@@ -52,8 +52,8 @@
 
                 {{-- Tenants --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa fa-users"></i>
                         <span class="side-menu__label">Tenants</span>
                     </a>
@@ -61,8 +61,8 @@
 
                 {{-- Applications --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-clipboard-list"></i>
                         <span class="side-menu__label">Applications</span>
                     </a>
@@ -70,8 +70,8 @@
 
                 {{-- Leases and files --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-file"></i>
                         <span class="side-menu__label">Leases & Files</span>
                     </a>
@@ -79,8 +79,8 @@
 
                 {{-- Income --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-chart-line"></i>
                         <span class="side-menu__label">Income</span>
                     </a>
@@ -88,8 +88,8 @@
 
                 {{-- Expence --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-explosion"></i>
                         <span class="side-menu__label">Expence</span>
                     </a>
@@ -97,8 +97,8 @@
 
                 {{-- Maintanence --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-screwdriver-wrench"></i>
                         <span class="side-menu__label">Maintanence</span>
                     </a>
@@ -106,8 +106,8 @@
 
                 {{-- Messaging --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-message"></i>
                         <span class="side-menu__label">Messaging</span>
                     </a>
@@ -115,8 +115,8 @@
 
                 {{-- Listing --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('team.list') ? 'has-link' : '' }}"
-                        href="{{ route('team.list') }}">
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="">
                         <i class="fa-solid fa-clipboard-list"></i>
                         <span class="side-menu__label">Listing</span>
                     </a>
