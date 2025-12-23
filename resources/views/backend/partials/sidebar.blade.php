@@ -37,11 +37,17 @@
 
                 {{-- Properties --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('employee.list') ? 'has-link' : '' }}"
-                        href="{{ route('employee.list') }}">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
                         <i class="fa-solid fa-bed-pulse"></i>
-                        <span class="side-menu__label">Properties</span>
+                        <span class="side-menu__label">Manage Property</span>
+                        <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('setting.general.index') }}" class="slide-item">Property Types</a></li>
+                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Tags</a></li>
+                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Properties</a></li>
+                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Amenities</a></li>
+                    </ul>
                 </li>
 
                 {{-- Tenants --}}
@@ -142,8 +148,10 @@
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
-                        <li><a href="{{ route('setting.general.index') }}" class="slide-item">General Settings</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Profile Settings</a></li>
+                        <li><a href="{{ route('setting.general.index') }}" class="slide-item">General Settings</a>
+                        </li>
+                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Profile Settings</a>
+                        </li>
                         <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Social Profile</a></li>
                     </ul>
                 </li>
@@ -163,10 +171,10 @@
 
 {{-- sidebar style --}}
 <style>
-
     .slide i {
         margin-top: 8px;
     }
+
     /* Base menu item styling */
     .side-menu__item {
         display: flex;
