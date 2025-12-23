@@ -15,24 +15,7 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $user = auth()->user();
-
-        // User Statistics
-        $totalEmployees = User::where('role', 'employee')->count();
-
-        // Work Statistics
-        $totalWorks = Work::count();
-        $rescheduledWorks = Work::where('is_rescheduled', true)->count();
-
-        // Team Statistics
-        $totalTeams = Team::count();
-
-        return view('backend.layouts.dashboard', compact(
-            'totalEmployees',
-            'totalWorks',
-            'rescheduledWorks',
-            'totalTeams',
-        ));
+        return view('backend.layouts.dashboard');
     }
 
     /**
