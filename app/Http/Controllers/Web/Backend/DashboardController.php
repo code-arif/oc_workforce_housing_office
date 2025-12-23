@@ -20,18 +20,18 @@ class DashboardController extends Controller
         // User Statistics
         $totalEmployees = User::where('role', 'employee')->count();
 
-        // Work Statistics
-        $totalWorks = Work::count();
-        $rescheduledWorks = Work::where('is_rescheduled', true)->count();
+        // // Work Statistics
+        // $totalWorks = Work::count();
+        // $rescheduledWorks = Work::where('is_rescheduled', true)->count();
 
-        // Team Statistics
-        $totalTeams = Team::count();
+        // // Team Statistics
+        // $totalTeams = Team::count();
 
         return view('backend.layouts.dashboard', compact(
             'totalEmployees',
-            'totalWorks',
-            'rescheduledWorks',
-            'totalTeams',
+            // 'totalWorks',
+            // 'rescheduledWorks',
+            // 'totalTeams',
         ));
     }
 

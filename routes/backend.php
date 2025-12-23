@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\Backend\TeamManageController;
 use App\Http\Controllers\Web\Backend\WorkManageController;
 use App\Http\Controllers\Web\Backend\EmployeeAssignController;
 use App\Http\Controllers\Web\Backend\EmployeeManageController;
+use App\Http\Controllers\Web\Backend\PropertyTypeController;
 use App\Http\Controllers\Web\Backend\Settings\ProfileController;
 use App\Http\Controllers\Web\Backend\Settings\SettingController;
 
@@ -72,6 +73,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('reschedule-request', [WorkScheduleRequest::class, 'index'])->name('reschedule.work.list');
     Route::get('reschedule-request/edit/{id}', [WorkScheduleRequest::class, 'edit'])->name('reschedule.work.edit');
     Route::post('reschedule-request/update/{id}', [WorkScheduleRequest::class, 'update'])->name('reschedule.work.update');
+
+    // property type manage
+    Route::prefix('property-type')->name('property-type.')->group(function () {
+        Route::get('/list', [PropertyTypeController::class, 'index'])->name('list');
+        Route::post('/store', [PropertyTypeController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [PropertyTypeController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [PropertyTypeController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [PropertyTypeController::class, 'destroy'])->name('delete');
+    });
 
     // work map view
     Route::get('/global-map', [MapController::class, 'globalMap'])->name('map.global');
