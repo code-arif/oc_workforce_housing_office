@@ -1,7 +1,7 @@
 {{-- @extends('backend.layouts.app') --}}
 @extends('backend.app')
 
-@section('title', 'Property Types')
+@section('title', 'Properties list ')
 
 @section('content')
     <!--app-content open-->
@@ -10,12 +10,12 @@
             <div class="main-container container-fluid">
                 <div class="page-header">
                     <div>
-                        <h1 class="page-title">Property Types</h1>
+                        <h1 class="page-title">Properties list </h1>
                     </div>
                     <div class="ms-auto pageheader-btn">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="javascript:void(0);">Index</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Property Types</li>
+                            <li class="breadcrumb-item active" aria-current="page">Properties list </li>
                         </ol>
                     </div>
                 </div>
@@ -29,9 +29,9 @@
 
                                 <div
                                     class="card-header border-bottom mb-3 d-flex justify-content-between align-items-center">
-                                    <h4 class="mb-0">Property Types List</h4>
+                                    <h4 class="mb-0">Property List</h4>
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#propertyTypeModal" id="addPropertyTypeBtn">Add Property Type</button>
+                                        data-bs-target="#propertyTypeModal" id="addPropertyTypeBtn">Add Property</button>
                                 </div>
 
 
@@ -60,7 +60,7 @@
         </div>
     </div>
 
-    @include('backend.layouts.properties.types.create')
+    @include('backend.layouts.properties.create')
 @endsection
 
 @push('styles')

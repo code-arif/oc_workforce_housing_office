@@ -44,8 +44,8 @@
                     </a>
                     <ul class="slide-menu">
                         <li><a href="{{ route('property-type.list') }}" class="slide-item">Property Types</a></li>
+                        <li><a href="{{ route('property.list') }}" class="slide-item">Properties</a></li>
                         <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Tags</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Properties</a></li>
                         <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Amenities</a></li>
                     </ul>
                 </li>

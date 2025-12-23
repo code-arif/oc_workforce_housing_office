@@ -1,15 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Web\TrackingController;
-use App\Http\Controllers\Web\Backend\MapController;
-use App\Http\Controllers\Web\Backend\CalendarController;
+use App\Http\Controllers\Web\Backend\PropertyController;
 use App\Http\Controllers\Web\Backend\DashboardController;
-use App\Http\Controllers\Web\Backend\WorkScheduleRequest;
-use App\Http\Controllers\Web\Backend\TeamManageController;
-use App\Http\Controllers\Web\Backend\WorkManageController;
-use App\Http\Controllers\Web\Backend\EmployeeAssignController;
-use App\Http\Controllers\Web\Backend\EmployeeManageController;
 use App\Http\Controllers\Web\Backend\PropertyTypeController;
 use App\Http\Controllers\Web\Backend\Settings\ProfileController;
 use App\Http\Controllers\Web\Backend\Settings\SettingController;
@@ -20,7 +13,27 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 });
 
+    // property type manage
+    Route::prefix('property-type')->name('property-type.')->group(function () {
+        Route::get('/list', [PropertyTypeController::class, 'index'])->name('list');
+        Route::post('/store', [PropertyTypeController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [PropertyTypeController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [PropertyTypeController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [PropertyTypeController::class, 'destroy'])->name('delete');
 
+        Route::get('/toggle-status/{id}', [PropertyTypeController::class, 'toggleStatus'])->name('toggle.status');
+    });
+
+    //Property manage
+    Route::prefix('property')->name('property.')->group(function () {
+        Route::get('/list', [PropertyController::class, 'index'])->name('list');
+        Route::post('/store', [PropertyController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [PropertyController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [PropertyController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [PropertyController::class, 'destroy'])->name('delete');
+
+        Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
+    });
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {

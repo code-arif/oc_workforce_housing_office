@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->id();
             $table->string('name')->index();
+            $table->string('slug')->unique();
+            $table->text('description')->nullable();
             $table->string('address')->nullable();
             $table->foreignId('property_type_id')->constrained('property_types')->cascadeOnDelete();
             $table->string('image_path')->nullable();

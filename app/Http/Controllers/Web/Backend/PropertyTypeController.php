@@ -29,8 +29,8 @@ class PropertyTypeController extends Controller
                 })
                 ->addColumn('status', function ($item) {
                     $badge = $item->is_active
-                        ? '<span class="badge bg-success">Active</span>'
-                        : '<span class="badge bg-danger">Inactive</span>';
+                        ? '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
+                        : '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
@@ -38,7 +38,7 @@ class PropertyTypeController extends Controller
                         <button class="btn btn-sm btn-warning me-1" onclick="editPropertyType(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deletePropertyType(' . $item->id . ')" title="Delete">
+                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     ';
@@ -155,6 +155,25 @@ class PropertyTypeController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting property type: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $propertyType = PropertyType::findOrFail($id);
+            $propertyType->is_active = !$propertyType->is_active;
+            $propertyType->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property Type status updated successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating property type status: ' . $e->getMessage(),
             ], 500);
         }
     }
