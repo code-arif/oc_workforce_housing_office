@@ -15,16 +15,16 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 });
 
-    // property type manage
-    Route::prefix('property-type')->name('property-type.')->group(function () {
-        Route::get('/list', [PropertyTypeController::class, 'index'])->name('list');
-        Route::post('/store', [PropertyTypeController::class, 'store'])->name('store');
-        Route::get('/edit/{id}', [PropertyTypeController::class, 'edit'])->name('edit');
-        Route::post('/update/{id}', [PropertyTypeController::class, 'update'])->name('update');
-        Route::delete('/delete/{id}', [PropertyTypeController::class, 'destroy'])->name('delete');
+// property type manage
+Route::prefix('property-type')->name('property-type.')->group(function () {
+    Route::get('/list', [PropertyTypeController::class, 'index'])->name('list');
+    Route::post('/store', [PropertyTypeController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [PropertyTypeController::class, 'edit'])->name('edit');
+    Route::post('/update/{id}', [PropertyTypeController::class, 'update'])->name('update');
+    Route::delete('/delete/{id}', [PropertyTypeController::class, 'destroy'])->name('delete');
 
-        Route::get('/toggle-status/{id}', [PropertyTypeController::class, 'toggleStatus'])->name('toggle.status');
-    });
+    Route::get('/toggle-status/{id}', [PropertyTypeController::class, 'toggleStatus'])->name('toggle.status');
+});
 
     Route::prefix('rooms')->name('rooms.')->group(function () {
         Route::get('/list', [RoomController::class, 'index'])->name('list');
@@ -57,8 +57,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/update/{id}', [PropertyController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [PropertyController::class, 'destroy'])->name('delete');
 
-        Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
-    });
+    Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
+});
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {
