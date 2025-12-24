@@ -20,7 +20,12 @@ class RoomController extends Controller
             // dd($rooms);
             return DataTables::of($rooms)
                 ->addIndexColumn()
-                ->addColumn('room_number', fn($item) => $item->room_number)
+                ->addColumn('room_number', function($item) {
+                    return '
+                        Room No.: <span class="fw-bold">' . $item->room_number . '</span> <br>
+                        <span class="text-muted">' . $item->name . '</span>
+                    ';
+                })
                 ->addColumn('description', function ($item) {
                     return $item->description
                         ? (strlen($item->description) > 50 ? substr($item->description, 0, 50) . '...' : $item->description)
@@ -51,7 +56,7 @@ class RoomController extends Controller
                         </button>
                     ';
                 })
-                ->rawColumns(['beds_count', 'actions'])
+                ->rawColumns(['room_number','beds_count', 'actions'])
                 ->make(true);
         }
 

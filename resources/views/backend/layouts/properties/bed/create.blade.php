@@ -40,7 +40,7 @@
                         <div class="col-12 mb-3">
                             <label for="bed_number" class="form-label">Bed Number <span
                                     class="text-danger">*</span></label>
-                            <input type="number" id="bed_number" name="bed_number" class="form-control"
+                            <input type="text" id="bed_number" name="bed_number" class="form-control"
                                 placeholder="Enter Bed number" required>
                             <span class="text-danger error-text bed_number_error"></span>
                         </div>
