@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web\Backend\CMS;
+namespace App\Http\Controllers\Web\Backend\CMS\Home;
 
 use App\Helper\Helper;
 use App\Models\Slider;
@@ -165,3 +165,4 @@ class HomePageSliderController extends Controller
         }
     }
 }
+
