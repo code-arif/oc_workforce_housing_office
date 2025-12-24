@@ -31,7 +31,8 @@
                                     class="card-header border-bottom mb-3 d-flex justify-content-between align-items-center">
                                     <h4 class="mb-0">Property Types List</h4>
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#propertyTypeModal" id="addPropertyTypeBtn">Add Property Type</button>
+                                        data-bs-target="#propertyTypeModal" id="addPropertyTypeBtn">Add Property
+                                        Type</button>
                                 </div>
 
 
@@ -110,23 +111,47 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route("property-type.list") }}',
+                    url: '{{ route('property-type.list') }}',
                     type: 'GET',
                     data: function(d) {
                         return d;
                     }
                 },
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'name', name: 'name' },
-                    { data: 'slug', name: 'slug' },
-                    { data: 'description', name: 'description' },
-                    { data: 'status', name: 'status', orderable: false, searchable: false },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'slug',
+                        name: 'slug'
+                    },
+                    {
+                        data: 'description',
+                        name: 'description'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
-                order: [[0, 'desc']],
+                order: [
+                    [0, 'desc']
+                ],
                 pageLength: 10,
-                dom: 'lrtip'
             });
 
             // Add Property Type
@@ -143,7 +168,8 @@
                 e.preventDefault();
 
                 const id = $('#propertyTypeId').val();
-                const url = id ? `{{ route('property-type.update', '') }}/${id}` : '{{ route("property-type.store") }}';
+                const url = id ? `{{ route('property-type.update', '') }}/${id}` :
+                    '{{ route('property-type.store') }}';
                 const method = id ? 'POST' : 'POST';
 
                 $.ajax({
@@ -187,7 +213,7 @@
                 </div>`;
 
                 $('#alertContainer').html(alertHtml);
-                
+
                 setTimeout(() => {
                     $('.alert').fadeOut('slow', function() {
                         $(this).remove();
@@ -296,7 +322,7 @@
                     });
                 }
             });
-            
+
         }
     </script>
 @endpush
