@@ -254,7 +254,6 @@
                 if (section === 'how-it-works' && typeof initHowItWorksSection === 'function') {
                     initHowItWorksSection();
                 }
-
             }
         }
 
