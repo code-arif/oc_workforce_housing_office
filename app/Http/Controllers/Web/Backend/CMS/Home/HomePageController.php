@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web\Backend\CMS;
+namespace App\Http\Controllers\Web\Backend\CMS\Home;
 
 use Exception;
 use App\Models\CMS;

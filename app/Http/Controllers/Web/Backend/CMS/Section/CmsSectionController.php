@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web\Backend\CMS;
+namespace App\Http\Controllers\Web\Backend\CMS\Section;
 
 use App\Models\CMS;
 use App\Models\Slider;
