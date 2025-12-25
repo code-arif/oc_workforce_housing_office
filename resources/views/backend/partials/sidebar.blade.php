@@ -127,19 +127,10 @@
 
                 {{-- Frontend --}}
                 <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                    <a class="side-menu__item" {{ request()->routeIs('cms.index') ? 'has-link' : '' }}" href="{{ route('cms.index') }}">
                         <i class="fa-solid fa-layer-group"></i>
                         <span class="side-menu__label">Platform</span>
-                        <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('setting.general.index') }}" class="slide-item">Home</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">About Us</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Properties</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Amenities</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Pricing</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Contact</a></li>
-                    </ul>
                 </li>
 
                 {{-- Settings --}}
