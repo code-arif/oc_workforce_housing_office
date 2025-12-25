@@ -159,23 +159,41 @@
             axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
         }
 
-        // Route helper
+        // Route helper - FIXED with all routes
         window.route = function(name, params = {}) {
             const routes = {
                 'cms.index': BASE_URL,
                 'cms.section': BASE_URL + '/section/' + (params.section || params),
                 'cms.home.hero.section.update': BASE_URL + '/home/hero/update',
-                'cms.slider.store': BASE_URL + '/slider/store',
-                'cms.slider.status': BASE_URL + '/slider/' + (params.id || params) + '/status',
-                'cms.slider.destroy': BASE_URL + '/slider/' + (params.id || params),
-                'cms.slider.updateOrder': BASE_URL + '/slider/update-order',
+                'cms.slider.store': BASE_URL + '/home/slider/store',
+                'cms.slider.status': BASE_URL + '/home/slider/' + (params.id || params) + '/status',
+                'cms.slider.destroy': BASE_URL + '/home/slider/' + (params.id || params),
+                'cms.slider.updateOrder': BASE_URL + '/home/slider/update-order',
+                'cms.home.how-it-works.update': BASE_URL + '/home/how-it-works/update',
             };
             return routes[name] || BASE_URL;
+        };
+
+        // Global Toast Helper
+        window.showToast = function(type, message) {
+            if (typeof iziToast !== 'undefined') {
+                iziToast[type]({
+                    title: type === 'success' ? 'Success' : 'Error',
+                    message: message,
+                    position: 'topRight',
+                    timeout: type === 'success' ? 3000 : 5000
+                });
+            } else if (typeof toastr !== 'undefined') {
+                toastr[type](message);
+            } else {
+                alert(message);
+            }
         };
 
         // CMS Manager Class
         class CmsManager {
             constructor() {
+                this.currentSection = 'hero';
                 this.initTabs();
             }
 
@@ -192,6 +210,7 @@
                 const title = tab.getAttribute("data-title");
                 const breadcrumb = tab.getAttribute("data-breadcrumb");
 
+                this.currentSection = section;
                 this.updateActiveTab(tab);
                 this.updatePageInfo(title, breadcrumb);
                 this.loadSection(section);
@@ -212,15 +231,15 @@
             async loadSection(section) {
                 const contentDiv = document.getElementById("dynamic-content");
                 contentDiv.innerHTML = `
-                    <div class="loading-overlay">
-                        <div class="text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2">Loading content...</p>
-                        </div>
+            <div class="loading-overlay">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
-                `;
+                    <p class="mt-2">Loading content...</p>
+                </div>
+            </div>
+        `;
 
                 try {
                     const response = await axios.get(route('cms.section', {
@@ -233,21 +252,24 @@
 
                     contentDiv.innerHTML = `<div class="fade-in">${response.data}</div>`;
 
-                    // Initialize section-specific scripts
-                    this.initializeSectionScripts(section);
+                    // Initialize section scripts after content loaded
+                    await this.initializeSectionScripts(section);
                 } catch (error) {
                     console.error('Error loading section:', error);
                     contentDiv.innerHTML = `
-                        <div class="alert alert-danger fade-in">
-                            <h4>Error Loading Content</h4>
-                            <p>Failed to load ${section} section. Please try again.</p>
-                            <button onclick="location.reload()" class="btn btn-primary">Reload Page</button>
-                        </div>
-                    `;
+                <div class="alert alert-danger fade-in">
+                    <h4>Error Loading Content</h4>
+                    <p>Failed to load ${section} section. Please try again.</p>
+                    <button onclick="location.reload()" class="btn btn-primary">Reload Page</button>
+                </div>
+            `;
                 }
             }
 
-            initializeSectionScripts(section) {
+            async initializeSectionScripts(section) {
+                // Wait for DOM to be ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 if (section === 'hero' && typeof initHeroSection === 'function') {
                     initHeroSection();
                 }
@@ -260,6 +282,15 @@
         // Initialize CMS Manager
         document.addEventListener("DOMContentLoaded", function() {
             window.cmsManager = new CmsManager();
+
+            // Initialize first section if active
+            const activeTab = document.querySelector("#cms-tabs .nav-link.active");
+            if (activeTab) {
+                const section = activeTab.getAttribute("data-section");
+                if (section === 'hero' && typeof initHeroSection === 'function') {
+                    initHeroSection();
+                }
+            }
         });
     </script>
 @endpush

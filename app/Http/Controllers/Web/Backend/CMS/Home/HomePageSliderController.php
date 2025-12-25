@@ -39,14 +39,12 @@ class HomePageSliderController extends Controller
                 'success' => true,
                 'message' => 'Slider added successfully!'
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
-
         } catch (\Exception $e) {
             Log::error('Slider Store Failed: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
@@ -55,6 +53,62 @@ class HomePageSliderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to add slider: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // update slider
+    // Update slider
+    public function update(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
+                'image' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
+                'status' => 'nullable|boolean'
+            ]);
+
+            $slider = Slider::findOrFail($id);
+
+            $data = [
+                'title' => $request->title,
+                'location' => $request->location,
+                'status' => $request->has('status') ? true : false,
+            ];
+
+            // Handle Image Upload
+            if ($request->hasFile('image')) {
+                // Delete old image
+                if ($slider->image) {
+                    Helper::deleteImage($slider->image);
+                }
+                $data['image'] = Helper::uploadImage($request->file('image'), 'sliders');
+            }
+
+            $slider->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Slider updated successfully!'
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Slider not found.'
+            ], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Slider Update Failed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update slider: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -75,13 +129,11 @@ class HomePageSliderController extends Controller
                 'success' => true,
                 'message' => 'Status updated successfully!'
             ], 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Slider not found.'
             ], 404);
-
         } catch (\Exception $e) {
             Log::error('Slider Status Update Failed: ' . $e->getMessage());
 
@@ -109,13 +161,11 @@ class HomePageSliderController extends Controller
                 'success' => true,
                 'message' => 'Slider deleted successfully!'
             ], 200);
-
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Slider not found.'
             ], 404);
-
         } catch (\Exception $e) {
             Log::error('Slider Delete Failed: ' . $e->getMessage());
 
@@ -147,14 +197,12 @@ class HomePageSliderController extends Controller
                 'success' => true,
                 'message' => 'Order updated successfully!'
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid data provided',
                 'errors' => $e->errors()
             ], 422);
-
         } catch (\Exception $e) {
             Log::error('Slider Order Update Failed: ' . $e->getMessage());
 
@@ -165,4 +213,3 @@ class HomePageSliderController extends Controller
         }
     }
 }
-

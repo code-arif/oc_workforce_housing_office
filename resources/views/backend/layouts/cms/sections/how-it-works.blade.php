@@ -35,73 +35,94 @@
 </div>
 
 <script>
-    // Global function define koro - window.initHowItWorksSection
     function initHowItWorksSection() {
         console.log('How It Works section initialized');
 
-        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        // Remove previous listeners to avoid duplicates
+        const form = document.getElementById('howItWorksSectionForm');
+        if (!form) {
+            console.error('Form not found');
+            return;
+        }
 
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': csrfToken
+        // Clone and replace to remove all old event listeners
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+
+        // Add new event listener
+        newForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const submitBtn = this.querySelector('#submitButton');
+            const spinner = this.querySelector('#howItWorkSpinner');
+            const btnText = this.querySelector('#submitBtnText');
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            btnText.textContent = 'Saving...';
+
+            // Clear previous errors
+            clearFormErrors(this);
+
+            try {
+                const formData = new FormData(this);
+
+                const response = await axios.post(this.action, formData, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+
+                if (response.data.success) {
+                    showToast('success', response.data.message || 'Updated successfully!');
+                } else {
+                    showToast('error', response.data.message || 'Failed to update!');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+
+                if (error.response?.status === 422 && error.response?.data?.errors) {
+                    // Validation errors
+                    const errors = error.response.data.errors;
+                    Object.keys(errors).forEach(field => {
+                        const input = this.querySelector(`[name="${field}"]`);
+                        if (input) {
+                            input.classList.add('is-invalid');
+                            const feedback = input.nextElementSibling;
+                            if (feedback?.classList.contains('invalid-feedback')) {
+                                feedback.textContent = errors[field][0];
+                                feedback.style.display = 'block';
+                            }
+                        }
+                        showToast('error', errors[field][0]);
+                    });
+                } else {
+                    showToast('error', error.response?.data?.message || 'Something went wrong!');
+                }
+            } finally {
+                // Re-enable button
+                submitBtn.disabled = false;
+                spinner.classList.add('d-none');
+                btnText.textContent = 'Save Changes';
             }
+
+            return false;
         });
 
-        // Remove previous event listeners to avoid duplicates
-        $('#howItWorksSectionForm').off('submit');
-
-        // $('#howItWorksSectionForm').on('submit', function(e) {
-        //     e.preventDefault();
-        //     e.stopPropagation();
-
-        //     let url = $(this).attr('action');
-        //     let formData = new FormData(this);
-
-        //     $('#howItWorkSpinner').removeClass('d-none');
-        //     $('#submitBtnText').text('Saving...');
-        //     $('#submitButton').prop('disabled', true);
-
-        //     $.ajax({
-        //         url: url,
-        //         type: "POST",
-        //         data: formData,
-        //         contentType: false,
-        //         processData: false,
-
-        //         success: function(res) {
-        //             console.log('Success:', res);
-        //             if (res.success) {
-        //                 toastr.success(res.message ?? 'Updated successfully!');
-        //             } else {
-        //                 toastr.error(res.message ?? 'Failed to update!');
-        //             }
-        //         },
-
-        //         error: function(xhr) {
-        //             console.log('Error:', xhr.responseJSON);
-        //             if (xhr.status === 422 && xhr.responseJSON?.errors) {
-        //                 $.each(xhr.responseJSON.errors, function(key, value) {
-        //                     toastr.error(value[0]);
-        //                 });
-        //             } else {
-        //                 toastr.error(xhr.responseJSON?.message ?? 'Something went wrong!');
-        //             }
-        //         },
-
-        //         complete: function() {
-        //             $('#howItWorkSpinner').addClass('d-none');
-        //             $('#submitBtnText').text('Save Changes');
-        //             $('#submitButton').prop('disabled', false);
-        //         }
-        //     });
-
-        //     return false;
-        // });
+        function clearFormErrors(form) {
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.invalid-feedback').forEach(el => {
+                el.textContent = '';
+                el.style.display = 'none';
+            });
+        }
     }
 
-
-        // Initialize if hero tab is active
+    // Auto-initialize if on how-it-works section
     if (document.getElementById('how-it-works-tab')?.classList.contains('active')) {
-        initHeroSection();
+        initHowItWorksSection();
     }
 </script>

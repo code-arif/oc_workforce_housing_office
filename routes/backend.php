@@ -78,11 +78,12 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::post('/home/hero/update', [HomePageController::class, 'update'])->name('home.hero.section.update');
 
     // Slider Management Routes
-    Route::prefix('home/slider')->name('home.sider')->group(function () {
+    Route::prefix('home/slider')->name('slider.')->group(function () {
         Route::post('/store', [HomePageSliderController::class, 'store'])->name('store');
+        Route::put('/{id}', [HomePageSliderController::class, 'update'])->name('update'); // NEW
         Route::post('/{id}/status', [HomePageSliderController::class, 'updateStatus'])->name('status');
-        Route::delete('/delete/{id}', [HomePageSliderController::class, 'destroy'])->name('destroy');
-        Route::post('/update-order', [HomePageSliderController::class, 'updateOrder'])->name('update.order');
+        Route::delete('/{id}', [HomePageSliderController::class, 'destroy'])->name('destroy');
+        Route::post('/update-order', [HomePageSliderController::class, 'updateOrder'])->name('updateOrder');
     });
 
     // How it works
