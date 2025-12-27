@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('unit_id')->index();
             $table->string('name')->nullable();
             $table->string('room_number')->index();
             $table->string('description')->nullable();
             $table->string('gender_designation')->nullable(); //Male, Female, Mixed
             $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

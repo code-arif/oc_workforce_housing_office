@@ -11,17 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('beds', function (Blueprint $table) {
+        Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('room_id')->index();
-            $table->string('bed_label')->nullable();
-            $table->string('bed_number')->nullable();
+            $table->string('name')->nullable();
             $table->string('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
             $table->timestamps();
-
-            $table->unique(['room_id', 'bed_number']);
         });
     }
 
@@ -30,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('beds');
+        Schema::dropIfExists('units');
     }
 };

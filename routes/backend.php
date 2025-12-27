@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\UnitController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -30,8 +31,20 @@ Route::prefix('property-type')->name('property-type.')->group(function () {
     Route::get('/toggle-status/{id}', [PropertyTypeController::class, 'toggleStatus'])->name('toggle.status');
 });
 
+// property type manage
+Route::prefix('units')->name('units.')->group(function () {
+    Route::get('/list', [UnitController::class, 'index'])->name('list');
+    Route::post('/store', [UnitController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [UnitController::class, 'edit'])->name('edit');
+    Route::post('/update/{id}', [UnitController::class, 'update'])->name('update');
+    Route::delete('/delete/{id}', [UnitController::class, 'destroy'])->name('delete');
+
+    Route::get('/toggle-status/{id}', [UnitController::class, 'toggleStatus'])->name('toggle.status');
+});
+
 Route::prefix('rooms')->name('rooms.')->group(function () {
     Route::get('/list', [RoomController::class, 'index'])->name('list');
+    Route::get('/show/{id}', [RoomController::class, 'show'])->name('show');
     Route::get('/create', [RoomController::class, 'create'])->name('create');
     Route::post('/store', [RoomController::class, 'store'])->name('store');
     Route::get('/edit/{id}', [RoomController::class, 'edit'])->name('edit');
@@ -56,8 +69,10 @@ Route::prefix('beds')->name('beds.')->group(function () {
 //Property manage
 Route::prefix('property')->name('property.')->group(function () {
     Route::get('/list', [PropertyController::class, 'index'])->name('list');
+    Route::get('/create', [PropertyController::class, 'create'])->name('create');
     Route::post('/store', [PropertyController::class, 'store'])->name('store');
     Route::get('/edit/{id}', [PropertyController::class, 'edit'])->name('edit');
+    Route::get('/show/{id}', [PropertyController::class, 'show'])->name('show');
     Route::post('/update/{id}', [PropertyController::class, 'update'])->name('update');
     Route::delete('/delete/{id}', [PropertyController::class, 'destroy'])->name('delete');
 

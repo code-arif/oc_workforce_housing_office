@@ -22,8 +22,10 @@ class RoomController extends Controller
                 ->addIndexColumn()
                 ->addColumn('room_number', function($item) {
                     return '
-                        Room No.: <span class="fw-bold">' . $item->room_number . '</span> <br>
-                        <span class="text-muted">' . $item->name . '</span>
+                        <a href="' . route('rooms.show', $item->id) . '" class="text-decoration-none fw-bold text-primary">
+                            <span class="fw-bold">' . $item->room_number . '</span> <br>
+                            <span class="text-muted">' . $item->name . '</span>
+                        </a>
                     ';
                 })
                 ->addColumn('description', function ($item) {
@@ -48,6 +50,7 @@ class RoomController extends Controller
                 })
                 ->addColumn('actions', function ($item) {
                     return '
+                        <a href="' . route('rooms.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
                         <button class="btn btn-sm btn-warning me-1" onclick="editRoom(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -77,6 +80,7 @@ class RoomController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'unit_id' => 'required|exists:units,id',
             'room_number' => 'required|string|max:255|unique:rooms,room_number',
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -85,9 +89,24 @@ class RoomController extends Controller
             'beds.*.bed_number' => 'nullable|string|max:255',
         ]);
 
+        if (!empty($validated['beds'])) {
+            $bedNumbers = collect($validated['beds'])
+                ->pluck('bed_number')
+                ->filter() // remove null / empty
+                ->values();
+
+            if ($bedNumbers->count() !== $bedNumbers->unique()->count()) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Duplicate bed numbers are not allowed in the same room.');
+            }
+        }
+
+
         try {
             // Create room
             $room = Room::create([
+                'unit_id' => $validated['unit_id'],
                 'room_number' => $validated['room_number'],
                 'name' => $validated['name'],
                 'description' => $validated['description'],
@@ -101,6 +120,7 @@ class RoomController extends Controller
                     if (!empty($bed['bed_number'])) {
                         $room->beds()->create([
                             'bed_number' => $bed['bed_number'] ?? null,
+                            'bed_label' => $room->room_number . '-' . $bed['bed_number'],
                             'is_active' => false,
                         ]);
                     }
@@ -113,6 +133,20 @@ class RoomController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Error creating room: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified room.
+     */
+    public function show($id)
+    {
+        try {
+            $room = Room::with('beds')->findOrFail($id);
+            return view('backend.layouts.properties.room.show', compact('room'));
+        } catch (\Exception $e) {
+            return redirect()->route('rooms.list')
+                ->with('error', 'Room not found.');
         }
     }
 
@@ -139,6 +173,7 @@ class RoomController extends Controller
             $room = Room::with('beds')->findOrFail($id);
 
             $validated = $request->validate([
+                'unit_id' => 'required|exists:units,id',
                 'room_number' => 'required|string|max:255|unique:rooms,room_number,' . $id,
                 'name' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
@@ -150,6 +185,7 @@ class RoomController extends Controller
 
             // Update room
             $room->update([
+                'unit_id' => $validated['unit_id'],
                 'room_number' => $validated['room_number'],
                 'name' => $validated['name'],
                 'description' => $validated['description'],
@@ -162,21 +198,34 @@ class RoomController extends Controller
                 $updatedBedIds = [];
 
                 foreach ($validated['beds'] as $bedData) {
-                    // Skip empty beds
-                    if ( empty($bedData['bed_number'])) {
+
+                    if (empty($bedData['bed_number'])) {
                         continue;
                     }
 
+                    $duplicateExists = Bed::where('room_id', $room->id)
+                        ->where('bed_number', $bedData['bed_number'])
+                        ->when(!empty($bedData['id']), function ($q) use ($bedData) {
+                            $q->where('id', '!=', $bedData['id']);
+                        })
+                        ->exists();
+
+                    if ($duplicateExists) {
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error', 'Bed number "' . $bedData['bed_number'] . '" already exists in this room.');
+                    }
+
+                    // Update or create
                     if (!empty($bedData['id']) && in_array($bedData['id'], $existingBedIds)) {
-                        // Update existing bed
                         Bed::where('id', $bedData['id'])->update([
-                            'bed_number' => $bedData['bed_number'] ?? null,
+                            'bed_number' => $bedData['bed_number'],
                         ]);
                         $updatedBedIds[] = $bedData['id'];
                     } else {
-                        // Create new bed
                         $bed = $room->beds()->create([
-                            'bed_number' => $bedData['bed_number'] ?? null,
+                            'bed_number' => $bedData['bed_number'],
+                            'bed_label' => $room->room_number . '-' . $bedData['bed_number'],
                             'is_active' => true,
                         ]);
                         $updatedBedIds[] = $bed->id;

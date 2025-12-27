@@ -18,30 +18,30 @@ class RoomWithBedsSeeder extends Seeder
         $rooms = [
             [
                 'name' => 'Deluxe Room',
-                'room_number' => 'R-101',
+                'room_number' => 'A',
                 'gender_designation' => 'Mixed',
                 'beds' => [
-                    ['bed_label' => 'A', 'bed_number' => 'A'],
-                    ['bed_label' => 'B', 'bed_number' => 'B'],
+                    ['bed_label' => 'A-1', 'bed_number' => '1'],
+                    ['bed_label' => 'A-2', 'bed_number' => '2'],
                 ],
             ],
             [
                 'name' => 'Male Shared Room',
-                'room_number' => 'R-102',
+                'room_number' => 'B',
                 'gender_designation' => 'Male',
                 'beds' => [
-                    ['bed_label' => 'A', 'bed_number' => 'A'],
-                    ['bed_label' => 'B', 'bed_number' => 'B'],
-                    ['bed_label' => 'C', 'bed_number' => 'C'],
+                    ['bed_label' => 'B-1', 'bed_number' => '1'],
+                    ['bed_label' => 'B-2', 'bed_number' => '2'],
+                    ['bed_label' => 'B-3', 'bed_number' => '3'],
                 ],
             ],
             [
                 'name' => 'Female Shared Room',
-                'room_number' => 'R-103',
+                'room_number' => 'C',
                 'gender_designation' => 'Female',
                 'beds' => [
-                    ['bed_label' => 'A', 'bed_number' => 'A'],
-                    ['bed_label' => 'B', 'bed_number' => 'B'],
+                    ['bed_label' => 'C-1', 'bed_number' => '1'],
+                    ['bed_label' => 'C-2', 'bed_number' => '2'],
                 ],
             ],
         ];
@@ -51,6 +51,7 @@ class RoomWithBedsSeeder extends Seeder
             unset($roomData['beds']);
 
             $room = Room::create([
+                'unit_id' => 1,
                 'name' => $roomData['name'],
                 'room_number' => $roomData['room_number'],
                 'description' => 'Auto generated room',

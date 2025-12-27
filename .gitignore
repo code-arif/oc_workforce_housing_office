@@ -22,3 +22,5 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/PROPERTY_CREATION_REFACTOR.md
+/PROPERTY_UI_GUIDE.md

@@ -2,33 +2,27 @@
 
 namespace App\Models;
 
-use App\Models\Bed;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Room extends Model
+class Unit extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'rooms';
-
     protected $fillable = [
-        'unit_id',
         'name',
-        'room_number',
         'description',
-        'gender_designation',
         'is_active',
     ];
 
-    public function beds()
+    public function rooms()
     {
-        return $this->hasMany(Bed::class);
+        return $this->hasMany(Room::class);
     }
 
-    public function unit()
+    public function properties()
     {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsToMany(Property::class, 'property_unit');
     }
 }

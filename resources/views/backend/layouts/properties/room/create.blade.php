@@ -25,13 +25,19 @@
                 <div id="alertContainer">
                     @if ($errors->any())
                         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>Validation Error!</strong>
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <div class="d-flex align-items-start">
+                                <div class="flex-grow-1">
+                                    <h5 class="alert-heading mb-2">
+                                        <i class="bi bi-exclamation-triangle"></i> Validation Error!
+                                    </h5>
+                                    <ul class="mb-0">
+                                        @foreach ($errors->all() as $error)
+                                            <li class="mb-1">{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -54,6 +60,28 @@
                                         <div class="col-12 col-lg-8 col-xl-8 mb-3">
                                             <div class="row">
                                                 <div class="col-12 mb-3">
+                                                    <label for="room_number" class="form-label">Unit Number <span
+                                                            class="text-danger">*</span></label>
+                                                    @php
+                                                        $units = App\Models\Unit::all();
+                                                    @endphp
+                                                    <select name="unit_id" id="unit_id"
+                                                        class="form-select @error('unit_id') is-invalid @enderror select3"
+                                                        required>
+                                                        <option value="">Select Unit</option>
+                                                        @foreach ($units as $unit)
+                                                            <option value="{{ $unit->id }}">{{ $unit->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error('room_number')
+                                                        <div class="invalid-feedback" style="display: block;">
+                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                                                        </div>
+                                                    @enderror
+                                                </div>
+
+                                                <div class="col-12 mb-3">
                                                     <label for="room_number" class="form-label">Room Number <span
                                                             class="text-danger">*</span></label>
                                                     <input type="text" id="room_number" name="room_number"
@@ -61,7 +89,9 @@
                                                         placeholder="Enter Room number"
                                                         value="{{ old('room_number') }}" required>
                                                     @error('room_number')
-                                                        <span class="text-danger">{{ $message }}</span>
+                                                        <div class="invalid-feedback" style="display: block;">
+                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                                                        </div>
                                                     @enderror
                                                 </div>
 
@@ -73,7 +103,9 @@
                                                         placeholder="Enter room name"
                                                         value="{{ old('name') }}">
                                                     @error('name')
-                                                        <span class="text-danger">{{ $message }}</span>
+                                                        <div class="invalid-feedback" style="display: block;">
+                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                                                        </div>
                                                     @enderror
                                                 </div>
 
@@ -95,7 +127,9 @@
                                                             Mixed</option>
                                                     </select>
                                                     @error('gender_designation')
-                                                        <span class="text-danger">{{ $message }}</span>
+                                                        <div class="invalid-feedback" style="display: block;">
+                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                                                        </div>
                                                     @enderror
                                                 </div>
 
@@ -105,7 +139,9 @@
                                                     <textarea name="description" id="description" class="form-control @error('description') is-invalid @enderror"
                                                         placeholder="Enter room description" rows="3">{{ old('description') }}</textarea>
                                                     @error('description')
-                                                        <span class="text-danger">{{ $message }}</span>
+                                                        <div class="invalid-feedback" style="display: block;">
+                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
+                                                        </div>
                                                     @enderror
                                                 </div>
 
@@ -148,6 +184,9 @@
 
 @push('styles')
     <style>
+        .select2-container {
+            width: 100% !important;
+        }
         .bed-item {
             background-color: #fff;
             border: 1px solid #ddd;
@@ -190,11 +229,11 @@
             transform: scale(1.2);
         }
 
-        .bed-fields {
+        /* .bed-fields {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
-        }
+        } */
 
         .bed-fields .form-group {
             margin-bottom: 8px;
@@ -218,6 +257,56 @@
             color: #999;
             font-size: 14px;
         }
+
+        .form-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            background-image: none;
+        }
+
+        .form-control.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        #alertContainer .alert {
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #dc3545;
+        }
+
+        #alertContainer .alert ul {
+            padding-left: 1.5rem;
+        }
+
+        #alertContainer .alert li {
+            line-height: 1.6;
+        }
+
+        .bed-item.has-error {
+            border: 1px solid #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            display: block;
+        }
     </style>
 @endpush
 
@@ -226,9 +315,30 @@
     <script>
         let bedCount = 0;
 
-        // Add bed input
-        document.getElementById('addBedBtn').addEventListener('click', function() {
-            addBedInput();
+        $(document).ready(function() {
+            // Check if there are old bed inputs from validation error
+            const oldBeds = @json(old('beds'));
+
+            // Load beds from old input if validation failed
+            if (oldBeds && oldBeds.length > 0) {
+                loadBedsFromData(oldBeds);
+            } else {
+                clearBeds();
+            }
+
+            // Add bed input
+            document.getElementById('addBedBtn').addEventListener('click', function() {
+                addBedInput();
+            });
+
+            // Auto-dismiss success alerts after 5 seconds
+            const successAlert = document.querySelector('.alert-success');
+            if (successAlert) {
+                setTimeout(() => {
+                    const alert = new bootstrap.Alert(successAlert);
+                    alert.close();
+                }, 5000);
+            }
         });
 
         function addBedInput(bedData = null) {
@@ -242,32 +352,30 @@
 
             bedCount++;
             const bedId = bedData?.id || '';
-            const bedLabel = bedData?.bed_label || '';
             const bedNumber = bedData?.bed_number || '';
 
             const bedHTML = `
             <div class="bed-item" data-bed-id="${bedId}">
                 <div class="bed-item-header">
                     <span class="bed-item-title">Bed #${bedCount}</span>
-                    <button type="button" class="bed-remove-btn" onclick="removeBed(this)">
+                    <button type="button" class="bed-remove-btn" onclick="removeBed(this)" title="Remove">
                         <i class="bi bi-trash"></i>
                     </button>
                 </div>
                 <div class="bed-fields">
-                    
-                    <div class="form-group">
+                    <div class="form-group w-100">
                         <label for="bed_number_${bedCount}">Bed Number</label>
-                        <input type="text" 
+                        <input type="text"
                             id="bed_number_${bedCount}"
-                            name="beds[${bedCount}][bed_number]" 
-                            class="form-control form-control-sm" 
+                            name="beds[${bedCount}][bed_number]"
+                            class="form-control form-control-sm"
                             placeholder="e.g., 1, 2, 3"
                             value="${bedNumber}">
                     </div>
                 </div>
                 ${bedId ? `<input type="hidden" name="beds[${bedCount}][id]" value="${bedId}">` : ''}
             </div>
-        `;
+            `;
 
             bedContainer.insertAdjacentHTML('beforeend', bedHTML);
         }
@@ -302,5 +410,12 @@
                 clearBeds();
             }
         }
+
+        $(document).ready(function() {
+            $('.select3').select2({
+                // minimumResultsForSearch: -1,
+                width: '100%',
+            })
+        })
     </script>
 @endpush

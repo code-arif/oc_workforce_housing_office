@@ -44,6 +44,7 @@
                     </a>
                     <ul class="slide-menu">
                         <li><a href="{{ route('property-type.list') }}" class="slide-item">Property Types</a></li>
+                        <li><a href="{{ route('units.list') }}" class="slide-item">Units</a></li>
                         <li><a href="{{ route('rooms.list') }}" class="slide-item">Rooms</a></li>
                         <li><a href="{{ route('beds.list') }}" class="slide-item">Beds</a></li>
                         <li><a href="{{ route('property.list') }}" class="slide-item">Properties</a></li>
