@@ -145,6 +145,12 @@ class PropertyTypeController extends Controller
     {
         try {
             $propertyType = PropertyType::findOrFail($id);
+            if ($propertyType->properties()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Property Type has properties. You cannot delete it.',
+                ], 500);
+            }
             $propertyType->delete();
 
             return response()->json([

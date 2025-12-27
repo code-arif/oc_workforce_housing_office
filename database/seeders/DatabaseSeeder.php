@@ -15,8 +15,11 @@ class DatabaseSeeder extends Seeder
         $this->call([
             UserSeeder::class,
             SettingSeeder::class,
-            // RoomWithBedsSeeder::class,
-            // RoomSeeder::class,
+            PropertyTypeSeeder::class,
+            PropertySeeder::class,
+            UnitSeeder::class,
+            RoomSeeder::class,
+            BedSeeder::class,
         ]);
     }
 }

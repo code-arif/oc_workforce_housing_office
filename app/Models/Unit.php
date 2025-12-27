@@ -21,4 +21,9 @@ class Unit extends Model
     {
         return $this->belongsTo(Property::class, 'property_id');
     }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
+    }
 }

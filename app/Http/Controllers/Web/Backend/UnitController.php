@@ -148,6 +148,13 @@ class UnitController extends Controller
     {
         try {
             $unit = Unit::findOrFail($id);
+
+            if($unit->rooms()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unit has rooms. You cannot delete it.',
+                ], 500);
+            }
             $unit->delete();
 
             return response()->json([

@@ -269,7 +269,13 @@ class RoomController extends Controller
         try {
             $room = Room::findOrFail($id);
             // Delete beds first
-            $room->beds()->delete();
+            // $room->beds()->delete();
+            if ($room->beds->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete room with beds.',
+                ], 500);
+            }
             // Then delete room
             $room->delete();
 
