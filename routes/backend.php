@@ -2,6 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\BedController;
+use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
+use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
+use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
+use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\RoomController;
 use App\Http\Controllers\Web\Backend\PropertyController;
 use App\Http\Controllers\Web\Backend\DashboardController;
@@ -11,6 +15,7 @@ use App\Http\Controllers\Web\Backend\Settings\SettingController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -89,11 +94,26 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // How it works
     Route::prefix('home/how-it-works')->name('home.how-it-works.')->group(function () {
         Route::post('update', [HowItWorksController::class, 'update'])->name('update');
-        Route::get('item', [HowItWorksController::class, 'index'])->name('index');
-        Route::post('item/store', [HowItWorksController::class, 'store'])->name('store');
+        Route::post('item/store', [HowItWorksController::class, 'storeItem'])->name('store');
         Route::post('item/update', [HowItWorksController::class, 'updateItem'])->name('update.item');
-        Route::delete('item/delete', [HowItWorksController::class, 'delete'])->name('delete');
+        Route::delete('item/delete', [HowItWorksController::class, 'destroy'])->name('delete');
     });
+
+    // Employee and sponsor
+    Route::post('/home/employee-and-sponsor/update', [EmpAndSponsorController::class, 'update'])->name('home.employee.and.sponsor.section.update');
+
+    // Prime Location Section
+    Route::post('/home/prime-location/update', [PrimeLocationController::class, 'update'])->name('home.prime.location.section.update');
+
+    // Apartment section update
+    Route::post('/home/apartment/update', [ApartmentController::class, 'update'])->name('home.apartment.section.update');
+
+    // Upload gallery image
+    Route::post('/gallery/update', [GalleryController::class, 'store'])->name('gallery.section.update');
+    Route::delete('/gallery/item/delete/{id}', [GalleryController::class, 'destroy'])->name('gallery.item.delete');
+
+    // About section update
+    Route::post('/about/breadcrumb/update', [AboutPageController::class, 'update'])->name('about.breadcrumb.update');
 });
 
 //! Route for Profile Settings

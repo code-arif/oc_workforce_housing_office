@@ -7,7 +7,35 @@ use Illuminate\Database\Eloquent\Model;
 
 class CMS extends Model
 {
-    protected $guarded = [];
+    /**
+     * IMPORTANT: Explicitly define table name
+     * Check your actual table name in database
+     */
+    protected $table = 'c_m_s';
+
+    protected $fillable = [
+        'page',
+        'section',
+        'name',
+        'slug',
+        'title',
+        'sub_title',
+        'description',
+        'sub_description',
+        'bg',
+        'image',
+        'btn_text',
+        'btn_link',
+        'btn_color',
+        'metadata',
+        'status',
+        'email',
+        'phone',
+        'address',
+        'slogan',
+        'business_name',
+    ];
+
 
     protected $hidden = [
         'created_at',
