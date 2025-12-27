@@ -55,9 +55,9 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Room Number</th>
-                                                <th>Description</th>
                                                 <th>Gender</th>
                                                 <th>Beds</th>
+                                                <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -216,16 +216,18 @@
                         name: 'room_number'
                     },
                     {
-                        data: 'description',
-                        name: 'description'
-                    },
-                    {
                         data: 'gender',
                         name: 'gender'
                     },
                     {
                         data: 'beds_count',
                         name: 'beds_count',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
                         orderable: false,
                         searchable: false
                     },
@@ -354,6 +356,40 @@
                     toastr.error(error.message);
                 }
             });
+        }
+
+        function toggleStatus(id) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Are you sure you want to update status?',
+                text: 'If you update this, it will be Changed.',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, update it!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `{{ route('rooms.toggle.status', '') }}/${id}`,
+                        type: 'GET',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                $('#roomTable').DataTable().ajax.reload();
+                                toastr.success(response.message);
+                            }
+                        },
+                        error: function(xhr) {
+                            toastr.error(xhr.responseJSON?.message || 'Error toggling status');
+                            // showAlert('danger', xhr.responseJSON?.message || 'Error toggling status');
+                        }
+                    });
+                }
+            });
+            
         }
 
         // Show Alert

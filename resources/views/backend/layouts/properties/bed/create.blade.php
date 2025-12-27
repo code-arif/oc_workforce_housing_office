@@ -18,7 +18,7 @@
                             <label for="room" class="form-label">Room <span
                                     class="text-danger">*</span></label>
                                 @php
-                                    $rooms = App\Models\Room::get();
+                                    $rooms = App\Models\Room::where('is_active', 1)->get();
                                 @endphp
                             <select name="room_id" id="room_id" class="select3">
                                 @foreach ($rooms as $room)

@@ -82,7 +82,7 @@ class BedController extends Controller
         try {
             $room = Room::findOrFail($validated['room_id']);
             $validated['room_number'] = $room->room_number;
-            $validated['bed_label'] = $validated['room_number'] . '-' . $validated['bed_number'];
+            $validated['bed_label'] = $room->unit->name . '-' . $room->room_number . '-' . $validated['bed_number'];
             Bed::create($validated);
 
             return response()->json([
@@ -156,7 +156,7 @@ class BedController extends Controller
             $bed = Bed::findOrFail($id);
             $room = Room::findOrFail($validated['room_id']);
             $validated['room_number'] = $room->room_number;
-            $validated['bed_label'] = $validated['room_number'] . '-' . $validated['bed_number'];
+            $validated['bed_label'] = $room->unit->name . '-' . $room->room_number . '-' . $validated['bed_number'];
             $bed->update($validated);
 
             return response()->json([

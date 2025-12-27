@@ -11,18 +11,14 @@ class Unit extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'property_id',
         'name',
-        'description',
+        'gender_designation',
         'is_active',
     ];
 
-    public function rooms()
+    public function property()
     {
-        return $this->hasMany(Room::class);
-    }
-
-    public function properties()
-    {
-        return $this->belongsToMany(Property::class, 'property_unit');
+        return $this->belongsTo(Property::class, 'property_id');
     }
 }

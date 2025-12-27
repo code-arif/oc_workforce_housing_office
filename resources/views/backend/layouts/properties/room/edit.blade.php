@@ -97,23 +97,11 @@
                                                     <label for="gender_designation" class="form-label">Gender Designation (optional)</label>
                                                     <select id="gender_designation" name="gender_designation" class="form-control @error('gender_designation') is-invalid @enderror">
                                                         <option value="">-- Select --</option>
-                                                        <option value="Male" {{ old('gender_designation', $room->gender_designation) == 'Male' ? 'selected' : '' }}>Male</option>
-                                                        <option value="Female" {{ old('gender_designation', $room->gender_designation) == 'Female' ? 'selected' : '' }}>Female</option>
-                                                        <option value="Mixed" {{ old('gender_designation', $room->gender_designation) == 'Mixed' ? 'selected' : '' }}>Mixed</option>
+                                                        <option value="male" {{ old('gender_designation', $room->gender_designation) == 'male' ? 'selected' : '' }}>Male</option>
+                                                        <option value="female" {{ old('gender_designation', $room->gender_designation) == 'Female' ? 'selected' : '' }}>Female</option>
+                                                        {{-- <option value="Mixed" {{ old('gender_designation', $room->gender_designation) == 'Mixed' ? 'selected' : '' }}>Mixed</option> --}}
                                                     </select>
                                                     @error('gender_designation')
-                                                        <div class="invalid-feedback" style="display: block;">
-                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
-                                                        </div>
-                                                    @enderror
-                                                </div>
-
-                                                <!-- Room Description -->
-                                                <div class="col-12 mb-3">
-                                                    <label for="description" class="form-label">Room Description (optional)</label>
-                                                    <textarea name="description" id="description" class="form-control @error('description') is-invalid @enderror"
-                                                        placeholder="Enter room description" rows="3">{{ old('description', $room->description) }}</textarea>
-                                                    @error('description')
                                                         <div class="invalid-feedback" style="display: block;">
                                                             <i class="bi bi-exclamation-circle"></i> {{ $message }}
                                                         </div>

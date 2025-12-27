@@ -41,7 +41,7 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Name</th>
-                                                <th>Description</th>
+                                                <th>Property</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -126,8 +126,8 @@
                         name: 'name'
                     },
                     {
-                        data: 'description',
-                        name: 'description'
+                        data: 'property',
+                        name: 'property'
                     },
                     {
                         data: 'status',
@@ -228,8 +228,8 @@
                     if (response.success) {
                         $('#unitId').val(response.data.id);
                         $('#name').val(response.data.name);
-                        $('#slug').val(response.data.slug);
-                        $('#description').val(response.data.description);
+                        $('#property_id').val(response.data.property_id).trigger('change');
+                        $('#gender_designation').val(response.data.gender_designation).trigger('change');
                         $('#isActive').prop('checked', response.data.is_active);
                         $('#modalTitle').text('Edit Unit');
                         $('#submitBtn').text('Update');

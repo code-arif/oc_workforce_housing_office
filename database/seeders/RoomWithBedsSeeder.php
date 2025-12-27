@@ -17,18 +17,18 @@ class RoomWithBedsSeeder extends Seeder
         });
         $rooms = [
             [
-                'name' => 'Deluxe Room',
+                
                 'room_number' => 'A',
-                'gender_designation' => 'Mixed',
+                'gender_designation' => 'male',
                 'beds' => [
                     ['bed_label' => 'A-1', 'bed_number' => '1'],
                     ['bed_label' => 'A-2', 'bed_number' => '2'],
                 ],
             ],
             [
-                'name' => 'Male Shared Room',
+                
                 'room_number' => 'B',
-                'gender_designation' => 'Male',
+                'gender_designation' => 'male',
                 'beds' => [
                     ['bed_label' => 'B-1', 'bed_number' => '1'],
                     ['bed_label' => 'B-2', 'bed_number' => '2'],
@@ -36,9 +36,9 @@ class RoomWithBedsSeeder extends Seeder
                 ],
             ],
             [
-                'name' => 'Female Shared Room',
+                
                 'room_number' => 'C',
-                'gender_designation' => 'Female',
+                'gender_designation' => 'female',
                 'beds' => [
                     ['bed_label' => 'C-1', 'bed_number' => '1'],
                     ['bed_label' => 'C-2', 'bed_number' => '2'],
@@ -52,9 +52,8 @@ class RoomWithBedsSeeder extends Seeder
 
             $room = Room::create([
                 'unit_id' => 1,
-                'name' => $roomData['name'],
+                
                 'room_number' => $roomData['room_number'],
-                'description' => 'Auto generated room',
                 'gender_designation' => $roomData['gender_designation'],
                 'is_active' => true,
             ]);
@@ -63,7 +62,6 @@ class RoomWithBedsSeeder extends Seeder
                 $room->beds()->create([
                     'bed_label' => $bed['bed_label'],
                     'bed_number' => $bed['bed_number'],
-                    'description' => 'Auto generated bed',
                     'is_active' => true,
                 ]);
             }

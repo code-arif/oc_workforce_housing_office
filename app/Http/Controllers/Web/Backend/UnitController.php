@@ -21,12 +21,7 @@ class UnitController extends Controller
             return DataTables::of($units)
                 ->addIndexColumn()
                 ->addColumn('name', fn($item) => $item->name)
-                ->addColumn('slug', fn($item) => $item->slug)
-                ->addColumn('description', function ($item) {
-                    return $item->description
-                        ? (strlen($item->description) > 50 ? substr($item->description, 0, 50) . '...' : $item->description)
-                        : '---';
-                })
+                ->addColumn('property', fn($item) => $item->property->name ?? '---')
                 ->addColumn('status', function ($item) {
                     $badge = $item->is_active
                         ? '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
@@ -64,8 +59,9 @@ class UnitController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'property_id' => 'required|exists:properties,id',
             'name' => 'required|string|max:255|unique:units,name',
-            'description' => 'nullable|string',
+            'gender_designation' => 'nullable|string|in:male,female',
             'is_active' => 'boolean',
         ]);
 
@@ -123,8 +119,9 @@ class UnitController extends Controller
             $unit = Unit::findOrFail($id);
 
             $validated = $request->validate([
-                'name' => 'required|string|max:255|unique:units,name,' . $id,
-                'description' => 'nullable|string',
+                'property_id' => 'required|exists:properties,id',
+                'name' => 'required|string|max:255',
+                'gender_designation' => 'nullable|string|in:male,female',
                 'is_active' => 'boolean',
             ]);
 

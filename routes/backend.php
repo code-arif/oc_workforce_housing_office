@@ -56,7 +56,7 @@ Route::prefix('rooms')->name('rooms.')->group(function () {
     Route::post('/update/{id}', [RoomController::class, 'update'])->name('update');
     Route::delete('/delete/{id}', [RoomController::class, 'destroy'])->name('delete');
 
-    Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
+    Route::get('/toggle-status/{id}', [RoomController::class, 'toggleStatus'])->name('toggle.status');
 });
 
 Route::prefix('beds')->name('beds.')->group(function () {

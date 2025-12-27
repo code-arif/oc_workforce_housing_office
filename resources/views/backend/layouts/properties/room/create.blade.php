@@ -63,7 +63,7 @@
                                                     <label for="room_number" class="form-label">Unit Number <span
                                                             class="text-danger">*</span></label>
                                                     @php
-                                                        $units = App\Models\Unit::all();
+                                                        $units = App\Models\Unit::where('is_active', 1)->get();
                                                     @endphp
                                                     <select name="unit_id" id="unit_id"
                                                         class="form-select @error('unit_id') is-invalid @enderror select3"
@@ -116,15 +116,12 @@
                                                     <select id="gender_designation" name="gender_designation"
                                                         class="form-control @error('gender_designation') is-invalid @enderror">
                                                         <option value="">-- Select --</option>
-                                                        <option value="Male"
-                                                            {{ old('gender_designation') == 'Male' ? 'selected' : '' }}>
+                                                        <option value="male"
+                                                            {{ old('gender_designation') == 'male' ? 'selected' : '' }}>
                                                             Male</option>
-                                                        <option value="Female"
-                                                            {{ old('gender_designation') == 'Female' ? 'selected' : '' }}>
+                                                        <option value="female"
+                                                            {{ old('gender_designation') == 'female' ? 'selected' : '' }}>
                                                             Female</option>
-                                                        <option value="Mixed"
-                                                            {{ old('gender_designation') == 'Mixed' ? 'selected' : '' }}>
-                                                            Mixed</option>
                                                     </select>
                                                     @error('gender_designation')
                                                         <div class="invalid-feedback" style="display: block;">
@@ -132,20 +129,6 @@
                                                         </div>
                                                     @enderror
                                                 </div>
-
-                                                <!-- Room Description -->
-                                                <div class="col-12 mb-3">
-                                                    <label for="description" class="form-label">Room Description (optional)</label>
-                                                    <textarea name="description" id="description" class="form-control @error('description') is-invalid @enderror"
-                                                        placeholder="Enter room description" rows="3">{{ old('description') }}</textarea>
-                                                    @error('description')
-                                                        <div class="invalid-feedback" style="display: block;">
-                                                            <i class="bi bi-exclamation-circle"></i> {{ $message }}
-                                                        </div>
-                                                    @enderror
-                                                </div>
-
-
                                             </div>
                                         </div>
 

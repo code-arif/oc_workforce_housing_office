@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('beds', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('room_id')->index();
+            $table->foreignId('room_id')->constrained()->cascadeOnDelete();
+            $table->string('bed_number'); // e.g., "A", "B" (Top/Bottom bunk)
             $table->string('bed_label')->nullable();
-            $table->string('bed_number')->nullable();
-            $table->string('description')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->decimal('base_rent', 10, 2)->default(0); 
+            $table->boolean('is_occupied')->default(false);
             $table->softDeletes();
             $table->timestamps();
 
