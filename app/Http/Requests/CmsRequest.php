@@ -22,18 +22,32 @@ class CmsRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'page'              => 'nullable|string|max:100',
+            'section'           => 'nullable|string|max:100',
             'name'              => 'nullable|string|max:50',
+            'slug'              => 'nullable|string|max:150',
             'title'             => 'nullable|string|max:255',
             'sub_title'         => 'nullable|string|max:255',
             'description'       => 'nullable|string',
             'sub_description'   => 'nullable|string',
-            'bg'                => 'nullable|image|max:5120',
-            'image'             => 'nullable|image|max:5120',
-            'video'             => 'nullable|file|mimes:mp4,avi,mov,mkv,flv,wmv,webm,3gp,ogg|max:51200',
+
+            // migration e longText, tai string/URL/path dhora holo
+            'bg'                => 'nullable|string',
+            'image'             => 'nullable',
+
             'btn_text'          => 'nullable|string|max:50',
-            'btn_link'          => 'nullable|string|max:100',
+            'btn_link'          => 'nullable|string|max:255',
             'btn_color'         => 'nullable|string|max:50',
-            'rating'            => 'nullable|integer|between:1,5'
+
+            'metadata'          => 'nullable|array',
+
+            'status'            => 'nullable|in:active,inactive',
+
+            'email'             => 'nullable|email|max:100',
+            'phone'             => 'nullable|string|max:30',
+            'address'           => 'nullable|string|max:255',
+            'slogan'            => 'nullable|string|max:255',
+            'business_name'     => 'nullable|string|max:255',
         ];
     }
 }

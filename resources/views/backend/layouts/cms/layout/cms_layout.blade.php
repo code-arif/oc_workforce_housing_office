@@ -23,7 +23,7 @@
                     <!-- Main Content Area -->
                     <div class="col-lg-10 col-xl-10 col-md-10 col-sm-12">
                         <div id="dynamic-content">
-                            @include('backend.layouts.cms.sections.hero', [
+                            @include('backend.layouts.cms.home.hero', [
                                 'data' => $heroData ?? null,
                                 'sliders' => $sliders ?? [],
                             ])
@@ -53,25 +53,43 @@
                                         <i class="fe fe-play-circle me-2"></i> How It Works
                                     </a>
 
-                                    <a class="nav-link" id="about-tab" href="javascript:void(0);" data-section="about"
-                                        data-title="About Section" data-breadcrumb="About">
-                                        <i class="fe fe-info me-2"></i> About Section
+                                    <a class="nav-link" id="employee-and-sponsor-tab" href="javascript:void(0);"
+                                        data-section="employee-and-sponsor" data-title="Employers & Sponsor"
+                                        data-breadcrumb="Employers & Sponsor">
+                                        <i class="fe fe-users me-2"></i>Employers & Sponsor
                                     </a>
 
-                                    <a class="nav-link" id="services-tab" href="javascript:void(0);" data-section="services"
-                                        data-title="Services Section" data-breadcrumb="Services">
-                                        <i class="fe fe-briefcase me-2"></i> Services Section
+                                    <a class="nav-link" id="prime-location-tab" href="javascript:void(0);"
+                                        data-section="prime-location" data-title="Prime Location"
+                                        data-breadcrumb="Prime Location">
+                                        <i class="fa-solid fa-location-crosshairs me-2"></i> Prime Locations
                                     </a>
 
-                                    <a class="nav-link" id="testimonials-tab" href="javascript:void(0);"
-                                        data-section="testimonials" data-title="Testimonials"
-                                        data-breadcrumb="Testimonials">
-                                        <i class="fe fe-message-square me-2"></i> Testimonials
+                                    <a class="nav-link" id="apartment-tab" href="javascript:void(0);"
+                                        data-section="apartment" data-title="Apartment" data-breadcrumb="Apartment">
+                                        <i class="fa-solid fa-building me-2"></i> Apartment
                                     </a>
 
-                                    <a class="nav-link" id="contact-tab" href="javascript:void(0);" data-section="contact"
-                                        data-title="Contact Section" data-breadcrumb="Contact">
-                                        <i class="fe fe-phone me-2"></i> Contact Section
+                                    <a class="nav-link" id="gallery-tab" href="javascript:void(0);" data-section="gallery"
+                                        data-title="Gallery Section" data-breadcrumb="Gallery">
+                                        <i class="fa-solid fa-images me-2"></i> Gallery
+                                    </a>
+
+                                    {{-- about us page --}}
+                                    <h6 class="px-3 pt-3 pb-2 mb-0 text-uppercase text-muted" style="font-size: 0.75rem;">
+                                        About Us
+                                    </h6>
+
+                                    <a class="nav-link" id="about-us-breadcrumb-tab" href="javascript:void(0);"
+                                        data-section="about-us-breadcrumb" data-title="About Us Breadcrumb"
+                                        data-breadcrumb="About Us Breadcrumb">
+                                        <i class="fa-regular fa-address-card me-2"></i> About Us Breadcrumb
+                                    </a>
+
+                                    <a class="nav-link" id="about-contact-breadcrumb-tab" href="javascript:void(0);"
+                                        data-section="about-contact-breadcrumb" data-title="Contact us Breadcrumb"
+                                        data-breadcrumb="Contact us Breadcrumb">
+                                        <i class="fa-solid fa-phone me-2"></i> Contact us Breadcrumb
                                     </a>
                                 </div>
                             </div>
@@ -170,9 +188,34 @@
                 'cms.slider.destroy': BASE_URL + '/home/slider/' + (params.id || params),
                 'cms.slider.updateOrder': BASE_URL + '/home/slider/update-order',
                 'cms.home.how-it-works.update': BASE_URL + '/home/how-it-works/update',
+                'cms.home.how-it-works.store': BASE_URL + '/home/how-it-works/item/store',
+                'cms.home.how-it-works.update.item': BASE_URL + '/home/how-it-works/item/update',
+                'cms.home.how-it-works.delete': BASE_URL + '/home/how-it-works/item/delete',
+
+                // employee and sponsor route
+                'cms.home.employee.and.sponsor.section.update': BASE_URL + '/home/employee-and-sponsor/update',
+
+                // prime location upate route
+                'cms.home.prime.location.section.update': BASE_URL + '/home/prime-location/update',
+
+                // apartment update route
+                'cms.home.apartment.section.update': BASE_URL + '/home/apartment/update',
+
+                // gallery image delete route
+                'cms.gallery.item.delete': BASE_URL + '/gallery/item/delete/' + (params.id || params),
+
             };
             return routes[name] || BASE_URL;
         };
+
+        // Asset URL helper
+        window.assetUrl = function(path) {
+            if (!path) return '';
+            if (path.startsWith('http')) return path;
+            const baseUrl = "{{ url('/') }}";
+            return baseUrl + '/' + path.replace(/^\/+/, '');
+        };
+
 
         // Global Toast Helper
         window.showToast = function(type, message) {
@@ -188,6 +231,96 @@
             } else {
                 alert(message);
             }
+        };
+
+        // Define How It Works Section Function GLOBALLY
+        window.initHowItWorksSection = function() {
+            console.log('How It Works section initialized (global)');
+
+            const form = document.getElementById('howItWorksSectionForm');
+            if (!form) {
+                console.error('Form not found');
+                return;
+            }
+
+            // Remove any existing submit handlers by cloning
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+
+            // Add submit handler
+            newForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const submitBtn = this.querySelector('#submitButton');
+                const spinner = this.querySelector('#howItWorkSpinner');
+                const btnText = this.querySelector('#submitBtnText');
+
+                console.log('Form action:', this.action);
+                console.log('Form submitting...');
+
+                submitBtn.disabled = true;
+                spinner.classList.remove('d-none');
+                btnText.textContent = 'Saving...';
+
+                // Clear errors
+                this.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                this.querySelectorAll('.invalid-feedback').forEach(el => {
+                    el.textContent = '';
+                    el.style.display = 'none';
+                });
+
+                try {
+                    const formData = new FormData(this);
+
+                    console.log('Sending request to:', this.action);
+                    console.log('FormData:', Object.fromEntries(formData));
+
+                    const response = await axios.post(this.action, formData, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    console.log('Response:', response.data);
+
+                    if (response.data.success) {
+                        window.showToast('success', response.data.message || 'Updated successfully!');
+                    } else {
+                        window.showToast('error', response.data.message || 'Failed to update!');
+                    }
+                } catch (error) {
+                    console.error('Submission Error:', error);
+                    console.error('Error Response:', error.response);
+
+                    if (error.response?.status === 422 && error.response?.data?.errors) {
+                        const errors = error.response.data.errors;
+                        Object.keys(errors).forEach(field => {
+                            const input = this.querySelector(`[name="${field}"]`);
+                            if (input) {
+                                input.classList.add('is-invalid');
+                                const feedback = input.nextElementSibling;
+                                if (feedback?.classList.contains('invalid-feedback')) {
+                                    feedback.textContent = errors[field][0];
+                                    feedback.style.display = 'block';
+                                }
+                            }
+                        });
+                        window.showToast('error', Object.values(errors).flat()[0]);
+                    } else {
+                        window.showToast('error', error.response?.data?.message || 'Something went wrong!');
+                    }
+                } finally {
+                    submitBtn.disabled = false;
+                    spinner.classList.add('d-none');
+                    btnText.textContent = 'Save Changes';
+                }
+
+                return false;
+            });
+
+            console.log('How It Works form handler attached');
         };
 
         // CMS Manager Class
@@ -242,6 +375,8 @@
         `;
 
                 try {
+                    console.log('Loading section:', section);
+
                     const response = await axios.get(route('cms.section', {
                         section: section
                     }), {
@@ -250,10 +385,25 @@
                         }
                     });
 
-                    contentDiv.innerHTML = `<div class="fade-in">${response.data}</div>`;
+                    console.log('Section loaded:', section);
 
-                    // Initialize section scripts after content loaded
-                    await this.initializeSectionScripts(section);
+                    contentDiv.innerHTML = response.data;
+
+                    // CRITICAL: Wait for DOM to update, then run inline scripts
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    // Execute any inline scripts in the loaded content
+                    const scripts = contentDiv.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => {
+                            newScript.setAttribute(attr.name, attr.value);
+                        });
+                        newScript.textContent = oldScript.textContent;
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+
+                    console.log(`Section ${section} scripts executed`);
                 } catch (error) {
                     console.error('Error loading section:', error);
                     contentDiv.innerHTML = `
@@ -265,32 +415,26 @@
             `;
                 }
             }
-
-            async initializeSectionScripts(section) {
-                // Wait for DOM to be ready
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                if (section === 'hero' && typeof initHeroSection === 'function') {
-                    initHeroSection();
-                }
-                if (section === 'how-it-works' && typeof initHowItWorksSection === 'function') {
-                    initHowItWorksSection();
-                }
-            }
         }
 
         // Initialize CMS Manager
         document.addEventListener("DOMContentLoaded", function() {
+            console.log('CMS Manager initializing...');
             window.cmsManager = new CmsManager();
 
             // Initialize first section if active
             const activeTab = document.querySelector("#cms-tabs .nav-link.active");
             if (activeTab) {
                 const section = activeTab.getAttribute("data-section");
+                console.log('Initial section:', section);
+
                 if (section === 'hero' && typeof initHeroSection === 'function') {
                     initHeroSection();
                 }
+                // Note: how-it-works will initialize via inline script in blade
             }
+
+            console.log('CMS Manager ready');
         });
     </script>
 @endpush
