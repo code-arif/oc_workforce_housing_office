@@ -35,7 +35,7 @@ class SocialLinkController extends Controller
                     return '<span class="badge bg-secondary">No Icon</span>';
                 })
                 ->addColumn('url', function ($row) {
-                    return '<a href="' . $row->url . '" target="_blank" class="text-primary">' . \Illuminate\Support\Str::limit($row->url, 30) . '</a>';
+                    return '<a href="' . $row->url . '" target="_blank" class="text-primary">' . Str::limit($row->url, 30) . '</a>';
                 })
                 ->addColumn('status', function ($row) {
                     $checked = $row->status === 'active' ? 'checked' : '';
@@ -100,7 +100,7 @@ class SocialLinkController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (Exception $e) {
-            \Log::error('Social Link Store Error: ' . $e->getMessage());
+            Log::error('Social Link Store Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create social link: ' . $e->getMessage()
@@ -144,7 +144,7 @@ class SocialLinkController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (Exception $e) {
-            \Log::error('Social Link Update Error: ' . $e->getMessage());
+            Log::error('Social Link Update Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update social link: ' . $e->getMessage()
@@ -171,7 +171,7 @@ class SocialLinkController extends Controller
                 'message' => 'Social link deleted successfully!'
             ]);
         } catch (Exception $e) {
-            \Log::error('Social Link Delete Error: ' . $e->getMessage());
+            Log::error('Social Link Delete Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete social link'
@@ -195,7 +195,7 @@ class SocialLinkController extends Controller
                 'status' => $social->status
             ]);
         } catch (Exception $e) {
-            \Log::error('Social Link Status Error: ' . $e->getMessage());
+            Log::error('Social Link Status Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update status'
