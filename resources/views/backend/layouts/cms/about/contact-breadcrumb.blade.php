@@ -2,17 +2,17 @@
     <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light">
-                <h4 class="card-title">About Us Page - Header Section</h4>
+                <h4 class="card-title">About Us Page - Contact Section</h4>
             </div>
             <div class="card-body">
-                <form id="aboutUsForm" method="post" action="{{ route('cms.about.breadcrumb.update') }}"
+                <form id="contactForm" method="post" action="{{ route('cms.contact.breadcrumb.update') }}"
                     enctype="multipart/form-data">
                     @csrf
 
                     {{-- Title --}}
                     <div class="form-group mb-3">
-                        <label for="about_us_breadcrumb_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="about_us_breadcrumb_title"
+                        <label for="contact_breadcrumb_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="contact_breadcrumb_title"
                             placeholder="Enter title" value="{{ $data->title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
@@ -43,7 +43,7 @@
 
                     <div class="form-group">
                         <button class="btn btn-primary" type="submit" id="submitButton">
-                            <span class="spinner-border spinner-border-sm d-none" id="aboutSpinner"></span>
+                            <span class="spinner-border spinner-border-sm d-none" id="contactSpinner"></span>
                             <span id="submitBtnText">Save Changes</span>
                         </button>
                     </div>
@@ -56,9 +56,9 @@
 <script>
     (function() {
         // Define initialization function
-        window.initAboutUsSection = function() {
+        window.initContactSection = function() {
 
-            const form = document.getElementById('aboutUsForm');
+            const form = document.getElementById('contactForm');
             if (!form) {
                 console.error('Form not found');
                 return;
@@ -86,7 +86,7 @@
                 e.stopPropagation();
 
                 const submitBtn = this.querySelector('#submitButton');
-                const spinner = this.querySelector('#aboutSpinner');
+                const spinner = this.querySelector('#contactSpinner');
                 const btnText = this.querySelector('#submitBtnText');
 
                 // Disable button and show loading
@@ -221,8 +221,8 @@
         };
 
         // Auto-execute initialization
-        if (typeof window.initAboutUsSection === 'function') {
-            window.initAboutUsSection();
+        if (typeof window.initContactSection === 'function') {
+            window.initContactSection();
         }
     })();
 </script>

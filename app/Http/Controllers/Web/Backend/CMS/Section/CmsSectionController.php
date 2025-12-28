@@ -134,6 +134,14 @@ class CmsSectionController extends Controller
                     $galleries = Gallery::latest()->get();
                     return view('backend.layouts.cms.home.gallery', compact('galleries'))->render();
 
+                    // Property page - propert banner section
+                case 'property-banner':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'hero')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.properties-banner', compact('data'))->render();
+
                     // about page - about us breadcrumb section
                 case 'about-us-breadcrumb':
                     $data = CMS::where('page', 'about')
@@ -141,6 +149,79 @@ class CmsSectionController extends Controller
                         ->where('name', 'item')
                         ->first();
                     return view('backend.layouts.cms.about.about-breadcrumb', compact('data'))->render();
+
+                    // about page - contact us breadcrumb
+                case 'about-contact-breadcrumb':
+                    $data = CMS::where('page', 'about')
+                        ->where('section', 'about-contact-breadcrumb')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.about.contact-breadcrumb', compact('data'))->render();
+
+                    // amenities page - hero section
+                case 'amenities-hero-section':
+                    $data = CMS::where('page', 'amenities')
+                        ->where('section', 'hero')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.amenities.amenities-hero', compact('data'))->render();
+
+                    // amenities page - amenities feature section
+                case 'amenities-feature':
+                    // Check if this is a DataTable AJAX request
+                    if ($request->ajax() && $request->has('draw')) {
+                        $items = CMS::where('page', 'amenities')
+                            ->where('section', 'amenities-feature')
+                            ->where('name', 'card')
+                            ->orderBy('created_at', 'desc');
+
+                        return DataTables::of($items)
+                            ->addIndexColumn()
+                            ->addColumn('image', function ($row) {
+                                if ($row->image) {
+                                    return '<img src="' . asset($row->image) . '" class="img-thumbnail" style="width: 60px; height: 60px; object-fit: cover;">';
+                                }
+                                return '<span class="badge bg-secondary">No Image</span>';
+                            })
+                            ->addColumn('title', fn($row) => $row->title ?? '---')
+                            ->addColumn('description', function ($row) {
+                                if (!$row->description || $row->description === '---') {
+                                    return '<span class="text-muted">No description</span>';
+                                }
+
+                                // Strip HTML tags and limit to 60 characters
+                                $plainText = strip_tags($row->description);
+                                $limited = \Illuminate\Support\Str::limit($plainText, 60);
+
+                                // Add tooltip for full text
+                                return '<span title="' . htmlspecialchars($plainText) . '">' . $limited . '</span>';
+                            })
+                            ->rawColumns(['image', 'action', 'description']) // Now add description
+                            ->addColumn('action', function ($row) {
+                                return '
+                                    <button class="btn btn-sm btn-info edit-item"
+                                        data-id="' . $row->id . '"
+                                        data-title="' . htmlspecialchars($row->title) . '"
+                                        data-description="' . htmlspecialchars($row->description) . '"
+                                        data-image="' . ($row->image ?? '') . '">
+                                        <i class="fe fe-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-feature-item" data-id="' . $row->id . '">
+                                        <i class="fe fe-trash-2"></i>
+                                    </button>
+                                ';
+                            })
+                            ->rawColumns(['image', 'action', 'description'])
+                            ->make(true);
+                    }
+
+                    // Regular page load - return view
+                    $data = CMS::where('page', 'amenities')
+                        ->where('section', 'amenities-feature')
+                        ->where('name', 'item')
+                        ->first();
+
+                    return view('backend.layouts.cms.amenities.amenities-feature', compact('data'))->render();
                 default:
                     return response()->json([
                         'success' => false,

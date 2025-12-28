@@ -2,49 +2,33 @@
     <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light">
-                <h4 class="card-title">About Us Page - Header Section</h4>
+                <h4 class="card-title">Property Page - Banner Section</h4>
             </div>
             <div class="card-body">
-                <form id="aboutUsForm" method="post" action="{{ route('cms.about.breadcrumb.update') }}"
+                <form id="propertyBannerForm" method="post" action="{{ route('cms.property.banner.update') }}"
                     enctype="multipart/form-data">
                     @csrf
 
                     {{-- Title --}}
                     <div class="form-group mb-3">
-                        <label for="about_us_breadcrumb_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="about_us_breadcrumb_title"
+                        <label for="property_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="property_title"
                             placeholder="Enter title" value="{{ $data->title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
 
-                    {{-- Description --}}
+                    {{-- Sub Title --}}
                     <div class="form-group mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea name="description" id="summernote" class="summernote form-control @error('description') is-invalid @enderror"
-                            rows="6" placeholder="Enter description">{{ $data->description ?? old('description') }}</textarea>
-                        @error('description')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    {{-- Image --}}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group mb-3">
-                                <label for="image" class="form-label">Image</label>
-                                <input type="file" class="dropify form-control"
-                                    data-default-file="{{ !empty($data->image) && file_exists(public_path($data->image)) ? asset($data->image) : asset('default/placeholder-image.avif') }}"
-                                    name="image" id="image" accept="image/*">
-                                <small class="text-muted">Recommended: 1920x1080px (Max: 2MB)</small>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
+                        <label for="property_sub_title" class="form-label">Sub Title</label>
+                        <input type="text" class="form-control" name="sub_title" id="property_sub_title"
+                            placeholder="Enter Sub Title" value="{{ $data->sub_title ?? '' }}">
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="form-group">
-                        <button class="btn btn-primary" type="submit" id="submitButton">
-                            <span class="spinner-border spinner-border-sm d-none" id="aboutSpinner"></span>
-                            <span id="submitBtnText">Save Changes</span>
+                        <button class="btn btn-primary" type="submit" id="propertyBannerSubmitButton">
+                            <span class="spinner-border spinner-border-sm d-none" id="propertyBannerSpinner"></span>
+                            <span id="propertySubmitBtnText">Save Changes</span>
                         </button>
                     </div>
                 </form>
@@ -56,9 +40,9 @@
 <script>
     (function() {
         // Define initialization function
-        window.initAboutUsSection = function() {
+        window.initPropertyBannerSection = function() {
 
-            const form = document.getElementById('aboutUsForm');
+            const form = document.getElementById('propertyBannerForm');
             if (!form) {
                 console.error('Form not found');
                 return;
@@ -68,26 +52,16 @@
             const newForm = form.cloneNode(true);
             form.parentNode.replaceChild(newForm, form);
 
-            // Re-initialize Dropify on new form
-            if (typeof $.fn.dropify !== 'undefined') {
-                $(newForm).find('.dropify').dropify({
-                    messages: {
-                        'default': 'Drag and drop a file here or click',
-                        'replace': 'Drag and drop or click to replace',
-                        'remove': 'Remove',
-                        'error': 'Sorry, the file is too large'
-                    }
-                });
-            }
+
 
             // Add submit event listener
             newForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const submitBtn = this.querySelector('#submitButton');
-                const spinner = this.querySelector('#aboutSpinner');
-                const btnText = this.querySelector('#submitBtnText');
+                const submitBtn = this.querySelector('#propertyBannerSubmitButton');
+                const spinner = this.querySelector('#propertyBannerSpinner');
+                const btnText = this.querySelector('#propertySubmitBtnText');
 
                 // Disable button and show loading
                 submitBtn.disabled = true;
@@ -116,21 +90,6 @@
                     if (response.data.success) {
                         window.showToast('success', response.data.message ||
                             'Updated successfully!');
-
-                        // Update dropify preview if new image was uploaded
-                        if (response.data.image) {
-                            const dropifyWrapper = this.querySelector('.dropify-wrapper');
-                            if (dropifyWrapper) {
-                                const dropifyPreview = dropifyWrapper.querySelector(
-                                    '.dropify-preview');
-                                if (dropifyPreview) {
-                                    const imgElement = dropifyPreview.querySelector('img');
-                                    if (imgElement) {
-                                        imgElement.src = window.assetUrl(response.data.image);
-                                    }
-                                }
-                            }
-                        }
                     } else {
                         window.showToast('error', response.data.message || 'Failed to update!');
                     }
@@ -221,8 +180,8 @@
         };
 
         // Auto-execute initialization
-        if (typeof window.initAboutUsSection === 'function') {
-            window.initAboutUsSection();
+        if (typeof window.initPropertyBannerSection === 'function') {
+            window.initPropertyBannerSection();
         }
     })();
 </script>

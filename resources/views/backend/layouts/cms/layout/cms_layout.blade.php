@@ -36,9 +36,9 @@
                             <div class="card-header bg-primary text-white">
                                 <h5 class="card-title text-white mb-0">CMS Sections</h5>
                             </div>
-                            <div class="card-body p-0">
+                            <div class="card-body p-0" style="height: 70vh; overflow-x:auto">
                                 <div class="nav flex-column nav-pills" id="cms-tabs" role="tablist">
-                                    <h6 class="px-3 pt-3 pb-2 mb-0 text-uppercase text-muted" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
                                         Home Page
                                     </h6>
 
@@ -75,9 +75,18 @@
                                         <i class="fa-solid fa-images me-2"></i> Gallery
                                     </a>
 
+                                    {{-- Properties Page --}}
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        Properties Page
+                                    </h6>
+                                    <a class="nav-link" id="property-banner-tab" href="javascript:void(0);" data-section="property-banner"
+                                        data-title="Property Page Banner" data-breadcrumb="Property Page Banner">
+                                        <i class="fa-solid fa-bandage me-2"></i> Property Page Banner
+                                    </a>
+
                                     {{-- about us page --}}
-                                    <h6 class="px-3 pt-3 pb-2 mb-0 text-uppercase text-muted" style="font-size: 0.75rem;">
-                                        About Us
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        About Us Page
                                     </h6>
 
                                     <a class="nav-link" id="about-us-breadcrumb-tab" href="javascript:void(0);"
@@ -90,6 +99,55 @@
                                         data-section="about-contact-breadcrumb" data-title="Contact us Breadcrumb"
                                         data-breadcrumb="Contact us Breadcrumb">
                                         <i class="fa-solid fa-phone me-2"></i> Contact us Breadcrumb
+                                    </a>
+
+                                    {{-- amenities page --}}
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        Amenities Page
+                                    </h6>
+
+                                    <a class="nav-link" id="amenities-hero-tab" href="javascript:void(0);"
+                                        data-section="amenities-hero-section" data-title="Amenities Hero"
+                                        data-breadcrumb="Amenities Hero">
+                                        <i class="fa-solid fa-democrat me-2"></i>Amenities Banner
+                                    </a>
+                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
+                                        data-section="amenities-feature" data-title="Featured Amenities"
+                                        data-breadcrumb="Featured Amenities">
+                                        <i class="fa-solid fa-republican me-2"></i> Featured Amenities
+                                    </a>
+
+                                    {{-- amenities page --}}
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        Pricing Page
+                                    </h6>
+
+                                    <a class="nav-link" id="amenities-hero-tab" href="javascript:void(0);"
+                                        data-section="amenities-hero-section" data-title="Amenities Hero"
+                                        data-breadcrumb="Amenities Hero">
+                                        <i class="fa-solid fa-democrat me-2"></i> Pricing Banner
+                                    </a>
+                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
+                                        data-section="amenities-feature" data-title="Featured Amenities"
+                                        data-breadcrumb="Featured Amenities">
+                                        <i class="fa-solid fa-republican me-2"></i> Pricing Item
+                                    </a>
+
+                                    {{-- amenities page --}}
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        Reservation Page
+                                    </h6>
+
+                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
+                                        data-section="amenities-feature" data-title="Featured Amenities"
+                                        data-breadcrumb="Featured Amenities">
+                                        <i class="fa-solid fa-book-atlas me-2"></i> Reservation Page Banner
+                                    </a>
+
+                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
+                                        data-section="amenities-feature" data-title="Featured Amenities"
+                                        data-breadcrumb="Featured Amenities">
+                                        <i class="fa-solid fa-microchip me-2"></i> Reservation Process
                                     </a>
                                 </div>
                             </div>

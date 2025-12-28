@@ -146,7 +146,7 @@
                         </li>
                         <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Profile Settings</a>
                         </li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Social Profile</a></li>
+                        <li><a href="{{ route('social.profile.index') }}" class="slide-item">Social Profile</a></li>
                     </ul>
                 </li>
             </ul>

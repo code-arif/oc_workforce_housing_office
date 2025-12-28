@@ -2,22 +2,25 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\BedController;
-use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
-use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
-use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
-use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\RoomController;
+use App\Http\Controllers\Web\Backend\UnitController;
 use App\Http\Controllers\Web\Backend\PropertyController;
 use App\Http\Controllers\Web\Backend\DashboardController;
 use App\Http\Controllers\Web\Backend\PropertyTypeController;
 use App\Http\Controllers\Web\Backend\Settings\ProfileController;
 use App\Http\Controllers\Web\Backend\Settings\SettingController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
+use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
+use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
+use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
-use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
+use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
+use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
-use App\Http\Controllers\Web\Backend\UnitController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -127,8 +130,21 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::post('/gallery/update', [GalleryController::class, 'store'])->name('gallery.section.update');
     Route::delete('/gallery/item/delete/{id}', [GalleryController::class, 'destroy'])->name('gallery.item.delete');
 
+    // Property page
+    Route::post('/property/banner/update', [PropertyPageController::class, 'update'])->name('property.banner.update');
+
     // About section update
     Route::post('/about/breadcrumb/update', [AboutPageController::class, 'update'])->name('about.breadcrumb.update');
+    Route::post('/contact/breadcrumb/update', [AboutPageController::class, 'contactUpdate'])->name('contact.breadcrumb.update');
+
+    // Amenities page
+    Route::post('/amenities/hero/update', [AmenitiesPageController::class, 'update'])->name('amenities.hero.update');
+    Route::prefix('amenities/features')->name('amenities.')->group(function () {
+        Route::post('/header/update', [AmenitiesPageController::class, 'headerUpdate'])->name('header.update');
+        Route::post('/item/store', [AmenitiesPageController::class, 'storeItem'])->name('item.store');
+        Route::post('/item/update', [AmenitiesPageController::class, 'updateItem'])->name('item.update');
+        Route::delete('/item/delete', [AmenitiesPageController::class, 'destroy'])->name('item.delete');
+    });
 });
 
 //! Route for Profile Settings
@@ -144,4 +160,15 @@ Route::controller(ProfileController::class)->group(function () {
 Route::controller(SettingController::class)->group(function () {
     Route::get('setting/general', 'index')->name('setting.general.index');
     Route::patch('setting/general', 'update')->name('setting.general.update');
+});
+
+/**
+ * Socials links routes
+ */
+Route::prefix('social')->name('social.profile.')->group(function () {
+    Route::get('/', [SocialLinkController::class, 'index'])->name('index');
+    Route::post('/store', [SocialLinkController::class, 'store'])->name('store');
+    Route::post('/update/{id}', [SocialLinkController::class, 'update'])->name('update');
+    Route::delete('/delete/{id}', [SocialLinkController::class, 'destroy'])->name('destroy');
+    Route::get('/status/{id}', [SocialLinkController::class, 'status'])->name('status');
 });
