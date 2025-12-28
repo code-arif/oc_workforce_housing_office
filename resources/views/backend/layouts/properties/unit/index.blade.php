@@ -1,7 +1,7 @@
 {{-- @extends('backend.layouts.app') --}}
 @extends('backend.app')
 
-@section('title', 'Properties list ')
+@section('title', 'Unit List')
 
 @section('content')
     <!--app-content open-->
@@ -10,12 +10,12 @@
             <div class="main-container container-fluid">
                 <div class="page-header">
                     <div>
-                        <h1 class="page-title">Properties list </h1>
+                        <h1 class="page-title">Unit List</h1>
                     </div>
                     <div class="ms-auto pageheader-btn">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="javascript:void(0);">Index</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Properties list </li>
+                            <li class="breadcrumb-item active" aria-current="page">Unit List</li>
                         </ol>
                     </div>
                 </div>
@@ -29,22 +29,19 @@
 
                                 <div
                                     class="card-header border-bottom mb-3 d-flex justify-content-between align-items-center">
-                                    <h4 class="mb-0">Property List</h4>
-                                    <a href="{{ route('property.create') }}" class="btn btn-primary btn-sm">
-                                        <i class="bi bi-plus-circle"></i> Add Property
-                                    </a>
+                                    <h4 class="mb-0">Unit List</h4>
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#unitModal" id="addUnitBtn">Add Unit</button>
                                 </div>
 
 
                                 <div class="table-responsive">
-                                    <table class="table table-bordered " id="propertyTable" width="100%">
+                                    <table class="table table-bordered " id="unitTable" width="100%">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
                                                 <th>Name</th>
-                                                <th>Address</th>
-                                                <th>Rent</th>
-                                                <th>Available Units</th>
+                                                <th>Property</th>
                                                 <th>Status</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -61,6 +58,8 @@
             </div>
         </div>
     </div>
+
+    @include('backend.layouts.properties.unit.create')
 @endsection
 
 @push('styles')
@@ -98,50 +97,107 @@
             border-radius: 6px;
             margin-bottom: 15px;
         }
-
-        .select2-container {
-            width: 100% !important;
-        }
     </style>
 @endpush
+
 
 @push('scripts')
     <script>
         $(document).ready(function() {
             // Initialize DataTable
-            const propertyTable = $('#propertyTable').DataTable({
+            const unitTable = $('#unitTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route("property.list") }}',
+                    url: '{{ route('units.list') }}',
                     type: 'GET',
                     data: function(d) {
                         return d;
                     }
                 },
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'name', name: 'name' },
-                    { data: 'description', name: 'description' },
-                    { data: 'rent', name: 'rent' },
-                    { data: 'status', name: 'status', orderable: false, searchable: false },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'property',
+                        name: 'property'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
-                order: [[0, 'desc']], 
+                order: [
+                    [0, 'desc']
+                ],
                 pageLength: 10,
-                dom: 'lrtip'
             });
 
             // Add Property Type
-            $('#addpropertyBtn').click(function() {
-                $('#propertyForm')[0].reset();
-                $('#propertyId').val('');
-                $('#modalTitle').text('Add Property ');
-                $('#submitBtn').text('Save');
-                $('#propertyModal').modal('show');
+            $('#addUnitBtn').click(function() {
+                $('#unitForm')[0].reset();
+                $('#unitId').val('');
+                $('#modalTitle').text('Add Unit');
+                $('#submitBtn').text('Save ');
+                $('#unitModal').modal('show');
             });
 
-            // Submit Form - REMOVED (using new create page)
+            // Submit Form
+            $('#unitForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const id = $('#unitId').val();
+                const url = id ? `{{ route('units.update', '') }}/${id}` :
+                    '{{ route('units.store') }}';
+                const method = id ? 'POST' : 'POST';
+
+                $.ajax({
+                    url: url,
+                    type: method,
+                    data: $(this).serialize(),
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            // showAlert('success', response.message);
+                            $('#unitModal').modal('hide');
+                            unitTable.ajax.reload();
+                            $('#unitForm')[0].reset();
+                        }
+                    },
+                    error: function(xhr) {
+                        const errors = xhr.responseJSON?.errors || {};
+                        if (Object.keys(errors).length > 0) {
+                            let errorMsg = 'Please fix the following errors:\n';
+                            $.each(errors, function(key, value) {
+                                errorMsg += '- ' + value[0] + '\n';
+                            });
+                            toastr.error(errorMsg);
+                            // showAlert('danger', errorMsg);
+                        } else {
+                            toastr.error(xhr.responseJSON?.message || 'An error occurred');
+                            // showAlert('danger', xhr.responseJSON?.message || 'An error occurred');
+                        }
+                    }
+                });
+            });
 
             // Show Alert
             function showAlert(type, message) {
@@ -151,7 +207,7 @@
                 </div>`;
 
                 $('#alertContainer').html(alertHtml);
-                
+
                 setTimeout(() => {
                     $('.alert').fadeOut('slow', function() {
                         $(this).remove();
@@ -161,28 +217,29 @@
         });
 
         // Edit Property Type
-        function editproperty(id) {
+        function editUnit(id) {
             $.ajax({
-                url: `{{ route('property.edit', '') }}/${id}`,
+                url: `{{ route('units.edit', '') }}/${id}`,
                 type: 'GET',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
                 success: function(response) {
                     if (response.success) {
-                        $('#propertyId').val(response.data.id);
+                        $('#unitId').val(response.data.id);
                         $('#name').val(response.data.name);
-                        $('#address').val(response.data.address);
+                        $('#property_id').val(response.data.property_id).trigger('change');
+                        $('#gender_designation').val(response.data.gender_designation).trigger('change');
                         $('#isActive').prop('checked', response.data.is_active);
-                        $('#modalTitle').text('Edit Property');
-                        $('#submitBtn').text('Update Property ');
-                        $('#propertyModal').modal('show');
+                        $('#modalTitle').text('Edit Unit');
+                        $('#submitBtn').text('Update');
+                        $('#unitModal').modal('show');
                         // toastr.success(resp.message);
                     }
                 },
                 error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Error loading property ');
-                    showAlert('danger', xhr.responseJSON?.message || 'Error loading property ');
+                    toastr.error(xhr.responseJSON?.message || 'Error loading Unit');
+                    showAlert('danger', xhr.responseJSON?.message || 'Error loading Unit');
                 }
             });
         }
@@ -191,7 +248,7 @@
         function showDeleteConfirm(id) {
             event.preventDefault();
             Swal.fire({
-                title: 'Are you sure you want to delete this property?',
+                title: 'Are you sure you want to delete this team?',
                 text: 'If you delete this, it will be gone forever.',
                 icon: 'warning',
                 showCancelButton: true,
@@ -208,7 +265,7 @@
         // Delete Button
         function deleteItem(id) {
             NProgress.start();
-            let url = `{{ route('property.delete', '') }}/${id}`;
+            let url = `{{ route('units.delete', '') }}/${id}`;
             let csrfToken = '{{ csrf_token() }}';
             $.ajax({
                 type: "DELETE",
@@ -219,7 +276,7 @@
                 success: function(resp) {
                     NProgress.done();
                     toastr.success(resp.message);
-                    $('#propertyTable').DataTable().ajax.reload();
+                    $('#unitTable').DataTable().ajax.reload();
                 },
                 error: function(error) {
                     NProgress.done();
@@ -241,14 +298,14 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: `{{ route('property.toggle.status', '') }}/${id}`,
+                        url: `{{ route('units.toggle.status', '') }}/${id}`,
                         type: 'GET',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
                         success: function(response) {
                             if (response.success) {
-                                $('#propertyTable').DataTable().ajax.reload();
+                                $('#unitTable').DataTable().ajax.reload();
                                 toastr.success(response.message);
                             }
                         },
@@ -259,10 +316,7 @@
                     });
                 }
             });
-        }
 
-        $(document).ready(function() {
-            // Modal select2 removed - using new create page
-        })
+        }
     </script>
 @endpush

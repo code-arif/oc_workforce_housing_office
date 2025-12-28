@@ -60,6 +60,7 @@
                                                     <input type="checkbox" id="selectAllBeds" class="form-check-input" title="Select all">
                                                 </th>
                                                 <th>#</th>
+                                                <th>Label</th>
                                                 <th>Bed Number</th>
                                                 <th>Room</th>
                                                 <th>Description</th>
@@ -118,6 +119,7 @@
                         }
                     },
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'bed_label', name: 'bed_label' },
                     { data: 'bed_number', name: 'bed_number' },
                     { data: 'room', name: 'room' },
                     { data: 'description', name: 'description' },

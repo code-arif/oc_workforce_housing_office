@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('rooms', function (Blueprint $table) {
+        Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
-            $table->string('room_number');
-            $table->string('name')->nullable();
+            $table->foreignId('property_id')->constrained()->cascadeOnDelete();
+            $table->string('name'); // e.g., "Apt 201"
             $table->enum('gender_designation', ['male', 'female'])->default('male');
             $table->boolean('is_active')->default(true);
             $table->softDeletes();
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('rooms');
+        Schema::dropIfExists('units');
     }
 };

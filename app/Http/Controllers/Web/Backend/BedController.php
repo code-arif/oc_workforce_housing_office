@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Bed;
+use App\Models\Room;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -20,8 +21,11 @@ class BedController extends Controller
             // dd($beds);
             return DataTables::of($beds)
                 ->addIndexColumn()
+                ->addColumn('bed_label', function($item) {
+                    return $item->bed_label;
+                })
                 ->addColumn('bed_number', function($item) {
-                    return $item->room->room_number . '-' . $item->bed_number;
+                    return $item->bed_number;
                 })
                 ->addColumn('description', function ($item) {
                     return $item->description
@@ -68,7 +72,7 @@ class BedController extends Controller
         // dd($request->all());
 
         $validated['is_active'] = $request->has('is_active') ? true : false;
-        if(Bed::where('room_id', $request->room_id)->where('bed_label', $request->bed_label)->exists()) {
+        if(Bed::where('room_id', $request->room_id)->where('bed_number', $request->bed_number)->exists()) {
             return response()->json([
                 'error' => false,
                 'message' => 'Bed already exists.',
@@ -76,7 +80,9 @@ class BedController extends Controller
         }
 
         try {
-            
+            $room = Room::findOrFail($validated['room_id']);
+            $validated['room_number'] = $room->room_number;
+            $validated['bed_label'] = $room->unit->name . '-' . $room->room_number . '-' . $validated['bed_number'];
             Bed::create($validated);
 
             return response()->json([
@@ -134,8 +140,23 @@ class BedController extends Controller
 
         $validated['is_active'] = $request->has('is_active') ? true : false;
 
+        if (
+            Bed::where('room_id', $request->room_id)
+                ->where('bed_number', $request->bed_number)
+                ->where('id', '!=', $id)
+                ->exists()
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bed already exists in this room.',
+            ], 422);
+        }
+
         try {
             $bed = Bed::findOrFail($id);
+            $room = Room::findOrFail($validated['room_id']);
+            $validated['room_number'] = $room->room_number;
+            $validated['bed_label'] = $room->unit->name . '-' . $room->room_number . '-' . $validated['bed_number'];
             $bed->update($validated);
 
             return response()->json([

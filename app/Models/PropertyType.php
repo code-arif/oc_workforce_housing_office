@@ -21,8 +21,8 @@ class PropertyType extends Model
     //     $this->attributes['slug'] = str_slug($value);
     // }
 
-    // public function properties()
-    // {
-    //     return $this->hasMany(Property::class);
-    // }
+    public function properties()
+    {
+        return $this->hasMany(Property::class);
+    }
 }
