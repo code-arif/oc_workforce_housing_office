@@ -24,8 +24,8 @@ class UnitController extends Controller
                 ->addColumn('property', fn($item) => $item->property->name ?? '---')
                 ->addColumn('status', function ($item) {
                     $badge = $item->is_active
-                        ? '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
-                        : '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
+                        ? '<button onclick="toggleUnitStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
+                        : '<button onclick="toggleUnitStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
@@ -60,12 +60,21 @@ class UnitController extends Controller
     {
         $validated = $request->validate([
             'property_id' => 'required|exists:properties,id',
-            'name' => 'required|string|max:255|unique:units,name',
+            'name' => 'required|string|max:255',
             'gender_designation' => 'nullable|string|in:male,female',
             'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? true : false;
+
+        $exisingUnit = Unit::where('property_id', $validated['property_id'])->where('name', $validated['name'])->first();
+
+        if ($exisingUnit) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unit already exists.',
+            ]);
+        }
 
         try {
             Unit::create($validated);
@@ -126,7 +135,14 @@ class UnitController extends Controller
             ]);
 
             $validated['is_active'] = $request->has('is_active') ? true : false;
+            $exisingUnit = Unit::where('property_id', $validated['property_id'])->where('name', $validated['name'])->first();
 
+            if ($exisingUnit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unit already exists.',
+                ]);
+            }
             $unit->update($validated);
 
             return response()->json([

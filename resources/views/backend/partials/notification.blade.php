@@ -83,8 +83,7 @@
 
     // Notification
     document.addEventListener('DOMContentLoaded', function() {
-        window.Echo.
-            .listen('NewNotificationEvent', (event) => {
+        window.Echo.listen('NewNotificationEvent', (event) => {
                 toastr.success(event.data.message); // Ensure message is at the top level in the event data
                 notification(); // Call your custom notification function
             });
