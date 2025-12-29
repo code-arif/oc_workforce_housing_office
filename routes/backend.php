@@ -103,7 +103,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Slider Management Routes
     Route::prefix('home/slider')->name('slider.')->group(function () {
         Route::post('/store', [HomePageSliderController::class, 'store'])->name('store');
-        Route::put('/{id}', [HomePageSliderController::class, 'update'])->name('update'); // NEW
+        Route::post('/update/{id}', [HomePageSliderController::class, 'update'])->name('update'); // NEW
         Route::post('/{id}/status', [HomePageSliderController::class, 'updateStatus'])->name('status');
         Route::delete('/{id}', [HomePageSliderController::class, 'destroy'])->name('destroy');
         Route::post('/update-order', [HomePageSliderController::class, 'updateOrder'])->name('updateOrder');
