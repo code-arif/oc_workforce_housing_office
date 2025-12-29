@@ -172,280 +172,6 @@
     </div>
 </div>
 
-{{-- <script>
-    // Hero Section JavaScript
-    function initHeroSection() {
-        console.log('Hero section');
-        let sliderModal = null;
-
-        // Initialize modal
-        const modalElement = document.getElementById('addSliderModal');
-        if (modalElement && typeof bootstrap !== 'undefined') {
-            sliderModal = new bootstrap.Modal(modalElement);
-            modalElement.addEventListener('hidden.bs.modal', resetSliderForm);
-        }
-
-        // Add Slider Button
-        document.getElementById('addSliderBtn')?.addEventListener('click', () => {
-            if (sliderModal) sliderModal.show();
-        });
-
-        // Image Preview
-        document.getElementById('sliderImage')?.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                if (file.size > 2 * 1024 * 1024) {
-                    showToast('error', 'Image size should not exceed 2MB');
-                    e.target.value = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('previewImg').src = e.target.result;
-                    document.getElementById('imagePreview').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Hero Form Submit
-        document.getElementById('heroSectionForm')?.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const btn = form.querySelector('button[type="submit"]');
-            const spinner = document.getElementById('heroSpinner');
-            const text = document.getElementById('heroSubmitText');
-
-            btn.disabled = true;
-            spinner.classList.remove('d-none');
-            text.textContent = 'Saving...';
-
-            try {
-                const formData = new FormData(form);
-                const response = await axios.post(form.action, formData, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                if (response.data.success) {
-                    showToast('success', response.data.message);
-                }
-            } catch (error) {
-                handleError(error, form);
-            } finally {
-                btn.disabled = false;
-                spinner.classList.add('d-none');
-                text.textContent = 'Save Changes';
-            }
-        });
-
-        // Slider Form Submit
-        document.getElementById('sliderForm')?.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const btn = form.querySelector('button[type="submit"]');
-            const spinner = document.getElementById('modalSpinner');
-            const text = document.getElementById('modalSubmitText');
-
-            clearErrors(form);
-            btn.disabled = true;
-            spinner.classList.remove('d-none');
-            text.textContent = 'Adding...';
-
-            try {
-                const formData = new FormData(form);
-                const response = await axios.post(window.route('cms.slider.store'), formData, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                if (response.data.success) {
-                    showToast('success', response.data.message);
-                    if (sliderModal) sliderModal.hide();
-                    setTimeout(() => window.cmsManager.loadSection('hero'), 1000);
-                }
-            } catch (error) {
-                handleError(error, form);
-            } finally {
-                btn.disabled = false;
-                spinner.classList.add('d-none');
-                text.textContent = 'Add Slider';
-            }
-        });
-
-        // Status Toggle
-        document.querySelectorAll('.status-toggle').forEach(toggle => {
-            toggle.addEventListener('change', async function(e) {
-                const checkbox = e.target;
-                const id = checkbox.dataset.id;
-                const newStatus = checkbox.checked;
-
-                checkbox.checked = !newStatus;
-
-                const result = await Swal.fire({
-                    title: 'Are you sure?',
-                    text: `Do you want to ${newStatus ? 'activate' : 'deactivate'} this slider?`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#521aac',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, do it!'
-                });
-
-                if (result.isConfirmed) {
-                    try {
-                        const response = await axios.post(window.route('cms.slider.status', {
-                            id: id
-                        }), {
-                            status: newStatus ? 1 : 0
-                        }, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-
-                        checkbox.checked = newStatus;
-                        const label = document.querySelector(`.status-label-${id}`);
-                        if (label) label.textContent = newStatus ? 'Active' : 'Inactive';
-                        showToast('success', response.data.message);
-                    } catch (error) {
-                        checkbox.checked = !newStatus;
-                        showToast('error', error.response?.data?.message ||
-                            'Failed to update status');
-                    }
-                }
-            });
-        });
-
-        // Delete Slider
-        document.querySelectorAll('.delete-slider').forEach(btn => {
-            btn.addEventListener('click', async function(e) {
-                const id = e.currentTarget.dataset.id;
-
-                const result = await Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                });
-
-                if (result.isConfirmed) {
-                    try {
-                        const response = await axios.delete(window.route('cms.slider.destroy', {
-                            id: id
-                        }), {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        showToast('success', response.data.message);
-                        setTimeout(() => window.cmsManager.loadSection('hero'), 1000);
-                    } catch (error) {
-                        showToast('error', error.response?.data?.message || 'Failed to delete');
-                    }
-                }
-            });
-        });
-
-        // Sortable
-        const sortableList = document.getElementById('sortable-sliders');
-        if (sortableList && sortableList.children.length > 0 && typeof Sortable !== 'undefined') {
-            new Sortable(sortableList, {
-                animation: 150,
-                handle: '.drag-handle',
-                onEnd: async function() {
-                    const orders = [];
-                    document.querySelectorAll('.sortable-item').forEach((item, index) => {
-                        orders.push({
-                            id: item.dataset.id,
-                            position: index + 1
-                        });
-                    });
-
-                    try {
-                        const response = await axios.post(window.route('cms.slider.updateOrder'), {
-                            orders: orders
-                        }, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
-                        showToast('success', response.data.message);
-                    } catch (error) {
-                        showToast('error', 'Failed to update order');
-                    }
-                }
-            });
-        }
-
-        // Helper Functions
-        function resetSliderForm() {
-            const form = document.getElementById('sliderForm');
-            if (form) {
-                form.reset();
-                document.getElementById('imagePreview').style.display = 'none';
-                clearErrors(form);
-            }
-        }
-
-        function clearErrors(form) {
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            form.querySelectorAll('.invalid-feedback').forEach(el => {
-                el.textContent = '';
-                el.style.display = 'none';
-            });
-        }
-
-        function handleError(error, form = null) {
-            let message = 'An error occurred';
-
-            if (error.response?.status === 422 && error.response?.data?.errors) {
-                const errors = error.response.data.errors;
-                if (form) {
-                    Object.keys(errors).forEach(field => {
-                        const input = form.querySelector(`[name="${field}"]`);
-                        if (input) {
-                            input.classList.add('is-invalid');
-                            const feedback = input.nextElementSibling;
-                            if (feedback?.classList.contains('invalid-feedback')) {
-                                feedback.textContent = errors[field][0];
-                                feedback.style.display = 'block';
-                            }
-                        }
-                    });
-                }
-                message = Object.values(errors).flat().join('<br>');
-            } else if (error.response?.data?.message) {
-                message = error.response.data.message;
-            }
-
-            showToast('error', message);
-        }
-
-        function showToast(type, message) {
-            if (typeof iziToast !== 'undefined') {
-                iziToast[type]({
-                    title: type === 'success' ? 'Success' : 'Error',
-                    message: message,
-                    position: 'topRight',
-                    timeout: type === 'success' ? 3000 : 5000
-                });
-            } else {
-                alert(message);
-            }
-        }
-    }
-
-    // Initialize if hero tab is active
-    if (document.getElementById('hero-tab')?.classList.contains('active')) {
-        initHeroSection();
-    }
-</script> --}}
-
 <script>
     function initHeroSection() {
         console.log('Hero section initialized');
@@ -574,11 +300,11 @@
                 let method = 'POST';
 
                 if (editMode && editingId) {
-                    formData.append('_method', 'PUT');
-                    url = window.route('cms.slider.update', {
-                        id: editingId
-                    });
+                    formData.append('_method', 'POST');
+                    url = `/admin/cms/home/slider/update/${editingId}`;
                 }
+
+                console.log(url);
 
                 const response = await axios.post(url, formData, {
                     headers: {
@@ -664,13 +390,14 @@
 
             if (result.isConfirmed) {
                 try {
-                    const response = await axios.delete(window.route('cms.slider.destroy', {
+                    const response = await axios.delete(route('cms.slider.destroy', {
                         id: id
                     }), {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     });
+
                     showToast('success', response.data.message);
                     setTimeout(() => window.cmsManager.loadSection('hero'), 1000);
                 } catch (error) {

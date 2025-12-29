@@ -219,14 +219,9 @@
                         const description = $('#summernote').summernote('code');
                         formData.set('description', description);
 
-                        // const url = isFeatureEditMode ?
-                        //     window.route('cms.amenities.item.update') :
-                        //     window.route('cms.amenities.item.store');
                         const url = isFeatureEditMode ?
                             '/admin/cms/amenities/features/item/update' :
                             '/admin/cms/amenities/features/item/store';
-
-                        console.log('Generated URL:', url);
 
                         const response = await axios.post(url, formData, {
                             headers: {

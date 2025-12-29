@@ -83,6 +83,18 @@
                                         data-title="Property Page Banner" data-breadcrumb="Property Page Banner">
                                         <i class="fa-solid fa-bandage me-2"></i> Property Page Banner
                                     </a>
+                                    <a class="nav-link" id="property-our-offer-tab" href="javascript:void(0);" data-section="property-our-offer"
+                                        data-title="Our Offer" data-breadcrumb="Our Offer">
+                                        <i class="fa-solid fa-briefcase me-2"></i> Our Offer
+                                    </a>
+                                    <a class="nav-link" id="property-one-tab" href="javascript:void(0);" data-section="property-one"
+                                        data-title="Property One" data-breadcrumb="Property One">
+                                        <i class="fa-solid fa-briefcase me-2"></i> Property One
+                                    </a>
+                                    <a class="nav-link" id="property-one-tab" href="javascript:void(0);" data-section="property-one"
+                                        data-title="Property Two" data-breadcrumb="Property One">
+                                        <i class="fa-solid fa-briefcase me-2"></i> Property Two
+                                    </a>
 
                                     {{-- about us page --}}
                                     <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
