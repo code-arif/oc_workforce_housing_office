@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Bed;
 use App\Models\Room;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
@@ -22,35 +21,37 @@ class BedController extends Controller
             return DataTables::of($beds)
                 ->addIndexColumn()
                 ->addColumn('bed_label', function($item) {
-                    return $item->bed_label;
-                })
-                ->addColumn('bed_number', function($item) {
-                    return $item->bed_number;
+                    return '
+                        <span class="fw-bold">Bed No. :' . $item->bed_number . '</span> <br>
+                        <span class="text-capitalize">' . $item->bed_label . '</span>
+                    ' ;
                 })
                 ->addColumn('description', function ($item) {
-                    return $item->description
-                        ? (strlen($item->description) > 50 ? substr($item->description, 0, 50) . '...' : $item->description)
-                        : '---';
+                    return '
+                        Property : <span class="fw-bold">' . $item->room->unit->property->name . '</span> <br>
+                        Unit : <span class="fw-bold">' . $item->room->unit->name . '</span> <br>
+                        Room: <span class="text-capitalize"> ' . $item->room->room_number . '</span>
+                    ';
                 })
-                ->addColumn('room', fn($item) => $item->room->room_number ?? '---')
+                // ->addColumn('room', fn($item) => $item->room->room_number ?? '---')
                 ->addColumn('status', function ($item) {
-                    $status = $item->is_active 
-                    ? '<button type="button" onclick="toggleStatus(' . $item->id . ')" class="badge bg-danger">Occupied</button>'
-                    : '<button type="button" onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Available</button>';
+                    $status = $item->is_occupied 
+                    ? '<button type="button" onclick="toggleBedStatus(' . $item->id . ')" class="badge bg-danger">Occupied</button>'
+                    : '<button type="button" onclick="toggleBedStatus(' . $item->id . ')" class="badge bg-success">Available</button>';
                     
                     return $status;
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        <button class="btn btn-sm btn-warning me-1" onclick="editbed(' . $item->id . ')" title="Edit">
+                        <button class="btn btn-sm btn-warning me-1" onclick="editBed(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
+                        <button class="btn btn-sm btn-danger" onclick="deleteBed(' . $item->id . ')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     ';
                 })
-                ->rawColumns(['beds_count', 'status', 'actions'])
+                ->rawColumns(['bed_label','description', 'beds_count', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -67,11 +68,11 @@ class BedController extends Controller
             // 'bed_label' => 'required|string|max:255',
             'bed_number' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'is_occupied' => 'boolean',
         ]);
         // dd($request->all());
 
-        $validated['is_active'] = $request->has('is_active') ? true : false;
+        $validated['is_occupied'] = $request->has('is_occupied') ? true : false;
         if(Bed::where('room_id', $request->room_id)->where('bed_number', $request->bed_number)->exists()) {
             return response()->json([
                 'error' => false,
@@ -111,7 +112,7 @@ class BedController extends Controller
     public function edit($id)
     {
         try {
-            $bed = Bed::findOrFail($id);
+            $bed = Bed::with('room', 'room.unit', 'room.unit.property')->findOrFail($id);
 
             return response()->json([
                 'success' => true,
@@ -134,11 +135,11 @@ class BedController extends Controller
             // 'bed_label' => 'required|string|max:255',
             'bed_number' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_active' => 'boolean',
+            'is_occupied' => 'boolean',
         ]);
         // dd($request->all());
 
-        $validated['is_active'] = $request->has('is_active') ? true : false;
+        $validated['is_occupied'] = $request->has('is_occupied') ? true : false;
 
         if (
             Bed::where('room_id', $request->room_id)
@@ -196,7 +197,7 @@ class BedController extends Controller
     {
         try {
             $bed = Bed::findOrFail($id);
-            $bed->is_active = !$bed->is_active;
+            $bed->is_occupied = !$bed->is_occupied;
             $bed->save();
 
             return response()->json([
@@ -236,5 +237,21 @@ class BedController extends Controller
                 'message' => 'Error deleting beds: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function getRooms($unitId) 
+    {
+         try {
+            $rooms = Room::where('unit_id', $unitId)->where('is_active', true)->get();
+            return response()->json([
+                'success' => true,
+                'data' => $rooms,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching rooms: ' . $e->getMessage(),
+            ], 500);
+        }   
     }
 }

@@ -45,17 +45,17 @@ class PropertyController extends Controller
                 })
                 ->addColumn('status', function ($item) {
                     $badge = $item->is_active
-                        ? '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
-                        : '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
+                        ? '<button onclick="togglePropertyStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
+                        : '<button onclick="togglePropertyStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
                     return '
                         <a href="' . route('property.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
-                        <button class="btn btn-sm btn-warning me-1" onclick="editPropertyType(' . $item->id . ')" title="Edit">
+                        <button class="btn btn-sm btn-warning me-1" onclick="editProperty(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
+                        <button class="btn btn-sm btn-danger" onclick="propertyDeleteConfirm(' . $item->id . ')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     ';
@@ -63,7 +63,7 @@ class PropertyController extends Controller
                 ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
                 ->make(true);
         }
-        return view('backend.layouts.properties.index');
+        return view('backend.layouts.properties.layout.property-layout');
     }
 
     /**
@@ -82,7 +82,7 @@ class PropertyController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type_id' => 'required|exists:property_types,id',
+            'property_type_id' => 'required|exists:property_types,id',
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -100,15 +100,20 @@ class PropertyController extends Controller
 
             $validated['is_active'] = true;
             $validated['slug'] = Str::slug($validated['name']);
-            $validated['property_type_id'] = $validated['type_id'];
-            unset($validated['type_id']);
+            // $validated['property_type_id'] = $validated['property_type_id'];
+            // unset($validated['property_type_id']);
 
             // Create property
             $property = Property::create($validated);
 
             DB::commit();
 
-            return redirect()->route('property.list')->with('success', 'Property created successfully.');
+            // return redirect()->route('property.list')->with('success', 'Property created successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Property created successfully.',
+                'property' => $property,
+            ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -158,7 +163,19 @@ class PropertyController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        try {
+            $property = Property::findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $property,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Property not found.',
+            ], 404);
+        }
     }
 
     /**

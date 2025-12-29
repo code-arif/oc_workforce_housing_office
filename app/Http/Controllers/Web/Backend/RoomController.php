@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Bed;
 use App\Models\Room;
-use Illuminate\Http\Request;
+use App\Models\Unit;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -31,7 +32,7 @@ class RoomController extends Controller
                         </a>
                     ';
                 })
-                ->addColumn('gender', fn($item) => $item->gender_designation ?? '---')
+                ->addColumn('unit', fn($item) => $item->unit->name ?? '---')
                 ->addColumn('beds_count', function ($item) {
                     $bedsData = $item->beds->map(function($bed) {
                         return [
@@ -48,8 +49,8 @@ class RoomController extends Controller
                 })
                 ->addColumn('status', function ($item) {
                     $status = $item->is_active 
-                    ? '<button type="button" onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
-                    : '<button type="button" onclick="toggleStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
+                    ? '<button type="button" onclick="toggleRoomStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
+                    : '<button type="button" onclick="toggleRoomStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
                     
                     return $status;
                 })
@@ -59,7 +60,7 @@ class RoomController extends Controller
                         <button class="btn btn-sm btn-warning me-1" onclick="editRoom(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
+                        <button class="btn btn-sm btn-danger" onclick="deleteRoom(' . $item->id . ')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     ';
@@ -86,29 +87,36 @@ class RoomController extends Controller
     {
         $validated = $request->validate([
             'unit_id' => 'required|exists:units,id',
-            'room_number' => 'required|string|max:255|unique:rooms,room_number',
+            'room_number' => 'required|string|max:255',
             'gender_designation' => 'nullable|string|in:male,female',
             'name' => 'nullable|string|max:255',
             'beds' => 'nullable|array',
             'beds.*.bed_number' => 'nullable|string|max:255',
         ]);
         // dd($request->all());
+        $exsitingRoom = Room::where('unit_id', $validated['unit_id'])
+                ->where('room_number', $validated['room_number'])
+                ->exists();
 
+        if ($exsitingRoom) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Room number already exists in the same unit.'
+            ]);
+        }
         if (!empty($validated['beds'])) {
-            Log::info('Bed Numbers: ' . json_encode($validated['beds']));
             $bedNumbers = collect($validated['beds'])
                 ->pluck('bed_number')
                 ->filter() // remove null / empty
                 ->values();
 
             if ($bedNumbers->count() !== $bedNumbers->unique()->count()) {
-                Log::error('Duplicate bed numbers are not allowed in the same room.');
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Duplicate bed numbers are not allowed in the same room.');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Duplicate bed numbers are not allowed in the same room.'
+                ]);
             }
         }
-        Log::info('Validated Data: ' . json_encode($validated));
         try {
             DB::beginTransaction();
             // Create room
@@ -119,7 +127,6 @@ class RoomController extends Controller
                 'name' => $validated['name'],
                 'is_active' => true,
             ]);
-            Log::info('Room Created: ' . json_encode($room));
             // Create beds if provided
             if (!empty($validated['beds'])) {
                 foreach ($validated['beds'] as $bed) {
@@ -132,16 +139,15 @@ class RoomController extends Controller
                     }
                 }
             }
-            Log::info('Beds Created');
             DB::commit();
-            return redirect()->route('rooms.list')
-                ->with('success', 'Room created successfully with ' . count(array_filter($validated['beds'] ?? [], fn($b) => !empty($b['bed_label']) || !empty($b['bed_number']))) . ' beds.');
+            // return redirect()->route('rooms.list')
+            //     ->with('success', 'Room created successfully with ' . count(array_filter($validated['beds'] ?? [], fn($b) => !empty($b['bed_label']) || !empty($b['bed_number']))) . ' beds.');
+            return response()->json(['success' => true, 'message' => 'Room created successfully.'], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Room Creation Error' . $e->getMessage());
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error creating room: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error creating room: ' . $e->getMessage()], 500);
+            
         }
     }
 
@@ -165,11 +171,11 @@ class RoomController extends Controller
     public function edit($id)
     {
         try {
-            $room = Room::with('beds')->findOrFail($id);
-            return view('backend.layouts.properties.room.edit', compact('room'));
+            $room = Room::with('beds', 'unit')->findOrFail($id);
+            return response()->json(['success' => true, 'data' => $room]);
+            // return view('backend.layouts.properties.room.edit', compact('room'));
         } catch (\Exception $e) {
-            return redirect()->route('room.list')
-                ->with('error', 'Room not found.');
+            return response()->json(['success' => false, 'message' => 'Room not found.'], 404);
         }
     }
 
@@ -184,14 +190,25 @@ class RoomController extends Controller
 
             $validated = $request->validate([
                 'unit_id' => 'required|exists:units,id',
-                'room_number' => 'required|string|max:255|unique:rooms,room_number,' . $id,
+                'room_number' => 'required|string|max:255',
                 'name' => 'nullable|string|max:255',
                 'gender_designation' => 'nullable|string|in:male,female,Mixed',
                 'beds' => 'nullable|array',
                 'beds.*.id' => 'nullable|numeric',
                 'beds.*.bed_number' => 'nullable|string|max:255',
             ]);
+           
+            $exsitingRoom = Room::where('unit_id', $validated['unit_id'])
+                ->where('room_number', $validated['room_number'])
+                ->where('id', '!=', $id)
+                ->exists();
 
+            if ($exsitingRoom) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Room number already exists in the same unit.'
+                ]);
+            }
             // Update room
             $room->update([
                 'unit_id' => $validated['unit_id'],
@@ -219,9 +236,10 @@ class RoomController extends Controller
                         ->exists();
 
                     if ($duplicateExists) {
-                        return redirect()->back()
-                            ->withInput()
-                            ->with('error', 'Bed number "' . $bedData['bed_number'] . '" already exists in this room.');
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Bed number "' . $bedData['bed_number'] . '" already exists in this room.'
+                        ]);
                     }
 
                     // Update or create
@@ -251,13 +269,17 @@ class RoomController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('rooms.list')
-                ->with('success', 'Room updated successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Room updated successfully.',
+            ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Error updating room: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating room: ' . $e->getMessage(),
+            ]);
         }
     }
 
@@ -309,4 +331,22 @@ class RoomController extends Controller
             ], 500);
         }
     }
+
+    public function getUnits($propertyId)
+    {
+        try {
+            $units = Unit::where('property_id', $propertyId)->where('is_active', true)->get();
+            return response()->json([
+                'success' => true,
+                'data' => $units,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching units: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 }

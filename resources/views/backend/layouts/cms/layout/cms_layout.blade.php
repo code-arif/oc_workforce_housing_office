@@ -422,15 +422,15 @@
             async loadSection(section) {
                 const contentDiv = document.getElementById("dynamic-content");
                 contentDiv.innerHTML = `
-            <div class="loading-overlay">
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                    <div class="loading-overlay">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading content...</p>
+                        </div>
                     </div>
-                    <p class="mt-2">Loading content...</p>
-                </div>
-            </div>
-        `;
+                `;
 
                 try {
                     console.log('Loading section:', section);

@@ -29,8 +29,8 @@ class PropertyTypeController extends Controller
                 })
                 ->addColumn('status', function ($item) {
                     $badge = $item->is_active
-                        ? '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
-                        : '<button onclick="toggleStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
+                        ? '<button onclick="togglePropertyTypeStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
+                        : '<button onclick="togglePropertyTypeStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
@@ -38,7 +38,7 @@ class PropertyTypeController extends Controller
                         <button class="btn btn-sm btn-warning me-1" onclick="editPropertyType(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
+                        <button class="btn btn-sm btn-danger" onclick="deletePropertyType(' . $item->id . ')" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     ';

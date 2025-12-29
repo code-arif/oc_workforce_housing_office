@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -60,6 +61,8 @@ Route::prefix('rooms')->name('rooms.')->group(function () {
     Route::delete('/delete/{id}', [RoomController::class, 'destroy'])->name('delete');
 
     Route::get('/toggle-status/{id}', [RoomController::class, 'toggleStatus'])->name('toggle.status');
+
+    Route::get('/get-units/{propertyId}', [RoomController::class, 'getUnits'])->name('get.units');
 });
 
 Route::prefix('beds')->name('beds.')->group(function () {
@@ -71,12 +74,19 @@ Route::prefix('beds')->name('beds.')->group(function () {
     Route::post('/bulk-delete', [BedController::class, 'bulkDelete'])->name('bulk-delete');
 
     Route::get('/toggle-status/{id}', [BedController::class, 'toggleStatus'])->name('toggle.status');
+    Route::get('/get-rooms/{unitId}', [BedController::class, 'getRooms'])->name('get.rooms');
+
 });
 
 
 //Property manage
 Route::prefix('property')->name('property.')->group(function () {
-    Route::get('/list', [PropertyController::class, 'index'])->name('list');
+    // Dynamic property management (new CMS-style tab system)
+    Route::get('/', [PropertySectionController::class, 'index'])->name('list');
+    Route::get('/section/{section}', [PropertySectionController::class, 'section'])->name('section');
+    
+    // Legacy routes for create/edit operations
+    Route::get('/list', [PropertyController::class, 'index'])->name('index');
     Route::get('/create', [PropertyController::class, 'create'])->name('create');
     Route::post('/store', [PropertyController::class, 'store'])->name('store');
     Route::get('/edit/{id}', [PropertyController::class, 'edit'])->name('edit');
