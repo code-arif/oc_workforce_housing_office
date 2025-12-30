@@ -127,7 +127,7 @@
 
 @include('backend.partials.toster')
 
-@include('backend.partials.ajax')
+{{-- @include('backend.partials.ajax') --}}
 @include('backend.partials.notification')
 
 @stack('scripts')
