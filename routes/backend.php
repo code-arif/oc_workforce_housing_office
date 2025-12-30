@@ -22,6 +22,7 @@ use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
+use App\Http\Controllers\Web\Backend\SeasonController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -95,6 +96,17 @@ Route::prefix('property')->name('property.')->group(function () {
     Route::delete('/delete/{id}', [PropertyController::class, 'destroy'])->name('delete');
 
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
+});
+
+Route::prefix('seasons')->name('seasons.')->group(function () {    
+    // Legacy routes for create/edit operations
+    Route::get('/list', [SeasonController::class, 'index'])->name('list');
+    Route::post('/store', [SeasonController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [SeasonController::class, 'edit'])->name('edit');
+    Route::post('/update/{id}', [SeasonController::class, 'update'])->name('update');
+    Route::delete('/delete/{id}', [SeasonController::class, 'destroy'])->name('delete');
+
+    Route::get('/toggle-status/{id}', [SeasonController::class, 'toggleStatus'])->name('toggle.status');
 });
 
 /**

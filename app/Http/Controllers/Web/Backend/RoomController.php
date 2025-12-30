@@ -20,7 +20,7 @@ class RoomController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $rooms = Room::with('beds')->get();
+            $rooms = Room::with('beds')->latest()->get();
             // dd($rooms);
             return DataTables::of($rooms)
                 ->addIndexColumn()

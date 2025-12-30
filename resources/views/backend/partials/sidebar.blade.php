@@ -69,11 +69,16 @@
 
                 {{-- Leases and files --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-file"></i>
+                    
+                    <a class="side-menu__item {{ request()->routeIs('seasons.list') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
+                       <i class="fa-solid fa-file"></i>
                         <span class="side-menu__label">Leases & Files</span>
+                        <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a></li>
+                        <li><a href="#" class="slide-item">Leases</a></li>
+                    </ul>
                 </li>
 
                 {{-- Income --}}
