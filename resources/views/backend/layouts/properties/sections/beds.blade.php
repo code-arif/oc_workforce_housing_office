@@ -322,7 +322,6 @@
                 });
             };
 
-
             document.getElementById('property_id')?.addEventListener('change', () => {
                 getUnits(document.getElementById('property_id').value);
             });

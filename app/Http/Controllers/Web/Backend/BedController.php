@@ -55,7 +55,7 @@ class BedController extends Controller
                 ->make(true);
         }
 
-        return view('backend.layouts.properties.bed.index');
+        // return view('backend.layouts.properties.bed.index');
     }
 
     /**

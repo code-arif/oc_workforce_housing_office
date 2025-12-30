@@ -124,7 +124,6 @@
                                 </h5>
                             </div>
                             <div class="card-body">
-                                @if(count($propertyUnits) > 0)
                                     <div class="table-responsive">
                                         <table class="table table-hover">
                                             <thead class="table-light">
@@ -138,78 +137,22 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @forelse($propertyUnits as $index => $item)
-                                                    <tr class="align-middle" onclick="alert('Tentant details are coming soon!!')">
-                                                        <td>
-                                                            <span class="badge bg-info">{{ $index + 1 }}</span>
-                                                        </td>
-                                                        <td>
-                                                            <strong>{{ $item['unit']->name ?? '---' }}</strong>
-                                                            @if($item['unit']->description)
-                                                                <br><small class="text-muted">{{ $item['unit']->description }}</small>
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            @if($item['room'])
-                                                                <strong>{{ $item['room']->room_number }}</strong>
-                                                                @if($item['room']->name)
-                                                                    <br><small class="text-muted">{{ $item['room']->name }}</small>
-                                                                @endif
-                                                            @else
-                                                                <span class="text-muted">---</span>
-                                                            @endif
-                                                        </td>
-                                                        <td>
-                                                            @if($item['bed'])
-                                                                <strong>{{ $item['bed']->bed_number }}</strong>
-                                                                @if($item['bed']->bed_label)
-                                                                    <br><small class="text-muted">{{ $item['bed']->bed_label }}</small>
-                                                                @endif
-                                                            @else
-                                                                <span class="text-muted">---</span>
-                                                            @endif
-                                                        </td>
-                                                        <td>
-
-                                                            {{-- @if($item['room'])
-                                                                @if($item['room']->is_active)
-                                                                    <span class="badge bg-success">Available</span>
-                                                                @else
-                                                                    <span class="badge bg-danger">Unavailable</span>
-                                                                @endif
-                                                            @else
-                                                                ---
-                                                            @endif --}}
-                                                        </td>
-                                                        <td>
-                                                            @if($item['bed'])
-                                                                @if($item['bed']->is_active)
-                                                                <span class="badge bg-danger">Occupied</span>
-                                                                @else
-                                                                <span class="badge bg-success">Available</span>
-                                                                @endif
-                                                            @else
-                                                                ---
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                @empty
-                                                    <tr>
-                                                        <td colspan="6" class="text-center text-muted py-4">
-                                                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                                            <p class="mt-2">No units assigned to this property</p>
-                                                        </td>
-                                                    </tr>
-                                                @endforelse
+                                                
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted py-4">
+                                                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                                        <p class="mt-2">No units assigned to this property</p>
+                                                    </td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
-                                @else
+                                {{-- @else
                                     <div class="text-center text-muted py-5">
                                         <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                                         <p class="mt-2">No units assigned to this property</p>
                                     </div>
-                                @endif
+                                @endif --}}
                             </div>
                         </div>
                     </div>
@@ -229,7 +172,7 @@
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div>
                                             <p class="text-muted mb-1">Total Units</p>
-                                            <h4 class="fw-bold">{{ $property->units->unique()->count() }}</h4>
+                                            <h4 class="fw-bold">10</h4>
                                         </div>
                                         <div style="font-size: 2.5rem; color: #007bff;">
                                             <i class="bi bi-building"></i>
@@ -243,7 +186,7 @@
                                         <div>
                                             <p class="text-muted mb-1">Total Rooms</p>
                                             <h4 class="fw-bold">
-                                                {{ collect($propertyUnits)->map(fn($item) => $item['room']?->id)->unique()->count() }}
+                                                20
                                             </h4>
                                         </div>
                                         <div style="font-size: 2.5rem; color: #28a745;">
@@ -257,7 +200,7 @@
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div>
                                             <p class="text-muted mb-1">Total Beds</p>
-                                            <h4 class="fw-bold">{{ $totalBeds }}</h4>
+                                            <h4 class="fw-bold">100</h4>
                                         </div>
                                         <div style="font-size: 2.5rem; color: #ffc107;">
                                             <i class="bi bi-box2"></i>
@@ -275,28 +218,15 @@
                                 </h5>
                             </div>
                             <div class="card-body">
-                                @php
-                                    $unitBreakdown = collect($propertyUnits)->groupBy('unit.id')->map(function($items) {
-                                        return [
-                                            'unit' => $items[0]['unit'],
-                                            'count' => $items->count()
-                                        ];
-                                    });
-                                @endphp
-
-                                @forelse($unitBreakdown as $unitId => $data)
-                                    <div class="mb-3 pb-3 border-bottom">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <p class="fw-bold text-dark mb-1">{{ $data['unit']->name }}</p>
-                                                <small class="text-muted">{{ $data['count'] }} bed(s)</small>
-                                            </div>
-                                            <span class="badge bg-info">{{ $data['count'] }}</span>
+                               <div class="mb-3 pb-3 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <p class="fw-bold text-dark mb-1">101</p>
+                                            <small class="text-muted">6 bed(s)</small>
                                         </div>
+                                        <span class="badge bg-info">Available</span>
                                     </div>
-                                @empty
-                                    <p class="text-muted text-center py-3">No units assigned</p>
-                                @endforelse
+                                </div>
                             </div>
                         </div>
 

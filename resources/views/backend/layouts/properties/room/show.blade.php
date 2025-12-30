@@ -23,7 +23,7 @@
                 <!-- Back Button -->
                 <div class="row mb-3">
                     <div class="col-12">
-                        <a href="history.back()" class="btn btn-secondary btn-sm">
+                        <a href="javascript:history.back();" class="btn btn-secondary btn-sm">
                             <i class="bi bi-arrow-left"></i> Back to Rooms
                         </a>
                         

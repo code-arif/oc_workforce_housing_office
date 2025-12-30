@@ -38,19 +38,27 @@
                             <div class="card-body p-0" style="height: 70vh; overflow-x:auto">
                                 <div class="nav flex-column nav-pills" id="property-tabs" role="tablist">
                                     <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
-                                        Property Hierarchy
+                                        Property Setup
                                     </h6>
-
-                                    <a class="nav-link active" id="properties-tab" href="javascript:void(0);" data-section="properties"
-                                        data-title="Properties" data-breadcrumb="Properties">
-                                        <i class="fa-solid fa-home me-2"></i> Properties
+                                    
+                                    <a class="nav-link" id="amenities-tab" href="javascript:void(0);"
+                                        data-section="amenities" data-title="Amenities"
+                                        data-breadcrumb="Amenities">
+                                        <i class="fa-solid fa-check me-2"></i> Amenities
                                     </a>
-
                                     <a class="nav-link" id="property-types-tab" href="javascript:void(0);"
                                         data-section="property-types" data-title="Property Types"
                                         data-breadcrumb="Property Types">
                                         <i class="fa-solid fa-layer-group me-2"></i> Property Types
                                     </a>
+                                    
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        Property Hierarchy
+                                    </h6>
+                                    <a class="nav-link active" id="properties-tab" href="javascript:void(0);" data-section="properties"
+                                        data-title="Properties" data-breadcrumb="Properties">
+                                        <i class="fa-solid fa-home me-2"></i> Properties
+                                    </a>                                    
 
                                     <a class="nav-link" id="units-tab" href="javascript:void(0);"
                                         data-section="units" data-title="Units"
@@ -69,6 +77,7 @@
                                         data-breadcrumb="Beds">
                                         <i class="fa-solid fa-bed me-2"></i> Beds
                                     </a>
+                                    
                                 </div>
                             </div>
                         </div>

@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\RoomController;
 use App\Http\Controllers\Web\Backend\UnitController;
+use App\Http\Controllers\Web\Backend\SeasonController;
+use App\Http\Controllers\Web\Backend\AmenityController;
 use App\Http\Controllers\Web\Backend\PropertyController;
 use App\Http\Controllers\Web\Backend\DashboardController;
 use App\Http\Controllers\Web\Backend\PropertyTypeController;
@@ -20,9 +22,8 @@ use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
-use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
-use App\Http\Controllers\Web\Backend\SeasonController;
+use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -88,6 +89,7 @@ Route::prefix('property')->name('property.')->group(function () {
     
     // Legacy routes for create/edit operations
     Route::get('/list', [PropertyController::class, 'index'])->name('index');
+    Route::get('/get-data', [PropertyController::class, 'getData'])->name('get.data');
     Route::get('/create', [PropertyController::class, 'create'])->name('create');
     Route::post('/store', [PropertyController::class, 'store'])->name('store');
     Route::get('/edit/{id}', [PropertyController::class, 'edit'])->name('edit');
@@ -107,6 +109,16 @@ Route::prefix('seasons')->name('seasons.')->group(function () {
     Route::delete('/delete/{id}', [SeasonController::class, 'destroy'])->name('delete');
 
     Route::get('/toggle-status/{id}', [SeasonController::class, 'toggleStatus'])->name('toggle.status');
+});
+
+Route::prefix('amenities')->name('amenities.')->group(function () {
+    Route::get('/list', [AmenityController::class, 'index'])->name('list');
+    Route::post('/store', [AmenityController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [AmenityController::class, 'edit'])->name('edit');
+    Route::post('/update/{id}', [AmenityController::class, 'update'])->name('update');
+    Route::delete('/delete/{id}', [AmenityController::class, 'destroy'])->name('delete');
+
+    Route::get('/toggle-status/{id}', [AmenityController::class, 'toggleStatus'])->name('toggle.status');
 });
 
 /**

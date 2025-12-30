@@ -20,6 +20,11 @@ class PropertyController extends Controller
      */
     public function index( Request $request)
     {
+        return view('backend.layouts.properties.layout.property-layout');
+    }
+
+    public function getData(Request $request) 
+    {
         if ($request->ajax()) {
             $properties = Property::latest('id')->get();
 
@@ -63,9 +68,7 @@ class PropertyController extends Controller
                 ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
                 ->make(true);
         }
-        return view('backend.layouts.properties.layout.property-layout');
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -131,31 +134,10 @@ class PropertyController extends Controller
     {
         $property = Property::with([
             'propertyType',
-            'units' => function ($query) {
-                $query->withPivot('room_id', 'bed_id');
-            }
+            'units' ,
         ])->findOrFail($id);
 
-        // Load rooms and beds with their details
-        $propertyUnits = [];
-        foreach ($property->units as $unit) {
-            $roomId = $unit->pivot->room_id;
-            $bedId = $unit->pivot->bed_id;
-
-            $room = $roomId ? \App\Models\Room::find($roomId) : null;
-            $bed = $bedId ? \App\Models\Bed::find($bedId) : null;
-
-            $propertyUnits[] = [
-                'unit' => $unit,
-                'room' => $room,
-                'bed' => $bed,
-            ];
-        }
-
-        // Count total beds
-        $totalBeds = count($propertyUnits);
-
-        return view('backend.layouts.properties.show', compact('property', 'propertyUnits', 'totalBeds'));
+        return view('backend.layouts.properties.show', compact('property'));
     }
 
     /**

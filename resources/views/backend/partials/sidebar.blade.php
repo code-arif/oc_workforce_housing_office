@@ -37,15 +37,13 @@
 
                 {{-- Properties --}}
                 <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                    <a class="side-menu__item {{ request()->routeIs('property.index') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                         <i class="fa-solid fa-bed-pulse"></i>
                         <span class="side-menu__label">Manage Property</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
                         <li><a href="{{ route('property.index') }}" class="slide-item">Properties</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Tags</a></li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Amenities</a></li>
                     </ul>
                 </li>
 

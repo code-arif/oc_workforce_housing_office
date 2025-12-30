@@ -63,6 +63,8 @@
 @endsection
 
 @push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
+
     <style>
         .datepicker {
             background-color: #fff;
@@ -116,6 +118,8 @@
 
 @push('scripts')
     <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.css"></script>
+    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
     <script>
         $(document).ready(function() {
             $('.datepicker2').datepicker({
@@ -174,8 +178,7 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            toastr.success(response.message);
-                            // showAlert('success', response.message);
+                            showToast('success', response.message);
                             $('#seasonModal').modal('hide');
                             seasonTable.ajax.reload();
                             $('#seasonForm')[0].reset();
@@ -188,32 +191,33 @@
                             $.each(errors, function(key, value) {
                                 errorMsg += '- ' + value[0] + '\n';
                             });
-                            toastr.error(errorMsg);
-                            // showAlert('danger', errorMsg);
+                            // toastr.error(errorMsg);
+                            showToast('danger', errorMsg);
                         } else {
-                            toastr.error(xhr.responseJSON?.message || 'An error occurred');
-                            // showAlert('danger', xhr.responseJSON?.message || 'An error occurred');
+                            // toastr.error(xhr.responseJSON?.message || 'An error occurred');
+                            showToast('danger', xhr.responseJSON?.message || 'An error occurred');
                         }
                     }
                 });
             });
 
-            // Show Alert
-            function showAlert(type, message) {
-                const alertHtml = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                                    ${message}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>`;
-
-                $('#alertContainer').html(alertHtml);
-
-                setTimeout(() => {
-                    $('.alert').fadeOut('slow', function() {
-                        $(this).remove();
-                    });
-                }, 5000);
-            }
+           
         });
+
+        window.showToast = function(type, message) {
+            if (typeof iziToast !== 'undefined') {
+                iziToast[type]({
+                    title: type === 'success' ? 'Success' : 'Error',
+                    message: message,
+                    position: 'topRight',
+                    timeout: type === 'success' ? 3000 : 5000
+                });
+            } else if (typeof toastr !== 'undefined') {
+                toastr[type](message);
+            } else {
+                alert(message);
+            }
+        };
 
         // Edit Property Type
         function editSeason(id) {
@@ -274,12 +278,12 @@
                 },
                 success: function(resp) {
                     NProgress.done();
-                    toastr.success(resp.message);
+                    showToast('success', resp.message || 'Deleted successfully!');
                     $('#seasonTable').DataTable().ajax.reload();
                 },
                 error: function(error) {
                     NProgress.done();
-                    toastr.error(error.message);
+                    showToast('danger', error.responseJSON?.message || 'Error deleting season');
                 }
             });
         }
@@ -305,12 +309,14 @@
                         success: function(response) {
                             if (response.success) {
                                 $('#seasonTable').DataTable().ajax.reload();
-                                toastr.success(response.message);
+                                // toastr.success(response.message);
+                                showToast('success', response.message);
                             }
                         },
                         error: function(xhr) {
                             toastr.error(xhr.responseJSON?.message || 'Error toggling status');
-                            showAlert('danger', xhr.responseJSON?.message || 'Error toggling status');
+                            // showAlert('danger', xhr.responseJSON?.message || 'Error toggling status');
+                            showToast('error', xhr.responseJSON?.message || 'Error toggling status');
                         }
                     });
                 }
