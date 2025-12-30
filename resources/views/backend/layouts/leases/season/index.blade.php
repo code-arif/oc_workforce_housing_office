@@ -64,6 +64,19 @@
 
 @push('styles')
     <style>
+        .datepicker {
+            background-color: #fff;
+            border: 1px solid #e9ebfa;
+            border-radius: 5px;
+            box-shadow: none;
+            display: inline-block;
+            font-family: Roboto, sans-serif;
+            font-size: inherit;
+            margin: 1px 0 0;
+            padding: 0px;
+            width: auto !important;
+            z-index: 5 !important;
+        }
         .form-group label {
             font-weight: 600;
             margin-bottom: 8px;
@@ -105,6 +118,12 @@
     <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
     <script>
         $(document).ready(function() {
+            $('.datepicker2').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                width: 300
+            });
             // Initialize DataTable
             const seasonTable = $('#seasonTable').DataTable({
                 processing: true,
@@ -197,7 +216,7 @@
         });
 
         // Edit Property Type
-        function editUnit(id) {
+        function editSeason(id) {
             $.ajax({
                 url: `{{ route('seasons.edit', '') }}/${id}`,
                 type: 'GET',
@@ -265,7 +284,7 @@
             });
         }
 
-        function toggleStatus(id) {
+        function toggleSeasonStatus(id) {
             event.preventDefault();
             Swal.fire({
                 title: 'Are you sure you want to update status?',

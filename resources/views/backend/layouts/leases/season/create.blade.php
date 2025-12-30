@@ -4,7 +4,7 @@
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">Add Unit</h5>
+                <h5 class="modal-title" id="modalTitle">Add Season</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
@@ -24,8 +24,8 @@
 
                         <!-- Gender Designation -->
                         <div class="col-12 col-md-6 col-lg-6 col-xl-6 mb-3">
-                            <label for="blanket_start_date" class="form-label"> Blanket Start Date</label>
-                            <input type="text" class="form-control" name="blanket_start_date" id="blanket_start_date" placeholder="Enter blanket start date" required>
+                            <label for="blanket_start_date" class="form-label"> Start Date</label>
+                            <input type="text" class="form-control datepicker2" name="blanket_start_date" id="blanket_start_date" placeholder="Enter start date" required>
                             @error('blanket_start_date')
                                 <div class="invalid-feedback" style="display: block;">
                                     <i class="bi bi-exclamation-circle"></i> {{ $message }}
@@ -33,8 +33,8 @@
                             @enderror
                         </div>
                         <div class="col-12 col-md-6 col-lg-6 col-xl-6 mb-3">
-                            <label for="blanket_end_date" class="form-label"> Blanket End Date</label>
-                            <input type="text" class="form-control" name="blanket_end_date" id="blanket_end_date" placeholder="Enter blanket start date" required>
+                            <label for="blanket_end_date" class="form-label"> End Date</label>
+                            <input type="text" class="form-control datepicker2" name="blanket_end_date" id="blanket_end_date" placeholder="Enter End date" required>
                             @error('blanket_end_date')
                                 <div class="invalid-feedback" style="display: block;">
                                     <i class="bi bi-exclamation-circle"></i> {{ $message }}

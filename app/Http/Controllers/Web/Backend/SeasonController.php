@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Season;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -21,17 +22,17 @@ class SeasonController extends Controller
                 ->addIndexColumn()
                 ->addColumn('name', fn($item) => $item->name)
                 ->addColumn('date', function ($item) {
-                    return $item->blanket_start_date . ' - ' . $item->blanket_end_date;
+                    return date('d M, Y', strtotime($item->blanket_start_date)) . ' - ' . date('d M, Y', strtotime($item->blanket_end_date));
                 })
                 ->addColumn('status', function ($item) {
                     $badge = $item->is_active
-                        ? '<button onclick="toggleUnitStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
-                        : '<button onclick="toggleUnitStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
+                        ? '<button onclick="toggleSeasonStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
+                        : '<button onclick="toggleSeasonStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        <button class="btn btn-sm btn-warning me-1" onclick="editUnit(' . $item->id . ')" title="Edit">
+                        <button class="btn btn-sm btn-warning me-1" onclick="editSeason(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
                         <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
@@ -59,7 +60,23 @@ class SeasonController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'blanket_start_date' => 'required|date',
+            'blanket_end_date' => 'required|date',
+        ]);
+
+        DB::beginTransaction();
+        
+        $validated['blanket_start_date'] = date('Y-m-d', strtotime($validated['blanket_start_date']));
+        $validated['blanket_end_date'] = date('Y-m-d', strtotime($validated['blanket_end_date']));
+        $validated['is_active'] = $request->has('is_active') ? true : false;
+
+        Season::create($validated);
+
+        DB::commit();
+
+        return response()->json(['success' => true, 'message' => 'Season created successfully.'], 200);
     }
 
     /**
@@ -75,7 +92,8 @@ class SeasonController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $season = Season::findOrFail($id);
+        return response()->json(['success' => true, 'data' => $season]);
     }
 
     /**
@@ -83,7 +101,25 @@ class SeasonController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $season = Season::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'blanket_start_date' => 'required|date',
+            'blanket_end_date' => 'required|date',
+        ]);
+
+        DB::beginTransaction();
+        
+        $validated['blanket_start_date'] = date('Y-m-d', strtotime($validated['blanket_start_date']));
+        $validated['blanket_end_date'] = date('Y-m-d', strtotime($validated['blanket_end_date']));
+        $validated['is_active'] = $request->has('is_active') ? true : false;
+
+        $season->update($validated);
+
+        DB::commit();
+
+        return response()->json(['success' => true, 'message' => 'Season updated successfully.'], 200);
     }
 
     /**
@@ -91,6 +127,28 @@ class SeasonController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $season = Season::findOrFail($id);
+        $season->delete();
+
+        return response()->json(['success' => true, 'message' => 'Season deleted successfully.'], 200);
+    }
+
+    public function toggleStatus($id)
+    {
+        try {
+            $season = Season::findOrFail($id);
+            $season->is_active = !$season->is_active;
+            $season->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Season status updated successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating Season status: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }
