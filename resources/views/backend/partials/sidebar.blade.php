@@ -133,6 +133,20 @@
                     </a>
                 </li>
 
+                {{-- User Management --}}
+                <li class="slide">
+                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span class="side-menu__label">User Management</span>
+                        <i class="angle fa fa-angle-right ms-auto"></i>
+                    </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('user-management.users.index') }}" class="slide-item">Users</a></li>
+                        <li><a href="{{ route('user-management.roles.index') }}" class="slide-item">Roles</a></li>
+                        <li><a href="{{ route('user-management.permissions.index') }}" class="slide-item">Permissions</a></li>
+                    </ul>
+                </li>
+
                 {{-- Settings --}}
                 <li class="slide">
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">

@@ -24,6 +24,9 @@ use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\UserManagement\UserController;
+use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
+use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -205,4 +208,45 @@ Route::prefix('social')->name('social.profile.')->group(function () {
     Route::post('/update/{id}', [SocialLinkController::class, 'update'])->name('update');
     Route::delete('/delete/{id}', [SocialLinkController::class, 'destroy'])->name('destroy');
     Route::get('/status/{id}', [SocialLinkController::class, 'status'])->name('status');
+});
+
+/**
+ * User Management routes
+ */
+Route::prefix('user-management')->name('user-management.')->group(function () {
+    // Users management
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/get-data', [UserController::class, 'getData'])->name('get.data');
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/store', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
+
+    // Roles management
+    Route::prefix('roles')->name('roles.')->group(function () {
+        Route::get('/get-data', [RoleController::class, 'getData'])->name('get.data');
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::get('/create', [RoleController::class, 'create'])->name('create');
+        Route::post('/store', [RoleController::class, 'store'])->name('store');
+        Route::get('/{role}', [RoleController::class, 'show'])->name('show');
+        Route::get('/{role}/edit', [RoleController::class, 'edit'])->name('edit');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('destroy');
+    });
+
+    // Permissions management
+    Route::prefix('permissions')->name('permissions.')->group(function () {
+        Route::get('/get-data', [PermissionController::class, 'getData'])->name('get.data');
+        Route::get('/', [PermissionController::class, 'index'])->name('index');
+        Route::get('/create', [PermissionController::class, 'create'])->name('create');
+        Route::post('/store', [PermissionController::class, 'store'])->name('store');
+        Route::get('/{id}', [PermissionController::class, 'show'])->name('show');
+        Route::get('/edit/{id}', [PermissionController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [PermissionController::class, 'update'])->name('update');
+        Route::delete('/{id}', [PermissionController::class, 'destroy'])->name('destroy');
+    });
 });
