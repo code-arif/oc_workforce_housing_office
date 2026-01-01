@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class Tenant extends Model
+class Tenant extends Authenticatable implements JWTSubject
 {
+
     protected $fillable = [
         'user_id',
         'application_source',
@@ -50,5 +52,15 @@ class Tenant extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
     }
 }

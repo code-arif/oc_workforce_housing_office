@@ -43,7 +43,7 @@ return [
 
         'api' => [
             'driver' => 'jwt',
-            'provider' => 'users',
+            'provider' => 'tentants',
         ],
 
         'business' => [
@@ -83,6 +83,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),
+        ],
+
+        'tentants' => [
+            'driver' => 'eloquent',
+            'model' => env('AUTH_TENANT_MODEL', App\Models\Tenant::class),
         ],
 
         // 'users' => [
