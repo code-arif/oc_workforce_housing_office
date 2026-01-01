@@ -31,7 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
 
@@ -39,6 +38,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \Illuminate\Auth\Middleware\Authenticate::class, // for web
             'auth.jwt' => App\Http\Middleware\AuthCheckMiddleware::class, // for API
             'admin' => App\Http\Middleware\AdminMiddleware::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'payment/stripe-webhook',
