@@ -106,6 +106,7 @@ Route::prefix('property')->name('property.')->group(function () {
 Route::prefix('seasons')->name('seasons.')->group(function () {    
     // Legacy routes for create/edit operations
     Route::get('/list', [SeasonController::class, 'index'])->name('list');
+    Route::get('/get-data', [SeasonController::class, 'getData'])->name('get.data');
     Route::post('/store', [SeasonController::class, 'store'])->name('store');
     Route::get('/edit/{id}', [SeasonController::class, 'edit'])->name('edit');
     Route::post('/update/{id}', [SeasonController::class, 'update'])->name('update');
@@ -221,8 +222,8 @@ Route::prefix('user-management')->name('user-management.')->group(function () {
         Route::get('/create', [UserController::class, 'create'])->name('create');
         Route::post('/store', [UserController::class, 'store'])->name('store');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
-        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
-        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::get('/edit/{id}', [UserController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}', [UserController::class, 'update'])->name('update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
 

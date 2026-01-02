@@ -133,7 +133,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route('seasons.list') }}',
+                    url: '{{ route('seasons.get.data') }}',
                     type: 'GET',
                     data: function(d) {
                         return d;

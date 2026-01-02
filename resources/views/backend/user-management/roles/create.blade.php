@@ -81,17 +81,24 @@
                                             @foreach ($permissions as $module => $perms)
                                                 <div class="mb-4">
                                                     <h6 class="text-uppercase fw-bold mb-3">
-                                                        <i class="fa fa-folder"></i> {{ $module }}
+                                                        <label class="form-check-label">
+                                                        <input class="form-check-input module-select-all mt-0" type="checkbox" id="all_perm_{{ $module }}"
+                                                            data-module="{{ $module }}"
+                                                            onchange="selectAllPermissions(this, '{{ $module }}')">
+                                                            <i class="fa fa-folder"></i> {{ $module }}
+                                                        </label>
                                                     </h6>
                                                     <div class="row">
                                                         @foreach ($perms as $permission)
                                                             <div class="col-md-6 col-lg-4 mb-2">
                                                                 <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox" name="permissions[]"
-                                                                        value="{{ $permission->id }}" id="perm_{{ $permission->id }}"
-                                                                        @if(in_array($permission->id, old('permissions', []))) checked @endif>
+                                                                    <input class="form-check-input module-permission" type="checkbox" name="permissions[]"
+                                                                        value="{{ $permission->name }}" id="perm_{{ $permission->id }}"
+                                                                        data-module="{{ $module }}"
+                                                                        onchange="updateModuleSelectAll('{{ $module }}')"
+                                                                        @if(in_array($permission->name, old('permissions', []))) checked @endif>
                                                                     <label class="form-check-label" for="perm_{{ $permission->id }}">
-                                                                        {{ $permission->display_name ?? $permission->name }}
+                                                                        {{ strtoupper($permission->display_name) ?? $permission->name }}
                                                                     </label>
                                                                 </div>
                                                             </div>
@@ -120,5 +127,41 @@
         </div>
     </div>
 </div>
+
+<script>
+// Select all permissions for a module
+function selectAllPermissions(checkbox, module) {
+    const modulePermissions = document.querySelectorAll(`.module-permission[data-module="${module}"]`);
+    modulePermissions.forEach(permission => {
+        permission.checked = checkbox.checked;
+    });
+}
+
+// Update the "select all" checkbox state based on individual permissions
+function updateModuleSelectAll(module) {
+    const modulePermissions = document.querySelectorAll(`.module-permission[data-module="${module}"]`);
+    const selectAllCheckbox = document.querySelector(`.module-select-all[data-module="${module}"]`);
+    
+    const allChecked = Array.from(modulePermissions).every(checkbox => checkbox.checked);
+    const someChecked = Array.from(modulePermissions).some(checkbox => checkbox.checked);
+    
+    if (allChecked) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else if (someChecked) {
+        selectAllCheckbox.indeterminate = true;
+        selectAllCheckbox.checked = false;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const modules = Array.from(document.querySelectorAll('.module-select-all')).map(el => el.dataset.module);
+    modules.forEach(module => updateModuleSelectAll(module));
+});
+</script>
 
 @endsection

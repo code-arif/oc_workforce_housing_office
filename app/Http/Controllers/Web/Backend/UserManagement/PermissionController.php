@@ -9,6 +9,13 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PermissionController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:user-management.permissions.list')->only('index', 'getData');
+        $this->middleware('permission:user-management.permissions.create')->only('store');
+        $this->middleware('permission:user-management.permissions.delete')->only('destroy');
+    }
     /**
      * Display a listing of permissions
      */

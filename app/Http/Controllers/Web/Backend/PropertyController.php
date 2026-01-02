@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers\Web\Backend;
 
-use App\Models\Bed;
-use App\Models\Room;
 use App\Models\Unit;
 use App\Models\Property;
 use Illuminate\Support\Str;
@@ -15,6 +13,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PropertyController extends Controller
 {
+    public function __construct()
+    {
+        // You can add middleware here for permissions if needed
+        $this->middleware('permission:property.list')->only('index', 'getData');
+        $this->middleware('permission:property.create')->only('create', 'store');
+        $this->middleware('permission:property.edit')->only('edit', 'update');
+        $this->middleware('permission:property.delete')->only('destroy');
+    }
     /**
      * Display a listing of the resource.
      */

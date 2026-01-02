@@ -4,19 +4,61 @@ namespace App\Http\Controllers\Web\Backend\UserManagement;
 
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use App\Http\Controllers\Controller;
+use Spatie\Permission\Models\Permission;
+use Yajra\DataTables\Facades\DataTables;
 
 class RoleController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('permission:user-management.roles.list')->only('index', 'getData');
+        $this->middleware('permission:user-management.roles.create')->only('create', 'store');
+        $this->middleware('permission:user-management.roles.edit')->only('edit', 'update');
+        $this->middleware('permission:user-management.roles.delete')->only('destroy');
+    }
     /**
      * Display a listing of roles
      */
     public function index()
     {
-        $roles = Role::with('permissions')->paginate(10);
         
-        return view('backend.user-management.roles.index', compact('roles'));
+        return view('backend.user-management.roles.index');
+    }
+
+    public function getData(Request $request)
+    {
+        if($request->ajax()) {
+            $roles = Role::with('permissions')->get();
+
+             return DataTables::of($roles)
+                ->addIndexColumn()
+                ->addColumn('name', function($item){
+                    return $item->name;
+                })
+                ->addColumn('display_name', function($item){
+                    return $item->display_name;
+                })
+                ->addColumn('description', function($item){
+                    return $item->description;
+                })
+                ->addColumn('permissions', function($item){
+                    return '<small>' . $item->permissions->count() . ' permission(s)</small>';
+                })
+                ->addColumn('action', function($item){
+                    return '
+                        <a href="' . route('user-management.roles.edit', $item->id) . '" class="btn btn-sm btn-warning me-1" title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm btn-danger" onclick="deleteRole(' . $item->id . ')" title="Delete">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    ';
+                })
+                ->rawColumns(['action', 'permissions'])
+                ->make(true);
+        }
     }
     /**
      * Show the form for creating a new role
@@ -40,7 +82,7 @@ class RoleController extends Controller
             'display_name' => 'required|string',
             'description' => 'nullable|string',
             'permissions' => 'required|array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'exists:permissions,name',
         ]);
 
         $role = Role::create([
@@ -88,7 +130,7 @@ class RoleController extends Controller
             'display_name' => 'required|string',
             'description' => 'nullable|string',
             'permissions' => 'required|array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'exists:permissions,name',
         ]);
 
         $role->update([

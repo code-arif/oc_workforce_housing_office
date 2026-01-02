@@ -10,10 +10,23 @@ use Yajra\DataTables\Facades\DataTables;
 
 class SeasonController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:seasons.list')->only('index', 'getData');
+        $this->middleware('permission:seasons.create')->only('create', 'store');
+        $this->middleware('permission:seasons.edit')->only('edit', 'update');
+        $this->middleware('permission:seasons.delete')->only('destroy');
+        $this->middleware('permission:seasons.toggle.status')->only('toggleStatus');
+    }
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
+    {
+        return view('backend.layouts.leases.season.index');
+    }
+
+    public function getData(Request $request)
     {
         if ($request->ajax()) {
             $seasons = Season::latest('id')->get();
@@ -43,8 +56,6 @@ class SeasonController extends Controller
                 ->rawColumns(['status', 'actions'])
                 ->make(true);
         }
-
-        return view('backend.layouts.leases.season.index');
     }
 
     /**

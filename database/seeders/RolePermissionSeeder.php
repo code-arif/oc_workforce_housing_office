@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -14,6 +13,7 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        
         // Create permissions for each resource
         $this->createPermissions();
 
@@ -27,23 +27,23 @@ class RolePermissionSeeder extends Seeder
     private function createPermissions(): void
     {
         $modules = [
-            'property-type' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            'units' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            'rooms' => ['list', 'show', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            'beds' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status', 'bulk-delete'],
+            // 'property-type' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            // 'units' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            // 'rooms' => ['list', 'show', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            // 'beds' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status', 'bulk-delete'],
             'property' => ['list', 'create', 'store', 'edit', 'show', 'update', 'delete', 'toggle.status'],
             'seasons' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            'amenities' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            'dashboard' => ['view'],
+            // 'amenities' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            // 'dashboard' => ['view'],
             'cms' => ['view', 'update'],
             'cms.home' => ['slider.store', 'slider.update', 'slider.destroy', 'how-it-works.update'],
-            'cms.gallery' => ['store', 'destroy'],
-            'cms.property' => ['update'],
-            'cms.about' => ['update'],
-            'cms.amenities' => ['update'],
+            // 'cms.gallery' => ['store', 'destroy'],
+            // 'cms.property' => ['update'],
+            // 'cms.about' => ['update'],
+            // 'cms.amenities' => ['update'],
             'profile' => ['view', 'edit', 'update'],
             'settings' => ['view', 'edit', 'update'],
-            'social' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'status'],
+            // 'social' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'status'],
             'user-management.users' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'user-management.roles' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'user-management.permissions' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
@@ -69,6 +69,10 @@ class RolePermissionSeeder extends Seeder
      */
     private function createRoles(): void
     {
+        $admin = Role::firstOrCreate(
+            ['name' => 'super admin'],
+            ['display_name' => 'Super Admin', 'description' => 'Has access to all system features and settings']
+        );
         // Admin Role - Full access
         $admin = Role::firstOrCreate(
             ['name' => 'admin'],

@@ -17,13 +17,16 @@
                         </ol>
                     </nav>
                 </div>
+                @can('user-management.permissions.create')
+                    
                 <div class="page-btn">
                     <a class="btn btn-primary btn-sm" id="addPermissionBtn"
                     data-bs-toggle="modal" data-bs-target="#permissionModal">
-                        <i class="fa fa-plus"></i> Add New Permission
+                    <i class="fa fa-plus"></i> Add New Permission
                     </a>
                 </div>
                 @include('backend.user-management.permissions.create')
+                @endcan
             </div>
             <!-- /PAGE HEADER -->
 
@@ -57,9 +60,7 @@
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        
-                                    </tbody>
+                                    <tbody></tbody>
                                 </table>
                             </div>
                         </div>

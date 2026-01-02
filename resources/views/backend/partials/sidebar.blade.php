@@ -35,6 +35,7 @@
                     </a>
                 </li>
 
+                @can('property.list')
                 {{-- Properties --}}
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('property.index') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
@@ -46,6 +47,8 @@
                         <li><a href="{{ route('property.index') }}" class="slide-item">Properties</a></li>
                     </ul>
                 </li>
+                @endcan
+                
 
                 {{-- Tenants --}}
                 <li class="slide">
@@ -74,7 +77,9 @@
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
+                        @can('seasons.list')
                         <li><a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a></li>
+                        @endcan
                         <li><a href="#" class="slide-item">Leases</a></li>
                     </ul>
                 </li>
@@ -124,15 +129,16 @@
                     </a>
                 </li>
 
-
+                @can('cms.view')
                 {{-- Frontend --}}
                 <li class="slide">
-                    <a class="side-menu__item" {{ request()->routeIs('cms.index') ? 'has-link' : '' }}" href="{{ route('cms.index') }}">
+                    <a class="side-menu__item {{ request()->routeIs('cms.index') ? 'has-link' : '' }}" href="{{ route('cms.index') }}">
                         <i class="fa-solid fa-layer-group"></i>
                         <span class="side-menu__label">Platform</span>
                     </a>
                 </li>
-
+                @endcan
+                @can('user-management.users.list' )
                 {{-- User Management --}}
                 <li class="slide">
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">
@@ -141,12 +147,18 @@
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
+                        @can('user-management.users.list')
                         <li><a href="{{ route('user-management.users.index') }}" class="slide-item">Users</a></li>
+                        @endcan
+                        @can('user-management.roles.list')
                         <li><a href="{{ route('user-management.roles.index') }}" class="slide-item">Roles</a></li>
+                        @endcan
+                        @can('user-management.permissions.list')
                         <li><a href="{{ route('user-management.permissions.index') }}" class="slide-item">Permissions</a></li>
+                        @endcan
                     </ul>
                 </li>
-
+                @endcan
                 {{-- Settings --}}
                 <li class="slide">
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">

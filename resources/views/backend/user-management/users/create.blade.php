@@ -1,45 +1,18 @@
-@extends('backend.app')
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog ">
+        <div class="modal-content">
 
-@section('title', 'Add New User')
-
-@section('content')
-<div class="app-content content">
-    <div class="content-wrapper">
-        <!-- PAGE HEADER -->
-        <div class="page-header">
-            <div class="page-title">
-                <h4>Add New User</h4>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('user-management.users.index') }}">Users</a></li>
-                        <li class="breadcrumb-item active">Add New</li>
-                    </ol>
-                </nav>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Create User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        </div>
-        <!-- /PAGE HEADER -->
 
-        <!-- FORM -->
-        <div class="row">
-            <div class="col-md-8 offset-md-2">
-                <div class="card">
-                    <div class="card-body">
-                        @if ($errors->any())
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <strong>Validation errors:</strong>
-                                <ul class="mb-0">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
-
-                        <form action="{{ route('user-management.users.store') }}" method="POST">
-                            @csrf
-
+            <form id="userForm" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="id" id="userId">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 col-lg-12">
                             <div class="form-group mb-3">
                                 <label for="name" class="form-label">Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('name') is-invalid @enderror"
@@ -87,9 +60,9 @@
                                 <div class="roles-container">
                                     @foreach ($roles as $role)
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roles[]"
-                                                value="{{ $role->id }}" id="role_{{ $role->id }}"
-                                                @if(in_array($role->id, old('roles', []))) checked @endif>
+                                            <input class="form-check-input" type="radio" name="roles[]"
+                                                value="{{ $role->name }}" id="role_{{ $role->id }}"
+                                               >
                                             <label class="form-check-label" for="role_{{ $role->id }}">
                                                 {{ $role->display_name }}
                                             </label>
@@ -100,17 +73,15 @@
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-primary me-2">Create User</button>
-                                <a href="{{ route('user-management.users.index') }}" class="btn btn-secondary">Cancel</a>
-                            </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Save</button>
+                </div>
+            </form>
         </div>
-        <!-- /FORM -->
     </div>
 </div>
-@endsection

@@ -18,9 +18,11 @@
                     </nav>
                 </div>
                 <div class="page-btn">
+                    @can('user-management.roles.create')
                     <a href="{{ route('user-management.roles.create') }}" class="btn btn-primary btn-sm">
                         <i class="fa fa-plus"></i> Add New Role
                     </a>
+                    @endcan
                 </div>
             </div>
             <!-- /PAGE HEADER -->
@@ -44,8 +46,8 @@
                                 </div>
                             @endif
 
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
+                            <div class="">
+                                <table class="table table-striped table-hover" id="roleTable">
                                     <thead>
                                         <tr>
                                             <th>#</th>
@@ -57,46 +59,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($roles as $role)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td><strong>{{ $role->name }}</strong></td>
-                                                <td>{{ $role->display_name }}</td>
-                                                <td>{{ $role->description ?? 'N/A' }}</td>
-                                                <td>
-                                                    <small>{{ $role->permissions->count() }} permission(s)</small>
-                                                </td>
-                                                <td>
-                                                    <a href="{{ route('user-management.roles.edit', $role) }}"
-                                                        class="btn btn-sm btn-info me-2">
-                                                        <i class="fa fa-edit"></i>
-                                                    </a>
-                                                    @if ($role->name !== 'admin')
-                                                        <form action="{{ route('user-management.roles.destroy', $role) }}"
-                                                            method="POST" style="display:inline;">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-sm btn-danger"
-                                                                onclick="return confirm('Are you sure?')">
-                                                                <i class="fa fa-trash"></i>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="6" class="text-center">No roles found</td>
-                                            </tr>
-                                        @endforelse
+                                        
                                     </tbody>
                                 </table>
                             </div>
 
-                            <!-- Pagination -->
-                            <div class="d-flex justify-content-center">
-                                {{ $roles->links() }}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -106,3 +73,87 @@
     </div>
 </div>
 @endsection
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css">
+@endpush
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.css"></script>
+    <script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            const roleTable = $('#roleTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('user-management.roles.get.data') }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false },
+                    {data: 'name', name: 'name'},
+                    {data: 'display_name', name: 'display_name'},
+                    {data: 'description', name: 'description'},
+                    {data: 'permissions', name: 'permissions', orderable: false, searchable: false},
+                    {data: 'action', name: 'action', orderable: false, searchable: false }
+                ],
+                order: [[0, 'asc']],
+                pageLength: 10,
+                responsive: true
+            });
+        })
+        
+        window.showToast = function(type, message) {
+            if (typeof iziToast !== 'undefined') {
+                iziToast[type]({
+                    title: type === 'success' ? 'Success' : 'Error',
+                    message: message,
+                    position: 'topRight',
+                    timeout: type === 'success' ? 3000 : 5000
+                });
+            } else if (typeof toastr !== 'undefined') {
+                toastr[type](message);
+            } else {
+                alert(message);
+            }
+        };
+
+        // delete Confirm
+        function deleteRole(id) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Are you sure you want to delete ?',
+                text: 'If you delete this, it will be gone forever.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteItem(id);
+                }
+            });
+        }
+
+        // Delete Button
+        function deleteItem(id) {
+            NProgress.start();
+            let url = `{{ route('user-management.roles.destroy', '') }}/${id}`;
+            let csrfToken = '{{ csrf_token() }}';
+            $.ajax({
+                type: "DELETE",
+                url: url.replace(':id', id),
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                success: function(resp) {
+                    NProgress.done();
+                    showToast('success', resp.message || 'Deleted successfully!');
+                    $('#roleTable').DataTable().ajax.reload();
+                },
+                error: function(error) {
+                    NProgress.done();
+                    showToast('danger', error.responseJSON?.message || 'Error deleting  item.');
+                }
+            });
+        }
+
+    </script>
+@endpush
