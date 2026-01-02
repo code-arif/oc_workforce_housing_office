@@ -105,45 +105,9 @@ Route::get('/run-storage-link', function () {
     }
 });
 
-
-// teacher email verification
-Route::get('/verify-email/{token}', [AuthenticationController::class, 'verifyEmail'])->name('verify.email');
-
-
-
-Route::middleware(['auth', 'admin'])->group(function () {
-    // Calendar Routes
-    Route::get('/calendar', [GoogleCalendarController::class, 'index'])->name('calendar.index'); // working
-    Route::get('/calendar/events', [GetEventFromGoogleController::class, 'getEvents'])->name('calendar.events'); // working
-
-    // Google OAuth Routes
-    Route::get('/google/redirect', [GoogleCalendarController::class, 'redirectToGoogle'])->name('google.redirect'); // working
-    Route::get('/google/callback', [GoogleCalendarController::class, 'handleGoogleCallback'])->name('google.callback'); // working
-    Route::get('/google/disconnect', [GoogleCalendarController::class, 'disconnect'])->name('google.disconnect'); // working
-    Route::post('/google/sync', [SyncEventFromGoogleController::class, 'syncFromGoogle'])->name('google.sync'); // working
-
-    // Work CRUD Routes (Modal based)
-    Route::post('/calendar/store', [EventManageGoogleController::class, 'store'])->name('calendar.store'); // working
-    Route::get('/calendar/{work}', [EventManageGoogleController::class, 'show'])->name('calendar.show'); // working
-    Route::post('/calendar/{work}', [EventManageGoogleController::class, 'update'])->name('calendar.update'); // working
-    Route::delete('/calendar/{work}', [EventManageGoogleController::class, 'destroy'])->name('calendar.destroy'); // working
-
-
-    Route::get('/calendars/list', [CalendarCrudController::class, 'index'])->name('calendars.list');
-    Route::post('/calendars/create', [CalendarCrudController::class, 'store'])->name('calendars.create');
-    Route::put('/calendars/{calendar}', [CalendarCrudController::class, 'update'])->name('calendars.update');
-    Route::post('/calendars/{calendar}/toggle', [CalendarCrudController::class, 'toggleVisibility'])->name('calendars.toggle');
-    Route::delete('/calendars/{calendar}', [CalendarCrudController::class, 'destroy'])->name('calendars.destroy');
-
-    // Multi-calendar sync
-    Route::post('/google/sync-all', [SyncMultipleGoogleCalendarsController::class, 'syncAll'])->name('google.sync.all');
-    Route::post('/google/full-sync', [BiDirectionalSyncController::class, 'fullSync'])->name('google.full.sync');
-
-    Route::get('/trash', [TrashController::class, 'index'])->name('trash.index');
-    Route::post('/trash/{id}/restore', [TrashController::class, 'restore'])->name('trash.restore');
-    Route::delete('/trash/{id}/force-delete', [TrashController::class, 'forceDelete'])->name('trash.forceDelete');
-    Route::delete('/trash/empty', [TrashController::class, 'emptyTrash'])->name('trash.empty');
+// test mail template
+Route::get('/mail-test', function(){
+    return view('emails.approval.approval');
 });
-
 
 require __DIR__ . '/auth.php';
