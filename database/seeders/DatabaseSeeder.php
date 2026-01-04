@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             RoomSeeder::class,
             BedSeeder::class,
+            RolePermissionSeeder::class
         ]);
     }
 }

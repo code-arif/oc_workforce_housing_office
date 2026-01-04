@@ -2,20 +2,28 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Str;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Tenant extends Authenticatable implements JWTSubject
 {
 
     protected $fillable = [
-        'user_id',
         'application_source',
         'status',
         'move_in_date',
         'arrival_date',
         'date_of_birth',
-        'gender'
+        'gender',
+        'password',
+        'email',
+        'otp',
+        'otp_expires_at',
+        'reset_password_token',
+        'reset_password_token_expire_at',
+        'approval_token',
+        'approval_token_expires_at'
     ];
 
     // relation with tenant profile table
@@ -62,5 +70,31 @@ class Tenant extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    /**
+     * ----------------------------
+     * Helper funciton for tenant
+     * ----------------------------
+     */
+    public function generateApprovalToken()
+    {
+        $this->approval_token = Str::random(60);
+        $this->approval_token_expires_at = now()->addHours(72);
+        $this->save();
+    }
+
+    public function clearApprovalToken()
+    {
+        $this->approval_token = null;
+        $this->approval_token_expires_at = null;
+        $this->save();
+    }
+
+    public function isApprovalTokenValid($token)
+    {
+        return $this->approval_token === $token &&
+            $this->approval_token_expires_at &&
+            $this->approval_token_expires_at->isFuture();
     }
 }
