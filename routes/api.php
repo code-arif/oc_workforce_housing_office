@@ -32,12 +32,11 @@ Route::group(['middleware' => 'guest:api'], function () {
         return response()->json(['beds' => $beds]);
     })->name('api.rooms.beds');
 
-    
+
 });
 
 
 Route::group(['middleware' => 'auth:api'], function () {
     //User logout
     Route::post('/logout', [AuthenticationController::class, 'logout']);
-
 });

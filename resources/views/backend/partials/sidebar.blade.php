@@ -48,7 +48,7 @@
                     </ul>
                 </li>
                 @endcan
-                
+
 
                 {{-- Tenants --}}
                 <li class="slide">
@@ -70,7 +70,7 @@
 
                 {{-- Leases and files --}}
                 <li class="slide">
-                    
+
                     <a class="side-menu__item {{ request()->routeIs('seasons.list') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                        <i class="fa-solid fa-file"></i>
                         <span class="side-menu__label">Leases & Files</span>
@@ -138,6 +138,7 @@
                     </a>
                 </li>
                 @endcan
+                
                 @can('user-management.users.list' )
                 {{-- User Management --}}
                 <li class="slide">
