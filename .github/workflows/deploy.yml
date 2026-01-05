@@ -3,18 +3,19 @@ on:
   push:
     branches:
       - deploy
+
 jobs:
   FTP-Deploy-Action:
-    name: FTP-Deploy-Action
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.1.0
-        with:
-          fetch-depth: 2
-      - name: FTP-Deploy-Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      - uses: actions/checkout@v2
+
+      - name: SFTP Deploy
+        uses: wangyucode/sftp-action@v1
         with:
           server: ftp.thewarriors.team
+          port: 22
           username: oc@oc-workforce.thewarriors.team
           password: "mb;zA^8z3?QsU,*H"
-
+          local_path: "./"
+          remote_path: "/public_html"
