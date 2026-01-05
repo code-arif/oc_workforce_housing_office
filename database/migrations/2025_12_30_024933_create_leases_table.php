@@ -21,7 +21,7 @@ return new class extends Migration
             $table->date('end_date');
             $table->decimal('rent_amount', 10, 2);
             $table->decimal('deposit_amount', 10, 2)->default(0.00);
-            $table->enum('payment_frequency', ['WEEKLY', 'BIWEEKLY', 'MONTHLY', 'CUSTOM']);
+            $table->enum('payment_frequency', ['WEEKLY', 'BIWEEKLY', 'MONTHLY', 'BIMONTHLY', 'SEMIANNUAL', 'CUSTOM']);
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->softDeletes();

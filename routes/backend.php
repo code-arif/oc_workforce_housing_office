@@ -251,3 +251,29 @@ Route::prefix('user-management')->name('user-management.')->group(function () {
         Route::delete('/{id}', [PermissionController::class, 'destroy'])->name('destroy');
     });
 });
+
+
+// Lease Templates - Document Upload & Management
+Route::resource('lease-templates', \App\Http\Controllers\Api\LeaseTemplateController::class);
+
+Route::prefix('lease-templates')->name('lease-templates.')->group(function () {
+    Route::get('/list/index', [\App\Http\Controllers\Backend\LeaseTemplateController::class, 'index'])->name('list');
+
+    // Additional lease template routes
+    Route::post('{template}/upload-document', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'uploadDocument'])->name('lease-templates.upload-document');
+    Route::get('{template}/preview', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'preview'])->name('lease-templates.preview');
+    Route::get('available-data-sources', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'getAvailableDataSources'])->name('lease-templates.available-data-sources');
+    Route::get('{template}/preview-with-data', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'previewWithData'])->name('lease-templates.preview-with-data');
+    Route::get('{template}/extract-placeholders', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'extractPlaceholders'])->name('lease-templates.extract-placeholders');
+
+    // Field Mappings
+    Route::get('/{template}/field-mappings', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'index'])->name('field-mappings.index');
+    Route::post('/{template}/field-mappings/store', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'store'])->name('field-mappings.store');
+    Route::get('/{template}/field-mappings/suggestions', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'suggestions'])->name('field-mappings.suggestions');
+    Route::get('/{template}/field-mappings/available-data-sources', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'availableDataSources'])->name('field-mappings.available-data-sources');
+    Route::get('/{template}/field-mappings/validate-completeness', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'validateCompleteness'])->name('field-mappings.validate-completeness');
+    Route::delete('/{template}/field-mappings/delete-all', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'deleteAll'])->name('field-mappings.delete-all');
+    Route::get('/{template}/field-mappings/{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'show'])->name('field-mappings.show');
+    Route::put('/{template}/field-mappings/{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'update'])->name('field-mappings.update');
+    Route::delete('/{template}/field-mappings/{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'destroy'])->name('field-mappings.destroy');
+});

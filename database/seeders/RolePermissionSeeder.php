@@ -13,7 +13,6 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        
         // Create permissions for each resource
         $this->createPermissions();
 
@@ -34,7 +33,7 @@ class RolePermissionSeeder extends Seeder
             'property' => ['list', 'create', 'store', 'edit', 'show', 'update', 'delete', 'toggle.status'],
             'seasons' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
             // 'amenities' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            // 'dashboard' => ['view'],
+            'dashboard' => ['view'],
             'cms' => ['view', 'update'],
             'cms.home' => ['slider.store', 'slider.update', 'slider.destroy', 'how-it-works.update'],
             // 'cms.gallery' => ['store', 'destroy'],
@@ -101,33 +100,33 @@ class RolePermissionSeeder extends Seeder
             'property.toggle.status',
             
             // Room Management
-            'rooms.list',
-            'rooms.show',
-            'rooms.create',
-            'rooms.store',
-            'rooms.edit',
-            'rooms.update',
-            'rooms.delete',
-            'rooms.toggle.status',
+            // 'rooms.list',
+            // 'rooms.show',
+            // 'rooms.create',
+            // 'rooms.store',
+            // 'rooms.edit',
+            // 'rooms.update',
+            // 'rooms.delete',
+            // 'rooms.toggle.status',
             
-            // Beds Management
-            'beds.list',
-            'beds.create',
-            'beds.store',
-            'beds.edit',
-            'beds.update',
-            'beds.delete',
-            'beds.toggle.status',
-            'beds.bulk-delete',
+            // // Beds Management
+            // 'beds.list',
+            // 'beds.create',
+            // 'beds.store',
+            // 'beds.edit',
+            // 'beds.update',
+            // 'beds.delete',
+            // 'beds.toggle.status',
+            // 'beds.bulk-delete',
             
             // Units Management
-            'units.list',
-            'units.create',
-            'units.store',
-            'units.edit',
-            'units.update',
-            'units.delete',
-            'units.toggle.status',
+            // 'units.list',
+            // 'units.create',
+            // 'units.store',
+            // 'units.edit',
+            // 'units.update',
+            // 'units.delete',
+            // 'units.toggle.status',
             
             // Profile
             'profile.view',
@@ -148,11 +147,11 @@ class RolePermissionSeeder extends Seeder
             // View only permissions
             'property.list',
             'property.show',
-            'rooms.list',
-            'rooms.show',
-            'beds.list',
-            'units.list',
-            'amenities.list',
+            // 'rooms.list',
+            // 'rooms.show',
+            // 'beds.list',
+            // 'units.list',
+            // 'amenities.list',
             'seasons.list',
             'profile.view',
         ];
@@ -170,5 +169,6 @@ class RolePermissionSeeder extends Seeder
             'profile.update',
         ];
         $tenant->syncPermissions($tenantPermissions);
+        
     }
 }

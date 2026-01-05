@@ -33,6 +33,9 @@ class UserSeeder extends Seeder
 
         foreach ($users as $user) {
             User::create($user);
+            // $user->assignRole('staff');
         }
+        $user = User::where('email', 'admin@gmail.com')->first();
+        $user->assignRole('super admin');
     }
 }

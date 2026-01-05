@@ -130,4 +130,5 @@
 {{-- @include('backend.partials.ajax') --}}
 @include('backend.partials.notification')
 
+@stack('temp_scripts')
 @stack('scripts')
