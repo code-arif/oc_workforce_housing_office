@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Tenents;
+namespace App\Http\Controllers\Api\Tenants;
 
 use Exception;
 use App\Models\Tenant;
@@ -53,9 +53,9 @@ class TenantPasswordController extends Controller
             }
 
             // Check if password already set
-            if ($tenant->password && !Hash::check('', $tenant->password)) {
-                return $this->error([], 'Password already set. Please use forgot password if you need to reset.', 400);
-            }
+            // if ($tenant->password && !Hash::check('', $tenant->password)) {
+            //     return $this->error([], 'Password already set. Please use forgot password if you need to reset.', 400);
+            // }
 
             // Verify approval token
             if ($tenant->approval_token !== $request->approval_token) {
@@ -96,7 +96,7 @@ class TenantPasswordController extends Controller
                     'status' => $tenant->status,
                     'profile' => $tenant->profile,
                 ],
-                'access_token' => $token,
+                'token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60
             ], 'Password set successfully. You are now logged in.', 200);
@@ -166,6 +166,7 @@ class TenantPasswordController extends Controller
 
             return $this->success([
                 'email' => $tenant->email,
+                'otp' => $tenant->otp . ' (TODO: only for testing purposes)',
                 'otp_expires_in_minutes' => 10
             ], 'OTP sent to your email. Please check your inbox.', 200);
         } catch (Exception $e) {
@@ -211,7 +212,7 @@ class TenantPasswordController extends Controller
             return $this->success([
                 'email' => $tenant->email,
                 'reset_token' => $tenant->reset_password_token,
-                'reset_url' => config('app.frontend_url') . "/tenant/reset-password?token={$tenant->reset_password_token}&email={$tenant->email}",
+                'reset_url' => config('app.frontend_url') . "/reset-password?token={$tenant->reset_password_token}&email={$tenant->email}",
                 'expires_in_minutes' => 60
             ], 'OTP verified successfully. Use the reset token to change your password.', 200);
         } catch (Exception $e) {
@@ -278,7 +279,7 @@ class TenantPasswordController extends Controller
                     'email' => $tenant->email,
                     'status' => $tenant->status,
                 ],
-                'access_token' => $token,
+                'token' => $token,
                 'token_type' => 'bearer',
                 'expires_in' => auth('api')->factory()->getTTL() * 60
             ], 'Password reset successfully. You are now logged in.', 200);

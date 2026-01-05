@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\Tenants\TenantAuthController;
 use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Auth\AuthenticationController;
 use App\Http\Controllers\Api\Tenants\PasswordResetController;
-use App\Http\Controllers\Api\Tenents\TenantPasswordController;
+use App\Http\Controllers\Api\Tenants\TenantPasswordController;
 
 //health-check
 Route::get('/health', function () {
@@ -70,11 +70,11 @@ Route::group(['middleware' => 'guest:api'], function () {
         // Tenant Password Management
         Route::prefix('tenant/password')->group(function () {
             // First time password setup (after approval)
-            Route::post('/setup', [TenantPasswordController::class, 'setPasswordAfterApproval']);
+            Route::post('/setup', [TenantPasswordController::class, 'setPasswordAfterApproval']); // done
 
             // Forgot password flow (OTP-based)
-            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']);
-            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']);
+            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // done
+            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
             Route::post('/forgot/reset', [TenantPasswordController::class, 'resetPasswordWithToken']);
         });
     });
