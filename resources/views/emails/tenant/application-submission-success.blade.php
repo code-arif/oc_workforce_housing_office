@@ -4,8 +4,8 @@
     <div class="message-content">
         <p>Dear {{ $tenant->name ?? 'Applicant' }},</p>
 
-        <p>Thank you for submitting your email to <strong>{{ $companyName }}</strong>. We have successfully received
-            your email.</p>
+        <p>Thank you for submitting your application to <strong>{{ $companyName }}</strong>. We have successfully received
+            your application and it is now under review.</p>
 
         <div class="highlight-box">
             <h3 style="color: #D9A600; margin-bottom: 15px;">Application Details:</h3>
@@ -15,7 +15,7 @@
             <p><strong>Submitted:</strong> {{ $tenant->created_at->format('F d, Y') }}</p>
         </div>
 
-        <p>You will get an application form as a tenant within <strong>1-2 business
+        <p>Our team will review your application thoroughly. You can expect to hear back from us within <strong>1-2 business
                 days</strong>.</p>
 
         <div style="text-align: center; margin: 30px 0;">
@@ -24,6 +24,14 @@
                 Visit Contact Page →
             </a>
         </div>
+
+        <p><strong>What to expect next:</strong></p>
+        <ul style="margin: 15px 0; padding-left: 20px;">
+            <li>Initial application review</li>
+            <li>Document verification (if required)</li>
+            <li>Approval decision notification</li>
+            <li>Onboarding process (if approved)</li>
+        </ul>
 
         <p>If you have any questions or need to provide additional information, please don't hesitate to contact our support
             team.</p>

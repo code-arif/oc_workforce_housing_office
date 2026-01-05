@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Mail\TenantApplication;
+namespace App\Mail\Tenant\PasswordReset;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class TenantApprovedMail extends Mailable
+class TenantPasswordResetOTPMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -27,7 +27,7 @@ class TenantApprovedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tenant Approved Mail',
+            subject: 'Tenant Password Reset O T P Mail',
         );
     }
 

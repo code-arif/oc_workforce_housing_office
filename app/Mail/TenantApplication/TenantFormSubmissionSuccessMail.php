@@ -10,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TenantWelcomeMail extends Mailable
+class TenantFormSubmissionSuccessMail extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -23,9 +23,6 @@ class TenantWelcomeMail extends Mailable
     public function __construct(Tenant $tenant)
     {
         $this->tenant = $tenant;
-
-        // Support URL or general info page
-        $this->supportUrl = config('app.frontend_url') . '/contact';
     }
 
     /**
@@ -34,7 +31,7 @@ class TenantWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome! Your Email Has Been Received - ' . config('app.name'),
+            subject: 'Welcome! Your Application Has Been Received - ' . config('app.name'),
         );
     }
 
@@ -44,7 +41,7 @@ class TenantWelcomeMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.tenant.welcome',
+            view: 'emails.tenant.application-submission-success',
         );
     }
 
@@ -58,7 +55,7 @@ class TenantWelcomeMail extends Mailable
             ->replyTo(config('mail.admin_email'), 'Application Support')
             ->with([
                 'tenant' => $this->tenant,
-                'supportUrl' => $this->supportUrl,
+                'supportUrl' => config('app.frontend_url') . '/contact',
                 'companyName' => config('app.name', 'OC Workforce Housing'),
                 'companyEmail' => config('mail.admin_email'),
                 'companyPhone' => config('app.phone', '(443) 336-5182'),

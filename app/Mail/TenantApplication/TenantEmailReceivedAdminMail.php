@@ -5,17 +5,18 @@ namespace App\Mail\TenantApplication;
 use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TenantWelcomeMail extends Mailable
+class TenantEmailReceivedAdminMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $tenant;
-    public $supportUrl;
+    public $viewUrl;
 
     /**
      * Create a new message instance.
@@ -23,9 +24,10 @@ class TenantWelcomeMail extends Mailable
     public function __construct(Tenant $tenant)
     {
         $this->tenant = $tenant;
+        // View URL - Direct link to admin dashboard tenant view
+        $this->viewUrl = config('app.url');
 
-        // Support URL or general info page
-        $this->supportUrl = config('app.frontend_url') . '/contact';
+        Log::info("TenantEmailReceivedAdminMail initialized for Tenant ID: {$tenant->id}");
     }
 
     /**
@@ -34,7 +36,7 @@ class TenantWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome! Your Email Has Been Received - ' . config('app.name'),
+            subject: 'New Tenant Email #' . $this->tenant->id . ' Received',
         );
     }
 
@@ -44,7 +46,7 @@ class TenantWelcomeMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.tenant.welcome',
+            view: 'emails.tenant.application.tenant-email-received',
         );
     }
 
@@ -55,16 +57,15 @@ class TenantWelcomeMail extends Mailable
     {
         return $this
             ->from(config('mail.from.address'), config('mail.from.name'))
-            ->replyTo(config('mail.admin_email'), 'Application Support')
+            ->priority(1) // High priority
             ->with([
                 'tenant' => $this->tenant,
-                'supportUrl' => $this->supportUrl,
+                'viewUrl' => $this->viewUrl,
                 'companyName' => config('app.name', 'OC Workforce Housing'),
-                'companyEmail' => config('mail.admin_email'),
-                'companyPhone' => config('app.phone', '(443) 336-5182'),
-                'tenantEmail' => $this->tenant->email,
+                'currentDate' => now()->format('F d, Y \a\t h:i A'),
                 'applicationId' => $this->tenant->id,
-                'currentYear' => now()->year,
+                'tenantEmail' => $this->tenant->email,
+                'tenantStatus' => ucfirst($this->tenant->status),
             ]);
     }
 

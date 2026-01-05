@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\Tenents\LandingController;
-use App\Http\Controllers\Api\Tenents\TenantAuthController;
-use App\Http\Controllers\Api\Tenents\TenantFormController;
+use App\Http\Controllers\Api\Tenants\LandingController;
+use App\Http\Controllers\Api\Tenants\TenantAuthController;
+use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Auth\AuthenticationController;
+use App\Http\Controllers\Api\Tenants\PasswordResetController;
+use App\Http\Controllers\Api\Tenents\TenantPasswordController;
 
 //health-check
 Route::get('/health', function () {
@@ -45,17 +47,35 @@ Route::group(['middleware' => 'guest:api'], function () {
     Route::prefix('v1')->group(function () {
 
         // Landing - Tenant Email Submission
-        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']);
+        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
+
+        // Admin Actions
+        Route::prefix('admin')->group(function () {
+            Route::post('/tenant/proceed/email', [LandingController::class, 'adminEmailProceed']); // only for developemnt purpose
+            Route::post('/tenant/proceed/application', [LandingController::class, 'adminApplicationProceed']); // only for developemnt purpose
+        });
 
         // Tenant Form (Token-based)
-        Route::get('/tenant/form/{token}', [TenantFormController::class, 'show']);
-        Route::post('/tenant/form/{token}', [TenantFormController::class, 'submit']);
+        Route::prefix('tenant/form')->group(function () {
+            Route::get('/{token}', [TenantFormController::class, 'show']);
+            Route::post('/{token}', [TenantFormController::class, 'submit']); // done
+        });
 
         // Tenant Authentication
         Route::prefix('tenant')->group(function () {
             Route::post('/login', [TenantAuthController::class, 'login']);
-            Route::post('/forgot-password', [TenantAuthController::class, 'forgotPassword']);
-            Route::post('/reset-password', [TenantAuthController::class, 'resetPassword']);
+        });
+
+
+        // Tenant Password Management
+        Route::prefix('tenant/password')->group(function () {
+            // First time password setup (after approval)
+            Route::post('/setup', [TenantPasswordController::class, 'setPasswordAfterApproval']);
+
+            // Forgot password flow (OTP-based)
+            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']);
+            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']);
+            Route::post('/forgot/reset', [TenantPasswordController::class, 'resetPasswordWithToken']);
         });
     });
 });

@@ -8,7 +8,7 @@ class TenantAddress extends Model
 {
     protected $fillable = [
         'tenant_id',
-        'address_line1',
+        'address',
         'city',
         'state',
         'zip',

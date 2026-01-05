@@ -1,31 +1,29 @@
 <?php
 
-namespace App\Mail\TenantApplication;
+namespace App\Mail\Tenant\Application;
 
-use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\SerializesModels;
 
-class TenantWelcomeMail extends Mailable
+class ApplicationRejectionMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public $tenant;
-    public $supportUrl;
+    public $contactUrl;
+
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Tenant $tenant)
+    public function __construct($tenant, $contactUrl)
     {
         $this->tenant = $tenant;
-
-        // Support URL or general info page
-        $this->supportUrl = config('app.frontend_url') . '/contact';
+        $this->contactUrl = $contactUrl;
     }
 
     /**
@@ -34,7 +32,7 @@ class TenantWelcomeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome! Your Email Has Been Received - ' . config('app.name'),
+            subject: 'Your Application has been Rejected',
         );
     }
 
@@ -44,7 +42,7 @@ class TenantWelcomeMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.tenant.welcome',
+            view: 'emails.tenant.application.application-rejected',
         );
     }
 
@@ -55,16 +53,14 @@ class TenantWelcomeMail extends Mailable
     {
         return $this
             ->from(config('mail.from.address'), config('mail.from.name'))
-            ->replyTo(config('mail.admin_email'), 'Application Support')
             ->with([
                 'tenant' => $this->tenant,
-                'supportUrl' => $this->supportUrl,
+                'contactUrl' => $this->contactUrl,
                 'companyName' => config('app.name', 'OC Workforce Housing'),
-                'companyEmail' => config('mail.admin_email'),
-                'companyPhone' => config('app.phone', '(443) 336-5182'),
-                'tenantEmail' => $this->tenant->email,
+                'currentDate' => now()->format('F d, Y \a\t h:i A'),
                 'applicationId' => $this->tenant->id,
-                'currentYear' => now()->year,
+                'tenantEmail' => $this->tenant->email,
+                'tenantStatus' => ucfirst($this->tenant->status),
             ]);
     }
 
