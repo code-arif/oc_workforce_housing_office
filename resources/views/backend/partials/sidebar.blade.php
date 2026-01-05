@@ -73,13 +73,14 @@
                     
                     <a class="side-menu__item {{ request()->routeIs('seasons.list') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                        <i class="fa-solid fa-file"></i>
-                        <span class="side-menu__label">Leases & Files</span>
+                        <span class="side-menu__label">Manage Leases & Files</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
                         @can('seasons.list')
                         <li><a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a></li>
                         @endcan
+                        <li><a href="{{route('lease-templates.list')}}" class="slide-item">Lease Templates</a></li>
                         <li><a href="#" class="slide-item">Leases</a></li>
                     </ul>
                 </li>

@@ -27,8 +27,6 @@
 
     @vite(['resources/js/app.js'])
 
-
-
     @include('backend.partials.styles')
 </head>
 
