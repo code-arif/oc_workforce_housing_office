@@ -15,6 +15,6 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ftp.thewarriors.team
-          username: app@workforce.thewarriors.team
-          password: 8{MnD(Nc)hE3A(za
+          username: oc@oc-workforce.thewarriors.team
+          password: "mb;zA^8z3?QsU,*H"
 
