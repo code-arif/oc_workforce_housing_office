@@ -18,9 +18,6 @@ Route::get('/health', function () {
 //Guest user routes
 Route::group(['middleware' => 'guest:api'], function () {
 
-    // Login & Register
-    Route::post('/login', [AuthenticationController::class, 'login']);
-
     // Property Creation - Unit/Room/Bed API
     Route::get('/unit/{unitId}/rooms', function ($unitId) {
         $unit = \App\Models\Unit::with('rooms')->find($unitId);
@@ -48,29 +45,31 @@ Route::group(['middleware' => 'guest:api'], function () {
     Route::prefix('v1')->group(function () {
 
         // Landing - Tenant Email Submission
-        Route::post('tenant/apply', [LandingController::class, 'submitEmail']);
+        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']);
 
         // Tenant Form (Token-based)
-        Route::get('tenant/form/{token}', [TenantFormController::class, 'show']);
-        Route::post('tenant/form/{token}', [TenantFormController::class, 'submit']);
+        Route::get('/tenant/form/{token}', [TenantFormController::class, 'show']);
+        Route::post('/tenant/form/{token}', [TenantFormController::class, 'submit']);
 
         // Tenant Authentication
         Route::prefix('tenant')->group(function () {
-            Route::post('login', [TenantAuthController::class, 'login']);
-            Route::post('register', [TenantAuthController::class, 'register']);
-            Route::post('forgot-password', [TenantAuthController::class, 'forgotPassword']);
-            Route::post('reset-password', [TenantAuthController::class, 'resetPassword']);
-        });
-
-        // Admin Authentication
-        Route::prefix('admin')->group(function () {
-            // Route::post('login', [AdminAuthController::class, 'login']);
+            Route::post('/login', [TenantAuthController::class, 'login']);
+            Route::post('/forgot-password', [TenantAuthController::class, 'forgotPassword']);
+            Route::post('/reset-password', [TenantAuthController::class, 'resetPassword']);
         });
     });
 });
 
 
 Route::group(['middleware' => 'auth:api'], function () {
-    //User logout
-    Route::post('/logout', [AuthenticationController::class, 'logout']);
+    // Protected Tenant Routes
+    Route::prefix('v1/tenant')->group(function () {
+        Route::get('/profile', [TenantAuthController::class, 'profile']);
+        Route::put('/profile-update', [TenantAuthController::class, 'updateProfile']);
+        Route::put('/avatar-update', [TenantAuthController::class, 'updateAvatar']);
+        Route::get('/dashboard', [TenantAuthController::class, 'dashboard']);
+        Route::post('/logout', [TenantAuthController::class, 'logout']);
+        Route::get('/documents', [TenantAuthController::class, 'documents']);
+        Route::post('/documents/upload', [TenantAuthController::class, 'uploadDocument']);
+    });
 });
