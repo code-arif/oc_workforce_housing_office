@@ -144,7 +144,7 @@ class LandingController extends Controller
             $formUrl = config('app.frontend_url') . "/apply-lease/{$formToken}";
 
             // Send email to tenant with form link
-            Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formUrl));
+            // Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formUrl));
 
             DB::commit();
 
