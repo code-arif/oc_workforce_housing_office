@@ -60,23 +60,23 @@ class LandingController extends Controller
             $approvalToken = $tenant->generateApprovalToken();
 
             // Send mail to admin with proceed and view buttons
-            try {
-                Mail::to(config('mail.admin_email'))
-                    ->send(new TenantEmailReceivedAdminMail($tenant));
-            } catch (Exception $mailError) {
-                Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
-            }
+            // try {
+            //     Mail::to(config('mail.admin_email'))
+            //         ->send(new TenantEmailReceivedAdminMail($tenant));
+            // } catch (Exception $mailError) {
+            //     Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
+            // }
 
             // Short delay to avoid rate limiting
-            sleep(1);
+            // sleep(1);
 
             // Send welcome mail to tenant
-            try {
-                Mail::to($tenant->email)
-                    ->send(new TenantWelcomeMail($tenant));
-            } catch (Exception $mailError) {
-                Log::error('Failed to send welcome email to tenant: ' . $mailError->getMessage());
-            }
+            // try {
+            //     Mail::to($tenant->email)
+            //         ->send(new TenantWelcomeMail($tenant));
+            // } catch (Exception $mailError) {
+            //     Log::error('Failed to send welcome email to tenant: ' . $mailError->getMessage());
+            // }
 
             DB::commit();
 
