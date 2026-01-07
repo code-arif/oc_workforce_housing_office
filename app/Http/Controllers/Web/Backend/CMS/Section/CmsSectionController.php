@@ -278,7 +278,7 @@ class CmsSectionController extends Controller
                 case 'pricing-item':
                     // Check if this is a DataTable AJAX request
                     if ($request->ajax() && $request->has('draw')) {
-                        $plans = PricingPlan::query()->orderBy('created_at', 'desc');
+                        $plans = PricingPlan::query();
 
                         return DataTables::of($plans)
                             ->addIndexColumn()
@@ -328,6 +328,14 @@ class CmsSectionController extends Controller
                     }
 
                     return view('backend.layouts.cms.pricing.pricing-item')->render();
+
+                    // Reservation page - reservation hero section
+                case 'reservation-hero-section':
+                    $data = CMS::where('page', 'reservation')
+                        ->where('section', 'hero')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.reservation.hero', compact('data'))->render();
 
                     // fallback for unknown sections
                 default:

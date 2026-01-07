@@ -173,9 +173,9 @@
                                         Reservation Page
                                     </h6>
 
-                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
-                                        data-section="amenities-feature" data-title="Featured Amenities"
-                                        data-breadcrumb="Featured Amenities">
+                                    <a class="nav-link" id="reservation-hero-tab" href="javascript:void(0);"
+                                        data-section="reservation-hero-section" data-title="Reservation Hero"
+                                        data-breadcrumb="Reservation Hero">
                                         <i class="fa-solid fa-book-atlas me-2"></i> Reservation Page Banner
                                     </a>
 

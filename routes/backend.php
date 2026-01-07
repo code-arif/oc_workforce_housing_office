@@ -26,6 +26,7 @@ use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
+use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
 
@@ -201,6 +202,9 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::post('/status', [PricingPageController::class, 'toggleStatus'])->name('status');
         Route::delete('/delete', [PricingPageController::class, 'destroy'])->name('delete');
     });
+
+    // Reservation page
+    Route::post('/reservation/hero/update', [ReservationPageController::class, 'update'])->name('reservation.hero.update');
 });
 
 //! Route for Profile Settings

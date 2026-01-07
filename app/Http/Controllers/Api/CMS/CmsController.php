@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\CMS;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\PricingPlan;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -215,9 +216,37 @@ class CmsController extends Controller
             ->where('name', 'item')
             ->get();
 
+
+        // pricing plans
+        $plans = PricingPlan::active() // scope from model
+            ->select([
+                'id',
+                'name',
+                'price_per_bed',
+                'tenants_per_room',
+                'amenities',
+                'description'
+            ])
+            ->orderBy('price_per_bed', 'asc')
+            ->get();
+
+        $formattedPlans = $plans->map(function ($plan) {
+            return [
+                'id'                => $plan->id,
+                'name'              => $plan->name,
+                'price_per_bed'     => (float) $plan->price_per_bed,
+                'formatted_price'   => '$' . number_format($plan->price_per_bed, 0) . ' / per bed',
+                'tenants_per_room'  => (int) $plan->tenants_per_room,
+                'tenants_text'      => "Sleep {$plan->tenants_per_room} tenants per room",
+                'amenities'         => $plan->amenities ?? [],
+                'description'       => $plan->description,
+            ];
+        });
+
         return $this->success([
             'pricing' => [
                 'hero' => CMSResource::collection($hero),
+                'plans' => $formattedPlans
             ]
         ], 'Pricing page data retrieved successfully');
     }
