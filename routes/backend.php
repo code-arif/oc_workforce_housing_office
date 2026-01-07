@@ -80,7 +80,6 @@ Route::prefix('beds')->name('beds.')->group(function () {
 
     Route::get('/toggle-status/{id}', [BedController::class, 'toggleStatus'])->name('toggle.status');
     Route::get('/get-rooms/{unitId}', [BedController::class, 'getRooms'])->name('get.rooms');
-
 });
 
 
@@ -137,6 +136,9 @@ Route::prefix('cms')->name('cms.')->group(function () {
 
     // Home Hero Section
     Route::post('/home/hero/update', [HomePageController::class, 'update'])->name('home.hero.section.update');
+
+    // Home housing option section
+    Route::post('/home/housing-option/update', [HomePageController::class, 'housingOptionupdate'])->name('home.housing.option.section.update');
 
     // Slider Management Routes
     Route::prefix('home/slider')->name('slider.')->group(function () {

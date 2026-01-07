@@ -25,6 +25,11 @@ class CmsController extends Controller
             ->orderBy('order', 'asc')
             ->get();
 
+        $housingOptions = CMS::where('page', 'home')
+            ->where('section', 'housing-options')
+            ->where('name', 'item')
+            ->get();
+
         $howItWorks = CMS::where('page', 'home')
             ->where('section', 'how-it-works')
             ->where('name', 'item')
@@ -64,6 +69,7 @@ class CmsController extends Controller
             'home' => [
                 'hero' => CMSResource::collection($hero),
                 'sliders' => SliderResource::collection($sliders),
+                'housing_options' => CMSResource::collection($housingOptions),
                 'how_it_works' => CMSResource::collection($howItWorks),
                 'how_it_works_item' => CMSResource::collection($howItWorksItem),
                 'employee_and_sponsor' => CMSResource::collection($employeeAndSponsor),

@@ -57,6 +57,16 @@ class CmsSectionController extends Controller
 
                     return view('backend.layouts.cms.home.hero', compact('data', 'sliders'))->render();
 
+                    // home page housing option section
+                case 'housing-options':
+                    $data = CMS::where('page', 'home')
+                        ->where('section', 'housing-options')
+                        ->where('name', 'item')
+                        ->first();
+
+                    return view('backend.layouts.cms.home.housing-option', compact('data'))->render();
+
+
                     // home page how it works section
                 case 'how-it-works':
                     // Check if this is a DataTable AJAX request
