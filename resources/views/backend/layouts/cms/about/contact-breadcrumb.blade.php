@@ -19,12 +19,9 @@
 
                     {{-- Description --}}
                     <div class="form-group mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea name="description" id="summernote" class="summernote form-control @error('description') is-invalid @enderror"
-                            rows="6" placeholder="Enter description">{{ $data->description ?? old('description') }}</textarea>
-                        @error('description')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
+                        <label for="about_description" class="form-label">Description</label>
+                        <textarea class="form-control summernote" name="description" id="about_description" placeholder="Enter Description">{{ $data->description ?? '' }}</textarea>
+                        <div class="invalid-feedback"></div>
                     </div>
 
                     {{-- Image --}}
@@ -68,6 +65,24 @@
             const newForm = form.cloneNode(true);
             form.parentNode.replaceChild(newForm, form);
 
+            // Initialize Summernote
+            if (typeof $.fn.summernote !== 'undefined') {
+                $(newForm).find('.summernote').summernote({
+                    placeholder: 'Your Content Here...',
+                    tabsize: 2,
+                    height: 150,
+                    toolbar: [
+                        ['style', ['style']],
+                        ['font', ['bold', 'underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                        ['table', ['table']],
+                        ['insert', ['link']],
+                        ['view', ['fullscreen', 'codeview', 'help']]
+                    ]
+                });
+            }
+
             // Re-initialize Dropify on new form
             if (typeof $.fn.dropify !== 'undefined') {
                 $(newForm).find('.dropify').dropify({
@@ -99,6 +114,10 @@
 
                 try {
                     const formData = new FormData(this);
+
+                    // Get summernote content and add to formData
+                    const descriptionContent = $(this).find('.summernote').summernote('code');
+                    formData.set('description', descriptionContent);
 
                     // Log form data for debugging
                     console.log('Form Data:');

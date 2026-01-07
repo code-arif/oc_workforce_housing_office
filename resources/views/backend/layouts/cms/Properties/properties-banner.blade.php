@@ -25,6 +25,20 @@
                         <div class="invalid-feedback"></div>
                     </div>
 
+                    {{-- Image --}}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group mb-3">
+                                <label for="image" class="form-label">Banckground Image</label>
+                                <input type="file" class="dropify form-control"
+                                    data-default-file="{{ !empty($data->image) && file_exists(public_path($data->image)) ? asset($data->image) : asset('default/placeholder-image.avif') }}"
+                                    name="image" id="image" accept="image/*">
+                                <small class="text-muted">Recommended: 1920x1080px (Max: 2MB)</small>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <button class="btn btn-primary" type="submit" id="propertyBannerSubmitButton">
                             <span class="spinner-border spinner-border-sm d-none" id="propertyBannerSpinner"></span>
@@ -52,6 +66,17 @@
             const newForm = form.cloneNode(true);
             form.parentNode.replaceChild(newForm, form);
 
+            // Re-initialize Dropify on new form
+            if (typeof $.fn.dropify !== 'undefined') {
+                $(newForm).find('.dropify').dropify({
+                    messages: {
+                        'default': 'Drag and drop a file here or click',
+                        'replace': 'Drag and drop or click to replace',
+                        'remove': 'Remove',
+                        'error': 'Sorry, the file is too large'
+                    }
+                });
+            }
 
 
             // Add submit event listener
@@ -90,6 +115,21 @@
                     if (response.data.success) {
                         window.showToast('success', response.data.message ||
                             'Updated successfully!');
+
+                        // Update dropify preview if new image was uploaded
+                        if (response.data.image) {
+                            const dropifyWrapper = this.querySelector('.dropify-wrapper');
+                            if (dropifyWrapper) {
+                                const dropifyPreview = dropifyWrapper.querySelector(
+                                    '.dropify-preview');
+                                if (dropifyPreview) {
+                                    const imgElement = dropifyPreview.querySelector('img');
+                                    if (imgElement) {
+                                        imgElement.src = window.assetUrl(response.data.image);
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         window.showToast('error', response.data.message || 'Failed to update!');
                     }

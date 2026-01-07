@@ -20,6 +20,22 @@ class AmenitiesPageController extends Controller
         try {
             $validated_data = $request->validated();
 
+            // get the existing record
+            $existing = CMS::where('page', 'amenities')
+                ->where('section', 'hero')
+                ->where('name', 'item')
+                ->first();
+
+            // handle image if present in request
+            if ($request->hasFile('image')) {
+                if ($existing && $existing->image) {
+                    Helper::deleteImage($existing->image);
+                }
+
+                $image_path = Helper::uploadImage($request->file('image'), 'cms/amenities/hero');
+                $validated_data['image'] = $image_path;
+            }
+
             // Add additional data
             $validated_data['page'] = 'amenities';
             $validated_data['section'] = 'hero';

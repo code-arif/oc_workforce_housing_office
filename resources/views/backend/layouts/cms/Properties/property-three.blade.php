@@ -2,26 +2,25 @@
     <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light">
-                <h4 class="card-title">Amenities Page - Hero Section</h4>
+                <h4 class="card-title">Property Page - Property Three</h4>
             </div>
             <div class="card-body">
-                <form id="amenitiesHeroForm" method="post" action="{{ route('cms.amenities.hero.update') }}"
+                <form id="propertyThreeForm" method="post" action="{{ route('cms.property.three.update') }}"
                     enctype="multipart/form-data">
                     @csrf
 
                     {{-- Title --}}
                     <div class="form-group mb-3">
-                        <label for="amenities_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="amenities_title"
+                        <label for="property_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="property_title"
                             placeholder="Enter title" value="{{ $data->title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
 
-                    {{-- Sub Title --}}
+                    {{-- Description (replacing Sub Title) --}}
                     <div class="form-group mb-3">
-                        <label for="amenities_sub_title" class="form-label">Sub Title</label>
-                        <input type="text" class="form-control" name="sub_title" id="amenities_sub_title"
-                            placeholder="Enter Sub Title" value="{{ $data->sub_title ?? '' }}">
+                        <label for="property_description" class="form-label">Description</label>
+                        <textarea class="form-control summernote" name="description" id="property_description" placeholder="Enter Description">{{ $data->description ?? '' }}</textarea>
                         <div class="invalid-feedback"></div>
                     </div>
 
@@ -29,7 +28,7 @@
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group mb-3">
-                                <label for="image" class="form-label">Banckground Image</label>
+                                <label for="image" class="form-label">Property Image</label>
                                 <input type="file" class="dropify form-control"
                                     data-default-file="{{ !empty($data->image) && file_exists(public_path($data->image)) ? asset($data->image) : asset('default/placeholder-image.avif') }}"
                                     name="image" id="image" accept="image/*">
@@ -40,9 +39,9 @@
                     </div>
 
                     <div class="form-group">
-                        <button class="btn btn-primary" type="submit" id="submitButton">
-                            <span class="spinner-border spinner-border-sm d-none" id="amenitiesHeroSpinner"></span>
-                            <span id="submitBtnText">Save Changes</span>
+                        <button class="btn btn-primary" type="submit" id="propertyThreeSubmitButton">
+                            <span class="spinner-border spinner-border-sm d-none" id="propertyThreeSpinner"></span>
+                            <span id="propertyThreeSubmitBtnText">Save Changes</span>
                         </button>
                     </div>
                 </form>
@@ -54,9 +53,9 @@
 <script>
     (function() {
         // Define initialization function
-        window.initAmenitiesHeroSection = function() {
+        window.initPropertyThreeSection = function() {
 
-            const form = document.getElementById('amenitiesHeroForm');
+            const form = document.getElementById('propertyThreeForm');
             if (!form) {
                 console.error('Form not found');
                 return;
@@ -65,6 +64,24 @@
             // Clone and replace to remove all old event listeners
             const newForm = form.cloneNode(true);
             form.parentNode.replaceChild(newForm, form);
+
+            // Initialize Summernote
+            if (typeof $.fn.summernote !== 'undefined') {
+                $(newForm).find('.summernote').summernote({
+                    placeholder: 'Your Content Here...',
+                    tabsize: 2,
+                    height: 150,
+                    toolbar: [
+                        ['style', ['style']],
+                        ['font', ['bold', 'underline', 'clear']],
+                        ['color', ['color']],
+                        ['para', ['ul', 'ol', 'paragraph']],
+                        ['table', ['table']],
+                        ['insert', ['link']],
+                        ['view', ['fullscreen', 'codeview', 'help']]
+                    ]
+                });
+            }
 
             // Re-initialize Dropify on new form
             if (typeof $.fn.dropify !== 'undefined') {
@@ -83,9 +100,9 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                const submitBtn = this.querySelector('#submitButton');
-                const spinner = this.querySelector('#amenitiesHeroSpinner');
-                const btnText = this.querySelector('#submitBtnText');
+                const submitBtn = this.querySelector('#propertyThreeSubmitButton');
+                const spinner = this.querySelector('#propertyThreeSpinner');
+                const btnText = this.querySelector('#propertyThreeSubmitBtnText');
 
                 // Disable button and show loading
                 submitBtn.disabled = true;
@@ -97,6 +114,10 @@
 
                 try {
                     const formData = new FormData(this);
+
+                    // Get summernote content and add to formData
+                    const descriptionContent = $(this).find('.summernote').summernote('code');
+                    formData.set('description', descriptionContent);
 
                     // Log form data for debugging
                     console.log('Form Data:');
@@ -114,6 +135,21 @@
                     if (response.data.success) {
                         window.showToast('success', response.data.message ||
                             'Updated successfully!');
+
+                        // Update dropify preview if new image was uploaded
+                        if (response.data.image) {
+                            const dropifyWrapper = this.querySelector('.dropify-wrapper');
+                            if (dropifyWrapper) {
+                                const dropifyPreview = dropifyWrapper.querySelector(
+                                    '.dropify-preview');
+                                if (dropifyPreview) {
+                                    const imgElement = dropifyPreview.querySelector('img');
+                                    if (imgElement) {
+                                        imgElement.src = window.assetUrl(response.data.image);
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         window.showToast('error', response.data.message || 'Failed to update!');
                     }
@@ -204,8 +240,8 @@
         };
 
         // Auto-execute initialization
-        if (typeof window.initAmenitiesHeroSection === 'function') {
-            window.initAmenitiesHeroSection();
+        if (typeof window.initPropertyThreeSection === 'function') {
+            window.initPropertyThreeSection();
         }
     })();
 </script>
@@ -228,5 +264,15 @@
 
     .dropify-preview {
         background-color: #f9fafb;
+    }
+
+    /* Summernote custom styles */
+    .note-editor.note-frame {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    .note-editor.note-frame .note-statusbar {
+        background-color: #f8f9fa;
     }
 </style>

@@ -89,11 +89,15 @@
                                     </a>
                                     <a class="nav-link" id="property-one-tab" href="javascript:void(0);" data-section="property-one"
                                         data-title="Property One" data-breadcrumb="Property One">
-                                        <i class="fa-solid fa-briefcase me-2"></i> Property One
+                                        <i class="fa-solid fa-1 me-2"></i> Property One
                                     </a>
-                                    <a class="nav-link" id="property-one-tab" href="javascript:void(0);" data-section="property-one"
-                                        data-title="Property Two" data-breadcrumb="Property One">
-                                        <i class="fa-solid fa-briefcase me-2"></i> Property Two
+                                    <a class="nav-link" id="property-two-tab" href="javascript:void(0);" data-section="property-two"
+                                        data-title="Property Two" data-breadcrumb="Property Two">
+                                        <i class="fa-solid fa-2 me-2"></i> Property Two
+                                    </a>
+                                    <a class="nav-link" id="property-three-tab" href="javascript:void(0);" data-section="property-three"
+                                        data-title="Property Three" data-breadcrumb="Property Three">
+                                        <i class="fa-solid fa-3 me-2"></i> Property Three
                                     </a>
 
                                     {{-- about us page --}}
@@ -134,14 +138,16 @@
                                         Pricing Page
                                     </h6>
 
-                                    <a class="nav-link" id="amenities-hero-tab" href="javascript:void(0);"
-                                        data-section="amenities-hero-section" data-title="Amenities Hero"
-                                        data-breadcrumb="Amenities Hero">
+                                    {{-- Pricing page hero section --}}
+                                    <a class="nav-link" id="pricing-hero-tab" href="javascript:void(0);"
+                                        data-section="pricing-hero-section" data-title="Pricing Hero"
+                                        data-breadcrumb="Pricing Hero">
                                         <i class="fa-solid fa-democrat me-2"></i> Pricing Banner
                                     </a>
-                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
-                                        data-section="amenities-feature" data-title="Featured Amenities"
-                                        data-breadcrumb="Featured Amenities">
+
+                                    <a class="nav-link" id="pricing-item-tab" href="javascript:void(0);"
+                                        data-section="pricing-item" data-title="Pricing Item"
+                                        data-breadcrumb="Pricing Item">
                                         <i class="fa-solid fa-republican me-2"></i> Pricing Item
                                     </a>
 

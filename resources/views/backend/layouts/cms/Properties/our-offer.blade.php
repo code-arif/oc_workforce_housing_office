@@ -2,47 +2,33 @@
     <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light">
-                <h4 class="card-title">Amenities Page - Hero Section</h4>
+                <h4 class="card-title">Property Page - Our Offer</h4>
             </div>
             <div class="card-body">
-                <form id="amenitiesHeroForm" method="post" action="{{ route('cms.amenities.hero.update') }}"
+                <form id="propertyOurOfferForm" method="post" action="{{ route('cms.property.our-offer.update') }}"
                     enctype="multipart/form-data">
                     @csrf
 
                     {{-- Title --}}
                     <div class="form-group mb-3">
-                        <label for="amenities_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="amenities_title"
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="title"
                             placeholder="Enter title" value="{{ $data->title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
 
                     {{-- Sub Title --}}
                     <div class="form-group mb-3">
-                        <label for="amenities_sub_title" class="form-label">Sub Title</label>
-                        <input type="text" class="form-control" name="sub_title" id="amenities_sub_title"
+                        <label for="sub_title" class="form-label">Sub Title</label>
+                        <input type="text" class="form-control" name="sub_title" id="sub_title"
                             placeholder="Enter Sub Title" value="{{ $data->sub_title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
 
-                    {{-- Image --}}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group mb-3">
-                                <label for="image" class="form-label">Banckground Image</label>
-                                <input type="file" class="dropify form-control"
-                                    data-default-file="{{ !empty($data->image) && file_exists(public_path($data->image)) ? asset($data->image) : asset('default/placeholder-image.avif') }}"
-                                    name="image" id="image" accept="image/*">
-                                <small class="text-muted">Recommended: 1920x1080px (Max: 2MB)</small>
-                                <div class="invalid-feedback"></div>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="form-group">
-                        <button class="btn btn-primary" type="submit" id="submitButton">
-                            <span class="spinner-border spinner-border-sm d-none" id="amenitiesHeroSpinner"></span>
-                            <span id="submitBtnText">Save Changes</span>
+                        <button class="btn btn-primary" type="submit" id="propertyOurOfferSubmitButton">
+                            <span class="spinner-border spinner-border-sm d-none" id="propertyOurOfferSpinner"></span>
+                            <span id="propertyOfferSubmitBtnText">Save Changes</span>
                         </button>
                     </div>
                 </form>
@@ -54,9 +40,9 @@
 <script>
     (function() {
         // Define initialization function
-        window.initAmenitiesHeroSection = function() {
+        window.initPropertyOfferSection = function() {
 
-            const form = document.getElementById('amenitiesHeroForm');
+            const form = document.getElementById('propertyOurOfferForm');
             if (!form) {
                 console.error('Form not found');
                 return;
@@ -78,14 +64,16 @@
                 });
             }
 
+
+
             // Add submit event listener
             newForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const submitBtn = this.querySelector('#submitButton');
-                const spinner = this.querySelector('#amenitiesHeroSpinner');
-                const btnText = this.querySelector('#submitBtnText');
+                const submitBtn = this.querySelector('#propertyOurOfferSubmitButton');
+                const spinner = this.querySelector('#propertyOurOfferSpinner');
+                const btnText = this.querySelector('#propertyOfferSubmitBtnText');
 
                 // Disable button and show loading
                 submitBtn.disabled = true;
@@ -149,51 +137,6 @@
                 return false;
             });
 
-            // Image file validation
-            const imageInput = newForm.querySelector('#image');
-            if (imageInput) {
-                imageInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        // Check file size (2MB max)
-                        if (file.size > 2 * 1024 * 1024) {
-                            window.showToast('error', 'Image size should not exceed 2MB');
-                            e.target.value = '';
-
-                            // Reset dropify
-                            if (typeof $.fn.dropify !== 'undefined') {
-                                const dropify = $(e.target).data('dropify');
-                                if (dropify) {
-                                    dropify.resetPreview();
-                                    dropify.clearElement();
-                                }
-                            }
-                            return;
-                        }
-
-                        // Check file type
-                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp',
-                            'image/avif'
-                        ];
-                        if (!validTypes.includes(file.type)) {
-                            window.showToast('error',
-                                'Please upload a valid image file (JPEG, PNG, WebP, AVIF)');
-                            e.target.value = '';
-
-                            // Reset dropify
-                            if (typeof $.fn.dropify !== 'undefined') {
-                                const dropify = $(e.target).data('dropify');
-                                if (dropify) {
-                                    dropify.resetPreview();
-                                    dropify.clearElement();
-                                }
-                            }
-                            return;
-                        }
-                    }
-                });
-            }
-
             function clearFormErrors(form) {
                 form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
                 form.querySelectorAll('.invalid-feedback').forEach(el => {
@@ -204,29 +147,8 @@
         };
 
         // Auto-execute initialization
-        if (typeof window.initAmenitiesHeroSection === 'function') {
-            window.initAmenitiesHeroSection();
+        if (typeof window.initPropertyOfferSection === 'function') {
+            window.initPropertyOfferSection();
         }
     })();
 </script>
-
-<style>
-    /* Dropify custom styles */
-    .dropify-wrapper {
-        border: 2px dashed #D9A600;
-        border-radius: 0.375rem;
-    }
-
-    .dropify-wrapper:hover {
-        border-color: #D9A600;
-    }
-
-    .dropify-message p {
-        font-size: 14px;
-        color: #6b7280;
-    }
-
-    .dropify-preview {
-        background-color: #f9fafb;
-    }
-</style>

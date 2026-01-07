@@ -2,25 +2,25 @@
     <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light">
-                <h4 class="card-title">Amenities Page - Hero Section</h4>
+                <h4 class="card-title">Pricing Page - Hero Section</h4>
             </div>
             <div class="card-body">
-                <form id="amenitiesHeroForm" method="post" action="{{ route('cms.amenities.hero.update') }}"
+                <form id="pricingHeroForm" method="post" action="{{ route('cms.pricing.hero.update') }}"
                     enctype="multipart/form-data">
                     @csrf
 
                     {{-- Title --}}
                     <div class="form-group mb-3">
-                        <label for="amenities_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="amenities_title"
+                        <label for="pricing_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" id="pricing_title"
                             placeholder="Enter title" value="{{ $data->title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
 
                     {{-- Sub Title --}}
                     <div class="form-group mb-3">
-                        <label for="amenities_sub_title" class="form-label">Sub Title</label>
-                        <input type="text" class="form-control" name="sub_title" id="amenities_sub_title"
+                        <label for="pricing_sub_title" class="form-label">Sub Title</label>
+                        <input type="text" class="form-control" name="sub_title" id="pricing_sub_title"
                             placeholder="Enter Sub Title" value="{{ $data->sub_title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
@@ -40,9 +40,9 @@
                     </div>
 
                     <div class="form-group">
-                        <button class="btn btn-primary" type="submit" id="submitButton">
-                            <span class="spinner-border spinner-border-sm d-none" id="amenitiesHeroSpinner"></span>
-                            <span id="submitBtnText">Save Changes</span>
+                        <button class="btn btn-primary" type="submit" id="submitPriceButton">
+                            <span class="spinner-border spinner-border-sm d-none" id="pricingHeroSpinner"></span>
+                            <span id="submitPriceBtnText">Save Changes</span>
                         </button>
                     </div>
                 </form>
@@ -54,9 +54,9 @@
 <script>
     (function() {
         // Define initialization function
-        window.initAmenitiesHeroSection = function() {
+        window.initPricingHeroSection = function() {
 
-            const form = document.getElementById('amenitiesHeroForm');
+            const form = document.getElementById('pricingHeroForm');
             if (!form) {
                 console.error('Form not found');
                 return;
@@ -83,9 +83,9 @@
                 e.preventDefault();
                 e.stopPropagation();
 
-                const submitBtn = this.querySelector('#submitButton');
-                const spinner = this.querySelector('#amenitiesHeroSpinner');
-                const btnText = this.querySelector('#submitBtnText');
+                const submitBtn = this.querySelector('#submitPriceButton');
+                const spinner = this.querySelector('#pricingHeroSpinner');
+                const btnText = this.querySelector('#submitPriceBtnText');
 
                 // Disable button and show loading
                 submitBtn.disabled = true;
@@ -204,8 +204,8 @@
         };
 
         // Auto-execute initialization
-        if (typeof window.initAmenitiesHeroSection === 'function') {
-            window.initAmenitiesHeroSection();
+        if (typeof window.initPricingHeroSection === 'function') {
+            window.initPricingHeroSection();
         }
     })();
 </script>

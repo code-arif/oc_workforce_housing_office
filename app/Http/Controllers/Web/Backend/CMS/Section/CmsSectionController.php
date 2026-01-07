@@ -142,6 +142,38 @@ class CmsSectionController extends Controller
                         ->first();
                     return view('backend.layouts.cms.properties.properties-banner', compact('data'))->render();
 
+                    // property page - our offer section
+                case 'property-our-offer':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'our-offer')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.our-offer', compact('data'))->render();
+
+                    // property page - property one section
+                case 'property-one':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-one')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.property-one', compact('data'))->render();
+
+                    // property page - property two section
+                case 'property-two':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-two')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.property-two', compact('data'))->render();
+
+                    // property page - property three section
+                case 'property-three':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-three')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.property-three', compact('data'))->render();
+
                     // about page - about us breadcrumb section
                 case 'about-us-breadcrumb':
                     $data = CMS::where('page', 'about')
@@ -222,6 +254,15 @@ class CmsSectionController extends Controller
                         ->first();
 
                     return view('backend.layouts.cms.amenities.amenities-feature', compact('data'))->render();
+
+                    // Pricing page - pricing hero section
+                case 'pricing-hero-section':
+                    $data = CMS::where('page', 'pricing')
+                        ->where('section', 'hero')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.pricing.pricing-banner', compact('data'))->render();
+
                 default:
                     return response()->json([
                         'success' => false,

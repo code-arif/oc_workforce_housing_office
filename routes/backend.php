@@ -17,16 +17,17 @@ use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
 use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
 use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
+use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
+use App\Http\Controllers\Web\Backend\UserManagement\UserController;
 use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
+use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
-use App\Http\Controllers\Web\Backend\UserManagement\UserController;
-use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
-use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -89,7 +90,7 @@ Route::prefix('property')->name('property.')->group(function () {
     // Dynamic property management (new CMS-style tab system)
     Route::get('/', [PropertySectionController::class, 'index'])->name('list');
     Route::get('/section/{section}', [PropertySectionController::class, 'section'])->name('section');
-    
+
     // Legacy routes for create/edit operations
     Route::get('/list', [PropertyController::class, 'index'])->name('index');
     Route::get('/get-data', [PropertyController::class, 'getData'])->name('get.data');
@@ -103,7 +104,7 @@ Route::prefix('property')->name('property.')->group(function () {
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
 });
 
-Route::prefix('seasons')->name('seasons.')->group(function () {    
+Route::prefix('seasons')->name('seasons.')->group(function () {
     // Legacy routes for create/edit operations
     Route::get('/list', [SeasonController::class, 'index'])->name('list');
     Route::get('/get-data', [SeasonController::class, 'getData'])->name('get.data');
@@ -170,6 +171,12 @@ Route::prefix('cms')->name('cms.')->group(function () {
 
     // Property page
     Route::post('/property/banner/update', [PropertyPageController::class, 'update'])->name('property.banner.update');
+    Route::post('/property/our-offer/update', [PropertyPageController::class, 'updateOurOffer'])->name('property.our-offer.update');
+
+    // Property one
+    Route::post('/property/property-one/update', [PropertyPageController::class, 'updatePropertyOne'])->name('property.one.update');
+    Route::post('/property/property-two/update', [PropertyPageController::class, 'updatePropertyTwo'])->name('property.two.update');
+    Route::post('/property/property-three/update', [PropertyPageController::class, 'updatePropertyThree'])->name('property.three.update');
 
     // About section update
     Route::post('/about/breadcrumb/update', [AboutPageController::class, 'update'])->name('about.breadcrumb.update');
@@ -183,6 +190,9 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::post('/item/update', [AmenitiesPageController::class, 'updateItem'])->name('item.update');
         Route::delete('/item/delete', [AmenitiesPageController::class, 'destroy'])->name('item.delete');
     });
+
+    // Pricing page
+    Route::post('/pricing/banner/update', [PricingPageController::class, 'update'])->name('pricing.hero.update');
 });
 
 //! Route for Profile Settings
