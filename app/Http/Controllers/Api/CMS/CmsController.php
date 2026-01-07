@@ -15,6 +15,9 @@ class CmsController extends Controller
 {
     use ApiResponse;
 
+    /**
+     * CMS Home page data
+     */
     public function home()
     {
         $hero = CMS::where('page', 'home')
@@ -76,6 +79,58 @@ class CmsController extends Controller
                 'prime_location' => CMSResource::collection($primeLocation),
                 'appartment' => CMSResource::collection($appartment),
                 'gallery' => $gallery
+            ]
+        ], 'Home data retrieved successfully');
+    }
+
+    /**
+     * CMS Properties page data
+     */
+    public function properties()
+    {
+        $hero = CMS::where('page', 'properties')
+            ->where('section', 'hero')
+            ->where('name', 'item')
+            ->get();
+
+        $ourOffer = CMS::where('page', 'properties')
+            ->where('section', 'our-offer')
+            ->where('name', 'item')
+            ->get();
+
+        $propertyOne = CMS::where('page', 'properties')
+            ->where('section', 'property-one')
+            ->where('name', 'item')
+            ->get();
+
+        $propertyTwo = CMS::where('page', 'properties')
+            ->where('section', 'property-two')
+            ->where('name', 'item')
+            ->get();
+
+        $propertyThree = CMS::where('page', 'properties')
+            ->where('section', 'property-three')
+            ->where('name', 'item')
+            ->get();
+
+        $gallery = Gallery::get();
+
+        $gallery = $gallery->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'image_path' => $item->image_path,
+                'image_url' => asset($item->image_path) ?? null
+            ];
+        });
+
+        return $this->success([
+            'properties' => [
+                'hero' => CMSResource::collection($hero),
+                'our_offer' => CMSResource::collection($ourOffer),
+                'property_one' => CMSResource::collection($propertyOne),
+                'gallery' => $gallery,
+                'property_two' => CMSResource::collection($propertyTwo),
+                'property_three' => CMSResource::collection($propertyThree),
             ]
         ], 'Home data retrieved successfully');
     }

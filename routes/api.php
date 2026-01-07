@@ -47,16 +47,7 @@ Route::group(['middleware' => 'guest:api'], function () {
     // cms route gorup
     Route::group(['prefix' => 'cms'], function () {
         Route::get('/home', [CmsController::class, 'home']); // cms home page data
-        Route::get('/our-story', [CmsController::class, 'ourStory']); // cms our story page data
-        Route::get('/how-it-works', [CmsController::class, 'howItWorks']); // how it works page data
-        Route::get('/structure', [CmsController::class, 'structure']); // structure page data
-        Route::get('/eligibility', [CmsController::class, 'eligibility']); // eligibility page data
-        Route::get('/payment-policy', [CmsController::class, 'paymentPolicy']); // payment policy page data
-        Route::get('/tax-policy', [CmsController::class, 'taxPolicy']); // tax policy page data
-        Route::get('/ethical-boundaries', [CmsController::class, 'ethicalBoundaries']); // ethical-boundaries page data
-        Route::get('/officer-compensation-policy', [CmsController::class, 'officerCompensationPolicy']); // officer compensation policy page data
-        Route::get('/archives', [CmsController::class, 'archives']); // archives page data
-        Route::get('/contact-us', [CmsController::class, 'contactUs']); // contact-us page data
+        Route::get('/properties', [CmsController::class, 'properties']); // cms properties page data
     });
 
 
