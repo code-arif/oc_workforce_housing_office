@@ -194,6 +194,13 @@ Route::prefix('cms')->name('cms.')->group(function () {
 
     // Pricing page
     Route::post('/pricing/banner/update', [PricingPageController::class, 'update'])->name('pricing.hero.update');
+    Route::prefix('pricing/plans')->name('pricing.')->group(function () {
+        Route::get('/', [PricingPageController::class, 'index'])->name('index');
+        Route::post('/store', [PricingPageController::class, 'store'])->name('store');
+        Route::post('/update', [PricingPageController::class, 'updatePricingItem'])->name('update');
+        Route::post('/status', [PricingPageController::class, 'toggleStatus'])->name('status');
+        Route::delete('/delete', [PricingPageController::class, 'destroy'])->name('delete');
+    });
 });
 
 //! Route for Profile Settings

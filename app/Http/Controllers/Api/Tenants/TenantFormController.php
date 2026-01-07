@@ -246,6 +246,7 @@ class TenantFormController extends Controller
                     'id' => $tenant->id,
                     'email' => $tenant->email,
                     'status' => $tenant->status,
+                    'approval_token' => $tenant->approval_token,
                     'profile' => $profile,
                     'address' => $address,
                     'employment_histories' => $employmentHistories,

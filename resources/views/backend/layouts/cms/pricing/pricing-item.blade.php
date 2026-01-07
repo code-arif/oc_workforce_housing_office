@@ -1,61 +1,25 @@
 <div class="row">
-    {{-- how is works header content --}}
-    <div class="col-lg-4">
-        <div class="card box-shadow-0">
-            <div class="card-header bg-light">
-                <h4 class="card-title">Amenities Page - Featured Amenities</h4>
-            </div>
-            <div class="card-body">
-                <form id="howItWorksSectionForm" method="post" action="{{ route('cms.amenities.header.update') }}">
-                    @csrf
-
-                    {{-- Title --}}
-                    <div class="form-group mb-3">
-                        <label for="amenities_feature_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="amenities_feature_title"
-                            placeholder="Enter title" value="{{ $data->title ?? '' }}">
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    {{-- Sub  title --}}
-                    <div class="form-group mb-3">
-                        <label for="amenities_feature_sub_title" class="form-label">Sub Title</label>
-                        <input type="text" class="form-control" name="sub_title" id="amenities_feature_sub_title"
-                            placeholder="Enter sub title" value="{{ $data->sub_title ?? '' }}">
-                        <div class="invalid-feedback"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <button class="btn btn-primary" type="submit" id="submitButton">
-                            <span class="spinner-border spinner-border-sm d-none" id="howItWorkSpinner"></span>
-                            <span id="submitBtnText">Save Changes</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    {{-- amenities feature card item --}}
-    <div class="col-lg-8">
+    <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Amenities Featured Items</h4>
-                <button class="btn btn-primary btn-sm" id="addItemBtn">
-                    <i class="fe fe-plus"></i> Add Item
+                <h4 class="card-title mb-0">Pricing Plans Management</h4>
+                <button class="btn btn-primary btn-sm" id="addPlanBtn">
+                    <i class="fe fe-plus"></i> Add Plan
                 </button>
             </div>
 
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table text-nowrap mb-0 table-bordered" id="featureTable">
+                    <table class="table table-bordered text-nowrap mb-0" id="pricingTable">
                         <thead>
                             <tr>
                                 <th width="5%">#</th>
-                                <th width="15%">Image</th>
-                                <th width="30%">Title</th>
-                                <th width="35%">Description</th>
-                                <th width="15%">Action</th>
+                                <th width="20%">Name</th>
+                                <th width="15%">Price Per Bed</th>
+                                <th width="15%">Tenants Per Room</th>
+                                <th width="25%">Amenities</th>
+                                <th width="8%">Status</th>
+                                <th width="12%">Action</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -66,59 +30,69 @@
     </div>
 </div>
 
-<!-- Item Modal (Add/Edit) -->
-<div class="modal fade" id="featureItemModal" tabindex="-1">
+<!-- Pricing Plan Modal -->
+<div class="modal fade" id="planModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="featureForm" enctype="multipart/form-data">
+            <form id="planForm">
                 @csrf
-                <input type="hidden" name="id" id="featureID">
+                <input type="hidden" name="id" id="planId">
 
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title text-white" id="featureItemModalLabel">Add Item</h5>
+                    <h5 class="modal-title text-white" id="planModalLabel">Add Pricing Plan</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
                     <div class="row">
-                        <!-- Title -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Plan Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" id="planName" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Price Per Bed <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" name="price_per_bed"
+                                id="planPrice" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tenants Per Room <span class="text-danger">*</span></label>
+                            <input type="number" min="1" max="20" class="form-control"
+                                name="tenants_per_room" id="planTenants" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
                         <div class="col-md-12 mb-3">
-                            <label class="form-label">Title <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="title" id="itemTitle"
-                                placeholder="Enter item title">
-                            <div class="invalid-feedback"></div>
+                            <label class="form-label">Amenities (Select multiple)</label>
+                            <select class="form-select" name="amenities[]" id="planAmenities" multiple>
+                                <option value="Security">Security</option>
+                                <option value="Free High-Speed Internet">Free High-Speed Internet</option>
+                                <option value="Laundry">Laundry</option>
+                                <option value="Lounges">Lounges</option>
+                                <option value="Onsite Office Staff">Onsite Office Staff</option>
+                                <option value="Table Tennis">Table Tennis</option>
+                                <option value="Gym">Gym</option>
+                                <option value="Swimming Pool">Swimming Pool</option>
+                                <!-- Add more as needed -->
+                            </select>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
                         </div>
 
-                        <!-- Desctription -->
-                        <div class="form-group mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea name="description" id="summernote" class="summernote form-control @error('description') is-invalid @enderror"
-                                rows="6" placeholder="Enter description"></textarea>
-                            <div class="invalid-feedback"></div>
-                        </div>
-
-                        <!-- Image -->
                         <div class="col-md-12 mb-3">
-                            <label class="form-label">Item Image <span class="text-danger"
-                                    id="imageRequired">*</span></label>
-                            <input type="file" name="image" id="itemImage" class="form-control" accept="image/*">
-                            <small class="text-muted">Recommended: 100x100px (Max: 2MB)</small>
-                            <div class="invalid-feedback"></div>
-                        </div>
-
-                        <!-- Image Preview -->
-                        <div class="col-md-12 mb-3" id="imagePreviewContainer" style="display:none;">
-                            <label class="form-label">Preview:</label>
-                            <img id="imagePreview" class="img-fluid border" style="max-height: 150px;">
+                            <label class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" name="description" id="planDescription" rows="4"></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" id="featureItemSubmitBtn">
-                        <span class="spinner-border spinner-border-sm d-none" id="featureSpinner"></span>
-                        <span id="featureItemSubmitText">Save Item</span>
+                    <button type="submit" class="btn btn-primary" id="planSubmitBtn">
+                        <span class="spinner-border spinner-border-sm d-none" id="planSpinner"></span>
+                        <span id="planSubmitText">Save Plan</span>
                     </button>
                 </div>
             </form>
@@ -126,302 +100,176 @@
     </div>
 </div>
 
+
 <script>
     (function() {
-        // Initialize Summernote
-        function initSummernote() {
-            if (typeof $.fn.summernote !== 'undefined') {
-                $('#summernote').summernote({
-                    height: 150,
-                    toolbar: [
-                        ['style', ['bold', 'italic', 'underline', 'clear']],
-                        ['font', ['strikethrough', 'superscript', 'subscript']],
-                        ['para', ['ul', 'ol', 'paragraph']],
-                        ['insert', ['link']],
-                        ['view', ['fullscreen', 'codeview']]
-                    ]
-                });
-            }
+        let planModal = null;
+        let pricingTable = null;
+        let isEditMode = false;
+
+        const modalEl = document.getElementById('planModal');
+        if (modalEl) {
+            planModal = new bootstrap.Modal(modalEl);
         }
 
-        // Initialize header form
-        if (typeof window.initFeatureItemSection === 'function') {
-            window.initFeatureItemSection();
-        }
+        function initDataTable() {
 
-        // Initialize items management with Yajra DataTables
-        window.initFeaturesItems = function() {
-            let featureItemModal = null;
-            let featureTable = null;
-            let isFeatureEditMode = false;
-            let editingId = null;
-
-            // Initialize Modal
-            const modalElement = document.getElementById('featureItemModal');
-            if (modalElement && typeof bootstrap !== 'undefined') {
-                featureItemModal = new bootstrap.Modal(modalElement);
-                modalElement.addEventListener('hidden.bs.modal', resetForm);
-                // Initialize Summernote when modal opens
-                modalElement.addEventListener('shown.bs.modal', initSummernote);
+            const table = document.getElementById('pricingTable');
+            if (!table || !$.fn.DataTable) {
+                return;
             }
 
-            // Initialize Yajra DataTable
-            initDataTable();
-
-            // Add Item Button
-            document.getElementById('addItemBtn')?.addEventListener('click', () => {
-                isFeatureEditMode = false;
-                editingId = null;
-                document.getElementById('featureItemModalLabel').textContent = 'Add New Feature Item';
-                document.getElementById('featureItemSubmitText').textContent = 'Save Item';
-                document.getElementById('imageRequired').style.display = 'inline';
-                document.getElementById('itemImage').setAttribute('required', 'required');
-                if (featureItemModal) featureItemModal.show();
+            const currentUrl = window.route('cms.section', {
+                section: 'pricing-item'
             });
 
-            // Image Preview
-            document.getElementById('itemImage')?.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 2 * 1024 * 1024) {
-                        window.showToast('error', 'Image size should not exceed 2MB');
-                        e.target.value = '';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('imagePreview').src = e.target.result;
-                        document.getElementById('imagePreviewContainer').style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-
-            // Item Form Submit
-            const featureForm = document.getElementById('featureForm');
-            if (featureForm) {
-                featureForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-
-                    const btn = document.getElementById('featureItemSubmitBtn');
-                    const spinner = document.getElementById('featureSpinner');
-                    const text = document.getElementById('featureItemSubmitText');
-
-                    clearErrors(this);
-                    btn.disabled = true;
-                    spinner.classList.remove('d-none');
-                    text.textContent = isFeatureEditMode ? 'Updating...' : 'Saving...';
-
-                    try {
-                        const formData = new FormData(this);
-
-                        // Get Summernote content
-                        const description = $('#summernote').summernote('code');
-                        formData.set('description', description);
-
-                        const url = isFeatureEditMode ?
-                            '/admin/cms/amenities/features/item/update' :
-                            '/admin/cms/amenities/features/item/store';
-
-                        const response = await axios.post(url, formData, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        });
-
-                        if (response.data.success) {
-                            window.showToast('success', response.data.message);
-                            if (featureItemModal) featureItemModal.hide();
-                            if (featureTable) featureTable.ajax.reload(null, false);
-                        }
-                    } catch (error) {
-                        handleError(error, this);
-                    } finally {
-                        btn.disabled = false;
-                        spinner.classList.add('d-none');
-                        text.textContent = isFeatureEditMode ? 'Update Item' : 'Save Item';
-                    }
-                });
-            }
-
-            // Initialize Yajra DataTable
-            function initDataTable() {
-                const table = document.getElementById('featureTable');
-                if (!table || !$.fn.DataTable) {
-                    return;
-                }
-
-                const currentUrl = window.route('cms.section', {
-                    section: 'amenities-feature'
-                });
-
-                featureTable = $('#featureTable').DataTable({
-                    processing: true,
-                    serverSide: true,
-                    ajax: {
-                        url: currentUrl,
-                        type: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        error: function(xhr, error, thrown) {
-                            console.error('DataTable Error:', error, xhr.responseText);
-                            window.showToast('error', 'Failed to load items');
-                        }
+            pricingTable = $('#pricingTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: currentUrl,
+                    type: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    columns: [{
-                            data: 'DT_RowIndex',
-                            name: 'DT_RowIndex',
-                            orderable: false,
-                            searchable: false
-                        },
-                        {
-                            data: 'image',
-                            name: 'image',
-                            orderable: false,
-                            searchable: false
-                        },
-                        {
-                            data: 'title',
-                            name: 'title'
-                        },
-                        {
-                            data: 'description',
-                            name: 'description'
-                        },
-                        {
-                            data: 'action',
-                            name: 'action',
-                            orderable: false,
-                            searchable: false
-                        }
-                    ],
-                    order: [
-                        [0, 'asc']
-                    ],
-                    pageLength: 10,
-                    language: {
-                        emptyTable: "No items found. Add your first item!",
-                        processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>'
+                    error: function(xhr, error, thrown) {
+                        console.error('DataTable Error:', error, xhr.responseText);
+                        window.showToast('error', 'Failed to load items');
                     }
-                });
-
-                // Edit Item - Event Delegation
-                $('#featureTable').on('click', '.edit-item', function() {
-                    const id = $(this).data('id');
-                    const title = $(this).data('title');
-                    const description = $(this).data('description');
-                    const image = $(this).data('image');
-
-                    isFeatureEditMode = true;
-                    editingId = id;
-
-                    document.getElementById('featureID').value = id;
-                    document.getElementById('itemTitle').value = title;
-
-                    // Set Summernote content
-                    $('#summernote').summernote('code', description || '');
-
-                    document.getElementById('imageRequired').style.display = 'none';
-                    document.getElementById('itemImage').removeAttribute('required');
-
-                    if (image) {
-                        document.getElementById('imagePreview').src = window.assetUrl(image);
-                        document.getElementById('imagePreviewContainer').style.display = 'block';
+                },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex'
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'price',
+                        name: 'price'
+                    },
+                    {
+                        data: 'tenants',
+                        name: 'tenants'
+                    },
+                    {
+                        data: 'amenities_list',
+                        name: 'amenities_list'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action'
                     }
-
-                    document.getElementById('featureItemModalLabel').textContent = 'Update Item';
-                    document.getElementById('featureItemSubmitText').textContent = 'Update Item';
-
-                    if (featureItemModal) featureItemModal.show();
-                });
-
-                // Delete Item - Event Delegation
-                $('#featureTable').on('click', '.delete-feature-item', async function() {
-                    const id = $(this).data('id');
-
-                    const result = await Swal.fire({
-                        title: 'Are you sure?',
-                        text: "You won't be able to revert this!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        confirmButtonText: 'Yes, delete it!'
-                    });
-
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await axios.delete(
-                                '/admin/cms/amenities/features/item/delete', {
-                                    data: {
-                                        id: id
-                                    },
-                                    headers: {
-                                        'X-Requested-With': 'XMLHttpRequest'
-                                    }
-                                });
-
-                            window.showToast('success', response.data.message);
-                            featureTable.ajax.reload(null, false);
-                        } catch (error) {
-                            window.showToast('error', error.response?.data?.message ||
-                                'Failed to delete');
-                        }
-                    }
-                });
-            }
-
-            // Helper Functions
-            function resetForm() {
-                const form = document.getElementById('featureForm');
-                if (form) {
-                    form.reset();
-                    document.getElementById('featureID').value = '';
-                    document.getElementById('imagePreviewContainer').style.display = 'none';
-
-                    // Reset Summernote
-                    $('#summernote').summernote('code', '');
-
-                    clearErrors(form);
-                    isFeatureEditMode = false;
-                    editingId = null;
+                ],
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 10,
+                language: {
+                    emptyTable: "No pricing plans yet. Add your first one!"
                 }
-            }
+            });
+        }
 
-            function clearErrors(form) {
-                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-                form.querySelectorAll('.invalid-feedback').forEach(el => {
-                    el.textContent = '';
-                    el.style.display = 'none';
-                });
-            }
+        initDataTable();
 
-            function handleError(error, form = null) {
-                console.error('Error:', error);
-                if (error.response?.status === 422 && error.response?.data?.errors) {
-                    const errors = error.response.data.errors;
-                    if (form) {
-                        Object.keys(errors).forEach(field => {
-                            const input = form.querySelector(`[name="${field}"]`);
-                            if (input) {
-                                input.classList.add('is-invalid');
-                                const feedback = input.nextElementSibling;
-                                if (feedback?.classList.contains('invalid-feedback')) {
-                                    feedback.textContent = errors[field][0];
-                                    feedback.style.display = 'block';
-                                }
-                            }
-                        });
-                    }
-                    window.showToast('error', Object.values(errors).flat()[0]);
+        // Add Button
+        $('#addPlanBtn').on('click', function() {
+            isEditMode = false;
+            $('#planForm')[0].reset();
+            $('#planId').val('');
+            $('#planModalLabel').text('Add Pricing Plan');
+            $('#planSubmitText').text('Save Plan');
+            planModal.show();
+        });
+
+        // Edit Button
+        $('#pricingTable').on('click', '.edit-plan', function() {
+            isEditMode = true;
+            const data = $(this).data();
+
+            $('#planId').val(data.id);
+            $('#planName').val(data.name);
+            $('#planPrice').val(data.price);
+            $('#planTenants').val(data.tenants);
+            $('#planDescription').val(data.description);
+
+            // Set multi-select amenities
+            $('#planAmenities').val(data.amenities);
+
+            $('#planModalLabel').text('Update Pricing Plan');
+            $('#planSubmitText').text('Update Plan');
+            planModal.show();
+        });
+
+        // Form Submit
+        $('#planForm').on('submit', async function(e) {
+            e.preventDefault();
+            const btn = $('#planSubmitBtn');
+            const spinner = $('#planSpinner');
+            const text = $('#planSubmitText');
+
+            btn.prop('disabled', true);
+            spinner.removeClass('d-none');
+            text.text(isEditMode ? 'Updating...' : 'Saving...');
+
+            try {
+                const formData = new FormData(this);
+                const url = isEditMode ?
+                    '{{ route('cms.pricing.update') }}' :
+                    '{{ route('cms.pricing.store') }}';
+
+                const response = await axios.post(url, formData);
+
+                if (response.data.success) {
+                    window.showToast('success', response.data.message);
+                    planModal.hide();
+                    pricingTable.ajax.reload(null, false);
+                }
+            } catch (error) {
+                if (error.response?.status === 422) {
+                    window.showToast('error', Object.values(error.response.data.errors)[0][0]);
                 } else {
-                    window.showToast('error', error.response?.data?.message || 'An error occurred');
+                    window.showToast('error', error.response?.data?.message || 'Something went wrong');
+                }
+            } finally {
+                btn.prop('disabled', false);
+                spinner.addClass('d-none');
+                text.text(isEditMode ? 'Update Plan' : 'Save Plan');
+            }
+        });
+
+        // Delete
+        $('#pricingTable').on('click', '.delete-plan', async function() {
+            const id = $(this).data('id');
+
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This plan will be deleted permanently!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    await axios.delete('{{ route('cms.pricing.delete') }}', {
+                        data: {
+                            id
+                        }
+                    });
+                    window.showToast('success', 'Plan deleted successfully');
+                    pricingTable.ajax.reload(null, false);
+                } catch (error) {
+                    window.showToast('error', 'Failed to delete');
                 }
             }
-        };
+        });
 
-        // Execute items initialization
-        window.initFeaturesItems();
     })();
 </script>

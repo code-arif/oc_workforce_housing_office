@@ -84,7 +84,7 @@ class LandingController extends Controller
                 'tenant_id' => $tenant->id,
                 'email' => $tenant->email,
                 'status' => $tenant->status,
-                'approval_token' => $tenant->approval_token . ' ____ ' . '(TODO: only for tesing purposes)',
+                'approval_token' => $tenant->approval_token,
             ], 'Your application has been submitted successfully. Please check your email for next steps.', 201);
         } catch (Exception $e) {
             DB::rollBack();

@@ -168,4 +168,57 @@ class CmsController extends Controller
             ]
         ], 'About page data retrieved successfully');
     }
+
+    /**
+     * CMS Amenities page data
+     */
+    public function amenities()
+    {
+        $hero = CMS::where('page', 'amenities')
+            ->where('section', 'hero')
+            ->where('name', 'item')
+            ->get();
+
+        $amenities_feature = CMS::where('page', 'amenities')
+            ->where('section', 'amenities-feature')
+            ->where('name', 'item')
+            ->get();
+
+        $amenities_item = CMS::where('page', 'amenities')
+            ->where('section', 'amenities-feature')
+            ->where('name', 'card')
+            ->get();
+
+        $aboutContactBreadcrumb = CMS::where('page', 'about')
+            ->where('section', 'about-contact-breadcrumb')
+            ->where('name', 'item')
+            ->get();
+
+        return $this->success([
+            'amenities' => [
+                'hero' => CMSResource::collection($hero),
+                'amenities_feature' => CMSResource::collection($amenities_feature),
+                'amenities_item' => CMSResource::collection($amenities_item),
+                'contact_breadcrumb' => CMSResource::collection($aboutContactBreadcrumb),
+            ]
+        ], 'Amenities page data retrieved successfully');
+    }
+
+
+    /**
+     * CMS Pricing page data
+     */
+    public function pricing()
+    {
+        $hero = CMS::where('page', 'pricing')
+            ->where('section', 'hero')
+            ->where('name', 'item')
+            ->get();
+
+        return $this->success([
+            'pricing' => [
+                'hero' => CMSResource::collection($hero),
+            ]
+        ], 'Pricing page data retrieved successfully');
+    }
 }

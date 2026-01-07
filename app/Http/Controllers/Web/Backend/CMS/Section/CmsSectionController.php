@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Backend\CMS\Section;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\PricingPlan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
@@ -273,6 +274,62 @@ class CmsSectionController extends Controller
                         ->first();
                     return view('backend.layouts.cms.pricing.pricing-banner', compact('data'))->render();
 
+                    // Pricing page - pricing plans section
+                case 'pricing-item':
+                    // Check if this is a DataTable AJAX request
+                    if ($request->ajax() && $request->has('draw')) {
+                        $plans = PricingPlan::query()->orderBy('created_at', 'desc');
+
+                        return DataTables::of($plans)
+                            ->addIndexColumn()
+                            ->addColumn('price', function ($row) {
+                                return '$' . number_format($row->price_per_bed, 0) . ' / per bed';
+                            })
+                            ->addColumn('tenants', function ($row) {
+                                return $row->tenants_per_room . ' tenants per room';
+                            })
+                            ->addColumn('amenities_list', function ($row) {
+                                if (!$row->amenities || count($row->amenities) == 0) {
+                                    return '<span class="badge bg-secondary">No amenities</span>';
+                                }
+
+                                $badges = '';
+                                foreach ($row->amenities as $amenity) {
+                                    $badges .= '<span class="badge bg-info me-1 mb-1">' . htmlspecialchars($amenity) . '</span>';
+                                }
+                                return $badges;
+                            })
+                            ->addColumn('status', function ($row) {
+                                $checked = $row->is_active ? 'checked' : '';
+                                return '
+                        <div class="form-check form-switch">
+                            <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
+                        </div>
+                    ';
+                            })
+                            ->addColumn('action', function ($row) {
+                                return '
+                        <button class="btn btn-sm btn-info edit-plan me-1"
+                            data-id="' . $row->id . '"
+                            data-name="' . htmlspecialchars($row->name) . '"
+                            data-price="' . $row->price_per_bed . '"
+                            data-tenants="' . $row->tenants_per_room . '"
+                            data-amenities=\'' . json_encode($row->amenities ?? []) . '\'
+                            data-description="' . htmlspecialchars($row->description ?? '') . '">
+                            <i class="fe fe-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-plan" data-id="' . $row->id . '">
+                            <i class="fe fe-trash-2"></i>
+                        </button>
+                    ';
+                            })
+                            ->rawColumns(['amenities_list', 'status', 'action'])
+                            ->make(true);
+                    }
+
+                    return view('backend.layouts.cms.pricing.pricing-item')->render();
+
+                    // fallback for unknown sections
                 default:
                     return response()->json([
                         'success' => false,
