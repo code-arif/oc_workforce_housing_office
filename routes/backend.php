@@ -32,7 +32,6 @@ use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as Section
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // working
-
 });
 
 // property type manage
