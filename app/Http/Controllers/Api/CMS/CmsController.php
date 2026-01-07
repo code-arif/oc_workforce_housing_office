@@ -80,7 +80,7 @@ class CmsController extends Controller
                 'appartment' => CMSResource::collection($appartment),
                 'gallery' => $gallery
             ]
-        ], 'Home data retrieved successfully');
+        ], 'Home page data retrieved successfully');
     }
 
     /**
@@ -132,6 +132,40 @@ class CmsController extends Controller
                 'property_two' => CMSResource::collection($propertyTwo),
                 'property_three' => CMSResource::collection($propertyThree),
             ]
-        ], 'Home data retrieved successfully');
+        ], 'Properties page data retrieved successfully');
+    }
+
+    /**
+     * CMS About us page data
+     */
+    public function aboutUs()
+    {
+        $aboutUsBreadcrumb = CMS::where('page', 'about')
+            ->where('section', 'about-us-breadcrumb')
+            ->where('name', 'item')
+            ->get();
+
+        $aboutContactBreadcrumb = CMS::where('page', 'about')
+            ->where('section', 'about-contact-breadcrumb')
+            ->where('name', 'item')
+            ->get();
+
+        $gallery = Gallery::limit(2)->get();
+
+        $gallery = $gallery->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'image_path' => $item->image_path,
+                'image_url' => asset($item->image_path) ?? null
+            ];
+        });
+
+        return $this->success([
+            'about-us' => [
+                'about-us-breadcrumb' => CMSResource::collection($aboutUsBreadcrumb),
+                'gallery' => $gallery,
+                'about-contact-breadcrumb' => CMSResource::collection($aboutContactBreadcrumb),
+            ]
+        ], 'About page data retrieved successfully');
     }
 }

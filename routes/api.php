@@ -48,6 +48,7 @@ Route::group(['middleware' => 'guest:api'], function () {
     Route::group(['prefix' => 'cms'], function () {
         Route::get('/home', [CmsController::class, 'home']); // cms home page data
         Route::get('/properties', [CmsController::class, 'properties']); // cms properties page data
+        Route::get('/about-us', [CmsController::class, 'aboutUs']); // cms about us page data
     });
 
 

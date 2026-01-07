@@ -36,13 +36,13 @@ class AboutPageController extends Controller
             }
 
             // Add additional data
-            $validated_data['page'] = 'home';
+            $validated_data['page'] = 'about';
             $validated_data['section'] = 'about-us-breadcrumb';
             $validated_data['name'] = 'item';
 
             CMS::updateOrCreate(
                 [
-                    'page' => 'home',
+                    'page' => 'about',
                     'section' => 'about-us-breadcrumb',
                     'name' => 'item'
                 ],
@@ -95,13 +95,13 @@ class AboutPageController extends Controller
             }
 
             // Add additional data
-            $validated_data['page'] = 'home';
+            $validated_data['page'] = 'about';
             $validated_data['section'] = 'about-contact-breadcrumb';
             $validated_data['name'] = 'item';
 
             CMS::updateOrCreate(
                 [
-                    'page' => 'home',
+                    'page' => 'about',
                     'section' => 'about-contact-breadcrumb',
                     'name' => 'item'
                 ],
