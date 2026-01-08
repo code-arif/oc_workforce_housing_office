@@ -68,7 +68,10 @@ class TenantFormController extends Controller
     public function submit(TenentApplicationRequest $request, $token)
     {
         try {
-            $tenantId = Cache::get("tenant_form_token_{$token}");
+            $tenantId = Tenant::select('id')
+                ->whereNotNull('approval_token')
+                ->where('approval_token', $token)
+                ->value('id');
 
             if (!$tenantId) {
                 return $this->error([], 'Invalid or expired form access token.', 403);
@@ -217,8 +220,8 @@ class TenantFormController extends Controller
                 }
             }
 
-            // Invalidate token after successful submission
-            Cache::forget("tenant_form_token_{$token}");
+            // Generate new approval token for admin review
+            $tenant->generateApprovalToken();
 
             // Send email to admin about form submission for review
             try {

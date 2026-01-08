@@ -14,7 +14,8 @@ class TenantProfile extends Model
         'email',
         'phone',
         'passport_number',
-        'national_id'
+        'national_id',
+        'avatar'
     ];
 
     // reverse relation with tenant table

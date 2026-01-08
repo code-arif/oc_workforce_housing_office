@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\Tenants\TenantAuthController;
 use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Auth\AuthenticationController;
 use App\Http\Controllers\Api\Tenants\PasswordResetController;
+use App\Http\Controllers\Api\Tenants\TenantDashboardController;
 use App\Http\Controllers\Api\Tenants\TenantPasswordController;
+use App\Http\Controllers\Api\Tenants\TenantProfileController;
 
 //health-check
 Route::get('/health', function () {
@@ -91,7 +93,7 @@ Route::group(['middleware' => 'guest:api'], function () {
             // Forgot password flow (OTP-based)
             Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // done
             Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
-            Route::post('/forgot/reset', [TenantPasswordController::class, 'resetPasswordWithToken']);
+            Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
         });
     });
 });
@@ -100,12 +102,16 @@ Route::group(['middleware' => 'guest:api'], function () {
 Route::group(['middleware' => 'auth:api'], function () {
     // Protected Tenant Routes
     Route::prefix('v1/tenant')->group(function () {
-        Route::get('/profile', [TenantAuthController::class, 'profile']);
-        Route::put('/profile-update', [TenantAuthController::class, 'updateProfile']);
-        Route::put('/avatar-update', [TenantAuthController::class, 'updateAvatar']);
-        Route::get('/dashboard', [TenantAuthController::class, 'dashboard']);
-        Route::post('/logout', [TenantAuthController::class, 'logout']);
-        Route::get('/documents', [TenantAuthController::class, 'documents']);
-        Route::post('/documents/upload', [TenantAuthController::class, 'uploadDocument']);
+        Route::get('/profile', [TenantProfileController::class, 'profile']); // done
+        Route::put('/update-profile', [TenantProfileController::class, 'updateProfile']); // done
+        Route::post('/update-avatar', [TenantProfileController::class, 'updateAvatar']); // done
+
+        Route::post('/logout', [TenantAuthController::class, 'logout']); // done
+
+
+        // Tenant dashbaord routes
+        Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
+        Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
+        Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
     });
 });

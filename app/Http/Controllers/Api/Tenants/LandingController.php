@@ -131,17 +131,15 @@ class LandingController extends Controller
                 return $this->error([], 'Approval token has expired.', 403);
             }
 
+            $approvalToken = $tenant->generateApprovalToken();
+
             // Update status to processing
             $tenant->update([
                 'status' => 'processing'
             ]);
 
-            // Generate form access token (valid for 7 days)
-            $formToken = Str::random(64);
-            Cache::put("tenant_form_token_{$formToken}", $tenant->id, now()->addDays(7));
-
             // Generate frontend form URL
-            $formUrl = config('app.frontend_url') . "/apply-lease/{$formToken}";
+            $formUrl = config('app.frontend_url') . "/apply-lease/{$tenant->approval_token}";
 
             // Send email to tenant with form link
             // Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formUrl));
@@ -153,7 +151,7 @@ class LandingController extends Controller
                 'email' => $tenant->email,
                 'status' => $tenant->status,
                 'form_url' => $formUrl,
-                'form_token' => $formToken,
+                'form_token' => $tenant->approval_token,
                 'expires_at' => now()->addDays(7)->toDateTimeString()
             ], 'Form link generated and sent to tenant successfully.', 200);
         } catch (Exception $e) {
@@ -203,12 +201,14 @@ class LandingController extends Controller
                 'status' => $request->status
             ]);
 
-            // Generate form access token (valid for 7 days)
-            $passResetToken = Str::random(64);
-            Cache::put("tenant_form_token_{$passResetToken}", $tenant->id, now()->addDays(7));
+            // Generate new approval token for password reset (if approved)
+            $passResetToken = null;
+            if ($request->status == 'approved') {
+                $passResetToken = $tenant->generateApprovalToken();
+            }
 
             // Generate frontend form URL
-            $passResetUrl = config('app.frontend_url') . "/reset-password/{$passResetToken}";
+            $passResetUrl = config('app.frontend_url') . "/reset-password/{$tenant->approval_token}";
 
             // Support URL
             $contactUrl = config('app.frontend_url') . "/contact";
@@ -228,6 +228,7 @@ class LandingController extends Controller
                 'email' => $tenant->email,
                 'status' => $tenant->status,
                 'password_reset_url' => $passResetUrl,
+                'password_reset_token' => $tenant->approval_token,
             ], 'Password reset link generated and sent to tenant successfully.', 200);
         } catch (Exception $e) {
             DB::rollBack();

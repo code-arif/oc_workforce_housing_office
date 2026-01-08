@@ -52,11 +52,6 @@ class TenantPasswordController extends Controller
                 return $this->error([], 'Tenant not found.', 404);
             }
 
-            // Check if password already set
-            // if ($tenant->password && !Hash::check('', $tenant->password)) {
-            //     return $this->error([], 'Password already set. Please use forgot password if you need to reset.', 400);
-            // }
-
             // Verify approval token
             if ($tenant->approval_token !== $request->approval_token) {
                 return $this->error([], 'Invalid approval token.', 403);

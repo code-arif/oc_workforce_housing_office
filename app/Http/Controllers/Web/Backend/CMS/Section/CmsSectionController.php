@@ -299,14 +299,7 @@ class CmsSectionController extends Controller
                                 }
                                 return $badges;
                             })
-                            ->addColumn('status', function ($row) {
-                                $checked = $row->is_active ? 'checked' : '';
-                                return '
-                        <div class="form-check form-switch">
-                            <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
-                        </div>
-                    ';
-                            })
+
                             ->addColumn('action', function ($row) {
                                 return '
                         <button class="btn btn-sm btn-info edit-plan me-1"
@@ -323,7 +316,7 @@ class CmsSectionController extends Controller
                         </button>
                     ';
                             })
-                            ->rawColumns(['amenities_list', 'status', 'action'])
+                            ->rawColumns(['amenities_list', 'action'])
                             ->make(true);
                     }
 

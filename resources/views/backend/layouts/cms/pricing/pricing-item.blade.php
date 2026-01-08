@@ -18,7 +18,6 @@
                                 <th width="15%">Price Per Bed</th>
                                 <th width="15%">Tenants Per Room</th>
                                 <th width="25%">Amenities</th>
-                                <th width="8%">Status</th>
                                 <th width="12%">Action</th>
                             </tr>
                         </thead>
@@ -158,10 +157,6 @@
                     {
                         data: 'amenities_list',
                         name: 'amenities_list'
-                    },
-                    {
-                        data: 'status',
-                        name: 'status'
                     },
                     {
                         data: 'action',

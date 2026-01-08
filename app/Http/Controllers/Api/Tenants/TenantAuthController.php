@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
-use App\Http\Controllers\Controller;
+use Exception;
 use App\Models\Tenant;
-use App\Models\TenantDocument;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use App\Models\TenantDocument;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -46,7 +47,8 @@ class TenantAuthController extends Controller
             );
         }
 
-        $token = $tenant->createToken('tenant-token')->plainTextToken;
+        // Generate JWT token
+        $token = auth('api')->login($tenant);
 
         return $this->success(
             [
@@ -56,7 +58,7 @@ class TenantAuthController extends Controller
                     'status' => $tenant->status,
                     'profile' => $tenant->profile,
                 ],
-                'token' => $token . 'Only of testing !!!',
+                'token' => $token,
                 'token_type' => 'Bearer'
             ],
             'Login successful',
@@ -64,143 +66,18 @@ class TenantAuthController extends Controller
         );
     }
 
-    /**
-     * Tenant Profile
-     */
-    public function profile(Request $request)
-    {
-        $tenant = $request->user();
-
-        $tenant->load([
-            'profile',
-            'address',
-            'employmentHistories',
-            'emergencyContacts',
-            'documents'
-        ]);
-
-        return $this->success(['tenant' => $tenant], 'Tenant profile data fatched successfully!', 200);
-    }
 
     /**
-     * Update tenant profile
+     * User logout
      */
-    public function updateProfile(Request $request)
-    {
-        $tenant = $request->user();
-
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'sometimes|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
-            'country_code' => 'nullable|string|max:10',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            if ($tenant->profile) {
-                $tenant->profile->update($request->only([
-                    'first_name',
-                    'middle_name',
-                    'last_name',
-                    'phone',
-                    'country_code'
-                ]));
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Profile updated successfully',
-                'data' => [
-                    'profile' => $tenant->profile
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update profile',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * User login
-     */
-    public function documents(Request $request)
-    {
-        $tenant = $request->user();
-        $documents = $tenant->documents;
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'documents' => $documents
-            ]
-        ]);
-    }
-
-    public function uploadDocument(Request $request)
-    {
-        $tenant = $request->user();
-
-        $validator = Validator::make($request->all(), [
-            'document_type' => 'required|in:passport,visa,id_front,id_back,other',
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $file = $request->file('file');
-            $path = $file->store("tenant_documents/{$tenant->id}", 'private');
-
-            $document = TenantDocument::create([
-                'tenant_id' => $tenant->id,
-                'document_type' => $request->document_type,
-                'file_path' => $path,
-                'file_original_name' => $file->getClientOriginalName(),
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Document uploaded successfully',
-                'data' => [
-                    'document' => $document
-                ]
-            ], 201);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to upload document',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        try {
+            auth('api')->logout(); // JWT invalidate
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout successful'
-        ]);
+            return $this->success([], 'Logged out successfully.', 200);
+        } catch (Exception $e) {
+            return $this->error([], 'Failed to logout.', 500);
+        }
     }
 }
