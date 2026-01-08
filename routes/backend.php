@@ -29,6 +29,7 @@ use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -206,6 +207,22 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Reservation page
     Route::post('/reservation/hero/update', [ReservationPageController::class, 'update'])->name('reservation.hero.update');
 });
+
+
+/*
+    |--------------------------------------------------------------------------
+    | Tenent Management Routes
+    |--------------------------------------------------------------------------
+    */
+
+Route::group([], function () {
+    Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
+    Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
+    Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
+    Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
+    Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+});
+
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {

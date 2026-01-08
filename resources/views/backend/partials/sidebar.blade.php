@@ -52,8 +52,8 @@
 
                 {{-- Tenants --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
+                    <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
+                        href="{{ route('tenants.index') }}">
                         <i class="fa fa-users"></i>
                         <span class="side-menu__label">Tenants</span>
                     </a>
@@ -139,7 +139,7 @@
                     </a>
                 </li>
                 @endcan
-                
+
                 @can('user-management.users.list' )
                 {{-- User Management --}}
                 <li class="slide">

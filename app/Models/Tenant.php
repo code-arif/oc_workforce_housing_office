@@ -218,4 +218,10 @@ class Tenant extends Authenticatable implements JWTSubject
     {
         return $query->where('application_source', 'admin');
     }
+
+    // relation with lease table
+    public function leases()
+    {
+        return $this->hasMany(Lease::class);
+    }
 }
