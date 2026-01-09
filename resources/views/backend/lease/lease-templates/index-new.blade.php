@@ -471,7 +471,7 @@ $(document).ready(function() {
         const templateId = $(this).data('id');
 
         $.ajax({
-            url: `/backend/lease-templates/${templateId}/preview`,
+            url: `/admin/lease-templates/${templateId}/preview`,
             method: 'GET',
             success: function(response) {
                 $('#previewContent').html(response.content);
@@ -492,7 +492,7 @@ $(document).ready(function() {
 
         if (confirm(`Are you sure you want to ${statusText} this template?`)) {
             $.ajax({
-                url: `/backend/lease-templates/${templateId}/toggle-status`,
+                url: `/admin/lease-templates/${templateId}/toggle-status`,
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
@@ -514,7 +514,7 @@ $(document).ready(function() {
         const templateId = $(this).data('id');
 
         if (confirm('Create a copy of this template?')) {
-            window.location.href = `/backend/lease-templates/${templateId}/duplicate`;
+            window.location.href = `/admin/lease-templates/${templateId}/duplicate`;
         }
     });
 
@@ -525,7 +525,7 @@ $(document).ready(function() {
 
         if (confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
             const form = $('#deleteForm');
-            form.attr('action', `/backend/lease-templates/${templateId}`);
+            form.attr('action', `/admin/lease-templates/${templateId}`);
             form.submit();
         }
     });

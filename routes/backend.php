@@ -240,7 +240,6 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::delete('/{id}/delete', [LeaseManageController::class, 'destroy'])->name('destroy');
 });
 
-
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {
     Route::get('setting/profile', 'index')->name('setting.profile.index');
