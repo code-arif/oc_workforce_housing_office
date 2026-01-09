@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('original_filename');
             $table->string('file_type'); // pdf or docx
-            $table->longText('content'); // Converted HTML content
+            $table->longText('content')->nullable(); // Converted HTML content
             $table->json('placeholders')->nullable(); // Dynamic field placeholders
             $table->json('signatures')->nullable(); // Signature positions
             $table->boolean('is_active')->default(true);
