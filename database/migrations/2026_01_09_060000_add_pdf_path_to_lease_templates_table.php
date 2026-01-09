@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lease_templates', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->longText('content');
-            $table->boolean('is_active')->default(true);
-            $table->softDeletes();
-            $table->timestamps();
+        Schema::table('lease_templates', function (Blueprint $table) {
+            $table->string('pdf_path')->nullable()->after('document_path');
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('lease_templates');
+        Schema::table('lease_templates', function (Blueprint $table) {
+            $table->dropColumn('pdf_path');
+        });
     }
 };

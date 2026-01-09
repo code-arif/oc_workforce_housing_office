@@ -77,6 +77,11 @@
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
+
+                    <div class="form-group mb-3">
+                        <a href="javascript:void(0)" class="form-label addAmenity">+ Click to add Amenity</a>
+                        
+                    </div>
                 </div>
 
                 <div class="modal-footer">

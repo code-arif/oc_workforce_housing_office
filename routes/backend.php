@@ -17,6 +17,8 @@ use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
 use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
 use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
 use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
 use App\Http\Controllers\Web\Backend\UserManagement\UserController;
@@ -308,26 +310,38 @@ Route::prefix('user-management')->name('user-management.')->group(function () {
 
 
 // Lease Templates - Document Upload & Management
-Route::resource('lease-templates', \App\Http\Controllers\Api\LeaseTemplateController::class);
+Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
+    Route::get('/', [LeaseTemplateController::class, 'index'])->name('index');
+    Route::get('/create', [LeaseTemplateController::class, 'create'])->name('create');
+    Route::post('/', [LeaseTemplateController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [LeaseTemplateController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [LeaseTemplateController::class, 'update'])->name('update');
+    Route::delete('/{id}', [LeaseTemplateController::class, 'destroy'])->name('destroy');
 
-Route::prefix('lease-templates')->name('lease-templates.')->group(function () {
-    Route::get('/list/index', [\App\Http\Controllers\Backend\LeaseTemplateController::class, 'index'])->name('list');
+    // PDF viewer route
+    Route::get('/{id}/pdf', [LeaseTemplateController::class, 'getPdf'])->name('pdf');
 
-    // Additional lease template routes
-    Route::post('{template}/upload-document', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'uploadDocument'])->name('lease-templates.upload-document');
-    Route::get('{template}/preview', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'preview'])->name('lease-templates.preview');
-    Route::get('available-data-sources', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'getAvailableDataSources'])->name('lease-templates.available-data-sources');
-    Route::get('{template}/preview-with-data', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'previewWithData'])->name('lease-templates.preview-with-data');
-    Route::get('{template}/extract-placeholders', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'extractPlaceholders'])->name('lease-templates.extract-placeholders');
+    // Generate lease document
+    Route::post('/{id}/generate-lease', [LeaseTemplateController::class, 'generateLease'])->name('generate-lease');
 
-    // Field Mappings
-    Route::get('/{template}/field-mappings', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'index'])->name('field-mappings.index');
-    Route::post('/{template}/field-mappings/store', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'store'])->name('field-mappings.store');
-    Route::get('/{template}/field-mappings/suggestions', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'suggestions'])->name('field-mappings.suggestions');
-    Route::get('/{template}/field-mappings/available-data-sources', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'availableDataSources'])->name('field-mappings.available-data-sources');
-    Route::get('/{template}/field-mappings/validate-completeness', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'validateCompleteness'])->name('field-mappings.validate-completeness');
-    Route::delete('/{template}/field-mappings/delete-all', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'deleteAll'])->name('field-mappings.delete-all');
-    Route::get('/{template}/field-mappings/{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'show'])->name('field-mappings.show');
-    Route::put('/{template}/field-mappings/{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'update'])->name('field-mappings.update');
-    Route::delete('/{template}/field-mappings/{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'destroy'])->name('field-mappings.destroy');
+    // Additional routes for template management
+    Route::get('/{id}/preview', [LeaseTemplateController::class, 'preview'])->name('preview');
+    Route::post('/{id}/toggle-status', [LeaseTemplateController::class, 'toggleStatus'])->name('toggle-status');
+    Route::get('/{id}/duplicate', [LeaseTemplateController::class, 'duplicate'])->name('duplicate');
+    Route::get('/{id}/export', [LeaseTemplateController::class, 'export'])->name('export');
 });
+
+// Lease Document Routes
+Route::prefix('lease-documents')->name('lease-documents.')->group(function() {
+    Route::get('/0', [LeaseDocumentController::class, 'index'])->name('index');
+    Route::get('/0/create', [LeaseDocumentController::class, 'create'])->name('create');
+    Route::post('/0', [LeaseDocumentController::class, 'store'])->name('store');
+    Route::get('/0/{id}', [LeaseDocumentController::class, 'show'])->name('show');
+    Route::get('/0/{id}/edit', [LeaseDocumentController::class, 'edit'])->name('edit');
+    Route::put('/0/{id}', [LeaseDocumentController::class, 'update'])->name('update');
+    Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
+    Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
+    Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
+});
+
+
