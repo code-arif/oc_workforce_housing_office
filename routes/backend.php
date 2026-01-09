@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Backend\Lease\LeaseManageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\RoomController;
@@ -210,17 +211,31 @@ Route::prefix('cms')->name('cms.')->group(function () {
 
 
 /*
-    |--------------------------------------------------------------------------
-    | Tenent Management Routes
-    |--------------------------------------------------------------------------
-    */
-
+|--------------------------------------------------------------------------
+| Tenent Management Routes
+|--------------------------------------------------------------------------
+*/
 Route::group([], function () {
     Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
     Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Lease Management Routes
+|--------------------------------------------------------------------------
+*/
+// Lease Management Routes
+Route::prefix('leases')->name('leases.')->group(function () {
+    Route::get('/', [LeaseManageController::class, 'index'])->name('index');
+    Route::get('/{id}', [LeaseManageController::class, 'show'])->name('show');
+    Route::get('/{id}/details', [LeaseManageController::class, 'details'])->name('details');
+    Route::post('/store', [LeaseManageController::class, 'store'])->name('store');
+    Route::put('/{id}/update', [LeaseManageController::class, 'update'])->name('update');
+    Route::delete('/{id}/delete', [LeaseManageController::class, 'destroy'])->name('destroy');
 });
 
 
