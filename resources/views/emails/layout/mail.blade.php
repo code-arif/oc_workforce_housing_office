@@ -194,15 +194,6 @@
 
         <!-- CONTENT SECTION -->
         <div class="email-content">
-            <!-- Greeting -->
-            <div class="greeting">
-                @if (isset($recipientName))
-                    Dear {{ $recipientName }},
-                @else
-                    Dear Valued Customer,
-                @endif
-            </div>
-
             <!-- Main Content Slot -->
             @yield('content')
 

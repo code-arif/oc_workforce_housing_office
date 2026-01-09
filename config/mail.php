@@ -113,4 +113,9 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /**
+     * Admin email for sending email to admin
+     */
+    'admin_email' => env('ADMIN_EMAIL', 'rufuzxyz@gmail.com'),
+
 ];

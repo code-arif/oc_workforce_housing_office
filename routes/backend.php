@@ -24,16 +24,18 @@ use App\Http\Controllers\Web\Backend\UserManagement\UserController;
 use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
+use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // working
-
 });
 
 // property type manage
@@ -82,7 +84,6 @@ Route::prefix('beds')->name('beds.')->group(function () {
 
     Route::get('/toggle-status/{id}', [BedController::class, 'toggleStatus'])->name('toggle.status');
     Route::get('/get-rooms/{unitId}', [BedController::class, 'getRooms'])->name('get.rooms');
-
 });
 
 
@@ -91,7 +92,7 @@ Route::prefix('property')->name('property.')->group(function () {
     // Dynamic property management (new CMS-style tab system)
     Route::get('/', [PropertySectionController::class, 'index'])->name('list');
     Route::get('/section/{section}', [PropertySectionController::class, 'section'])->name('section');
-    
+
     // Legacy routes for create/edit operations
     Route::get('/list', [PropertyController::class, 'index'])->name('index');
     Route::get('/get-data', [PropertyController::class, 'getData'])->name('get.data');
@@ -105,7 +106,7 @@ Route::prefix('property')->name('property.')->group(function () {
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
 });
 
-Route::prefix('seasons')->name('seasons.')->group(function () {    
+Route::prefix('seasons')->name('seasons.')->group(function () {
     // Legacy routes for create/edit operations
     Route::get('/list', [SeasonController::class, 'index'])->name('list');
     Route::get('/get-data', [SeasonController::class, 'getData'])->name('get.data');
@@ -140,6 +141,9 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Home Hero Section
     Route::post('/home/hero/update', [HomePageController::class, 'update'])->name('home.hero.section.update');
 
+    // Home housing option section
+    Route::post('/home/housing-option/update', [HomePageController::class, 'housingOptionupdate'])->name('home.housing.option.section.update');
+
     // Slider Management Routes
     Route::prefix('home/slider')->name('slider.')->group(function () {
         Route::post('/store', [HomePageSliderController::class, 'store'])->name('store');
@@ -172,6 +176,12 @@ Route::prefix('cms')->name('cms.')->group(function () {
 
     // Property page
     Route::post('/property/banner/update', [PropertyPageController::class, 'update'])->name('property.banner.update');
+    Route::post('/property/our-offer/update', [PropertyPageController::class, 'updateOurOffer'])->name('property.our-offer.update');
+
+    // Property one
+    Route::post('/property/property-one/update', [PropertyPageController::class, 'updatePropertyOne'])->name('property.one.update');
+    Route::post('/property/property-two/update', [PropertyPageController::class, 'updatePropertyTwo'])->name('property.two.update');
+    Route::post('/property/property-three/update', [PropertyPageController::class, 'updatePropertyThree'])->name('property.three.update');
 
     // About section update
     Route::post('/about/breadcrumb/update', [AboutPageController::class, 'update'])->name('about.breadcrumb.update');
@@ -185,7 +195,36 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::post('/item/update', [AmenitiesPageController::class, 'updateItem'])->name('item.update');
         Route::delete('/item/delete', [AmenitiesPageController::class, 'destroy'])->name('item.delete');
     });
+
+    // Pricing page
+    Route::post('/pricing/banner/update', [PricingPageController::class, 'update'])->name('pricing.hero.update');
+    Route::prefix('pricing/plans')->name('pricing.')->group(function () {
+        Route::get('/', [PricingPageController::class, 'index'])->name('index');
+        Route::post('/store', [PricingPageController::class, 'store'])->name('store');
+        Route::post('/update', [PricingPageController::class, 'updatePricingItem'])->name('update');
+        Route::post('/status', [PricingPageController::class, 'toggleStatus'])->name('status');
+        Route::delete('/delete', [PricingPageController::class, 'destroy'])->name('delete');
+    });
+
+    // Reservation page
+    Route::post('/reservation/hero/update', [ReservationPageController::class, 'update'])->name('reservation.hero.update');
 });
+
+
+/*
+    |--------------------------------------------------------------------------
+    | Tenent Management Routes
+    |--------------------------------------------------------------------------
+    */
+
+Route::group([], function () {
+    Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
+    Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
+    Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
+    Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
+    Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+});
+
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {

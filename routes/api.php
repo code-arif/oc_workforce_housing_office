@@ -1,18 +1,27 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\CMS\CmsController;
+use App\Http\Controllers\Api\Tenants\LandingController;
+use App\Http\Controllers\Api\Tenants\TenantAuthController;
+use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Auth\AuthenticationController;
+use App\Http\Controllers\Api\Tenants\PasswordResetController;
+use App\Http\Controllers\Api\Tenants\TenantDashboardController;
+use App\Http\Controllers\Api\Tenants\TenantPasswordController;
+use App\Http\Controllers\Api\Tenants\TenantProfileController;
 
 //health-check
-Route::get("/check", function () {
-    return "All Right 👍";
+Route::get('/health', function () {
+    return response()->json([
+        'success' => true,
+        'message' => 'API is running',
+        'timestamp' => now()->toIso8601String()
+    ]);
 });
 
 //Guest user routes
 Route::group(['middleware' => 'guest:api'], function () {
-
-    // Login & Register
-    Route::post('/login', [AuthenticationController::class, 'login']);
 
     // Property Creation - Unit/Room/Bed API
     Route::get('/unit/{unitId}/rooms', function ($unitId) {
@@ -32,37 +41,77 @@ Route::group(['middleware' => 'guest:api'], function () {
         return response()->json(['beds' => $beds]);
     })->name('api.rooms.beds');
 
-    
+    /*
+    |--------------------------------------------------------------------------
+    | Cms Routes
+    |--------------------------------------------------------------------------
+    */
+    // cms route gorup
+    Route::group(['prefix' => 'cms'], function () {
+        Route::get('/home', [CmsController::class, 'home']); // cms home page data
+        Route::get('/properties', [CmsController::class, 'properties']); // cms properties page data
+        Route::get('/about-us', [CmsController::class, 'aboutUs']); // cms about us page data
+        Route::get('/amenities', [CmsController::class, 'amenities']); // cms amenities page data
+        Route::get('/pricing', [CmsController::class, 'pricing']); // cms pricing page data
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tenent Management Routes
+    |--------------------------------------------------------------------------
+    */
+    // Public Routes
+    Route::prefix('v1')->group(function () {
+
+        // Landing - Tenant Email Submission
+        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
+
+        // Admin Actions
+        Route::prefix('admin')->group(function () {
+            Route::post('/tenant/proceed/email', [LandingController::class, 'adminEmailProceed']); // only for developemnt purpose
+            Route::post('/tenant/proceed/application', [LandingController::class, 'adminApplicationProceed']); // only for developemnt purpose
+        });
+
+        // Tenant Form (Token-based)
+        Route::prefix('tenant/form')->group(function () {
+            Route::get('/{token}', [TenantFormController::class, 'show']);
+            Route::post('/{token}', [TenantFormController::class, 'submit']); // done
+        });
+
+        // Tenant Authentication
+        Route::prefix('tenant')->group(function () {
+            Route::post('/login', [TenantAuthController::class, 'login']);
+        });
+
+
+        // Tenant Password Management
+        Route::prefix('tenant/password')->group(function () {
+            // First time password setup (after approval)
+            Route::post('/setup', [TenantPasswordController::class, 'setPasswordAfterApproval']); // done
+
+            // Forgot password flow (OTP-based)
+            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // done
+            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
+            Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
+        });
+    });
 });
 
 
 Route::group(['middleware' => 'auth:api'], function () {
-    //User logout
-    Route::post('/logout', [AuthenticationController::class, 'logout']);
+    // Protected Tenant Routes
+    Route::prefix('v1/tenant')->group(function () {
+        Route::get('/profile', [TenantProfileController::class, 'profile']); // done
+        Route::put('/update-profile', [TenantProfileController::class, 'updateProfile']); // done
+        Route::post('/update-avatar', [TenantProfileController::class, 'updateAvatar']); // done
 
-    // // Lease Templates - Document Upload & Management
-    // Route::apiResource('lease-templates', \App\Http\Controllers\Api\LeaseTemplateController::class);
-    
-    // // Additional lease template routes
-    // Route::group(['prefix' => 'lease-templates'], function () {
-    //     Route::post('{template}/upload-document', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'uploadDocument'])->name('lease-templates.upload-document');
-    //     Route::get('{template}/preview', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'preview'])->name('lease-templates.preview');
-    //     Route::get('available-data-sources', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'getAvailableDataSources'])->name('lease-templates.available-data-sources');
-    //     Route::get('{template}/preview-with-data', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'previewWithData'])->name('lease-templates.preview-with-data');
-    //     Route::get('{template}/extract-placeholders', [\App\Http\Controllers\Api\LeaseTemplateController::class, 'extractPlaceholders'])->name('lease-templates.extract-placeholders');
-    // });
+        Route::post('/logout', [TenantAuthController::class, 'logout']); // done
 
-    // // Field Mappings
-    // Route::group(['prefix' => 'lease-templates/{template}/field-mappings'], function () {
-    //     Route::get('', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'index'])->name('field-mappings.index');
-    //     Route::post('', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'store'])->name('field-mappings.store');
-    //     Route::get('suggestions', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'suggestions'])->name('field-mappings.suggestions');
-    //     Route::get('available-data-sources', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'availableDataSources'])->name('field-mappings.available-data-sources');
-    //     Route::get('validate-completeness', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'validateCompleteness'])->name('field-mappings.validate-completeness');
-    //     Route::delete('all', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'deleteAll'])->name('field-mappings.delete-all');
-    //     Route::get('{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'show'])->name('field-mappings.show');
-    //     Route::put('{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'update'])->name('field-mappings.update');
-    //     Route::delete('{fieldMapping}', [\App\Http\Controllers\Api\LeaseTemplateFieldMappingController::class, 'destroy'])->name('field-mappings.destroy');
-    // });
 
+        // Tenant dashbaord routes
+        Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
+        Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
+        Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+    });
 });

@@ -38,13 +38,20 @@
                             </div>
                             <div class="card-body p-0" style="height: 70vh; overflow-x:auto">
                                 <div class="nav flex-column nav-pills" id="cms-tabs" role="tablist">
-                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
+                                        style="font-size: 0.75rem;">
                                         Home Page
                                     </h6>
 
                                     <a class="nav-link active" id="hero-tab" href="javascript:void(0);" data-section="hero"
                                         data-title="Hero Section" data-breadcrumb="Hero">
                                         <i class="fe fe-home me-2"></i> Hero Section
+                                    </a>
+
+                                    {{-- Housing Options --}}
+                                    <a class="nav-link" id="housing-options-tab" href="javascript:void(0);" data-section="housing-options"
+                                        data-title="Housing Options" data-breadcrumb="Housing Options">
+                                        <i class="fa-solid fa-filter me-2"></i> Housing Options
                                     </a>
 
                                     <a class="nav-link" id="how-it-works-tab" href="javascript:void(0);"
@@ -76,28 +83,39 @@
                                     </a>
 
                                     {{-- Properties Page --}}
-                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
+                                        style="font-size: 0.75rem;">
                                         Properties Page
                                     </h6>
-                                    <a class="nav-link" id="property-banner-tab" href="javascript:void(0);" data-section="property-banner"
-                                        data-title="Property Page Banner" data-breadcrumb="Property Page Banner">
+                                    <a class="nav-link" id="property-banner-tab" href="javascript:void(0);"
+                                        data-section="property-banner" data-title="Property Page Banner"
+                                        data-breadcrumb="Property Page Banner">
                                         <i class="fa-solid fa-bandage me-2"></i> Property Page Banner
                                     </a>
-                                    <a class="nav-link" id="property-our-offer-tab" href="javascript:void(0);" data-section="property-our-offer"
-                                        data-title="Our Offer" data-breadcrumb="Our Offer">
+                                    <a class="nav-link" id="property-our-offer-tab" href="javascript:void(0);"
+                                        data-section="property-our-offer" data-title="Our Offer"
+                                        data-breadcrumb="Our Offer">
                                         <i class="fa-solid fa-briefcase me-2"></i> Our Offer
                                     </a>
-                                    <a class="nav-link" id="property-one-tab" href="javascript:void(0);" data-section="property-one"
-                                        data-title="Property One" data-breadcrumb="Property One">
-                                        <i class="fa-solid fa-briefcase me-2"></i> Property One
+                                    <a class="nav-link" id="property-one-tab" href="javascript:void(0);"
+                                        data-section="property-one" data-title="Property One"
+                                        data-breadcrumb="Property One">
+                                        <i class="fa-solid fa-1 me-2"></i> Property One
                                     </a>
-                                    <a class="nav-link" id="property-one-tab" href="javascript:void(0);" data-section="property-one"
-                                        data-title="Property Two" data-breadcrumb="Property One">
-                                        <i class="fa-solid fa-briefcase me-2"></i> Property Two
+                                    <a class="nav-link" id="property-two-tab" href="javascript:void(0);"
+                                        data-section="property-two" data-title="Property Two"
+                                        data-breadcrumb="Property Two">
+                                        <i class="fa-solid fa-2 me-2"></i> Property Two
+                                    </a>
+                                    <a class="nav-link" id="property-three-tab" href="javascript:void(0);"
+                                        data-section="property-three" data-title="Property Three"
+                                        data-breadcrumb="Property Three">
+                                        <i class="fa-solid fa-3 me-2"></i> Property Three
                                     </a>
 
                                     {{-- about us page --}}
-                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
+                                        style="font-size: 0.75rem;">
                                         About Us Page
                                     </h6>
 
@@ -114,7 +132,8 @@
                                     </a>
 
                                     {{-- amenities page --}}
-                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
+                                        style="font-size: 0.75rem;">
                                         Amenities Page
                                     </h6>
 
@@ -130,36 +149,34 @@
                                     </a>
 
                                     {{-- amenities page --}}
-                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
+                                        style="font-size: 0.75rem;">
                                         Pricing Page
                                     </h6>
 
-                                    <a class="nav-link" id="amenities-hero-tab" href="javascript:void(0);"
-                                        data-section="amenities-hero-section" data-title="Amenities Hero"
-                                        data-breadcrumb="Amenities Hero">
+                                    {{-- Pricing page hero section --}}
+                                    <a class="nav-link" id="pricing-hero-tab" href="javascript:void(0);"
+                                        data-section="pricing-hero-section" data-title="Pricing Hero"
+                                        data-breadcrumb="Pricing Hero">
                                         <i class="fa-solid fa-democrat me-2"></i> Pricing Banner
                                     </a>
-                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
-                                        data-section="amenities-feature" data-title="Featured Amenities"
-                                        data-breadcrumb="Featured Amenities">
+
+                                    <a class="nav-link" id="pricing-item-tab" href="javascript:void(0);"
+                                        data-section="pricing-item" data-title="Pricing Item"
+                                        data-breadcrumb="Pricing Item">
                                         <i class="fa-solid fa-republican me-2"></i> Pricing Item
                                     </a>
 
                                     {{-- amenities page --}}
-                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
+                                        style="font-size: 0.75rem;">
                                         Reservation Page
                                     </h6>
 
-                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
-                                        data-section="amenities-feature" data-title="Featured Amenities"
-                                        data-breadcrumb="Featured Amenities">
+                                    <a class="nav-link" id="reservation-hero-tab" href="javascript:void(0);"
+                                        data-section="reservation-hero-section" data-title="Reservation Hero"
+                                        data-breadcrumb="Reservation Hero">
                                         <i class="fa-solid fa-book-atlas me-2"></i> Reservation Page Banner
-                                    </a>
-
-                                    <a class="nav-link" id="amenities-feature-tab" href="javascript:void(0);"
-                                        data-section="amenities-feature" data-title="Featured Amenities"
-                                        data-breadcrumb="Featured Amenities">
-                                        <i class="fa-solid fa-microchip me-2"></i> Reservation Process
                                     </a>
                                 </div>
                             </div>

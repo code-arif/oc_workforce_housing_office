@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Backend\CMS\Section;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\PricingPlan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
@@ -56,6 +57,16 @@ class CmsSectionController extends Controller
                     $sliders = Slider::orderBy('order')->get();
 
                     return view('backend.layouts.cms.home.hero', compact('data', 'sliders'))->render();
+
+                    // home page housing option section
+                case 'housing-options':
+                    $data = CMS::where('page', 'home')
+                        ->where('section', 'housing-options')
+                        ->where('name', 'item')
+                        ->first();
+
+                    return view('backend.layouts.cms.home.housing-option', compact('data'))->render();
+
 
                     // home page how it works section
                 case 'how-it-works':
@@ -142,6 +153,38 @@ class CmsSectionController extends Controller
                         ->first();
                     return view('backend.layouts.cms.properties.properties-banner', compact('data'))->render();
 
+                    // property page - our offer section
+                case 'property-our-offer':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'our-offer')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.our-offer', compact('data'))->render();
+
+                    // property page - property one section
+                case 'property-one':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-one')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.property-one', compact('data'))->render();
+
+                    // property page - property two section
+                case 'property-two':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-two')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.property-two', compact('data'))->render();
+
+                    // property page - property three section
+                case 'property-three':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-three')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.properties.property-three', compact('data'))->render();
+
                     // about page - about us breadcrumb section
                 case 'about-us-breadcrumb':
                     $data = CMS::where('page', 'about')
@@ -222,6 +265,72 @@ class CmsSectionController extends Controller
                         ->first();
 
                     return view('backend.layouts.cms.amenities.amenities-feature', compact('data'))->render();
+
+                    // Pricing page - pricing hero section
+                case 'pricing-hero-section':
+                    $data = CMS::where('page', 'pricing')
+                        ->where('section', 'hero')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.pricing.pricing-banner', compact('data'))->render();
+
+                    // Pricing page - pricing plans section
+                case 'pricing-item':
+                    // Check if this is a DataTable AJAX request
+                    if ($request->ajax() && $request->has('draw')) {
+                        $plans = PricingPlan::query();
+
+                        return DataTables::of($plans)
+                            ->addIndexColumn()
+                            ->addColumn('price', function ($row) {
+                                return '$' . number_format($row->price_per_bed, 0) . ' / per bed';
+                            })
+                            ->addColumn('tenants', function ($row) {
+                                return $row->tenants_per_room . ' tenants per room';
+                            })
+                            ->addColumn('amenities_list', function ($row) {
+                                if (!$row->amenities || count($row->amenities) == 0) {
+                                    return '<span class="badge bg-secondary">No amenities</span>';
+                                }
+
+                                $badges = '';
+                                foreach ($row->amenities as $amenity) {
+                                    $badges .= '<span class="badge bg-info me-1 mb-1">' . htmlspecialchars($amenity) . '</span>';
+                                }
+                                return $badges;
+                            })
+
+                            ->addColumn('action', function ($row) {
+                                return '
+                        <button class="btn btn-sm btn-info edit-plan me-1"
+                            data-id="' . $row->id . '"
+                            data-name="' . htmlspecialchars($row->name) . '"
+                            data-price="' . $row->price_per_bed . '"
+                            data-tenants="' . $row->tenants_per_room . '"
+                            data-amenities=\'' . json_encode($row->amenities ?? []) . '\'
+                            data-description="' . htmlspecialchars($row->description ?? '') . '">
+                            <i class="fe fe-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-plan" data-id="' . $row->id . '">
+                            <i class="fe fe-trash-2"></i>
+                        </button>
+                    ';
+                            })
+                            ->rawColumns(['amenities_list', 'action'])
+                            ->make(true);
+                    }
+
+                    return view('backend.layouts.cms.pricing.pricing-item')->render();
+
+                    // Reservation page - reservation hero section
+                case 'reservation-hero-section':
+                    $data = CMS::where('page', 'reservation')
+                        ->where('section', 'hero')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.reservation.hero', compact('data'))->render();
+
+                    // fallback for unknown sections
                 default:
                     return response()->json([
                         'success' => false,

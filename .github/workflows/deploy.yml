@@ -2,7 +2,7 @@ name: Deploy project to our server
 on:
   push:
     branches:
-      - main
+      - deploy
 jobs:
   FTP-Deploy-Action:
     name: FTP-Deploy-Action
@@ -14,7 +14,7 @@ jobs:
       - name: FTP-Deploy-Action
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          server: ftp.softvencefsd.xyz
-          username: app@hudsongreen.softvencefsd.xyz
-          password: "#x2V*k~}(!{VZA2="
+          server: ftp.thewarriors.team
+          username: "oc@oc-workforce.thewarriors.team"
+          password: "+VChM)88600EyoGS"
 

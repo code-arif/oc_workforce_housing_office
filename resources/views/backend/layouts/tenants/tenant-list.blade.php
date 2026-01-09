@@ -1,0 +1,441 @@
+@extends('backend.app')
+
+@section('title', 'Tenant Management')
+
+@section('content')
+    <div class="app-content main-content mt-0">
+        <div class="side-app" style="margin-bottom: 50px">
+            <div class="main-container container-fluid">
+
+                <!-- PAGE-HEADER -->
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Tenants</h1>
+                        <p class="text-muted mb-0">Manage all property tenants and their lease agreements</p>
+                    </div>
+                    <div class="ms-auto pageheader-btn">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Tenants</li>
+                        </ol>
+                    </div>
+                </div>
+                <!-- PAGE-HEADER END -->
+
+                <!-- STATISTICS ROW -->
+                <div class="row mb-4">
+                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                        <div class="card stats-card" style="border-left: 4px solid #007bff;">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted mb-1">Total Tenants</h6>
+                                        <h3 class="mb-0">{{ $totalTenants }}</h3>
+                                    </div>
+                                    <div class="icon-service bg-primary-transparent text-primary p-3 rounded-3">
+                                        <i class="fe fe-users fs-20"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                        <div class="card stats-card" style="border-left: 4px solid #28a745;"
+                            onclick="filterByAccountStatus('active')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted mb-1">Active Tenants</h6>
+                                        <h3 class="mb-0">{{ $activeTenants }}</h3>
+                                    </div>
+                                    <div class="icon-service bg-success-transparent text-success p-3 rounded-3">
+                                        <i class="fe fe-check-circle fs-20"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                        <div class="card stats-card" style="border-left: 4px solid #ffc107;"
+                            onclick="filterByStatus('pending')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted mb-1">Pending</h6>
+                                        <h3 class="mb-0">{{ $pendingTenants }}</h3>
+                                    </div>
+                                    <div class="icon-service bg-warning-transparent text-warning p-3 rounded-3">
+                                        <i class="fe fe-clock fs-20"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                        <div class="card stats-card" style="border-left: 4px solid #6c757d;"
+                            onclick="filterByAccountStatus('inactive')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted mb-1">Inactive</h6>
+                                        <h3 class="mb-0">{{ $inactiveTenants }}</h3>
+                                    </div>
+                                    <div class="icon-service bg-secondary-transparent text-secondary p-3 rounded-3">
+                                        <i class="fe fe-user-x fs-20"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILTERS -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-end g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Tenant Status</label>
+                                    <select class="form-select" id="statusFilter">
+                                        <option value="">All Status</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="under_review">Under Review</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Account Status</label>
+                                    <select class="form-select" id="accountStatusFilter">
+                                        <option value="">All Accounts</option>
+                                        <option value="active">Active Lease</option>
+                                        <option value="inactive">No Active Lease</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Application Source</label>
+                                    <select class="form-select" id="sourceFilter">
+                                        <option value="">All Sources</option>
+                                        <option value="admin">Admin Created</option>
+                                        <option value="self">Self Registration</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="dateFrom">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="dateTo">
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
+                                        <i class="fe fe-filter me-1"></i> Apply Filters
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                        <i class="fe fe-refresh-cw me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TENANT LIST TABLE -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                                <h3 class="card-title mb-0">Tenant List</h3>
+                                <div class="card-options">
+                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="exportTenants()">
+                                        <i class="fe fe-download me-1"></i> Export
+                                    </button>
+                                    <a href="{{ route('tenants.create') }}" class="btn btn-sm btn-primary">
+                                        <i class="fe fe-plus me-1"></i> New Tenant
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered text-nowrap border-bottom" id="datatable">
+                                        <thead>
+                                            <tr>
+                                                <th class="bg-transparent border-bottom-0" style="width: 50px;">ID</th>
+                                                <th class="bg-transparent border-bottom-0" style="width: 200px;">Name</th>
+                                                <th class="bg-transparent border-bottom-0" style="width: 180px;">
+                                                    Property/Unit</th>
+                                                <th class="bg-transparent border-bottom-0" style="width: 200px;">Address
+                                                </th>
+                                                <th class="bg-transparent border-bottom-0 text-center">Account Status</th>
+                                                <th class="bg-transparent border-bottom-0 text-center">Status</th>
+                                                <th class="bg-transparent border-bottom-0 text-center">Rent</th>
+                                                <th class="bg-transparent border-bottom-0 text-center">Roommates</th>
+                                                <th class="bg-transparent border-bottom-0 text-center"
+                                                    style="width: 100px;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+    <script>
+        let dataTable;
+
+        $(document).ready(function() {
+            $.ajaxSetup({
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                }
+            });
+
+            initializeDataTable();
+        });
+
+        function initializeDataTable() {
+            if ($.fn.DataTable.isDataTable('#datatable')) {
+                $('#datatable').DataTable().destroy();
+            }
+
+            dataTable = $('#datatable').DataTable({
+                order: [
+                    [0, 'desc']
+                ],
+                lengthMenu: [
+                    [20, 50, 100, 200],
+                    [20, 50, 100, 200]
+                ],
+                processing: true,
+                responsive: true,
+                serverSide: true,
+                language: {
+                    processing: `<div class="text-center">
+                        <img src="{{ asset('default/loader.gif') }}" alt="Loader" style="width: 50px;">
+                    </div>`
+                },
+                pagingType: "full_numbers",
+                dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
+                ajax: {
+                    url: "{{ route('tenants.index') }}",
+                    type: "GET",
+                    data: function(d) {
+                        d.status = $('#statusFilter').val();
+                        d.account_status = $('#accountStatusFilter').val();
+                        d.source = $('#sourceFilter').val();
+                        d.date_from = $('#dateFrom').val();
+                        d.date_to = $('#dateTo').val();
+                    }
+                },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name',
+                        orderable: true,
+                        searchable: true
+                    },
+                    {
+                        data: 'property_unit',
+                        name: 'property_unit',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'address',
+                        name: 'address',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'account_status',
+                        name: 'account_status',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'tenant_status',
+                        name: 'status',
+                        orderable: true,
+                        searchable: false,
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'rent',
+                        name: 'rent',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'roommates',
+                        name: 'roommates',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    }
+                ]
+            });
+        }
+
+        function applyFilters() {
+            dataTable.ajax.reload();
+        }
+
+        function resetFilters() {
+            $('#statusFilter').val('');
+            $('#accountStatusFilter').val('');
+            $('#sourceFilter').val('');
+            $('#dateFrom').val('');
+            $('#dateTo').val('');
+            dataTable.ajax.reload();
+        }
+
+        function filterByStatus(status) {
+            $('#statusFilter').val(status);
+            $('#accountStatusFilter').val('');
+            applyFilters();
+        }
+
+        function filterByAccountStatus(status) {
+            $('#accountStatusFilter').val(status);
+            $('#statusFilter').val('');
+            applyFilters();
+        }
+
+        function showDeleteConfirm(id) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This tenant will be deleted permanently!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    deleteTenant(id);
+                }
+            });
+        }
+
+        function deleteTenant(id) {
+            NProgress.start();
+            let url = "{{ route('tenants.destroy', ':id') }}";
+            let csrfToken = '{{ csrf_token() }}';
+
+            $.ajax({
+                type: "DELETE",
+                url: url.replace(':id', id),
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                success: function(resp) {
+                    NProgress.done();
+                    if (resp.success) {
+                        toastr.success(resp.message);
+                        dataTable.ajax.reload();
+                    } else {
+                        toastr.error(resp.message);
+                    }
+                },
+                error: function(error) {
+                    NProgress.done();
+                    toastr.error(error.responseJSON?.message || 'Failed to delete tenant!');
+                }
+            });
+        }
+
+        function exportTenants() {
+            toastr.info('Export functionality coming soon!');
+        }
+    </script>
+@endpush
+
+@push('styles')
+    <link href="{{ asset('default/datatable.css') }}" rel="stylesheet" />
+    <style>
+        .filter-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .filter-card .form-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .stats-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .icon-service {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table th {
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-group-sm>.btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .card-options .btn {
+            font-size: 13px;
+        }
+
+        .badge {
+            padding: 0.35em 0.65em;
+            font-weight: 500;
+        }
+    </style>
+@endpush

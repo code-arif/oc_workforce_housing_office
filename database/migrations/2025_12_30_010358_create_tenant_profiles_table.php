@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('country_code')->nullable();
 
+            $table->string('avatar')->nullable();
+
             $table->timestamps();
 
             $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
