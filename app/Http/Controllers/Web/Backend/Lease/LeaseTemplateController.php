@@ -5,11 +5,9 @@ namespace App\Http\Controllers\Web\Backend\Lease;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\Controller;
 use App\Models\Lease\LeaseTemplate;
-use Smalot\PdfParser\Parser as PdfParser;
-use Ibnuhalimm\LaravelPdfToHtml\LaravelPdfToHtml;
-use Ibnuhalimm\LaravelPdfToHtml\Facades\PdfToHtml;
 
 class LeaseTemplateController extends Controller
 {
@@ -33,13 +31,22 @@ class LeaseTemplateController extends Controller
         ]);
 
         $file = $request->file('template_file');
-        $extension = $file->getClientOriginalExtension();
+        $extension = strtolower($file->getClientOriginalExtension());
         
         // Store the original file
         $documentPath = $file->store('lease-templates', 'public');
+        $pdfPath = null;
         
-        // Convert document to HTML
-        $htmlContent = $this->convertToHtml($file, $extension);
+        // Convert DOCX to PDF for viewing, or use PDF directly
+        if ($extension === 'docx') {
+            $pdfPath = $this->convertDocxToPdf($file, $documentPath);
+        } else {
+            // It's already a PDF
+            $pdfPath = $documentPath;
+        }
+        
+        // Get total pages from PDF
+        $totalPages = $this->getPdfPageCount(storage_path('app/public/' . $pdfPath));
         
         // Get file metadata
         $metadata = [
@@ -54,14 +61,123 @@ class LeaseTemplateController extends Controller
             'original_filename' => $file->getClientOriginalName(),
             'file_type' => $extension,
             'document_path' => $documentPath,
-            'content' => $htmlContent,
+            'pdf_path' => $pdfPath,
+            'total_pages' => $totalPages,
             'metadata' => $metadata,
             'placeholders' => [],
             'signatures' => []
         ]);
 
         return redirect()->route('lease-templates.edit', $template->id)
-            ->with('success', 'Template uploaded successfully. Now add placeholders and signatures.');
+            ->with('success', 'Template uploaded successfully. Now add placeholders to your document.');
+    }
+    
+    /**
+     * Convert DOCX to PDF for viewing
+     */
+    private function convertDocxToPdf($file, $documentPath)
+    {
+        try {
+            $sourceFile = storage_path('app/public/' . $documentPath);
+            $outputDir = storage_path('app/public/lease-templates/pdf');
+            
+            if (!is_dir($outputDir)) {
+                mkdir($outputDir, 0755, true);
+            }
+            
+            $basename = pathinfo($documentPath, PATHINFO_FILENAME);
+            $pdfFilename = $basename . '.pdf';
+            $pdfPath = 'lease-templates/pdf/' . $pdfFilename;
+            $outputFile = $outputDir . DIRECTORY_SEPARATOR . $pdfFilename;
+            
+            // Try using LibreOffice for conversion (cross-platform)
+            $libreOffice = $this->getLibreOfficePath();
+            
+            if ($libreOffice) {
+                $command = sprintf(
+                    '"%s" --headless --convert-to pdf --outdir "%s" "%s" 2>&1',
+                    $libreOffice,
+                    $outputDir,
+                    $sourceFile
+                );
+                
+                exec($command, $output, $returnCode);
+                
+                if ($returnCode === 0 && file_exists($outputFile)) {
+                    Log::info("DOCX converted to PDF successfully: {$outputFile}");
+                    return $pdfPath;
+                }
+            }
+            
+            // Fallback: Use PhpWord to convert (basic conversion)
+            $phpWord = IOFactory::load($sourceFile);
+            
+            // Create PDF using dompdf via PhpWord
+            $pdfWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
+            $pdfWriter->save($outputFile);
+            
+            if (file_exists($outputFile)) {
+                return $pdfPath;
+            }
+            
+            // If all else fails, return the original path (will need manual handling)
+            Log::warning("Could not convert DOCX to PDF, storing original");
+            return $documentPath;
+            
+        } catch (\Exception $e) {
+            Log::error("DOCX to PDF conversion failed: " . $e->getMessage());
+            return $documentPath;
+        }
+    }
+    
+    /**
+     * Get LibreOffice path based on OS
+     */
+    private function getLibreOfficePath()
+    {
+        // Windows paths
+        $windowsPaths = [
+            'C:\Program Files\LibreOffice\program\soffice.exe',
+            'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
+        ];
+        
+        // Linux/Mac paths
+        $unixPaths = [
+            '/usr/bin/libreoffice',
+            '/usr/bin/soffice',
+            '/Applications/LibreOffice.app/Contents/MacOS/soffice',
+        ];
+        
+        $paths = PHP_OS_FAMILY === 'Windows' ? $windowsPaths : $unixPaths;
+        
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get page count from PDF
+     */
+    private function getPdfPageCount($pdfPath)
+    {
+        try {
+            if (!file_exists($pdfPath)) {
+                return 1;
+            }
+            
+            // Simple page count using file content
+            $content = file_get_contents($pdfPath);
+            $pageCount = preg_match_all("/\/Type\s*\/Page[^s]/", $content);
+            
+            return max(1, $pageCount);
+        } catch (\Exception $e) {
+            Log::error("Error counting PDF pages: " . $e->getMessage());
+            return 1;
+        }
     }
 
     private function convertToHtml($file, $extension)
@@ -82,100 +198,6 @@ class LeaseTemplateController extends Controller
         $htmlWriter->save('php://output');
         $html = ob_get_clean();
         
-        // Clean up the HTML
-        return $this->cleanHtml($html);
-    }
-
-    private function pdfToHtml($file)
-    {
-        try {
-            $sourceFile = $file->getRealPath();
-            
-            if (!file_exists($sourceFile)) {
-                throw new \Exception("PDF file not found: {$sourceFile}");
-            }
-            
-            Log::info("Processing PDF: {$sourceFile}");
-            
-            $outputDir = storage_path('app/pdf-to-html');
-            if (!is_dir($outputDir)) {
-                mkdir($outputDir, 0755, true);
-            }
-            
-            // Generate unique output filename
-            $basename = pathinfo($sourceFile, PATHINFO_FILENAME);
-            $outputFile = $outputDir . DIRECTORY_SEPARATOR . $basename . '.html';
-            
-            // Build command with proper escaping for Windows
-            $binary = 'C:\poppler\Library\bin\pdftohtml.exe';
-            $command = sprintf(
-                '"%s" -c -noframes -i "%s" "%s" 2>&1',
-                $binary,
-                $sourceFile,
-                $outputFile
-            );
-            
-            Log::info("Executing command: {$command}");
-            
-            // Execute command
-            exec($command, $output, $returnCode);
-            
-            if ($returnCode !== 0) {
-                $errorMsg = implode("\n", $output);
-                Log::error("pdftohtml failed: {$errorMsg}");
-                throw new \Exception("Conversion failed: {$errorMsg}");
-            }
-            
-            // Check if HTML file was created
-            if (!file_exists($outputFile)) {
-                throw new \Exception("HTML file was not generated at: {$outputFile}");
-            }
-            
-            // Read the generated HTML
-            $html = file_get_contents($outputFile);
-            
-            Log::info("HTML generated successfully at: {$outputFile}");
-            // Clean up the HTML
-            return $this->cleanHtml($html);
-            
-        } catch (\Exception $e) {
-            Log::error("PDF to HTML conversion failed: " . $e->getMessage());
-            throw $e;
-        }
-    }
-    
-
-    private function cleanHtml($html)
-    {
-        // Extract body content if full HTML document
-        if (preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $matches)) {
-            $html = $matches[1];
-        }
-        
-        // Remove script tags
-        $html = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $html);
-        
-        // Remove meta tags and head content
-        $html = preg_replace('/<head\b[^>]*>(.*?)<\/head>/is', '', $html);
-        $html = preg_replace('/<meta[^>]*>/is', '', $html);
-        $html = preg_replace('/<link[^>]*>/is', '', $html);
-        
-        // Remove HTML, body, DOCTYPE tags
-        $html = preg_replace('/<!DOCTYPE[^>]*>/is', '', $html);
-        $html = preg_replace('/<\/?html[^>]*>/is', '', $html);
-        $html = preg_replace('/<\/?body[^>]*>/is', '', $html);
-        
-        // Keep inline styles but remove external style blocks that might break layout
-        // Only remove style blocks that have complex/problematic CSS
-        $html = preg_replace('/<style\b[^>]*>(?!.*(?:font-family|font-size|text-align|margin|padding))(.*?)<\/style>/is', '', $html);
-        
-        // Clean up extra whitespace but preserve structure
-        $html = preg_replace('/\s+/', ' ', $html);
-        $html = str_replace('> <', '><', $html);
-        
-        // Wrap content in a div to ensure proper structure
-        $html = '<div class="document-content">' . trim($html) . '</div>';
-        
         return $html;
     }
 
@@ -183,51 +205,53 @@ class LeaseTemplateController extends Controller
     {
         $template = LeaseTemplate::findOrFail($id);
         
-        // Available placeholder types
-        $placeholderTypes = [
-            'tenant_name' => 'Tenant Name',
-            'tenant_email' => 'Tenant Email',
-            'tenant_phone' => 'Tenant Phone',
-            'property_address' => 'Property Address',
-            'lease_start_date' => 'Lease Start Date',
-            'lease_end_date' => 'Lease End Date',
-            'monthly_rent' => 'Monthly Rent',
-            'security_deposit' => 'Security Deposit',
-            'lease_term' => 'Lease Term',
-            'admin_name' => 'Admin/Landlord Name',
-            'admin_email' => 'Admin/Landlord Email',
-            'current_date' => 'Current Date'
-        ];
-
-        return view('backend.lease.lease-templates.edit-new', compact('template', 'placeholderTypes'));
+        return view('backend.lease.lease-templates.editor', compact('template'));
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'content' => 'required',
-            'placeholders' => 'nullable|json',
-            'signatures' => 'nullable|json'
-        ]);
-
         $template = LeaseTemplate::findOrFail($id);
-        $template->update([
-            'name' => $request->name,
-            'content' => $request->content,
-            'placeholders' => json_decode($request->placeholders, true),
-            'signatures' => json_decode($request->signatures, true)
-        ]);
+        
+        $updateData = [];
+        
+        if ($request->has('name')) {
+            $updateData['name'] = $request->name;
+        }
+        
+        if ($request->has('placeholders')) {
+            $placeholders = is_string($request->placeholders) 
+                ? json_decode($request->placeholders, true) 
+                : $request->placeholders;
+            $updateData['placeholders'] = $placeholders;
+        }
+        
+        if ($request->has('signatures')) {
+            $signatures = is_string($request->signatures) 
+                ? json_decode($request->signatures, true) 
+                : $request->signatures;
+            $updateData['signatures'] = $signatures;
+        }
+        
+        $template->update($updateData);
 
         return response()->json([
             'success' => true,
-            'message' => 'Template updated successfully'
+            'message' => 'Template saved successfully'
         ]);
     }
 
     public function destroy($id)
     {
         $template = LeaseTemplate::findOrFail($id);
+        
+        // Delete associated files
+        if ($template->document_path) {
+            Storage::disk('public')->delete($template->document_path);
+        }
+        if ($template->pdf_path && $template->pdf_path !== $template->document_path) {
+            Storage::disk('public')->delete($template->pdf_path);
+        }
+        
         $template->delete();
 
         return redirect()->route('lease-templates.index')
@@ -235,16 +259,124 @@ class LeaseTemplateController extends Controller
     }
 
     /**
-     * Preview template content
+     * Get PDF file for viewing
      */
-    public function preview($id)
+    public function getPdf($id)
+    {
+        $template = LeaseTemplate::findOrFail($id);
+        $pdfPath = $template->pdf_path ?? $template->document_path;
+        
+        if (!$pdfPath || !Storage::disk('public')->exists($pdfPath)) {
+            abort(404, 'PDF not found');
+        }
+        
+        return response()->file(storage_path('app/public/' . $pdfPath));
+    }
+    
+    /**
+     * Generate final lease document with filled placeholders
+     */
+    public function generateLease(Request $request, $id)
     {
         $template = LeaseTemplate::findOrFail($id);
         
-        return response()->json([
-            'success' => true,
-            'content' => $template->content
+        $data = $request->validate([
+            'tenant_name' => 'required|string',
+            'tenant_email' => 'nullable|email',
+            'tenant_phone' => 'nullable|string',
+            'property_address' => 'nullable|string',
+            'lease_start_date' => 'nullable|date',
+            'lease_end_date' => 'nullable|date',
+            'monthly_rent' => 'nullable|numeric',
+            'security_deposit' => 'nullable|numeric',
+            // Add more fields as needed
         ]);
+        
+        // Get the PDF path
+        $pdfPath = storage_path('app/public/' . ($template->pdf_path ?? $template->document_path));
+        
+        if (!file_exists($pdfPath)) {
+            return response()->json(['error' => 'Template PDF not found'], 404);
+        }
+        
+        // Generate PDF with placeholder values overlaid
+        $outputPdf = $this->overlayPlaceholderValues($pdfPath, $template->placeholders ?? [], $data, $template->total_pages);
+        
+        return response()->download($outputPdf, 'lease_' . time() . '.pdf');
+    }
+    
+    /**
+     * Overlay placeholder values on PDF
+     * Note: For production, install setasign/fpdi for best results
+     * This is a fallback using mPDF for basic overlay
+     */
+    private function overlayPlaceholderValues($pdfPath, $placeholders, $data, $totalPages)
+    {
+        $outputPath = storage_path('app/public/generated-leases/lease_' . time() . '.pdf');
+        
+        $outputDir = dirname($outputPath);
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+        
+        // For the best PDF overlay, install setasign/fpdi package:
+        // composer require setasign/fpdi
+        // Then use the FPDI approach below:
+        
+        // Check if FPDI is available
+        if (class_exists('\setasign\Fpdi\Fpdi')) {
+            return $this->overlayWithFpdi($pdfPath, $placeholders, $data, $outputPath);
+        }
+        
+        // Fallback: Copy original and add instructions
+        // This is a simplified approach - for production use FPDI
+        copy($pdfPath, $outputPath);
+        
+        Log::warning("FPDI not installed. For proper PDF overlay, run: composer require setasign/fpdi");
+        
+        return $outputPath;
+    }
+    
+    /**
+     * Overlay using FPDI (when installed)
+     */
+    private function overlayWithFpdi($pdfPath, $placeholders, $data, $outputPath)
+    {
+        $pdf = new \setasign\Fpdi\Fpdi();
+        
+        // Get page count
+        $pageCount = $pdf->setSourceFile($pdfPath);
+        
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            $templateId = $pdf->importPage($pageNo);
+            $size = $pdf->getTemplateSize($templateId);
+            
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($templateId);
+            
+            // Filter placeholders for this page
+            $pagePlaceholders = array_filter($placeholders, fn($p) => ($p['page'] ?? 1) == $pageNo);
+            
+            foreach ($pagePlaceholders as $placeholder) {
+                $fieldName = $placeholder['field'] ?? '';
+                $value = $data[$fieldName] ?? '';
+                
+                if (empty($value)) continue;
+                
+                // Convert coordinates (PDF.js uses different coordinate system)
+                $x = ($placeholder['x'] ?? 0) * 0.264583; // Convert px to mm
+                $y = ($placeholder['y'] ?? 0) * 0.264583;
+                $fontSize = $placeholder['fontSize'] ?? 12;
+                
+                $pdf->SetFont('Helvetica', '', $fontSize * 0.75);
+                $pdf->SetXY($x, $y);
+                $pdf->Write(0, $value);
+            }
+        }
+        
+        $pdf->Output($outputPath, 'F');
+        
+        return $outputPath;
     }
 
     /**

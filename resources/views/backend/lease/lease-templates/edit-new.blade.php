@@ -269,6 +269,10 @@
                             <h6 class="mb-3">Template Statistics</h6>
                             <div class="stats-grid">
                                 <div class="stat-item">
+                                    <div class="stat-value">{{ $template->total_pages }}</div>
+                                    <div class="stat-label">Pages</div>
+                                </div>
+                                <div class="stat-item">
                                     <div class="stat-value" id="placeholderCount">0</div>
                                     <div class="stat-label">Placeholders</div>
                                 </div>
@@ -323,13 +327,52 @@
                         <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
                     </div>
 
+                    <!-- Page Navigation -->
+                    @if($template->total_pages > 1)
+                    <div class="card page-navigation-card">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted">Page:</span>
+                                    <strong id="currentPageDisplay">1</strong> of <strong>{{ $template->total_pages }}</strong>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="prevPage" disabled>
+                                        <i class="fas fa-chevron-left"></i> Previous
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="nextPage">
+                                        Next <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Document Editor -->
                     <div class="card document-card">
                         <div class="card-body p-0">
                             <div class="document-wrapper">
-                                <div id="documentEditor" class="document-editor" contenteditable="true">
-                                    {!! $template->content !!}
-                                </div>
+                                @if($template->pages && count($template->pages) > 0)
+                                    @foreach($template->pages as $page)
+                                    <div class="document-page" 
+                                         data-page="{{ $page['page_number'] }}" 
+                                         style="{{ $page['page_number'] > 1 ? 'display: none;' : '' }}">
+                                        <div class="page-header-indicator">
+                                            <span class="page-number-badge">Page {{ $page['page_number'] }}</span>
+                                        </div>
+                                        <div class="document-editor" contenteditable="true">
+                                            {!! $page['content'] !!}
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                @else
+                                    <div class="document-page" data-page="1">
+                                        <div class="document-editor" contenteditable="true">
+                                            {!! $template->content !!}
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -475,7 +518,7 @@
     /* Stats Grid */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 15px;
     }
 
@@ -498,6 +541,33 @@
         color: #6b7280;
         text-transform: uppercase;
         font-weight: 500;
+    }
+
+    /* Page Navigation */
+    .page-navigation-card {
+        margin-bottom: 15px;
+    }
+
+    .page-number-badge {
+        display: inline-block;
+        background: #667eea;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .document-page {
+        position: relative;
+    }
+
+    .page-header-indicator {
+        text-align: right;
+        padding: 10px 20px;
+        background: #f9fafb;
+        border-bottom: 2px solid #e5e7eb;
     }
 
     /* Editor Toolbar */
@@ -638,11 +708,57 @@
 <script>
 $(document).ready(function() {
     let currentZoom = 100;
+    let currentPage = 1;
+    let totalPages = {{ $template->total_pages ?? 1 }};
     let placeholders = @json($template->placeholders ?? []);
     let signatures = @json($template->signatures ?? []);
+    let pageContents = {}; // Store content for each page
 
     // Initialize
     updateStats();
+    initializePageNavigation();
+
+    // Page Navigation
+    function initializePageNavigation() {
+        if (totalPages <= 1) return;
+
+        updatePageButtons();
+
+        $('#prevPage').on('click', function() {
+            if (currentPage > 1) {
+                saveCurrentPage();
+                currentPage--;
+                showPage(currentPage);
+            }
+        });
+
+        $('#nextPage').on('click', function() {
+            if (currentPage < totalPages) {
+                saveCurrentPage();
+                currentPage++;
+                showPage(currentPage);
+            }
+        });
+    }
+
+    function showPage(pageNumber) {
+        $('.document-page').hide();
+        $(`.document-page[data-page="${pageNumber}"]`).show();
+        $('#currentPageDisplay').text(pageNumber);
+        updatePageButtons();
+        attachPlaceholderEvents();
+    }
+
+    function saveCurrentPage() {
+        const pageElement = $(`.document-page[data-page="${currentPage}"]`);
+        const content = pageElement.find('.document-editor').html();
+        pageContents[currentPage] = content;
+    }
+
+    function updatePageButtons() {
+        $('#prevPage').prop('disabled', currentPage <= 1);
+        $('#nextPage').prop('disabled', currentPage >= totalPages);
+    }
 
     // Drag and Drop from Palette
     $('.placeholder-item').on('dragstart', function(e) {
@@ -657,30 +773,32 @@ $(document).ready(function() {
         }));
     });
 
-    // Document editor drag events
-    const editor = $('#documentEditor');
+    // Document editor drag events - apply to all pages
+    $('.document-editor').each(function() {
+        const editor = $(this);
 
-    editor.on('dragover', function(e) {
-        e.preventDefault();
-        $(this).addClass('drag-over');
-    });
+        editor.on('dragover', function(e) {
+            e.preventDefault();
+            $(this).closest('.document-page').addClass('drag-over');
+        });
 
-    editor.on('dragleave', function(e) {
-        $(this).removeClass('drag-over');
-    });
+        editor.on('dragleave', function(e) {
+            $(this).closest('.document-page').removeClass('drag-over');
+        });
 
-    editor.on('drop', function(e) {
-        e.preventDefault();
-        $(this).removeClass('drag-over');
+        editor.on('drop', function(e) {
+            e.preventDefault();
+            $(this).closest('.document-page').removeClass('drag-over');
 
-        const data = JSON.parse(e.originalEvent.dataTransfer.getData('text/plain'));
-        
-        // Insert placeholder at drop position
-        insertPlaceholder(data, e.originalEvent);
+            const data = JSON.parse(e.originalEvent.dataTransfer.getData('text/plain'));
+            
+            // Insert placeholder at drop position
+            insertPlaceholder(data, e.originalEvent, this);
+        });
     });
 
     // Insert placeholder into document
-    function insertPlaceholder(data, event) {
+    function insertPlaceholder(data, event, editorElement) {
         const range = document.caretRangeFromPoint(event.clientX, event.clientY);
         
         if (!range) return;
@@ -764,8 +882,8 @@ $(document).ready(function() {
     });
 
     function applyZoom() {
-        editor.css('transform', `scale(${currentZoom / 100})`);
-        editor.css('transform-origin', 'top center');
+        $('.document-editor').css('transform', `scale(${currentZoom / 100})`);
+        $('.document-editor').css('transform-origin', 'top center');
         $('#zoomLevel').text(currentZoom + '%');
     }
 
@@ -795,14 +913,39 @@ $(document).ready(function() {
 
     // Preview
     $('#previewBtn').on('click', function() {
-        const content = editor.html();
-        $('#previewContent').html(content);
+        saveCurrentPage();
+        
+        // Combine all pages for preview
+        let fullContent = '';
+        $('.document-page').each(function() {
+            const pageNum = $(this).data('page');
+            const content = pageContents[pageNum] || $(this).find('.document-editor').html();
+            fullContent += `<div class="preview-page"><h6>Page ${pageNum}</h6>${content}<hr></div>`;
+        });
+        
+        $('#previewContent').html(fullContent);
         $('#previewModal').modal('show');
     });
 
     // Save template
     $('#saveBtn').on('click', function() {
-        const content = editor.html();
+        saveCurrentPage(); // Save current page before saving all
+        
+        // Collect all page contents
+        let pagesData = [];
+        $('.document-page').each(function() {
+            const pageNum = $(this).data('page');
+            const content = pageContents[pageNum] || $(this).find('.document-editor').html();
+            pagesData.push({
+                page_number: pageNum,
+                content: content,
+                format: 'html'
+            });
+        });
+        
+        // Combine all pages for main content
+        const fullContent = pagesData.map(p => p.content).join('\n');
+        
         const btn = $(this);
         const originalText = btn.html();
 
@@ -814,7 +957,9 @@ $(document).ready(function() {
             method: 'PUT',
             data: {
                 _token: '{{ csrf_token() }}',
-                content: content,
+                content: fullContent,
+                pages: JSON.stringify(pagesData),
+                total_pages: totalPages,
                 placeholders: JSON.stringify(placeholders),
                 signatures: JSON.stringify(signatures)
             },

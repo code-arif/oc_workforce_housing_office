@@ -15,8 +15,11 @@ class LeaseTemplate extends Model
         'original_filename',
         'file_type',
         'document_path',
+        'pdf_path',
         'thumbnail_path',
         'content',
+        'pages',
+        'total_pages',
         'placeholders',
         'signatures',
         'metadata',
@@ -27,6 +30,7 @@ class LeaseTemplate extends Model
         'placeholders' => 'array',
         'signatures' => 'array',
         'metadata' => 'array',
+        'pages' => 'array',
         'is_active' => 'boolean'
     ];
 

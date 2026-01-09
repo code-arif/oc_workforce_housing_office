@@ -264,6 +264,12 @@ Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
     Route::put('/{id}', [LeaseTemplateController::class, 'update'])->name('update');
     Route::delete('/{id}', [LeaseTemplateController::class, 'destroy'])->name('destroy');
 
+    // PDF viewer route
+    Route::get('/{id}/pdf', [LeaseTemplateController::class, 'getPdf'])->name('pdf');
+    
+    // Generate lease document
+    Route::post('/{id}/generate-lease', [LeaseTemplateController::class, 'generateLease'])->name('generate-lease');
+
     // Additional routes for template management
     Route::get('/{id}/preview', [LeaseTemplateController::class, 'preview'])->name('preview');
     Route::post('/{id}/toggle-status', [LeaseTemplateController::class, 'toggleStatus'])->name('toggle-status');
