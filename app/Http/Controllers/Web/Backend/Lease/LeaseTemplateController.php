@@ -16,32 +16,46 @@ class LeaseTemplateController extends Controller
     public function index()
     {
         $templates = LeaseTemplate::orderBy('created_at', 'desc')->get();
-        return view('backend.lease.lease-templates.index', compact('templates'));
+        return view('backend.lease.lease-templates.index-new', compact('templates'));
     }
 
     public function create()
     {
-        return view('backend.lease.lease-templates.create');
+        return view('backend.lease.lease-templates.create-new');
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'template_file' => 'required|file|mimes:pdf,docx|max:10240'
         ]);
 
         $file = $request->file('template_file');
         $extension = $file->getClientOriginalExtension();
         
+        // Store the original file
+        $documentPath = $file->store('lease-templates', 'public');
+        
         // Convert document to HTML
         $htmlContent = $this->convertToHtml($file, $extension);
+        
+        // Get file metadata
+        $metadata = [
+            'file_size' => $file->getSize(),
+            'mime_type' => $file->getMimeType(),
+            'uploaded_at' => now()->toDateTimeString()
+        ];
 
         $template = LeaseTemplate::create([
             'name' => $request->name,
+            'description' => $request->description,
             'original_filename' => $file->getClientOriginalName(),
             'file_type' => $extension,
+            'document_path' => $documentPath,
             'content' => $htmlContent,
+            'metadata' => $metadata,
             'placeholders' => [],
             'signatures' => []
         ]);
@@ -185,7 +199,7 @@ class LeaseTemplateController extends Controller
             'current_date' => 'Current Date'
         ];
 
-        return view('backend.lease.lease-templates.edit', compact('template', 'placeholderTypes'));
+        return view('backend.lease.lease-templates.edit-new', compact('template', 'placeholderTypes'));
     }
 
     public function update(Request $request, $id)

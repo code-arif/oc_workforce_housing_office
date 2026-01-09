@@ -182,7 +182,7 @@
                     <!-- Document Editor Container -->
                     <div class="card">
                         <div class="card-body document-editor-container">
-                            <div id="templateEditor" class="document-editor">
+                            <div id="templateEditor" contenteditable="true" class="document-editor">
                                 {!! $template->content !!}
                             </div>
                         </div>
@@ -214,6 +214,7 @@
 @endsection
 
 @push('scripts')
+
 <script>
     window.templateData = @json($template);
 </script>

@@ -256,20 +256,19 @@ Route::prefix('user-management')->name('user-management.')->group(function () {
 
 
 // Lease Templates - Document Upload & Management
-    // Lease Template Routes
 Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
-    Route::get('/0', [LeaseTemplateController::class, 'index'])->name('index');
-    Route::get('/0/create', [LeaseTemplateController::class, 'create'])->name('create');
-    Route::post('/0', [LeaseTemplateController::class, 'store'])->name('store');
-    Route::get('/0/{id}/edit', [LeaseTemplateController::class, 'edit'])->name('edit');
-    Route::put('/0/{id}', [LeaseTemplateController::class, 'update'])->name('update');
-    Route::delete('/0/{id}', [LeaseTemplateController::class, 'destroy'])->name('destroy');
+    Route::get('/', [LeaseTemplateController::class, 'index'])->name('index');
+    Route::get('/create', [LeaseTemplateController::class, 'create'])->name('create');
+    Route::post('/', [LeaseTemplateController::class, 'store'])->name('store');
+    Route::get('/{id}/edit', [LeaseTemplateController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [LeaseTemplateController::class, 'update'])->name('update');
+    Route::delete('/{id}', [LeaseTemplateController::class, 'destroy'])->name('destroy');
 
     // Additional routes for template management
-    Route::get('/0/{id}/preview', [LeaseTemplateController::class, 'preview'])->name('preview');
-    Route::post('/0/{id}/toggle-status', [LeaseTemplateController::class, 'toggleStatus'])->name('toggle-status');
-    Route::post('/0/{id}/duplicate', [LeaseTemplateController::class, 'duplicate'])->name('duplicate');
-    Route::get('/0/{id}/export', [LeaseTemplateController::class, 'export'])->name('export');
+    Route::get('/{id}/preview', [LeaseTemplateController::class, 'preview'])->name('preview');
+    Route::post('/{id}/toggle-status', [LeaseTemplateController::class, 'toggleStatus'])->name('toggle-status');
+    Route::get('/{id}/duplicate', [LeaseTemplateController::class, 'duplicate'])->name('duplicate');
+    Route::get('/{id}/export', [LeaseTemplateController::class, 'export'])->name('export');
 });
 
 // Lease Document Routes

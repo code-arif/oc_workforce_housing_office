@@ -11,17 +11,22 @@ class LeaseTemplate extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'original_filename',
         'file_type',
+        'document_path',
+        'thumbnail_path',
         'content',
         'placeholders',
         'signatures',
+        'metadata',
         'is_active'
     ];
 
     protected $casts = [
         'placeholders' => 'array',
         'signatures' => 'array',
+        'metadata' => 'array',
         'is_active' => 'boolean'
     ];
 
