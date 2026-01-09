@@ -2,15 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\Calendar\TrashController;
-use App\Http\Controllers\GoogleCalendarController;
-use App\Http\Controllers\Calendar\CalendarCrudController;
-use App\Http\Controllers\Api\Auth\AuthenticationController;
-use App\Http\Controllers\Calendar\BiDirectionalSyncController;
-use App\Http\Controllers\Calendar\EventManageGoogleController;
-use App\Http\Controllers\Calendar\GetEventFromGoogleController;
-use App\Http\Controllers\Calendar\SyncEventFromGoogleController;
-use App\Http\Controllers\Calendar\SyncMultipleGoogleCalendarsController;
 
 
 Route::get('/', function () {
@@ -109,5 +100,8 @@ Route::get('/run-storage-link', function () {
 Route::get('/mail-test', function(){
     return view('emails.approval.approval');
 });
+
+
+
 
 require __DIR__ . '/auth.php';
