@@ -11,9 +11,12 @@
                     <p class="text-muted">Manage pre-formatted lease document templates</p>
                 </div>
                 <div class="ms-auto pageheader-btn">
+                    @can('lease.template.create')
+                        
                     <a href="{{ route('lease-templates.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Upload New Template
+                        <i class="fas fa-plus"></i> New Template
                     </a>
+                    @endcan
                 </div>
             </div>
             <!-- PAGE HEADER END -->
@@ -97,11 +100,14 @@
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
+                                        @can('lease.template.edit')
                                         <li>
                                             <a class="dropdown-item" href="{{ route('lease-templates.edit', $template->id) }}">
                                                 <i class="fas fa-edit text-primary"></i> Edit Template
                                             </a>
                                         </li>
+                                        @endcan
+                                        
                                         <li>
                                             <a class="dropdown-item preview-template" href="#" data-id="{{ $template->id }}">
                                                 <i class="fas fa-eye text-info"></i> Preview
@@ -121,12 +127,14 @@
                                                 {{ $template->is_active ? 'Deactivate' : 'Activate' }}
                                             </a>
                                         </li>
+                                        @can('lease.template.delete')
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item delete-template" href="#" data-id="{{ $template->id }}">
                                                 <i class="fas fa-trash text-danger"></i> Delete
                                             </a>
                                         </li>
+                                        @endcan
                                     </ul>
                                 </div>
                             </div>
@@ -160,9 +168,11 @@
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-between">
+                                @can('lease.template.edit')
                                 <a href="{{ route('lease-templates.edit', $template->id) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
+                                @endcan
                                 <button class="btn btn-sm btn-outline-success use-template" data-id="{{ $template->id }}">
                                     <i class="fas fa-file-contract"></i> Use Template
                                 </button>

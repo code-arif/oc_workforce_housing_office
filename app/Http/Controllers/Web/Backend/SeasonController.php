@@ -44,14 +44,25 @@ class SeasonController extends Controller
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
-                    return '
-                        <button class="btn btn-sm btn-warning me-1" onclick="editSeason(' . $item->id . ')" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    ';
+                    $buttons = '';
+
+                    if (auth()->user()->can('seasons.edit')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-warning me-1" onclick="editSeason(' . $item->id . ')" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        ';
+                    }
+
+                    if (auth()->user()->can('seasons.delete')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ';
+                    }
+
+                    return $buttons;
                 })
                 ->rawColumns(['status', 'actions'])
                 ->make(true);

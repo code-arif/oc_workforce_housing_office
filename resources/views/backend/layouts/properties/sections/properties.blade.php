@@ -4,9 +4,11 @@
         <div class="card box-shadow-0">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h4 class="card-title">Properties</h4>
+                @can('property.create')
                 <button class="btn btn-primary btn-sm" id="addPropertyBtn">
                     <i class="fe fe-plus me-1"></i> Add Property
                 </button>
+                @endcan
             </div>
 
             <div class="card-body">

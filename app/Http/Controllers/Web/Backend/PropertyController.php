@@ -61,18 +61,30 @@ class PropertyController extends Controller
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
-                    return '
-                        <a href="' . route('property.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
-                        <button class="btn btn-sm btn-warning me-1" onclick="editProperty(' . $item->id . ')" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="propertyDeleteConfirm(' . $item->id . ')" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    ';
+                    $buttons = '';
+                    if (auth()->user()->can('property.show')) {
+                        $buttons .= '
+                            <a href="' . route('property.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
+                        ';
+                    }
+                    if (auth()->user()->can('property.edit')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-warning me-1" onclick="editProperty(' . $item->id . ')" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        ';
+                    }
+                    if (auth()->user()->can('property.delete')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-danger" onclick="propertyDeleteConfirm(' . $item->id . ')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ';
+                    }
+                    return $buttons;
                 })
-                ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
-                ->make(true);
+                    ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
+                    ->make(true);
         }
     }
     /**

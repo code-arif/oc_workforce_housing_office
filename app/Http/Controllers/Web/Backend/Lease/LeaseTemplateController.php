@@ -11,6 +11,19 @@ use App\Models\Lease\LeaseTemplate;
 
 class LeaseTemplateController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('permission:lease.template.list')->only(['index', 'show']);
+        $this->middleware('permission:lease.template.create')->only(['create', 'store']);
+        $this->middleware('permission:lease.template.edit')->only(['edit', 'update', 'toggleStatus']);
+        $this->middleware('permission:lease.template.delete')->only(['destroy']);
+        // $this->middleware('permission:lease.template.view')->only(['getPdf', 'generateLease']);
+        // $this->middleware('permission:lease.template.duplicate')->only(['duplicate']);
+        // $this->middleware('permission:lease.template.export')->only(['export']);
+    }
+
     public function index()
     {
         $templates = LeaseTemplate::orderBy('created_at', 'desc')->get();

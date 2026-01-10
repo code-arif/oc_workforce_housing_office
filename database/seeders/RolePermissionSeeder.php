@@ -26,13 +26,13 @@ class RolePermissionSeeder extends Seeder
     private function createPermissions(): void
     {
         $modules = [
-            // 'property-type' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            // 'units' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            // 'rooms' => ['list', 'show', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            // 'beds' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status', 'bulk-delete'],
+            'property-type' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'units' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'rooms' => ['list', 'show', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'beds' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status', 'bulk-delete'],
             'property' => ['list', 'create', 'store', 'edit', 'show', 'update', 'delete', 'toggle.status'],
             'seasons' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
-            // 'amenities' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'amenities' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
             'dashboard' => ['view'],
             'cms' => ['view', 'update'],
             'cms.home' => ['slider.store', 'slider.update', 'slider.destroy', 'how-it-works.update'],
@@ -46,6 +46,9 @@ class RolePermissionSeeder extends Seeder
             'user-management.users' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'user-management.roles' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'user-management.permissions' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
+            'lease' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'lease.template' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+
         ];
 
         foreach ($modules as $module => $actions) {
@@ -100,33 +103,33 @@ class RolePermissionSeeder extends Seeder
             'property.toggle.status',
             
             // Room Management
-            // 'rooms.list',
-            // 'rooms.show',
-            // 'rooms.create',
-            // 'rooms.store',
-            // 'rooms.edit',
-            // 'rooms.update',
-            // 'rooms.delete',
-            // 'rooms.toggle.status',
+            'rooms.list',
+            'rooms.show',
+            'rooms.create',
+            'rooms.store',
+            'rooms.edit',
+            'rooms.update',
+            'rooms.delete',
+            'rooms.toggle.status',
             
             // // Beds Management
-            // 'beds.list',
-            // 'beds.create',
-            // 'beds.store',
-            // 'beds.edit',
-            // 'beds.update',
-            // 'beds.delete',
-            // 'beds.toggle.status',
-            // 'beds.bulk-delete',
+            'beds.list',
+            'beds.create',
+            'beds.store',
+            'beds.edit',
+            'beds.update',
+            'beds.delete',
+            'beds.toggle.status',
+            'beds.bulk-delete',
             
             // Units Management
-            // 'units.list',
-            // 'units.create',
-            // 'units.store',
-            // 'units.edit',
-            // 'units.update',
-            // 'units.delete',
-            // 'units.toggle.status',
+            'units.list',
+            'units.create',
+            'units.store',
+            'units.edit',
+            'units.update',
+            'units.delete',
+            'units.toggle.status',
             
             // Profile
             'profile.view',
