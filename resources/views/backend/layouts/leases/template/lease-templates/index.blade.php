@@ -27,7 +27,7 @@
                                 <i class="fas fa-file-alt"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->count() }}</h3>
                                 <div class="stat-label">Total Templates</div>
                             </div>
                         </div>
@@ -40,7 +40,7 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->where('is_active', true)->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->where('is_active', true)->count() }}</h3>
                                 <div class="stat-label">Active Templates</div>
                             </div>
                         </div>
@@ -53,7 +53,7 @@
                                 <i class="fas fa-file-pdf"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->where('file_type', 'pdf')->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->where('file_type', 'pdf')->count() }}</h3>
                                 <div class="stat-label">PDF Templates</div>
                             </div>
                         </div>
@@ -66,7 +66,7 @@
                                 <i class="fas fa-file-word"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->where('file_type', 'docx')->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->where('file_type', 'docx')->count() }}</h3>
                                 <div class="stat-label">DOCX Templates</div>
                             </div>
                         </div>
@@ -226,8 +226,8 @@
     /* Stat Cards */
     .stat-card {
         border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-radius: 12px;
+        /* box-shadow: 0 2px 8px rgba(0,0,0,0.08); */
+        /* border-radius: 12px; */
         overflow: hidden;
     }
 
@@ -238,7 +238,7 @@
         padding: 25px;
     }
 
-    .stat-icon {
+    /* .stat-icon {
         width: 60px;
         height: 60px;
         border-radius: 12px;
@@ -246,23 +246,41 @@
         align-items: center;
         justify-content: center;
         font-size: 24px;
-        color: white;
+        color: rgb(255, 255, 255);
+    } */
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 18px;
     }
 
     .stat-icon.bg-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgba(118, 75, 162, 1);
     }
 
     .stat-icon.bg-success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.2) 0%, rgba(56, 239, 126, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgba(17, 153, 142, 1);
     }
 
     .stat-icon.bg-warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, rgba(241, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgba(245, 87, 108, 1);
     }
 
     .stat-icon.bg-info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 241, 254, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgb(0, 161, 254);
     }
 
     .stat-content {
@@ -270,8 +288,8 @@
     }
 
     .stat-number {
-        font-size: 28px;
-        font-weight: 700;
+        /* font-size: 28px; */
+        /* font-weight: 700; */
         color: #2c3e50;
         line-height: 1;
         margin-bottom: 5px;
@@ -318,8 +336,8 @@
     }
 
     .template-meta .badge {
-        font-size: 11px;
-        padding: 4px 8px;
+        font-size: 10px;
+        padding: 10px 10px;
         font-weight: 500;
     }
 

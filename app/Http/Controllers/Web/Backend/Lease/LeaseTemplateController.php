@@ -14,12 +14,12 @@ class LeaseTemplateController extends Controller
     public function index()
     {
         $templates = LeaseTemplate::orderBy('created_at', 'desc')->get();
-        return view('backend.lease.lease-templates.index-new', compact('templates'));
+        return view('backend.layouts.leases.template.lease-templates.index', compact('templates'));
     }
 
     public function create()
     {
-        return view('backend.lease.lease-templates.create-new');
+        return view('backend.layouts.leases.template.lease-templates.create');
     }
 
     public function store(Request $request)
@@ -27,7 +27,7 @@ class LeaseTemplateController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'template_file' => 'required|file|mimes:pdf,docx|max:10240'
+            'template_file' => 'required|file|mimes:pdf|max:10240'
         ]);
 
         $file = $request->file('template_file');
@@ -205,7 +205,7 @@ class LeaseTemplateController extends Controller
     {
         $template = LeaseTemplate::findOrFail($id);
         
-        return view('backend.lease.lease-templates.editor', compact('template'));
+        return view('backend.layouts.leases.template.lease-templates.editor', compact('template'));
     }
 
     public function update(Request $request, $id)
