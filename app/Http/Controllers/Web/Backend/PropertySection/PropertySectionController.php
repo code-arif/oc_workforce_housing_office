@@ -7,11 +7,7 @@ use App\Http\Controllers\Controller;
 
 class PropertySectionController extends Controller
 {
-    public function __construct()
-    {
-        // You can add middleware here for permissions if needed
 
-    }
     /**
      * Display the property management main page with default 'list' section
      */

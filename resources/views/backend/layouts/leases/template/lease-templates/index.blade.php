@@ -122,7 +122,7 @@
                                         <li>
                                             <a class="dropdown-item toggle-status" href="#" 
                                                data-id="{{ $template->id }}" 
-                                               data-status="{{ !$template->is_active }}">
+                                               data-status="{{ $template->is_active == true ? 0 : 1 }}">
                                                 <i class="fas fa-{{ $template->is_active ? 'ban' : 'check' }} text-{{ $template->is_active ? 'danger' : 'success' }}"></i>
                                                 {{ $template->is_active ? 'Deactivate' : 'Activate' }}
                                             </a>
@@ -516,24 +516,37 @@ $(document).ready(function() {
         e.preventDefault();
         const templateId = $(this).data('id');
         const newStatus = $(this).data('status');
+        console.log(newStatus);
+        
         const statusText = newStatus ? 'activate' : 'deactivate';
 
-        if (confirm(`Are you sure you want to ${statusText} this template?`)) {
-            $.ajax({
-                url: `/admin/lease-templates/${templateId}/toggle-status`,
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    is_active: newStatus
-                },
-                success: function() {
-                    location.reload();
-                },
-                error: function() {
-                    alert('Error updating template status');
-                }
-            });
-        }
+        Swal.fire({
+            title: `Are you sure you want to ${statusText} this template?`,
+            text: 'If you delete this, it will be gone forever.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/admin/lease-templates/${templateId}/toggle-status`,
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        is_active: newStatus
+                    },
+                    success: function() {
+                        location.reload();
+                        window.showToast('success', `Template ${statusText}d successfully!` || 'Status Updated successfully!');
+                    },
+                    error: function() {
+                        window.showToast('error', error.responseJSON?.message || 'Error updating template status');
+                    }
+                });
+            }
+        });
     });
 
     // Duplicate template

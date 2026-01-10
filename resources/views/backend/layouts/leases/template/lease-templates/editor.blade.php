@@ -176,7 +176,7 @@
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <!-- Zoom Controls -->
-                                    <div class="btn-group" role="group">
+                                    {{-- <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOut">
                                             <i class="fas fa-minus"></i>
                                         </button>
@@ -184,7 +184,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomIn">
                                             <i class="fas fa-plus"></i>
                                         </button>
-                                    </div>
+                                    </div> --}}
                                     <!-- Page Navigation -->
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="prevPage">
