@@ -43,7 +43,7 @@
                             </div>
                             <div class="card-body">
                                 <!-- Room Number -->
-                                <div class="row mb-4">
+                                <div class="row">
                                     <div class="col-md-4">
                                         <div class="info-item">
                                             <label class="info-label">Room Number</label>

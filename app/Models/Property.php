@@ -62,4 +62,22 @@ class Property extends Model
     {
         $this->attributes['deleted_by'] = $value ?? auth()->id();
     }
+
+    public function totalUnits()
+    {
+        return $this->units()->count();
+    }
+
+    public function totalRooms()
+    {
+        return Room::whereIn('unit_id', $this->units()->pluck('id'))->count();
+    }
+
+    public function totalBeds()
+    {
+        return Bed::whereIn('room_id',
+            Room::whereIn('unit_id', $this->units()->pluck('id'))->pluck('id')
+        )->count();
+    }
+
 }

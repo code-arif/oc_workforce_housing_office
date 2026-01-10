@@ -46,7 +46,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-md-6">
+                {{-- <div class="col-xl-3 col-md-6">
                     <div class="card stat-card">
                         <div class="card-body">
                             <div class="stat-icon bg-warning">
@@ -71,7 +71,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
             </div>
 
             <!-- Templates Grid -->

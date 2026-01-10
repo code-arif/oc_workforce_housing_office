@@ -76,7 +76,7 @@
 <script>
     (function() {
         window.initUnitsSection = function() {
-            console.log('Units section initialized');
+            // console.log('Units section initialized');
 
             let unitModal = null;
             let isEditMode = false;
@@ -292,7 +292,7 @@
                 });
             };
 
-            console.log('Units DataTable initialized');
+            // console.log('Units DataTable initialized');
         };
 
         // Auto-initialize

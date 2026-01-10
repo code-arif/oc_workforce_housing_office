@@ -85,7 +85,11 @@ Route::prefix('beds')->name('beds.')->group(function () {
 
     Route::get('/toggle-status/{id}', [BedController::class, 'toggleStatus'])->name('toggle.status');
     Route::get('/get-rooms/{unitId}', [BedController::class, 'getRooms'])->name('get.rooms');
+    Route::get('/get-amenities', [BedController::class, 'getAmenities'])->name('get.amenities');
+
+    Route::get('/get-beds/{roomId}', [BedController::class, 'getBeds'])->name('get.beds');
 });
+
 
 
 //Property manage

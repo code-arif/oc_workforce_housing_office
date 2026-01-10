@@ -250,7 +250,7 @@
                 `;
 
                 try {
-                    console.log('Loading section:', section);
+                    // console.log('Loading section:', section);
 
                     const response = await axios.get(window.route('property.section', {
                         section: section
@@ -260,7 +260,7 @@
                         }
                     });
 
-                    console.log('Section loaded:', section);
+                    // console.log('Section loaded:', section);
 
                     contentDiv.innerHTML = response.data;
 

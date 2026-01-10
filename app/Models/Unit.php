@@ -26,4 +26,14 @@ class Unit extends Model
     {
         return $this->hasMany(Room::class);
     }
+
+    public function totalRooms()
+    {
+        return $this->rooms()->count();
+    }
+
+    public function totalBeds()
+    {
+        return Bed::whereIn('room_id', $this->rooms()->pluck('id'))->count();
+    }
 }

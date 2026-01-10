@@ -89,7 +89,7 @@
 <script>
     (function() {
         window.initPropertiesSection = function() {
-            console.log('Properties section initialized');
+            // console.log('Properties section initialized');
 
             if (!$.fn.DataTable) {
                 console.error('DataTables not available');
@@ -311,7 +311,7 @@
                 });
             };
 
-            console.log('Properties DataTable initialized');
+            // console.log('Properties DataTable initialized');
         };
 
         // Auto-initialize

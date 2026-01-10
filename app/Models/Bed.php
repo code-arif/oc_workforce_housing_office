@@ -25,4 +25,8 @@ class Bed extends Model
         return $this->belongsTo(Room::class);
     }
 
+    public function amenities()
+    {
+        return $this->belongsToMany(Amenities::class, 'bed_amenities', 'bed_id', 'amenity_id');
+    }
 }
