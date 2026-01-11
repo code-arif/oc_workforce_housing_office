@@ -322,7 +322,7 @@ Route::prefix('user-management')->name('user-management.')->group(function () {
 
 
 // Lease Templates - Document Upload & Management
-Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
+Route::prefix('lease-templates')->name('lease-templates.')->group(function () {
     Route::get('/', [LeaseTemplateController::class, 'index'])->name('index');
     Route::get('/create', [LeaseTemplateController::class, 'create'])->name('create');
     Route::post('/', [LeaseTemplateController::class, 'store'])->name('store');
@@ -344,7 +344,7 @@ Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
 });
 
 // Lease Document Routes
-Route::prefix('lease-documents')->name('lease-documents.')->group(function() {
+Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::get('/0', [LeaseDocumentController::class, 'index'])->name('index');
     Route::get('/0/create', [LeaseDocumentController::class, 'create'])->name('create');
     Route::post('/0', [LeaseDocumentController::class, 'store'])->name('store');
