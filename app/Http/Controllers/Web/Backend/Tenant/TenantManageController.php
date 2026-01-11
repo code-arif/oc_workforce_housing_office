@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class TenantManageController extends Controller
@@ -373,12 +374,12 @@ class TenantManageController extends Controller
                         'status' => ucfirst($tenant->status)
                     ];
                 });
-
             return response()->json([
                 'success' => true,
                 'data' => $tenants
             ]);
         } catch (\Exception $e) {
+            Log::error('Error fetching active tenants: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load tenants: ' . $e->getMessage()

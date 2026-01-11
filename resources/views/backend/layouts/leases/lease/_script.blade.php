@@ -414,14 +414,22 @@
                 const unitName = $('#unit_id option:selected').text();
                 const roomName = $('#room_id option:selected').text();
                 const bedName = $('#bed_id option:selected').text();
-                $('#step3PropertyInfo').html(`<strong>${propertyName}</strong> → ${unitName} → ${roomName} → ${bedName}`);
-                $('#unitNameInfo').text(`${unitName} - ${roomName} - ${bedName}`);
+                $('#unitNameInfo').html(`<strong>${propertyName}</strong> →  ${bedName}`);
+                // $('#unitNameInfo').text(`${unitName} - ${roomName} - ${bedName}`);
             }
 
             // Update rent and deposit display
             const rentAmount = parseFloat($('#rent_amount').val()) || 0;
             const depositAmount = parseFloat($('#deposit_amount').val()) || 0;
             $('#rentDepositDisplay').text(`$${rentAmount.toFixed(2)} Rent/$${depositAmount.toFixed(2)} Deposit`);
+
+            $('#partialPayment').off('change').on('change', function() {
+                if ($(this).is(':checked')) {
+                    $('#partialPaymentBadge').removeClass('bg-danger').addClass('bg-success').text('On');
+                } else {
+                    $('#partialPaymentBadge').removeClass('bg-success').addClass('bg-danger').text('Off');
+                }
+            });
 
             // Load active tenants into dropdown
             loadActiveTenants();
@@ -528,7 +536,7 @@
 
         function loadActiveTenants() {
             $.ajax({
-                url: '/admin/tenants/active',
+                url: '/admin/tenants/0/active',
                 method: 'GET',
                 success: function(response) {
                     let options = '<option value="">Select a tenant...</option>';
@@ -540,11 +548,12 @@
                                 data-email="${tenant.email || ''}" 
                                 data-phone="${tenant.phone || ''}"
                                 data-status="${tenant.status || 'active'}">
-                                ${tenant.first_name} ${tenant.last_name} (${tenant.email})
+                                ${tenant.first_name} ${tenant.last_name} 
                             </option>`;
                         });
                     }
                     $('#existingTenantSelect').html(options);
+
                 },
                 error: function() {
                     console.error('Failed to load active tenants');

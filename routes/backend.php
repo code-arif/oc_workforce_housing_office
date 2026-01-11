@@ -232,7 +232,7 @@ Route::group([], function () {
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
     
     // Tenant API routes for lease creation
-    Route::get('/tenants/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
+    Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
     Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
 });
 

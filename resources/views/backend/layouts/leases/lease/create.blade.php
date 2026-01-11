@@ -65,8 +65,6 @@
                                         </div>
 
                                         <div class="step-main-content">
-                                            <h5 class="mb-4">SELECT PROPERTY & BED</h5>
-
                                             <!-- Hierarchical Property Selection -->
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
@@ -297,7 +295,7 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="step-sidebar">
-                                            <div class="step-number">1</div>
+                                            <div class="step-number">3</div>
                                             <div class="step-info">
                                                 <h6>Add Tenants</h6>
                                                 <p>Select Tenants from the list or add a new tenant</p>
@@ -325,7 +323,7 @@
                                                         <div class="card-body">
                                                             <div class="mb-3">
                                                                 <label class="form-label">Active Tenants</label>
-                                                                <select class="form-select" id="existingTenantSelect">
+                                                                <select class="form-select select3" id="existingTenantSelect">
                                                                     <option value="">Select a tenant...</option>
                                                                     @forelse ($tenants as $tenant)
                                                                         <option value="{{ $tenant->id }}"
@@ -535,9 +533,9 @@
                                                     <div class="text-muted small">Tenants are permitted to submit partial payments on invoices.</div>
                                                 </div>
                                                 <div class="form-check form-switch">
-                                                    <input class="form-check-input" type="checkbox" id="partialPayment" checked>
+                                                    <input class="form-check-input" name="partial_payment" type="checkbox" id="partialPayment" checked>
                                                     <label class="form-check-label" for="partialPayment">
-                                                        <span class="badge bg-success">On</span>
+                                                        <span class="badge bg-success" id="partialPaymentBadge">On</span>
                                                     </label>
                                                 </div>
                                             </div>

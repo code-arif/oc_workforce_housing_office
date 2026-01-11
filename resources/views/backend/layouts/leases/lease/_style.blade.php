@@ -93,7 +93,7 @@
     }
 
     .step-sidebar {
-        width: 200px;
+        width: 100%;
         flex-shrink: 0;
     }
 
@@ -120,7 +120,7 @@
     .step-info p {
         font-size: 14px;
         color: #6c757d;
-        margin: 0;
+        margin: 10px 0 10px 0;
     }
 
     .step-main-content {
@@ -415,7 +415,7 @@
 
     .add-tenant-section .card:hover {
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        transform: translateY(-2px);
+        /* transform: translateY(-2px); */
     }
 
     .add-tenant-section .card-header {
@@ -444,7 +444,7 @@
 
     .tenant-card:hover {
         box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
-        transform: translateY(-2px);
+        /* transform: translateY(-2px); */
     }
 
     .tenant-card h6 {
