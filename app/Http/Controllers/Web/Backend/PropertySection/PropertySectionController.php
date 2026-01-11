@@ -7,16 +7,7 @@ use App\Http\Controllers\Controller;
 
 class PropertySectionController extends Controller
 {
-    public function __construct()
-    {
-        // You can add middleware here for permissions if needed
-        $this->middleware('permission:property.list')->only('index', 'section');
-        $this->middleware('permission:property-type.list')->only('index', 'section');
-        $this->middleware('permission:units.list')->only('index', 'section');
-        $this->middleware('permission:rooms.list')->only('index', 'section');
-        $this->middleware('permission:beds.list')->only('index', 'section');
 
-    }
     /**
      * Display the property management main page with default 'list' section
      */

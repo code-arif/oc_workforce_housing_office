@@ -72,7 +72,7 @@
 <script>
     (function() {
         window.initPropertyTypesSection = function() {
-            console.log('Property Types section initialized');
+            // console.log('Property Types section initialized');
 
             let propertyTypeModal = null;
             let isEditMode = false;
@@ -285,7 +285,7 @@
                 });
             };
 
-            console.log('Property Types DataTable initialized');
+            // console.log('Property Types DataTable initialized');
         };
 
         // Auto-initialize

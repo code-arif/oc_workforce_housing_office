@@ -11,9 +11,12 @@
                     <p class="text-muted">Manage pre-formatted lease document templates</p>
                 </div>
                 <div class="ms-auto pageheader-btn">
+                    @can('lease.template.create')
+                        
                     <a href="{{ route('lease-templates.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Upload New Template
+                        <i class="fas fa-plus"></i> New Template
                     </a>
+                    @endcan
                 </div>
             </div>
             <!-- PAGE HEADER END -->
@@ -27,7 +30,7 @@
                                 <i class="fas fa-file-alt"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->count() }}</h3>
                                 <div class="stat-label">Total Templates</div>
                             </div>
                         </div>
@@ -40,20 +43,20 @@
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->where('is_active', true)->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->where('is_active', true)->count() }}</h3>
                                 <div class="stat-label">Active Templates</div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-3 col-md-6">
+                {{-- <div class="col-xl-3 col-md-6">
                     <div class="card stat-card">
                         <div class="card-body">
                             <div class="stat-icon bg-warning">
                                 <i class="fas fa-file-pdf"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->where('file_type', 'pdf')->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->where('file_type', 'pdf')->count() }}</h3>
                                 <div class="stat-label">PDF Templates</div>
                             </div>
                         </div>
@@ -66,12 +69,12 @@
                                 <i class="fas fa-file-word"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number">{{ $templates->where('file_type', 'docx')->count() }}</div>
+                                <h3 class="stat-number">{{ $templates->where('file_type', 'docx')->count() }}</h3>
                                 <div class="stat-label">DOCX Templates</div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
             </div>
 
             <!-- Templates Grid -->
@@ -97,13 +100,16 @@
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
+                                        @can('lease.template.edit')
                                         <li>
                                             <a class="dropdown-item" href="{{ route('lease-templates.edit', $template->id) }}">
                                                 <i class="fas fa-edit text-primary"></i> Edit Template
                                             </a>
                                         </li>
+                                        @endcan
+                                        
                                         <li>
-                                            <a class="dropdown-item preview-template" href="#" data-id="{{ $template->id }}">
+                                            <a class="dropdown-item" href="{{ route('lease-templates.preview', $template->id) }}">
                                                 <i class="fas fa-eye text-info"></i> Preview
                                             </a>
                                         </li>
@@ -116,17 +122,19 @@
                                         <li>
                                             <a class="dropdown-item toggle-status" href="#" 
                                                data-id="{{ $template->id }}" 
-                                               data-status="{{ !$template->is_active }}">
+                                               data-status="{{ $template->is_active == true ? 0 : 1 }}">
                                                 <i class="fas fa-{{ $template->is_active ? 'ban' : 'check' }} text-{{ $template->is_active ? 'danger' : 'success' }}"></i>
                                                 {{ $template->is_active ? 'Deactivate' : 'Activate' }}
                                             </a>
                                         </li>
+                                        @can('lease.template.delete')
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
                                             <a class="dropdown-item delete-template" href="#" data-id="{{ $template->id }}">
                                                 <i class="fas fa-trash text-danger"></i> Delete
                                             </a>
                                         </li>
+                                        @endcan
                                     </ul>
                                 </div>
                             </div>
@@ -160,9 +168,11 @@
                         </div>
                         <div class="card-footer">
                             <div class="d-flex justify-content-between">
+                                @can('lease.template.edit')
                                 <a href="{{ route('lease-templates.edit', $template->id) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
+                                @endcan
                                 <button class="btn btn-sm btn-outline-success use-template" data-id="{{ $template->id }}">
                                     <i class="fas fa-file-contract"></i> Use Template
                                 </button>
@@ -226,8 +236,8 @@
     /* Stat Cards */
     .stat-card {
         border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        border-radius: 12px;
+        /* box-shadow: 0 2px 8px rgba(0,0,0,0.08); */
+        /* border-radius: 12px; */
         overflow: hidden;
     }
 
@@ -238,7 +248,7 @@
         padding: 25px;
     }
 
-    .stat-icon {
+    /* .stat-icon {
         width: 60px;
         height: 60px;
         border-radius: 12px;
@@ -246,23 +256,41 @@
         align-items: center;
         justify-content: center;
         font-size: 24px;
-        color: white;
+        color: rgb(255, 255, 255);
+    } */
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 18px;
     }
 
     .stat-icon.bg-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgba(118, 75, 162, 1);
     }
 
     .stat-icon.bg-success {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.2) 0%, rgba(56, 239, 126, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgba(17, 153, 142, 1);
     }
 
     .stat-icon.bg-warning {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, rgba(241, 147, 251, 0.2) 0%, rgba(245, 87, 108, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgba(245, 87, 108, 1);
     }
 
     .stat-icon.bg-info {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 241, 254, 0.2) 100%);
+        background-color: transparent !important;
+        color: rgb(0, 161, 254);
     }
 
     .stat-content {
@@ -270,8 +298,8 @@
     }
 
     .stat-number {
-        font-size: 28px;
-        font-weight: 700;
+        /* font-size: 28px; */
+        /* font-weight: 700; */
         color: #2c3e50;
         line-height: 1;
         margin-bottom: 5px;
@@ -318,8 +346,8 @@
     }
 
     .template-meta .badge {
-        font-size: 11px;
-        padding: 4px 8px;
+        font-size: 10px;
+        padding: 10px 10px;
         font-weight: 500;
     }
 
@@ -459,10 +487,43 @@
     .dropdown-item:hover {
         background: #f9fafb;
     }
+
+    /* Preview overlays */
+    .pdf-page-container {
+        position: relative;
+        margin-bottom: 16px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #f1f3f5;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .placeholder-overlay, .signature-overlay {
+        position: absolute;
+        border: 1px dashed rgba(59, 130, 246, 0.6);
+        background: rgba(59, 130, 246, 0.15);
+        color: #1f2937;
+        font-size: 12px;
+        padding: 2px 4px;
+        pointer-events: none;
+        border-radius: 4px;
+    }
+    .signature-overlay {
+        border-color: rgba(245, 158, 11, 0.7);
+        background: rgba(245, 158, 11, 0.15);
+    }
 </style>
 @endpush
 
 @push('scripts')
+<!-- PDF.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-GKq8wARrVQkQp+QyZtiCvmiY+Gv+asA7kCZKVb4TDNRAoCchUFnsbnXyXMJfbH4d2kxv9x1CYUF4qR3ERuP5tA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+// Configure PDF.js worker
+if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+</script>
 <script>
 $(document).ready(function() {
     // Preview template
@@ -471,11 +532,22 @@ $(document).ready(function() {
         const templateId = $(this).data('id');
 
         $.ajax({
-            url: `/backend/lease-templates/${templateId}/preview`,
+            url: `/admin/lease-templates/${templateId}/preview`,
             method: 'GET',
             success: function(response) {
-                $('#previewContent').html(response.content);
-                $('#previewModal').modal('show');
+                console.log(response.placeholders);
+                
+                // Prefer PDF.js viewer with overlays if data present
+                if (response.pdf_url && window['pdfjsLib']) {
+                    renderTemplatePreview(response.pdf_url, response.placeholders || [], response.signatures || []);
+                    $('#previewModal').modal('show');
+                } else if (response.content) {
+                    // Fallback HTML content
+                    $('#previewContent').html(response.content);
+                    $('#previewModal').modal('show');
+                } else {
+                    alert('Preview data unavailable');
+                }
             },
             error: function() {
                 alert('Error loading preview');
@@ -488,24 +560,37 @@ $(document).ready(function() {
         e.preventDefault();
         const templateId = $(this).data('id');
         const newStatus = $(this).data('status');
+        console.log(newStatus);
+        
         const statusText = newStatus ? 'activate' : 'deactivate';
 
-        if (confirm(`Are you sure you want to ${statusText} this template?`)) {
-            $.ajax({
-                url: `/backend/lease-templates/${templateId}/toggle-status`,
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    is_active: newStatus
-                },
-                success: function() {
-                    location.reload();
-                },
-                error: function() {
-                    alert('Error updating template status');
-                }
-            });
-        }
+        Swal.fire({
+            title: `Are you sure you want to ${statusText} this template?`,
+            text: 'If you delete this, it will be gone forever.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, change it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/admin/lease-templates/${templateId}/toggle-status`,
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        is_active: newStatus
+                    },
+                    success: function() {
+                        location.reload();
+                        window.showToast('success', `Template ${statusText}d successfully!` || 'Status Updated successfully!');
+                    },
+                    error: function() {
+                        window.showToast('error', error.responseJSON?.message || 'Error updating template status');
+                    }
+                });
+            }
+        });
     });
 
     // Duplicate template
@@ -514,8 +599,20 @@ $(document).ready(function() {
         const templateId = $(this).data('id');
 
         if (confirm('Create a copy of this template?')) {
-            window.location.href = `/backend/lease-templates/${templateId}/duplicate`;
         }
+        Swal.fire({
+            title: `Are you sure you want to duplicate this template?`,
+            text: 'Document will be duplicated.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Do it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/lease-templates/${templateId}/duplicate`;
+            }
+        });
     });
 
     // Delete template
@@ -523,11 +620,21 @@ $(document).ready(function() {
         e.preventDefault();
         const templateId = $(this).data('id');
 
-        if (confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
-            const form = $('#deleteForm');
-            form.attr('action', `/backend/lease-templates/${templateId}`);
-            form.submit();
-        }
+        Swal.fire({
+            title: `Are you sure you want to delete this template?`,
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = $('#deleteForm');
+                form.attr('action', `/admin/lease-templates/${templateId}`);
+                form.submit();
+            }
+        });
     });
 
     // Use template
@@ -536,6 +643,111 @@ $(document).ready(function() {
         // Redirect to lease creation with template
         window.location.href = `/backend/leases/create?template_id=${templateId}`;
     });
+
+    // Render PDF and overlay placeholders/signatures
+    function renderTemplatePreview(pdfUrl, placeholders, signatures) {
+        console.log(placeholders);
+        
+        const $container = $('#previewContent');
+        $container.empty();
+
+        const loading = $('<div class="text-center py-3 text-muted">Loading preview…</div>');
+        $container.append(loading);
+
+        const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
+        loadingTask.promise.then(function(pdf) {
+            $container.empty();
+            const pageCount = pdf.numPages;
+
+            const groupedPlaceholders = groupByPage(placeholders);
+            const groupedSignatures = groupByPage(signatures);
+
+            // Render pages sequentially
+            const renderPage = function(pageNo) {
+                if (pageNo > pageCount) return;
+
+                pdf.getPage(pageNo).then(function(page) {
+                    const scale = 1.0; // keep 1.0 to match stored coords
+                    const viewport = page.getViewport({ scale: scale });
+
+                    const $pageContainer = $('<div class="pdf-page-container"></div>');
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    $pageContainer.append(canvas);
+                    $container.append($pageContainer);
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+
+                    page.render(renderContext).promise.then(function() {
+                        // Overlays for this page
+                        const pagePlaceholders = groupedPlaceholders[pageNo] || [];
+                        pagePlaceholders.forEach(function(p) {
+                            const x = toNumber(p.x, 0);
+                            const y = toNumber(p.y, 0);
+                            const w = toNumber(p.width, 140);
+                            const h = toNumber(p.height, 24);
+                            const label = (p.field || 'field');
+
+                            const overlay = document.createElement('div');
+                            overlay.className = 'placeholder-overlay';
+                            overlay.style.left = x + 'px';
+                            overlay.style.top = y + 'px';
+                            overlay.style.width = w + 'px';
+                            overlay.style.height = h + 'px';
+                            overlay.textContent = label;
+                            $pageContainer.append(overlay);
+                        });
+
+                        const pageSignatures = groupedSignatures[pageNo] || [];
+                        pageSignatures.forEach(function(s) {
+                            const x = toNumber(s.x, 0);
+                            const y = toNumber(s.y, 0);
+                            const w = toNumber(s.width, 180);
+                            const h = toNumber(s.height, 60);
+                            const label = (s.label || 'signature');
+
+                            const overlay = document.createElement('div');
+                            overlay.className = 'signature-overlay';
+                            overlay.style.left = x + 'px';
+                            overlay.style.top = y + 'px';
+                            overlay.style.width = w + 'px';
+                            overlay.style.height = h + 'px';
+                            overlay.textContent = label;
+                            $pageContainer.append(overlay);
+                        });
+
+                        // Next page
+                        renderPage(pageNo + 1);
+                    });
+                });
+            };
+
+            renderPage(1);
+        }).catch(function(err) {
+            $container.html('<div class="alert alert-danger">Failed to load PDF preview.</div>');
+            console.error(err);
+        });
+    }
+
+    function groupByPage(items) {
+        const map = {};
+        (items || []).forEach(function(it) {
+            const page = Number(it.page || 1);
+            if (!map[page]) map[page] = [];
+            map[page].push(it);
+        });
+        return map;
+    }
+
+    function toNumber(val, def) {
+        const n = Number(val);
+        return isNaN(n) ? def : n;
+    }
 });
 </script>
 @endpush

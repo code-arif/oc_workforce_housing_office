@@ -6,6 +6,7 @@ use App\Models\Bed;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Amenities;
 use Yajra\DataTables\Facades\DataTables;
 
 class BedController extends Controller
@@ -16,7 +17,7 @@ class BedController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $beds = Bed::with('room')->latest('id')->get();
+            $beds = Bed::with('room', 'amenities')->latest('id')->get();
             // dd($beds);
             return DataTables::of($beds)
                 ->addIndexColumn()
@@ -27,10 +28,12 @@ class BedController extends Controller
                     ' ;
                 })
                 ->addColumn('description', function ($item) {
+                    $amenities = $item->amenities->pluck('name')->join(', ');
                     return '
-                        Property : <span class="fw-bold">' . $item->room->unit->property->name . '</span> <br>
-                        Unit : <span class="fw-bold">' . $item->room->unit->name . '</span> <br>
-                        Room: <span class="text-capitalize"> ' . $item->room->room_number . '</span>
+                        Property : <span class="fw-bold">' . $item->room->unit->property->name . '</span>
+                        Unit : <span class="fw-bold">' . $item->room->unit->name . '</span>
+                        Room: <span class="text-capitalize"> ' . $item->room->room_number . '</span> <br>
+                        Amenities: <span class="text-muted">' . ($amenities ?: 'None') . '</span>
                     ';
                 })
                 // ->addColumn('room', fn($item) => $item->room->room_number ?? '---')
@@ -43,6 +46,8 @@ class BedController extends Controller
                 })
                 ->addColumn('actions', function ($item) {
                     return '
+                        <a href="#" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
+
                         <button class="btn btn-sm btn-warning me-1" onclick="editBed(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -69,6 +74,8 @@ class BedController extends Controller
             'bed_number' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_occupied' => 'boolean',
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:amenities,id',
         ]);
         // dd($request->all());
 
@@ -84,7 +91,8 @@ class BedController extends Controller
             $room = Room::findOrFail($validated['room_id']);
             $validated['room_number'] = $room->room_number;
             $validated['bed_label'] = $room->unit->name . '-' . $room->room_number . '-' . $validated['bed_number'];
-            Bed::create($validated);
+            $bed = Bed::create($validated);
+            $bed->amenities()->sync($request->input('amenities', []));
 
             return response()->json([
                 'success' => true,
@@ -112,7 +120,7 @@ class BedController extends Controller
     public function edit($id)
     {
         try {
-            $bed = Bed::with('room', 'room.unit', 'room.unit.property')->findOrFail($id);
+            $bed = Bed::with('room', 'room.unit', 'room.unit.property', 'amenities')->findOrFail($id);
 
             return response()->json([
                 'success' => true,
@@ -136,6 +144,8 @@ class BedController extends Controller
             'bed_number' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_occupied' => 'boolean',
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:amenities,id',
         ]);
         // dd($request->all());
 
@@ -159,6 +169,7 @@ class BedController extends Controller
             $validated['room_number'] = $room->room_number;
             $validated['bed_label'] = $room->unit->name . '-' . $room->room_number . '-' . $validated['bed_number'];
             $bed->update($validated);
+            $bed->amenities()->sync($request->input('amenities', []));
 
             return response()->json([
                 'success' => true,
@@ -251,6 +262,38 @@ class BedController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching rooms: ' . $e->getMessage(),
+            ], 500);
+        }   
+    }
+
+    public function getAmenities()
+    {
+        try {
+            $amenities = Amenities::where('is_active', true)->get();
+            return response()->json([
+                'success' => true,
+                'data' => $amenities,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching amenities: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getBeds($roomId) 
+    {
+         try {
+            $beds = Bed::where('room_id', $roomId)->get();
+            return response()->json([
+                'success' => true,
+                'data' => $beds,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching beds: ' . $e->getMessage(),
             ], 500);
         }   
     }

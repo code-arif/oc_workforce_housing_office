@@ -835,7 +835,7 @@ pre {
 }
 
 .accordion-secondary .card {
-    background-color: rgba(233, 132, 177, .45)
+    background-color: rgba(153, 153, 153, .45)
 }
 
 .accordion-secondary .card-header {
@@ -843,7 +843,7 @@ pre {
 }
 
 .accordion-secondary .card-header a {
-    background-color: rgba(233, 132, 177, .65);
+    background-color: rgba(153, 153, 153, .65);
     color: #fff;
     padding: 14px 20px;
     transition: all .3s ease;
@@ -873,7 +873,7 @@ pre {
 }
 
 .accordion-secondary .card-body {
-    background-color: rgba(233, 132, 177, 0);
+    background-color: rgba(153, 153, 153, 0);
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px
 }
@@ -1380,8 +1380,8 @@ pre {
 }
 
 .alert-secondary {
-    background-color: rgba(233, 132, 177, .15);
-    border-color: rgba(233, 132, 177, .15);
+    background-color: rgba(153, 153, 153, .15);
+    border-color: rgba(153, 153, 153, .15);
     color: #e984b1
 }
 
@@ -2361,7 +2361,7 @@ button.btn-close:focus {
 }
 
 .btn-group .btn-close.btn-secondary-light {
-    border: 1px solid rgba(233, 132, 177, .3) !important
+    border: 1px solid rgba(153, 153, 153, .3) !important
 }
 
 .btn-group .btn-close.btn-secondary-light:hover {
@@ -2597,34 +2597,34 @@ fieldset:disabled a.btn {
 }
 
 .btn-secondary {
-    background-color: #e984b1 !important;
-    border-color: #e984b1 !important;
+    background-color: #999999 !important;
+    border-color: #999999 !important;
     color: #fff !important
 }
 
 .btn-secondary:hover {
-    background-color: rgba(233, 132, 177, .85) !important;
-    border-color: rgba(233, 132, 177, .85);
+    background-color: rgba(153, 153, 153, 0.85) !important;
+    border-color: rgba(153, 153, 153, .85);
     color: #fff !important
 }
 
 .btn-secondary:focus {
     border-color: #e984b1;
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .9)
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .9)
 }
 
 .btn-secondary:disabled,
 .btn-secondary:not(:disabled):not(.disabled).active,
 .btn-secondary:not(:disabled):not(.disabled):active {
-    background-color: rgba(233, 132, 177, .85);
-    border-color: rgba(233, 132, 177, .85);
+    background-color: rgba(153, 153, 153, .85);
+    border-color: rgba(153, 153, 153, .85);
     color: #fff
 }
 
 .btn-secondary:not(:disabled):not(.disabled).active:focus,
 .btn-secondary:not(:disabled):not(.disabled):active:focus,
 .show>.btn-secondary.dropdown-toggle:focus {
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .56) !important
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .56) !important
 }
 
 .btn-secondary.disabled,
@@ -2940,8 +2940,8 @@ fieldset:disabled a.btn {
 }
 
 .btn-secondary-light {
-    background: rgba(233, 132, 177, .3) !important;
-    border-color: rgba(233, 132, 177, .3);
+    background: rgba(153, 153, 153, .3) !important;
+    border-color: rgba(153, 153, 153, .3);
     color: #e984b1 !important
 }
 
@@ -2953,7 +2953,7 @@ fieldset:disabled a.btn {
 
 .btn-secondary-light:not(:disabled):not(:disabled).active:focus,
 .btn-secondary-light:not(:disabled):not(:disabled):active:focus {
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .56) !important;
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .56) !important;
     color: #fff !important
 }
 
@@ -3846,7 +3846,7 @@ fieldset:disabled a.btn {
 .btn-secondary-gradient.focus,
 .btn-secondary-gradient:focus {
     border-color: #e984b1;
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .9)
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .9)
 }
 
 .btn-secondary-gradient.disabled,
@@ -3862,7 +3862,7 @@ fieldset:disabled a.btn {
 .btn-secondary-gradient:not(:disabled):not(.disabled).active:focus,
 .btn-secondary-gradient:not(:disabled):not(.disabled):active:focus,
 .show>.btn-secondary-gradient.dropdown-toggle:focus {
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .56) !important
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .56) !important
 }
 
 .btn-success-gradient {
@@ -4142,7 +4142,7 @@ fieldset:disabled a.btn {
 
 .btn-outline-secondary.focus,
 .btn-outline-secondary:focus {
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .9)
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .9)
 }
 
 .btn-outline-secondary.disabled,
@@ -4165,11 +4165,11 @@ fieldset:disabled a.btn {
 
 .btn-outline-secondary:not(:disabled):not(.disabled).active:focus,
 .btn-outline-secondary:not(:disabled):not(.disabled):active:focus {
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .56) !important
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .56) !important
 }
 
 .show>.btn-outline-secondary.dropdown-toggle:focus {
-    box-shadow: 0 0 0 2px rgba(233, 132, 177, .56)
+    box-shadow: 0 0 0 2px rgba(153, 153, 153, .56)
 }
 
 .btn-outline-success {
@@ -8679,7 +8679,7 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 .form-range-control.range-secondary::-webkit-slider-runnable-track {
-    background-color: rgba(233, 132, 177, .15)
+    background-color: rgba(153, 153, 153, .15)
 }
 
 .form-range-control.range-info::-webkit-slider-thumb {
@@ -71419,40 +71419,40 @@ a.bg-secondary:focus,
 a.bg-secondary:hover,
 button.bg-secondary:focus,
 button.bg-secondary:hover {
-    background-color: rgba(233, 132, 177, .85) !important
+    background-color: rgba(153, 153, 153, .85) !important
 }
 
 .bg-secondary-lightest {
-    background-color: rgba(233, 132, 177, .35) !important
+    background-color: rgba(153, 153, 153, .35) !important
 }
 
 a.bg-secondary-lightest:focus,
 a.bg-secondary-lightest:hover,
 button.bg-secondary-lightest:focus,
 button.bg-secondary-lightest:hover {
-    background-color: rgba(233, 132, 177, .15) !important
+    background-color: rgba(153, 153, 153, .15) !important
 }
 
 .bg-secondary-lighter {
-    background-color: rgba(233, 132, 177, .55) !important
+    background-color: rgba(153, 153, 153, .55) !important
 }
 
 a.bg-secondary-lighter:focus,
 a.bg-secondary-lighter:hover,
 button.bg-secondary-lighter:focus,
 button.bg-secondary-lighter:hover {
-    background-color: rgba(233, 132, 177, .35) !important
+    background-color: rgba(153, 153, 153, .35) !important
 }
 
 .bg-secondary-light {
-    background-color: rgba(233, 132, 177, .85) !important
+    background-color: rgba(153, 153, 153, .85) !important
 }
 
 a.bg-secondary-light:focus,
 a.bg-secondary-light:hover,
 button.bg-secondary-light:focus,
 button.bg-secondary-light:hover {
-    background-color: rgba(233, 132, 177, .55) !important
+    background-color: rgba(153, 153, 153, .55) !important
 }
 
 .bg-secondary-dark {
@@ -71663,7 +71663,7 @@ button.bg-custom-yellow-darkest:hover {
 }
 
 .bg-secondary-transparent {
-    background-color: rgba(233, 132, 177, .15) !important
+    background-color: rgba(153, 153, 153, .15) !important
 }
 
 .bg-success-transparent {
@@ -71696,7 +71696,7 @@ button.bg-custom-yellow-darkest:hover {
 }
 
 .shadow-secondary {
-    box-shadow: 0 7px 30px rgba(233, 132, 177, .2) !important
+    box-shadow: 0 7px 30px rgba(153, 153, 153, .2) !important
 }
 
 .shadow-teritary {
@@ -71729,7 +71729,7 @@ button.bg-custom-yellow-darkest:hover {
 }
 
 .box-shadow-secondary {
-    box-shadow: 0 7px 30px rgba(233, 132, 177, .2) !important
+    box-shadow: 0 7px 30px rgba(153, 153, 153, .2) !important
 }
 
 .box-shadow-teritary {
@@ -72222,7 +72222,7 @@ button.bg-custom-yellow-darkest:hover {
 }
 
 .border-bottom-secondary-light {
-    border-bottom-color: rgba(233, 132, 177, .25) !important
+    border-bottom-color: rgba(153, 153, 153, .25) !important
 }
 
 .border-bottom-success-light {
@@ -81803,37 +81803,37 @@ a.text-primary-darkest:hover {
 
 a.text-secondary:focus,
 a.text-secondary:hover {
-    color: rgba(233, 132, 177, .9) !important
+    color: rgba(153, 153, 153, .9) !important
 }
 
 .text-secondary-light {
-    fill: rgba(233, 132, 177, .85) !important;
-    color: rgba(233, 132, 177, .85) !important
+    fill: rgba(153, 153, 153, .85) !important;
+    color: rgba(153, 153, 153, .85) !important
 }
 
 .text-secondary-lighter,
 a.text-secondary-light:focus,
 a.text-secondary-light:hover {
-    color: rgba(233, 132, 177, .55) !important
+    color: rgba(153, 153, 153, .55) !important
 }
 
 .text-secondary-lighter {
-    fill: rgba(233, 132, 177, .55) !important
+    fill: rgba(153, 153, 153, .55) !important
 }
 
 .text-secondary-lightest,
 a.text-secondary-lighter:focus,
 a.text-secondary-lighter:hover {
-    color: rgba(233, 132, 177, .35) !important
+    color: rgba(153, 153, 153, .35) !important
 }
 
 .text-secondary-lightest {
-    fill: rgba(233, 132, 177, .35) !important
+    fill: rgba(153, 153, 153, .35) !important
 }
 
 a.text-secondary-lightest:focus,
 a.text-secondary-lightest:hover {
-    color: rgba(233, 132, 177, .15) !important
+    color: rgba(153, 153, 153, .15) !important
 }
 
 .text-secondary-dark {
@@ -82599,7 +82599,7 @@ textarea.form-control {
 }
 
 .text-secondary-shadow {
-    text-shadow: 0 5px 10px rgba(233, 132, 177, .3) !important
+    text-shadow: 0 5px 10px rgba(153, 153, 153, .3) !important
 }
 
 .text-teritary-shadow {

@@ -167,7 +167,7 @@
 <script>
     (function() {
         window.initRoomsSection = function() {
-            console.log('Rooms section initialized');
+            // console.log('Rooms section initialized');
 
             let roomModal = null;
             let isEditMode = false;
@@ -480,7 +480,7 @@
             };
 
 
-            console.log('Rooms DataTable initialized');
+            // console.log('Rooms DataTable initialized');
         };
 
         // Remove bed function

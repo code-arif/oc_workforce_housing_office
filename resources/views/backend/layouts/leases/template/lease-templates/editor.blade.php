@@ -176,7 +176,7 @@
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <!-- Zoom Controls -->
-                                    <div class="btn-group" role="group">
+                                    {{-- <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOut">
                                             <i class="fas fa-minus"></i>
                                         </button>
@@ -184,7 +184,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomIn">
                                             <i class="fas fa-plus"></i>
                                         </button>
-                                    </div>
+                                    </div> --}}
                                     <!-- Page Navigation -->
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-sm btn-outline-secondary" id="prevPage">
@@ -268,7 +268,7 @@
     .sticky-sidebar {
         position: sticky;
         top: 80px;
-        max-height: calc(100vh - 100px);
+        max-height: calc(100vh - 175px);
         overflow-y: auto;
     }
 
@@ -327,7 +327,7 @@
     .document-container {
         position: relative;
         background: #525659;
-        min-height: 700px;
+        height: 700px;
         overflow: auto;
         display: flex;
         justify-content: center;

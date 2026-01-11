@@ -137,13 +137,45 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                
+                                                @forelse ($property->units as $unit)
+                                                    @foreach ($unit->rooms as $room)
+                                                        @foreach ($room->beds as $bed)
+                                                            <tr>
+                                                                <td>{{ $loop->parent->parent->iteration }}.{{ $loop->parent->iteration }}.{{ $loop->iteration }}</td>
+                                                                <td>{{ $unit->name }}</td>
+                                                                <td>{{ $room->room_number }}</td>
+                                                                <td>{{ $bed->bed_label }}</td>
+                                                                <td>
+                                                                    {{-- @if($bed->tenants->isNotEmpty())
+                                                                        <ul class="list-unstyled mb-0">
+                                                                            @foreach($bed->tenants as $tenant)
+                                                                                <li>{{ $tenant->name }} ({{ $tenant->email }})</li>
+                                                                            @endforeach
+                                                                        </ul>
+                                                                    @else --}}
+                                                                        <span class="text-muted">No tenants assigned</span>
+                                                                    {{-- @endif --}}
+                                                                </td>
+                                                                <td>
+                                                                    @if($bed->is_occupied)
+                                                                    <span class="badge bg-danger">Occupied</span>
+                                                                    @else
+                                                                    <span class="badge bg-success">Available</span>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    @endforeach
+                                                    
+                                                @empty
                                                 <tr>
                                                     <td colspan="6" class="text-center text-muted py-4">
                                                         <i class="bi bi-inbox" style="font-size: 2rem;"></i>
                                                         <p class="mt-2">No units assigned to this property</p>
                                                     </td>
                                                 </tr>
+                                                @endforelse
+                                                
                                             </tbody>
                                         </table>
                                     </div>
@@ -172,7 +204,7 @@
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div>
                                             <p class="text-muted mb-1">Total Units</p>
-                                            <h4 class="fw-bold">10</h4>
+                                            <h4 class="fw-bold">{{ $property->totalUnits() }}</h4>
                                         </div>
                                         <div style="font-size: 2.5rem; color: #007bff;">
                                             <i class="bi bi-building"></i>
@@ -186,7 +218,7 @@
                                         <div>
                                             <p class="text-muted mb-1">Total Rooms</p>
                                             <h4 class="fw-bold">
-                                                20
+                                                    {{$property->totalRooms()}}
                                             </h4>
                                         </div>
                                         <div style="font-size: 2.5rem; color: #28a745;">
@@ -200,7 +232,7 @@
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div>
                                             <p class="text-muted mb-1">Total Beds</p>
-                                            <h4 class="fw-bold">100</h4>
+                                            <h4 class="fw-bold">{{ $property->totalBeds() }}</h4>
                                         </div>
                                         <div style="font-size: 2.5rem; color: #ffc107;">
                                             <i class="bi bi-box2"></i>
@@ -230,26 +262,15 @@
                             </div>
                         </div>
 
-                        <!-- Metadata Card -->
+                        <!-- Tentant history Card -->
                         <div class="card box-shadow-0 mt-3">
                             <div class="card-header border-bottom">
                                 <h5 class="card-title mb-0">
-                                    <i class="bi bi-info-circle"></i> Metadata
+                                    <i class="bi bi-info-circle"></i> Tentant History
                                 </h5>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3 pb-3 border-bottom">
-                                    <p class="text-muted mb-1 small">Created</p>
-                                    <p class="fw-bold text-dark">{{ $property->created_at->format('d M Y') }}</p>
-                                </div>
-                                <div class="mb-3 pb-3 border-bottom">
-                                    <p class="text-muted mb-1 small">Last Updated</p>
-                                    <p class="fw-bold text-dark">{{ $property->updated_at->format('d M Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-muted mb-1 small">Property ID</p>
-                                    <p class="fw-bold text-dark">#{{ $property->id }}</p>
-                                </div>
+                                
                             </div>
                         </div>
                     </div>

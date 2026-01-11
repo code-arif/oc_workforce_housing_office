@@ -34,7 +34,7 @@
                                     <div class="timeline-content">
                                         <div class="step-number">1</div>
                                         <h6>Upload Document</h6>
-                                        <p class="text-muted small">Upload your lease agreement in PDF or DOCX format</p>
+                                        <p class="text-muted small">Upload your lease agreement in PDF format</p>
                                     </div>
                                 </div>
                                 <div class="timeline-step">
@@ -73,7 +73,7 @@
                             <ul class="tips-list mb-0">
                                 <li>
                                     <i class="fas fa-check-circle text-success"></i>
-                                    <span><strong>Use DOCX format</strong> for better formatting preservation</span>
+                                    <span><strong>Use PDF format</strong> for better formatting preservation</span>
                                 </li>
                                 <li>
                                     <i class="fas fa-check-circle text-success"></i>
@@ -166,7 +166,7 @@
                                             <input type="text" 
                                                    name="name" 
                                                    id="name" 
-                                                   class="form-control form-control-lg @error('name') is-invalid @enderror" 
+                                                   class="form-control @error('name') is-invalid @enderror" 
                                                    placeholder="e.g., Standard Residential Lease Agreement 2024"
                                                    value="{{ old('name') }}"
                                                    required>
@@ -216,11 +216,9 @@
                                         <p class="upload-subtitle">or click to browse</p>
                                         <div class="upload-formats">
                                             <span class="format-badge">
-                                                <i class="fas fa-file-pdf"></i> PDF
+                                                <i class="fas fa-file-pdf"></i>Only PDF
                                             </span>
-                                            <span class="format-badge">
-                                                <i class="fas fa-file-word"></i> DOCX
-                                            </span>
+                                            
                                         </div>
                                         <input type="file" 
                                                name="template_file" 
@@ -270,7 +268,7 @@
                                 <div class="upload-info mt-3">
                                     <small class="text-muted">
                                         <i class="fas fa-info-circle"></i> 
-                                        <strong>Accepted formats:</strong> PDF (.pdf), Word Document (.docx) | 
+                                        <strong>Accepted formats:</strong> PDF (.pdf) | 
                                         <strong>Maximum size:</strong> 10MB
                                     </small>
                                 </div>
@@ -329,7 +327,7 @@
         width: 35px;
         height: 35px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
         color: white;
         display: flex;
         align-items: center;
@@ -385,7 +383,7 @@
 
     .placeholder-tags .badge {
         font-size: 11px;
-        padding: 5px 10px;
+        padding: 15px 12px;
         font-weight: 500;
     }
 
@@ -418,7 +416,7 @@
         height: 80px;
         margin: 0 auto 20px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -482,7 +480,7 @@
         width: 60px;
         height: 60px;
         border-radius: 12px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -536,7 +534,7 @@
     }
 
     .card-primary .card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
         color: white;
     }
 
@@ -545,7 +543,7 @@
     }
 
     .card-info .card-header {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.3) 0%, rgba(56, 239, 126, 0.3) 100%);
         color: white;
     }
 

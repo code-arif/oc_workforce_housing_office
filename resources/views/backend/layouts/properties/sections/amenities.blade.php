@@ -72,7 +72,7 @@
 <script>
     (function() {
         window.initBedsSection = function() {
-            console.log(' section initialized');
+            // console.log(' section initialized');
 
             let amenityModal = null;
             let isEditMode = false;
@@ -283,7 +283,7 @@
                 });
             };
 
-            console.log('Amenities DataTable initialized');
+            // console.log('Amenities DataTable initialized');
         };
 
         // Auto-initialize

@@ -30,8 +30,10 @@
                                 <div
                                     class="card-header border-bottom mb-3 d-flex justify-content-between align-items-center">
                                     <h4 class="mb-0">Season List</h4>
+                                    @can('season.create')
                                     <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#seasonModal" id="addSeasonBtn">Add Season</button>
+                                    data-bs-target="#seasonModal" id="addSeasonBtn">Add Season</button>
+                                    @endcan
                                 </div>
 
 

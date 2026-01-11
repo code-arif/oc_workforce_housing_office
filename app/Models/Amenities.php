@@ -12,4 +12,9 @@ class Amenities extends Model
         'name',
         'is_active',
     ];
+
+    public function beds()
+    {
+        return $this->belongsToMany(Bed::class, 'bed_amenities', 'amenity_id', 'bed_id');
+    }
 }

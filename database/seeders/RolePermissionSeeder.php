@@ -46,6 +46,9 @@ class RolePermissionSeeder extends Seeder
             'user-management.users' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'user-management.roles' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'user-management.permissions' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
+            'lease' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'lease.template' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+
         ];
 
         foreach ($modules as $module => $actions) {

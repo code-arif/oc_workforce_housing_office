@@ -61,18 +61,30 @@ class PropertyController extends Controller
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
-                    return '
-                        <a href="' . route('property.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
-                        <button class="btn btn-sm btn-warning me-1" onclick="editProperty(' . $item->id . ')" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="propertyDeleteConfirm(' . $item->id . ')" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    ';
+                    $buttons = '';
+                    if (auth()->user()->can('property.show')) {
+                        $buttons .= '
+                            <a href="' . route('property.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
+                        ';
+                    }
+                    if (auth()->user()->can('property.edit')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-warning me-1" onclick="editProperty(' . $item->id . ')" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                        ';
+                    }
+                    if (auth()->user()->can('property.delete')) {
+                        $buttons .= '
+                            <button class="btn btn-sm btn-danger" onclick="propertyDeleteConfirm(' . $item->id . ')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ';
+                    }
+                    return $buttons;
                 })
-                ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
-                ->make(true);
+                    ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
+                    ->make(true);
         }
     }
     /**
@@ -141,6 +153,8 @@ class PropertyController extends Controller
         $property = Property::with([
             'propertyType',
             'units' ,
+            'units.rooms',
+            'units.rooms.beds',
         ])->findOrFail($id);
 
         return view('backend.layouts.properties.show', compact('property'));
@@ -171,7 +185,42 @@ class PropertyController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $property = Property::findOrFail($id);
+        $validated = $request->validate([
+            'property_type_id' => 'required|exists:property_types,id',
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+        ]);
+
+        try {
+            DB::beginTransaction();
+            // Handle image upload
+            $imagePath = null;
+            if ($request->hasFile('image_path')) {
+                $imagePath = $request->file('image_path')->store('properties', 'public');
+                $validated['image_path'] = $imagePath;
+            }
+
+            $validated['slug'] = Str::slug($validated['name']);
+            // Create property
+            $property->update($validated);
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property updated successfully.',
+                'property' => $property,
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating property: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -179,6 +228,26 @@ class PropertyController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $property = Property::findOrFail($id);
+
+        try {
+            if ($property->units()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete property with associated units.',
+                ], 400);
+            }
+            $property->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property deleted successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting property: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

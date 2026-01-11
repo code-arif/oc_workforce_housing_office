@@ -44,11 +44,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="form-group mb-3">
-                        <label for="bed_number" class="form-label">Bed Number <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="bed_number" id="bed_number" placeholder="Enter bed number">
-                        <div class="invalid-feedback"></div>
-                    </div>
+                    
                     <div class="form-group mb-3">
                         <label for="property_id" class="form-label">Property</label>
                         <select class="form-control" id="property_id">
@@ -75,12 +71,21 @@
                             <option value="">Select a Unit First</option>
                             
                         </select>
+                        <div class="existingBeds" ></div>
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="form-group mb-3">
-                        <a href="javascript:void(0)" class="form-label addAmenity">+ Click to add Amenity</a>
-                        
+                        <label for="bed_number" class="form-label">Bed Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="bed_number" id="bed_number" placeholder="Enter bed number">
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Amenities</label>
+                        <div id="amenitiesContainer">
+                            <!-- Amenities checkboxes will be loaded here -->
+                        </div>
                     </div>
                 </div>
 
@@ -99,7 +104,7 @@
 <script>
     (function() {
         window.initBedsSection = function() {
-            console.log('Beds section initialized');
+            // console.log('Beds section initialized');
 
             let bedModal = null;
             let isEditMode = false;
@@ -141,6 +146,7 @@
                 editingId = null;
                 document.getElementById('bedModalLabel').textContent = 'Add Bed';
                 document.getElementById('submitBtnText').textContent = 'Save';
+                loadAmenities();
                 if (bedModal) bedModal.show();
             });
 
@@ -223,6 +229,39 @@
                 });
             }
 
+            function loadAmenities(selectedAmenities = []) {
+                const container = document.getElementById('amenitiesContainer');
+                container.innerHTML = '<p>Loading amenities...</p>';
+
+                $.ajax({
+                    url: `{{ route('beds.get.amenities') }}`,
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            container.innerHTML = '';
+                            response.data.forEach(amenity => {
+                                const isChecked = selectedAmenities.includes(amenity.id) ? 'checked' : '';
+                                const checkboxHtml = `
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="amenities[]" value="${amenity.id}" id="amenity_${amenity.id}" ${isChecked}>
+                                        <label class="form-check-label" for="amenity_${amenity.id}">
+                                            ${amenity.name}
+                                        </label>
+                                    </div>
+                                `;
+                                container.insertAdjacentHTML('beforeend', checkboxHtml);
+                            });
+                        } else {
+                            container.innerHTML = '<p class="text-danger">Failed to load amenities.</p>';
+                        }
+                    },
+                    error: function(xhr) {
+                        container.innerHTML = '<p class="text-danger">Error loading amenities.</p>';
+                        window.showToast('error', xhr.responseJSON?.message || 'Error loading amenities');
+                    }
+                });
+            }
+
             window.editBed = function(id) {
                 $.ajax({
                     url: `{{ route('beds.edit', '') }}/${id}`,
@@ -256,6 +295,7 @@
                             document.getElementById('bed_number').value = response.data.bed_number || '';
                             document.getElementById('bedModalLabel').textContent = 'Edit Bed';
                             document.getElementById('submitBtnText').textContent = 'Update';
+                            loadAmenities(response.data.amenities.map(a => a.id));
                             if (bedModal) bedModal.show();
                         }
                     },
@@ -335,6 +375,10 @@
                 getRooms(document.getElementById('unit_id').value);
             });
 
+            document.getElementById('room_id')?.addEventListener('change', () => {
+                getBeds(document.getElementById('room_id').value);
+            });
+
 
             window.getUnits = function(propertyId, selectedUnitId = null) {
                 let unitSelect = document.getElementById('unit_id');
@@ -366,6 +410,7 @@
 
             window.getRooms = function(unitId, selectedRoomId = null) {
                 let roomSeleted = document.getElementById('room_id');
+                let bedListDiv = document.querySelector('.existingRoom');
                 roomSeleted.innerHTML = '<option value="">Select Room</option>';
 
                 $.ajax({
@@ -384,6 +429,7 @@
 
                                 roomSeleted.appendChild(option);
                             });
+                           
                         }
                     },
                     error: function(xhr) {
@@ -392,12 +438,41 @@
                 });
             };
 
-            console.log('Beds DataTable initialized');
+            window.getBeds = function(roomId) {
+                let bedListDiv = document.querySelector('.existingBeds');
+                bedListDiv.innerHTML = 'Loading existing beds...';
+                $.ajax({
+                    url: `{{ route('beds.get.beds', '') }}/${roomId}`,
+                    type: 'GET',
+                    success: function(response) {
+                        bedListDiv.style.display = 'block';
+                        if (response.success) {
+                            bedListDiv.innerHTML = '';
+                            if (response.data.length > 0) {
+                                let bedListHtml = '<strong>Existing Beds:</strong>';
+                                response.data.forEach(bed => {
+                                    bedListHtml += `<span class="text-success me-1"> ${bed.bed_number}</span>, `;
+                                });
+                                bedListDiv.innerHTML = bedListHtml;
+                            } else {
+                                bedListDiv.innerHTML = '<p>No existing beds for this room.</p>';
+                            }
+                        }
+                    },
+                    error: function(xhr) {
+                        window.showToast('error', xhr.responseJSON?.message || 'Error loading beds');
+                    }
+                });
+            };
+
+            // console.log('Beds DataTable initialized');
         };
 
         // Auto-initialize
         if (typeof window.initBedsSection === 'function') {
             window.initBedsSection();
         }
+
+
     })();
 </script>
