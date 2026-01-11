@@ -21,6 +21,11 @@ class DatabaseSeeder extends Seeder
             UnitSeeder::class,
             RoomSeeder::class,
             BedSeeder::class,
+            TenantSeeder::class,
+            TenantProfileSeeder::class,
+            SeasonSeeder::class,
+            LeaseSeeder::class,
+            LeaseAssignmentSeeder::class,
         ]);
     }
 }

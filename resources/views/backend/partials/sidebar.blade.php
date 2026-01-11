@@ -80,7 +80,7 @@
                         @can('seasons.list')
                         <li><a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a></li>
                         @endcan
-                        <li><a href="{{route('lease-templates.list')}}" class="slide-item">Lease Templates</a></li>
+                        <li><a href="{{route('lease-templates.index')}}" class="slide-item">Lease Templates</a></li>
                         <li><a href="{{ route('leases.index') }}" class="slide-item">Leases</a></li>
                     </ul>
                 </li>

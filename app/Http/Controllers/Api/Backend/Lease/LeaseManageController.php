@@ -27,19 +27,20 @@ class LeaseManageController extends Controller
                     'leases.payment_frequency',
                     'leases.created_at'
                 ])
-                ->with([
-                    'tenant:id,email' => [
-                        'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
-                    ],
-                    'property:id,name,address,city,state,zip_code',
-                    'assignments' => function ($q) {
-                        $q->select('id', 'lease_id', 'bed_id', 'is_current')
-                            ->where('is_current', true)
-                            ->whereNull('deleted_at')
-                            ->with('bed:id,bed_number,room_id');
-                    },
-                    'documents:id,lease_id,tenant_signed_at,admin_signed_at'
-                ])
+            
+                // ->with([
+                //     'tenant:id,email' => [
+                //         'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
+                //     ],
+                //     'property:id,name',
+                //     'assignments' => function ($q) {
+                //         $q->select('id', 'lease_id', 'bed_id', 'is_current')
+                //             ->where('is_current', true)
+                //             ->whereNull('deleted_at')
+                //             ->with('bed:id,bed_number,room_id');
+                //     },
+                //     'documents:id,lease_id,tenant_signed_at,admin_signed_at'
+                // ])
                 ->orderBy('leases.id', 'desc');
 
             // Status filter
