@@ -1,16 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\Api\Backend\Lease;
+namespace App\Http\Controllers\Web\Backend\Lease;
 
-use App\Http\Controllers\Controller;
 use App\Models\Lease;
+use App\Models\Season;
+use App\Models\Tenant;
+use App\Models\Property;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Yajra\DataTables\Facades\DataTables;
 
-class LeaseManageController extends Controller
+class LeaseController extends Controller
 {
     public function index(Request $request)
+    {
+        // Get statistics
+        $stats = [
+            'active' => Lease::where('status', 'ACTIVE')->count(),
+            'inProcess' => Lease::whereIn('status', ['PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])->count(),
+            'future' => Lease::where('status', 'DRAFT')->where('start_date', '>', now())->count(),
+            'expiring' => Lease::where('status', 'ACTIVE')
+                ->whereBetween('end_date', [now(), now()->addDays(90)])
+                ->count(),
+            'expired' => Lease::whereIn('status', ['TERMINATED', 'COMPLETED'])->count()
+        ];
+
+        return view('backend.layouts.leases.lease.index', compact('stats'));
+    }
+
+    public function getData(Request $request)
     {
         if ($request->ajax()) {
             // Optimized query with eager loading and selective columns
@@ -27,20 +46,19 @@ class LeaseManageController extends Controller
                     'leases.payment_frequency',
                     'leases.created_at'
                 ])
-            
-                // ->with([
-                //     'tenant:id,email' => [
-                //         'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
-                //     ],
-                //     'property:id,name',
-                //     'assignments' => function ($q) {
-                //         $q->select('id', 'lease_id', 'bed_id', 'is_current')
-                //             ->where('is_current', true)
-                //             ->whereNull('deleted_at')
-                //             ->with('bed:id,bed_number,room_id');
-                //     },
-                //     'documents:id,lease_id,tenant_signed_at,admin_signed_at'
-                // ])
+                ->with([
+                    'tenant:id,email' => [
+                        'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
+                    ],
+                    'property:id,name,address,city,state,zip_code',
+                    'assignments' => function ($q) {
+                        $q->select('id', 'lease_id', 'bed_id', 'is_current')
+                            ->where('is_current', true)
+                            ->whereNull('deleted_at')
+                            ->with('bed:id,bed_number,room_id');
+                    },
+                    'documents:id,lease_id,tenant_signed_at,admin_signed_at'
+                ])
                 ->orderBy('leases.id', 'desc');
 
             // Status filter
@@ -175,19 +193,17 @@ class LeaseManageController extends Controller
                 ->rawColumns(['status_badge', 'property_unit', 'address', 'tenant_name', 'dates', 'rent', 'signature_status'])
                 ->make(true);
         }
+    }
 
-        // Get statistics
-        $stats = [
-            'active' => Lease::where('status', 'ACTIVE')->count(),
-            'inProcess' => Lease::whereIn('status', ['PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])->count(),
-            'future' => Lease::where('status', 'DRAFT')->where('start_date', '>', now())->count(),
-            'expiring' => Lease::where('status', 'ACTIVE')
-                ->whereBetween('end_date', [now(), now()->addDays(90)])
-                ->count(),
-            'expired' => Lease::whereIn('status', ['TERMINATED', 'COMPLETED'])->count()
-        ];
+    public function create()
+    {
+        $terms = Season::where('is_active', true)->get();
 
-        return view('backend.layouts.leases.lease.index', compact('stats'));
+        $properties = Property::with(['units'])->get();
+
+        $tenants = Tenant::with(['profile'])->where('status', 'active')->get();
+
+        return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants'));
     }
 
     public function show($id)

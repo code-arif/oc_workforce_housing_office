@@ -352,4 +352,100 @@ class TenantManageController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get active tenants for dropdown
+     */
+    public function getActiveTenants(Request $request)
+    {
+        try {
+            $tenants = Tenant::where('status', 'active')
+                ->with('profile:id,tenant_id,first_name,last_name,phone')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($tenant) {
+                    return [
+                        'id' => $tenant->id,
+                        'email' => $tenant->email,
+                        'first_name' => $tenant->profile->first_name ?? 'N/A',
+                        'last_name' => $tenant->profile->last_name ?? '',
+                        'phone' => $tenant->profile->phone ?? '',
+                        'status' => ucfirst($tenant->status)
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $tenants
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load tenants: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Quick create tenant for lease assignment
+     */
+    public function quickCreate(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|email|unique:tenants,email',
+                'phone' => 'required|string|max:20'
+            ]);
+
+            DB::beginTransaction();
+
+            // Create tenant
+            $tenant = Tenant::create([
+                'email' => $validated['email'],
+                'status' => 'active',
+                'application_source' => 'admin'
+            ]);
+
+            // Create tenant profile
+            $tenant->profile()->create([
+                'first_name' => $validated['first_name'],
+                'last_name' => $validated['last_name'],
+                // 'email' => $validated['email'],
+                'phone' => $validated['phone'],
+            ]);
+
+            DB::commit();
+
+            // Return tenant with profile
+            $tenant->load('profile');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tenant created successfully',
+                'data' => [
+                    'id' => $tenant->id,
+                    'email' => $tenant->email,
+                    'first_name' => $tenant->profile->first_name,
+                    'last_name' => $tenant->profile->last_name,
+                    'phone' => $tenant->profile->phone,
+                    'status' => ucfirst($tenant->status)
+                ]
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create tenant: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

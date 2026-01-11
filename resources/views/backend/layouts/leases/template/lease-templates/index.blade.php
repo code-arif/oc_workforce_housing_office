@@ -109,7 +109,7 @@
                                         @endcan
                                         
                                         <li>
-                                            <a class="dropdown-item preview-template" href="#" data-id="{{ $template->id }}">
+                                            <a class="dropdown-item" href="{{ route('lease-templates.preview', $template->id) }}">
                                                 <i class="fas fa-eye text-info"></i> Preview
                                             </a>
                                         </li>
@@ -487,10 +487,43 @@
     .dropdown-item:hover {
         background: #f9fafb;
     }
+
+    /* Preview overlays */
+    .pdf-page-container {
+        position: relative;
+        margin-bottom: 16px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        border: 1px solid #f1f3f5;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .placeholder-overlay, .signature-overlay {
+        position: absolute;
+        border: 1px dashed rgba(59, 130, 246, 0.6);
+        background: rgba(59, 130, 246, 0.15);
+        color: #1f2937;
+        font-size: 12px;
+        padding: 2px 4px;
+        pointer-events: none;
+        border-radius: 4px;
+    }
+    .signature-overlay {
+        border-color: rgba(245, 158, 11, 0.7);
+        background: rgba(245, 158, 11, 0.15);
+    }
 </style>
 @endpush
 
 @push('scripts')
+<!-- PDF.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha512-GKq8wARrVQkQp+QyZtiCvmiY+Gv+asA7kCZKVb4TDNRAoCchUFnsbnXyXMJfbH4d2kxv9x1CYUF4qR3ERuP5tA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+// Configure PDF.js worker
+if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+</script>
 <script>
 $(document).ready(function() {
     // Preview template
@@ -502,8 +535,19 @@ $(document).ready(function() {
             url: `/admin/lease-templates/${templateId}/preview`,
             method: 'GET',
             success: function(response) {
-                $('#previewContent').html(response.content);
-                $('#previewModal').modal('show');
+                console.log(response.placeholders);
+                
+                // Prefer PDF.js viewer with overlays if data present
+                if (response.pdf_url && window['pdfjsLib']) {
+                    renderTemplatePreview(response.pdf_url, response.placeholders || [], response.signatures || []);
+                    $('#previewModal').modal('show');
+                } else if (response.content) {
+                    // Fallback HTML content
+                    $('#previewContent').html(response.content);
+                    $('#previewModal').modal('show');
+                } else {
+                    alert('Preview data unavailable');
+                }
             },
             error: function() {
                 alert('Error loading preview');
@@ -527,7 +571,7 @@ $(document).ready(function() {
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!',
+            confirmButtonText: 'Yes, change it!',
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
@@ -555,8 +599,20 @@ $(document).ready(function() {
         const templateId = $(this).data('id');
 
         if (confirm('Create a copy of this template?')) {
-            window.location.href = `/admin/lease-templates/${templateId}/duplicate`;
         }
+        Swal.fire({
+            title: `Are you sure you want to duplicate this template?`,
+            text: 'Document will be duplicated.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, Do it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/lease-templates/${templateId}/duplicate`;
+            }
+        });
     });
 
     // Delete template
@@ -564,11 +620,21 @@ $(document).ready(function() {
         e.preventDefault();
         const templateId = $(this).data('id');
 
-        if (confirm('Are you sure you want to delete this template? This action cannot be undone.')) {
-            const form = $('#deleteForm');
-            form.attr('action', `/admin/lease-templates/${templateId}`);
-            form.submit();
-        }
+        Swal.fire({
+            title: `Are you sure you want to delete this template?`,
+            text: 'This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = $('#deleteForm');
+                form.attr('action', `/admin/lease-templates/${templateId}`);
+                form.submit();
+            }
+        });
     });
 
     // Use template
@@ -577,6 +643,111 @@ $(document).ready(function() {
         // Redirect to lease creation with template
         window.location.href = `/backend/leases/create?template_id=${templateId}`;
     });
+
+    // Render PDF and overlay placeholders/signatures
+    function renderTemplatePreview(pdfUrl, placeholders, signatures) {
+        console.log(placeholders);
+        
+        const $container = $('#previewContent');
+        $container.empty();
+
+        const loading = $('<div class="text-center py-3 text-muted">Loading preview…</div>');
+        $container.append(loading);
+
+        const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
+        loadingTask.promise.then(function(pdf) {
+            $container.empty();
+            const pageCount = pdf.numPages;
+
+            const groupedPlaceholders = groupByPage(placeholders);
+            const groupedSignatures = groupByPage(signatures);
+
+            // Render pages sequentially
+            const renderPage = function(pageNo) {
+                if (pageNo > pageCount) return;
+
+                pdf.getPage(pageNo).then(function(page) {
+                    const scale = 1.0; // keep 1.0 to match stored coords
+                    const viewport = page.getViewport({ scale: scale });
+
+                    const $pageContainer = $('<div class="pdf-page-container"></div>');
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    $pageContainer.append(canvas);
+                    $container.append($pageContainer);
+
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+
+                    page.render(renderContext).promise.then(function() {
+                        // Overlays for this page
+                        const pagePlaceholders = groupedPlaceholders[pageNo] || [];
+                        pagePlaceholders.forEach(function(p) {
+                            const x = toNumber(p.x, 0);
+                            const y = toNumber(p.y, 0);
+                            const w = toNumber(p.width, 140);
+                            const h = toNumber(p.height, 24);
+                            const label = (p.field || 'field');
+
+                            const overlay = document.createElement('div');
+                            overlay.className = 'placeholder-overlay';
+                            overlay.style.left = x + 'px';
+                            overlay.style.top = y + 'px';
+                            overlay.style.width = w + 'px';
+                            overlay.style.height = h + 'px';
+                            overlay.textContent = label;
+                            $pageContainer.append(overlay);
+                        });
+
+                        const pageSignatures = groupedSignatures[pageNo] || [];
+                        pageSignatures.forEach(function(s) {
+                            const x = toNumber(s.x, 0);
+                            const y = toNumber(s.y, 0);
+                            const w = toNumber(s.width, 180);
+                            const h = toNumber(s.height, 60);
+                            const label = (s.label || 'signature');
+
+                            const overlay = document.createElement('div');
+                            overlay.className = 'signature-overlay';
+                            overlay.style.left = x + 'px';
+                            overlay.style.top = y + 'px';
+                            overlay.style.width = w + 'px';
+                            overlay.style.height = h + 'px';
+                            overlay.textContent = label;
+                            $pageContainer.append(overlay);
+                        });
+
+                        // Next page
+                        renderPage(pageNo + 1);
+                    });
+                });
+            };
+
+            renderPage(1);
+        }).catch(function(err) {
+            $container.html('<div class="alert alert-danger">Failed to load PDF preview.</div>');
+            console.error(err);
+        });
+    }
+
+    function groupByPage(items) {
+        const map = {};
+        (items || []).forEach(function(it) {
+            const page = Number(it.page || 1);
+            if (!map[page]) map[page] = [];
+            map[page].push(it);
+        });
+        return map;
+    }
+
+    function toNumber(val, def) {
+        const n = Number(val);
+        return isNaN(n) ? def : n;
+    }
 });
 </script>
 @endpush

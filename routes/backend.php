@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\Backend\Lease\LeaseManageController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\RoomController;
@@ -9,9 +8,11 @@ use App\Http\Controllers\Web\Backend\SeasonController;
 use App\Http\Controllers\Web\Backend\AmenityController;
 use App\Http\Controllers\Web\Backend\PropertyController;
 use App\Http\Controllers\Web\Backend\DashboardController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseController;
 use App\Http\Controllers\Web\Backend\PropertyTypeController;
 use App\Http\Controllers\Web\Backend\Settings\ProfileController;
 use App\Http\Controllers\Web\Backend\Settings\SettingController;
+use App\Http\Controllers\Api\Backend\Lease\LeaseManageController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
 use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
 use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
 use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
+use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
 use App\Http\Controllers\Web\Backend\UserManagement\UserController;
 use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
@@ -32,7 +34,6 @@ use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
-use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -110,6 +111,8 @@ Route::prefix('property')->name('property.')->group(function () {
 
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
 });
+
+
 
 Route::prefix('seasons')->name('seasons.')->group(function () {
     // Legacy routes for create/edit operations
@@ -227,6 +230,10 @@ Route::group([], function () {
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+    
+    // Tenant API routes for lease creation
+    Route::get('/tenants/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
+    Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
 });
 
 /*
@@ -236,12 +243,14 @@ Route::group([], function () {
 */
 // Lease Management Routes
 Route::prefix('leases')->name('leases.')->group(function () {
-    Route::get('/', [LeaseManageController::class, 'index'])->name('index');
-    Route::get('/{id}', [LeaseManageController::class, 'show'])->name('show');
-    Route::get('/{id}/details', [LeaseManageController::class, 'details'])->name('details');
-    Route::post('/store', [LeaseManageController::class, 'store'])->name('store');
-    Route::put('/{id}/update', [LeaseManageController::class, 'update'])->name('update');
-    Route::delete('/{id}/delete', [LeaseManageController::class, 'destroy'])->name('destroy');
+    Route::get('/', [LeaseController::class, 'index'])->name('index');
+    Route::get('/get-data', [LeaseController::class, 'getData'])->name('get.data');
+    Route::get('/create', [LeaseController::class, 'create'])->name('create');
+    Route::get('/{id}', [LeaseController::class, 'show'])->name('show');
+    Route::get('/{id}/details', [LeaseController::class, 'details'])->name('details');
+    Route::post('/store', [LeaseController::class, 'store'])->name('store');
+    Route::put('/{id}/update', [LeaseController::class, 'update'])->name('update');
+    Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
 });
 
 //! Route for Profile Settings
@@ -347,4 +356,34 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function() {
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
 });
 
+
+// Hierarchical Property API Routes for Lease Creation
+Route::middleware(['auth', 'admin'])->group(function () {
+    // Get units by property
+    Route::get('/properties/{property}/units', function ($propertyId) {
+        $property = \App\Models\Property::with('units')->find($propertyId);
+        if (!$property) {
+            return response()->json(['success' => false, 'data' => [], 'message' => 'Property not found'], 404);
+        }
+        return response()->json(['success' => true, 'data' => $property->units]);
+    })->name('backend.properties.units');
+
+    // Get rooms by unit
+    Route::get('/units/{unit}/rooms', function ($unitId) {
+        $unit = \App\Models\Unit::with('rooms')->find($unitId);
+        if (!$unit) {
+            return response()->json(['success' => false, 'data' => [], 'message' => 'Unit not found'], 404);
+        }
+        return response()->json(['success' => true, 'data' => $unit->rooms]);
+    })->name('backend.units.rooms');
+
+    // Get beds by room
+    Route::get('/rooms/{room}/beds', function ($roomId) {
+        $room = \App\Models\Room::with('beds')->find($roomId);
+        if (!$room) {
+            return response()->json(['success' => false, 'data' => [], 'message' => 'Room not found'], 404);
+        }
+        return response()->json(['success' => true, 'data' => $room->beds]);
+    })->name('backend.rooms.beds');
+});
 

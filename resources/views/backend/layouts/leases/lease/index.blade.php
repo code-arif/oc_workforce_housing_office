@@ -17,9 +17,9 @@
                         </ol>
                     </div>
                     <div class="ms-auto">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newLeaseModal">
+                        <a href="{{ route('leases.create') }}" class="btn btn-primary">
                             <i class="fe fe-plus me-2"></i> New Lease
-                        </button>
+                        </a>
                     </div>
                 </div>
 
@@ -180,7 +180,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route('leases.index') }}',
+                    url: '{{ route('leases.get.data') }}',
                     data: function(d) {
                         d.status = $('#statusFilter').val();
                         d.date_from = $('#dateFrom').val();

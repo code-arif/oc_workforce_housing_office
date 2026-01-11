@@ -24,6 +24,135 @@ class LeaseTemplateController extends Controller
         // $this->middleware('permission:lease.template.export')->only(['export']);
     }
 
+    /**
+     * Preview the template with placeholders filled with sample dummy data.
+     */
+    public function preview($id)
+    {
+        $template = LeaseTemplate::findOrFail($id);
+
+        $pdfPath = $template->pdf_path ?? $template->document_path;
+
+        if (!$pdfPath || !Storage::disk('public')->exists($pdfPath)) {
+            return redirect()->route('lease-templates.index')
+                ->with('error', 'Preview not available: PDF file not found.');
+        }
+
+        $placeholders = is_array($template->placeholders) ? $template->placeholders : [];
+        $signatures = is_array($template->signatures) ? $template->signatures : [];
+
+        // Generate dummy data for each placeholder field
+        $dummyData = $this->generateDummyData($placeholders);
+
+        $pdfUrl = asset('storage/' . $pdfPath);
+
+        return view('backend.layouts.leases.template.lease-templates.preview', compact(
+            'template',
+            'placeholders',
+            'signatures',
+            'dummyData',
+            'pdfUrl'
+        ));
+    }
+
+    /**
+     * Generate dummy/sample data for placeholders based on field names.
+     */
+    private function generateDummyData(array $placeholders): array
+    {
+        $dummyValues = [
+            // Tenant info
+            'tenant_name' => 'John Michael Doe',
+            'tenant_first_name' => 'John',
+            'tenant_last_name' => 'Doe',
+            'tenant_email' => 'john.doe@example.com',
+            'tenant_phone' => '(555) 123-4567',
+            'tenant_address' => '123 Main Street, Apt 4B',
+            'tenant_city' => 'New York',
+            'tenant_state' => 'NY',
+            'tenant_zip' => '10001',
+            'tenant_ssn' => 'XXX-XX-1234',
+            'tenant_dob' => '01/15/1985',
+            'tenant_id' => 'DL-123456789',
+            
+            // Property info
+            'property_name' => 'Sunrise Apartments',
+            'property_address' => '456 Oak Avenue, Suite 100',
+            'property_city' => 'Los Angeles',
+            'property_state' => 'CA',
+            'property_zip' => '90001',
+            'unit_number' => 'Unit 205',
+            'room_number' => 'Room B',
+            'bed_number' => 'Bed 2',
+            
+            // Lease terms
+            'lease_start_date' => '02/01/2026',
+            'lease_end_date' => '01/31/2027',
+            'move_in_date' => '02/01/2026',
+            'move_out_date' => '01/31/2027',
+            'lease_term' => '12 months',
+            
+            // Financial
+            'monthly_rent' => '$1,500.00',
+            'security_deposit' => '$1,500.00',
+            'first_month_rent' => '$1,500.00',
+            'last_month_rent' => '$1,500.00',
+            'total_due' => '$4,500.00',
+            'late_fee' => '$50.00',
+            'pet_deposit' => '$300.00',
+            'parking_fee' => '$100.00',
+            
+            // Dates
+            'current_date' => date('m/d/Y'),
+            'signature_date' => date('m/d/Y'),
+            'effective_date' => date('m/d/Y'),
+            
+            // Landlord info
+            'landlord_name' => 'ABC Property Management LLC',
+            'landlord_address' => '789 Business Blvd',
+            'landlord_phone' => '(555) 987-6543',
+            'landlord_email' => 'leasing@abcproperties.com',
+            'manager_name' => 'Jane Smith',
+            
+            // Emergency contact
+            'emergency_contact' => 'Mary Doe',
+            'emergency_phone' => '(555) 111-2222',
+            'emergency_relation' => 'Mother',
+        ];
+
+        $result = [];
+
+        foreach ($placeholders as $placeholder) {
+            $field = $placeholder['field'] ?? '';
+            if (empty($field)) continue;
+
+            // Try exact match first
+            if (isset($dummyValues[$field])) {
+                $result[$field] = $dummyValues[$field];
+                continue;
+            }
+
+            // Try partial match (case insensitive)
+            $fieldLower = strtolower($field);
+            $matched = false;
+            foreach ($dummyValues as $key => $value) {
+                if (str_contains($fieldLower, str_replace('_', '', strtolower($key))) ||
+                    str_contains(str_replace('_', '', strtolower($key)), $fieldLower)) {
+                    $result[$field] = $value;
+                    $matched = true;
+                    break;
+                }
+            }
+
+            // Default fallback
+            if (!$matched) {
+                $result[$field] = '[' . ucwords(str_replace('_', ' ', $field)) . ']';
+            }
+        }
+
+        return $result;
+    }
+
     public function index()
     {
         $templates = LeaseTemplate::orderBy('created_at', 'desc')->get();
