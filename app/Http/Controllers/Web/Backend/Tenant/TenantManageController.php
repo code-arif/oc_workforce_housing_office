@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Web\Backend\Tenant;
 
 use App\Models\Tenant;
+use App\Models\TenantProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
 class TenantManageController extends Controller
@@ -15,7 +18,8 @@ class TenantManageController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->ajax()) {
+        // Fix browser back/forward button issue - only return JSON for AJAX requests
+        if ($request->ajax() && $request->wantsJson()) {
             // Optimized query with eager loading and selective columns
             $query = Tenant::query()
                 ->select([
@@ -92,11 +96,11 @@ class TenantManageController extends Controller
                     $profile = $data->profile;
                     if (!$profile) {
                         return '<div class="d-flex align-items-center">
-                                    <div class="avatar avatar-md rounded-circle bg-secondary">
+                                    <div class="avatar avatar-md rounded-circle bg-secondary flex-shrink-0">
                                         <span class="text-white">N/A</span>
                                     </div>
-                                    <div class="ms-3">
-                                        <div class="fw-semibold">No Profile</div>
+                                    <div class="ms-3 text-truncate">
+                                        <div class="fw-semibold text-truncate">No Profile</div>
                                         <small class="text-muted">Not Available</small>
                                     </div>
                                 </div>';
@@ -108,10 +112,10 @@ class TenantManageController extends Controller
                         : 'https://ui-avatars.com/api/?name=' . urlencode($fullName) . '&background=random';
 
                     return '<div class="d-flex align-items-center">
-                                <img src="' . $avatar . '" alt="avatar" class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
-                                <div>
-                                    <div class="fw-semibold">' . e($fullName) . '</div>
-                                    <small class="text-muted">' . e($profile->phone ?? 'No phone') . '</small>
+                                <img src="' . $avatar . '" alt="avatar" class="rounded-circle me-3 flex-shrink-0" width="40" height="40" style="object-fit: cover;">
+                                <div class="text-truncate">
+                                    <div class="fw-semibold text-truncate" title="' . e($fullName) . '">' . e($fullName) . '</div>
+                                    <small class="text-muted text-truncate d-block" title="' . e($profile->phone ?? 'No phone') . '">' . e($profile->phone ?? 'No phone') . '</small>
                                 </div>
                             </div>';
                 })
@@ -130,9 +134,9 @@ class TenantManageController extends Controller
                         ? 'Bed ' . e($assignment->bed->bed_number)
                         : 'N/A';
 
-                    return '<div>
-                                <div class="fw-semibold">' . $propertyName . '</div>
-                                <small class="text-muted">' . $unitInfo . '</small>
+                    return '<div class="text-truncate">
+                                <div class="fw-semibold text-truncate" title="' . $propertyName . '">' . $propertyName . '</div>
+                                <small class="text-muted text-truncate d-block" title="' . $unitInfo . '">' . $unitInfo . '</small>
                             </div>';
                 })
                 ->addColumn('address', function ($data) {
@@ -142,17 +146,16 @@ class TenantManageController extends Controller
                         return '<span class="text-muted">N/A</span>';
                     }
 
-                    // Assuming property has address fields
                     return '<small class="text-muted">Property Address</small>';
                 })
                 ->addColumn('account_status', function ($data) {
                     $hasActiveLease = $data->leases->where('status', 'ACTIVE')->isNotEmpty();
 
                     if ($hasActiveLease) {
-                        return '<span class="badge bg-success p-3">Active</span>';
+                        return '<span class="badge p-3 bg-success">Active</span>';
                     }
 
-                    return '<span class="badge bg-secondary p-3">Inactive</span>';
+                    return '<span class="badge p-3 bg-secondary">Inactive</span>';
                 })
                 ->addColumn('tenant_status', function ($data) {
                     $statusColors = [
@@ -177,39 +180,40 @@ class TenantManageController extends Controller
 
                     return '<span class="fw-semibold">$' . number_format($activeLease->rent_amount, 2) . '</span>';
                 })
-                ->addColumn('roommates', function ($data) {
-                    // Count roommates based on active lease assignments
-                    $activeLease = $data->leases->where('status', 'ACTIVE')->first();
+                // ->addColumn('roommates', function ($data) {
+                //     $activeLease = $data->leases->where('status', 'ACTIVE')->first();
 
-                    if (!$activeLease) {
-                        return '<span class="text-muted">0</span>';
-                    }
+                //     if (!$activeLease) {
+                //         return '<span class="text-muted">0</span>';
+                //     }
 
-                    $assignment = $activeLease->assignments->first();
-                    if (!$assignment || !$assignment->bed) {
-                        return '<span class="text-muted">0</span>';
-                    }
+                //     $assignment = $activeLease->assignments->first();
+                //     if (!$assignment || !$assignment->bed) {
+                //         return '<span class="text-muted">0</span>';
+                //     }
 
-                    // Get room_id and count other tenants in same room
-                    $roomId = $assignment->bed->room_id;
-                    $roommatesCount = DB::table('lease_assignments')
-                        ->join('leases', 'lease_assignments.lease_id', '=', 'leases.id')
-                        ->join('beds', 'lease_assignments.bed_id', '=', 'beds.id')
-                        ->where('beds.room_id', $roomId)
-                        ->where('lease_assignments.is_current', true)
-                        ->where('leases.status', 'ACTIVE')
-                        ->where('leases.tenant_id', '!=', $data->id)
-                        ->whereNull('lease_assignments.deleted_at')
-                        ->whereNull('leases.deleted_at')
-                        ->count();
+                //     $roomId = $assignment->bed->room_id;
+                //     $roommatesCount = DB::table('lease_assignments')
+                //         ->join('leases', 'lease_assignments.lease_id', '=', 'leases.id')
+                //         ->join('beds', 'lease_assignments.bed_id', '=', 'beds.id')
+                //         ->where('beds.room_id', $roomId)
+                //         ->where('lease_assignments.is_current', true)
+                //         ->where('leases.status', 'ACTIVE')
+                //         ->where('leases.tenant_id', '!=', $data->id)
+                //         ->whereNull('lease_assignments.deleted_at')
+                //         ->whereNull('leases.deleted_at')
+                //         ->count();
 
-                    return '<span>' . $roommatesCount . '</span>';
-                })
+                //     return '<span>' . $roommatesCount . '</span>';
+                // })
                 ->addColumn('action', function ($data) {
                     return '<div class="btn-group btn-group-sm" role="group">
                                 <a href="' . route('tenants.show', $data->id) . '" class="btn btn-primary" title="View Details">
                                     <i class="fe fe-eye"></i>
                                 </a>
+                                <button type="button" onclick="editTenant(' . $data->id . ')" class="btn btn-info" title="Edit Tenant">
+                                    <i class="fe fe-edit"></i>
+                                </button>
                                 <button type="button" onclick="showDeleteConfirm(' . $data->id . ')" class="btn btn-danger" title="Delete Tenant">
                                     <i class="fe fe-trash"></i>
                                 </button>
@@ -236,17 +240,151 @@ class TenantManageController extends Controller
     }
 
     /**
+     * Store new tenant
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'email' => 'required|email|unique:tenants,email',
+            'phone' => 'nullable|string|max:20',
+            'middle_name' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Create tenant
+            $tenant = Tenant::create([
+                'email' => $request->email,
+                'status' => 'pending',
+                'application_source' => 'admin',
+                'password' => Hash::make('password123'), // Default password
+            ]);
+
+            // Create tenant profile
+            TenantProfile::create([
+                'tenant_id' => $tenant->id,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'phone' => $request->phone,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tenant created successfully!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create tenant: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get tenant for editing
+     */
+    public function edit($id)
+    {
+        try {
+            $tenant = Tenant::with('profile')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'tenant' => [
+                    'id' => $tenant->id,
+                    'email' => $tenant->email,
+                    'first_name' => $tenant->profile->first_name ?? '',
+                    'middle_name' => $tenant->profile->middle_name ?? '',
+                    'last_name' => $tenant->profile->last_name ?? '',
+                    'phone' => $tenant->profile->phone ?? '',
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tenant not found'
+            ], 404);
+        }
+    }
+
+    /**
+     * Update tenant
+     */
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
+            'email' => 'required|email|unique:tenants,email,' . $id,
+            'phone' => 'nullable|string|max:20',
+            'middle_name' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $tenant = Tenant::findOrFail($id);
+            $tenant->update([
+                'email' => $request->email,
+            ]);
+
+            // Update or create profile
+            TenantProfile::updateOrCreate(
+                ['tenant_id' => $tenant->id],
+                [
+                    'first_name' => $request->first_name,
+                    'middle_name' => $request->middle_name,
+                    'last_name' => $request->last_name,
+                    'phone' => $request->phone,
+                ]
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tenant updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update tenant: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Show tenant details
      */
     public function show($id)
     {
-        // Get all tenants for sidebar
         $tenants = Tenant::with(['profile:id,tenant_id,first_name,middle_name,last_name,avatar'])
             ->select('id')
             ->orderBy('id', 'desc')
             ->get();
 
-        // Get selected tenant with full details
         $tenant = Tenant::with([
             'profile',
             'leases' => function ($query) {
@@ -259,7 +397,6 @@ class TenantManageController extends Controller
 
         return view('backend.layouts.tenants.tenant-details', compact('tenant', 'tenants'));
     }
-
 
     /**
      * Get tenant details via AJAX
@@ -320,7 +457,6 @@ class TenantManageController extends Controller
         }
     }
 
-
     /**
      * Delete tenant
      */
@@ -329,7 +465,6 @@ class TenantManageController extends Controller
         try {
             $tenant = Tenant::findOrFail($id);
 
-            // Check if tenant has active leases
             $hasActiveLeases = $tenant->leases()->where('status', 'ACTIVE')->exists();
 
             if ($hasActiveLeases) {

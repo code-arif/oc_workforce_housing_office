@@ -152,32 +152,42 @@
                         <div class="card">
                             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
                                 <h3 class="card-title mb-0">Tenant List</h3>
-                                <div class="card-options">
-                                    <button class="btn btn-sm btn-outline-primary me-2" onclick="exportTenants()">
-                                        <i class="fe fe-download me-1"></i> Export
+
+                                <div class="card-options d-flex align-items-center">
+                                    <button class="btn btn-sm btn-outline-primary me-2 d-inline-flex align-items-center"
+                                        onclick="exportTenants()">
+                                        <i class="fe fe-download me-1"></i>
+                                        Export
                                     </button>
-                                    <a href="{{ route('tenants.create') }}" class="btn btn-sm btn-primary">
-                                        <i class="fe fe-plus me-1"></i> New Tenant
-                                    </a>
+
+                                    <button class="btn btn-sm btn-primary d-inline-flex align-items-center"
+                                        onclick="showAddTenantModal()">
+                                        <i class="fe fe-plus me-1"></i>
+                                        Add Tenant
+                                    </button>
                                 </div>
                             </div>
+
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-bordered text-nowrap border-bottom" id="datatable">
                                         <thead>
                                             <tr>
                                                 <th class="bg-transparent border-bottom-0" style="width: 50px;">ID</th>
-                                                <th class="bg-transparent border-bottom-0" style="width: 200px;">Name</th>
-                                                <th class="bg-transparent border-bottom-0" style="width: 180px;">
+                                                <th class="bg-transparent border-bottom-0" style="width: 220px;">Name</th>
+                                                <th class="bg-transparent border-bottom-0" style="width: 200px;">
                                                     Property/Unit</th>
-                                                <th class="bg-transparent border-bottom-0" style="width: 200px;">Address
+                                                <th class="bg-transparent border-bottom-0" style="width: 180px;">Address
                                                 </th>
-                                                <th class="bg-transparent border-bottom-0 text-center">Account Status</th>
-                                                <th class="bg-transparent border-bottom-0 text-center">Status</th>
-                                                <th class="bg-transparent border-bottom-0 text-center">Rent</th>
-                                                <th class="bg-transparent border-bottom-0 text-center">Roommates</th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
-                                                    style="width: 100px;">Action</th>
+                                                    style="width: 120px;">Account Status</th>
+                                                <th class="bg-transparent border-bottom-0 text-center"
+                                                    style="width: 100px;">Status</th>
+                                                <th class="bg-transparent border-bottom-0 text-center"
+                                                    style="width: 100px;">Rent</th>
+                                                {{-- <th class="bg-transparent border-bottom-0 text-center" style="width: 100px;">Roommates</th> --}}
+                                                <th class="bg-transparent border-bottom-0 text-center"
+                                                    style="width: 120px;">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -191,6 +201,56 @@
             </div>
         </div>
     </div>
+
+    <!-- ADD/EDIT TENANT MODAL -->
+    <div class="modal fade" id="tenantModal" tabindex="-1" aria-labelledby="tenantModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tenantModalLabel">Add Tenant</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="tenantForm">
+                    <input type="hidden" id="tenant_id" name="tenant_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">First Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="middle_name" class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="middle_name" name="middle_name">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span class="btn-text">Add Tenant</span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status"
+                                aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -201,6 +261,7 @@
             $.ajaxSetup({
                 headers: {
                     "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-Requested-With": "XMLHttpRequest" // Important for back/forward fix
                 }
             });
 
@@ -233,6 +294,7 @@
                 ajax: {
                     url: "{{ route('tenants.index') }}",
                     type: "GET",
+                    dataType: 'json', // Important for back/forward fix
                     data: function(d) {
                         d.status = $('#statusFilter').val();
                         d.account_status = $('#accountStatusFilter').val();
@@ -286,13 +348,7 @@
                         searchable: false,
                         className: 'text-center'
                     },
-                    {
-                        data: 'roommates',
-                        name: 'roommates',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center'
-                    },
+                    // {data: 'roommates', name: 'roommates', orderable: false, searchable: false, className: 'text-center'},
                     {
                         data: 'action',
                         name: 'action',
@@ -309,11 +365,7 @@
         }
 
         function resetFilters() {
-            $('#statusFilter').val('');
-            $('#accountStatusFilter').val('');
-            $('#sourceFilter').val('');
-            $('#dateFrom').val('');
-            $('#dateTo').val('');
+            $('#statusFilter, #accountStatusFilter, #sourceFilter, #dateFrom, #dateTo').val('');
             dataTable.ajax.reload();
         }
 
@@ -328,6 +380,96 @@
             $('#statusFilter').val('');
             applyFilters();
         }
+
+        // Add Tenant Modal
+        function showAddTenantModal() {
+            $('#tenantModalLabel').text('Add Tenant');
+            $('#tenantForm')[0].reset();
+            $('#tenant_id').val('');
+            $('.invalid-feedback').text('').parent().removeClass('is-invalid');
+            $('#submitBtn .btn-text').text('Add Tenant');
+            $('#tenantModal').modal('show');
+        }
+
+        // Edit Tenant
+        function editTenant(id) {
+            NProgress.start();
+            $.ajax({
+                url: "{{ route('tenants.edit', ':id') }}".replace(':id', id),
+                type: 'GET',
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        $('#tenantModalLabel').text('Edit Tenant');
+                        $('#tenant_id').val(response.tenant.id);
+                        $('#first_name').val(response.tenant.first_name);
+                        $('#middle_name').val(response.tenant.middle_name);
+                        $('#last_name').val(response.tenant.last_name);
+                        $('#email').val(response.tenant.email);
+                        $('#phone').val(response.tenant.phone);
+                        $('#submitBtn .btn-text').text('Update Tenant');
+                        $('#tenantModal').modal('show');
+                    }
+                },
+                error: function() {
+                    NProgress.done();
+                    toastr.error('Failed to load tenant data');
+                }
+            });
+        }
+
+        // Submit Form
+        $('#tenantForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const tenantId = $('#tenant_id').val();
+            const url = tenantId ?
+                "{{ route('tenants.update', ':id') }}".replace(':id', tenantId) :
+                "{{ route('tenants.store') }}";
+            const method = tenantId ? 'PUT' : 'POST';
+
+            $('.invalid-feedback').text('').parent().removeClass('is-invalid');
+            $('#submitBtn').prop('disabled', true);
+            $('#submitBtn .btn-text').addClass('d-none');
+            $('#submitBtn .spinner-border').removeClass('d-none');
+
+            NProgress.start();
+
+            $.ajax({
+                url: url,
+                type: method,
+                data: $(this).serialize(),
+                success: function(response) {
+                    NProgress.done();
+                    $('#submitBtn').prop('disabled', false);
+                    $('#submitBtn .btn-text').removeClass('d-none');
+                    $('#submitBtn .spinner-border').addClass('d-none');
+
+                    if (response.success) {
+                        toastr.success(response.message);
+                        $('#tenantModal').modal('hide');
+                        dataTable.ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    NProgress.done();
+                    $('#submitBtn').prop('disabled', false);
+                    $('#submitBtn .btn-text').removeClass('d-none');
+                    $('#submitBtn .spinner-border').addClass('d-none');
+
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON.errors;
+                        $.each(errors, function(key, value) {
+                            const input = $(`#${key}`);
+                            input.addClass('is-invalid');
+                            input.siblings('.invalid-feedback').text(value[0]);
+                        });
+                    } else {
+                        toastr.error(xhr.responseJSON?.message || 'An error occurred');
+                    }
+                }
+            });
+        });
 
         function showDeleteConfirm(id) {
             event.preventDefault();
@@ -349,15 +491,9 @@
 
         function deleteTenant(id) {
             NProgress.start();
-            let url = "{{ route('tenants.destroy', ':id') }}";
-            let csrfToken = '{{ csrf_token() }}';
-
             $.ajax({
                 type: "DELETE",
-                url: url.replace(':id', id),
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken
-                },
+                url: "{{ route('tenants.destroy', ':id') }}".replace(':id', id),
                 success: function(resp) {
                     NProgress.done();
                     if (resp.success) {
@@ -424,6 +560,20 @@
             letter-spacing: 0.5px;
         }
 
+        /* Fix for text overflow */
+        .table td {
+            max-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .text-truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .btn-group-sm>.btn {
             padding: 0.25rem 0.5rem;
             font-size: 0.875rem;
@@ -436,6 +586,33 @@
         .badge {
             padding: 0.35em 0.65em;
             font-weight: 500;
+        }
+
+        .modal-header {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        .is-invalid {
+            border-color: #dc3545;
+        }
+
+        .invalid-feedback {
+            display: block;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
     </style>
 @endpush

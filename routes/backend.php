@@ -217,12 +217,28 @@ Route::prefix('cms')->name('cms.')->group(function () {
 | Tenent Management Routes
 |--------------------------------------------------------------------------
 */
-Route::group([], function () {
-    Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
-    Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
-    Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
-    Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
-    Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+// Route::group([], function () {
+//     Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
+//     Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
+//     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
+//     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
+//     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+// });
+
+// Tenant Management Routes
+Route::prefix('tenants')->name('tenants.')->group(function () {
+    // List and AJAX
+    Route::get('/', [TenantManageController::class, 'index'])->name('index');
+
+    // CRUD Operations
+    Route::post('/store', [TenantManageController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [TenantManageController::class, 'edit'])->name('edit');
+    Route::put('/update/{id}', [TenantManageController::class, 'update'])->name('update');
+    Route::delete('/{id}', [TenantManageController::class, 'destroy'])->name('destroy');
+
+    // View Details
+    Route::get('/{id}', [TenantManageController::class, 'show'])->name('show');
+    Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('details');
 });
 
 /*
@@ -310,7 +326,7 @@ Route::prefix('user-management')->name('user-management.')->group(function () {
 
 
 // Lease Templates - Document Upload & Management
-Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
+Route::prefix('lease-templates')->name('lease-templates.')->group(function () {
     Route::get('/', [LeaseTemplateController::class, 'index'])->name('index');
     Route::get('/create', [LeaseTemplateController::class, 'create'])->name('create');
     Route::post('/', [LeaseTemplateController::class, 'store'])->name('store');
@@ -332,7 +348,7 @@ Route::prefix('lease-templates')->name('lease-templates.')->group(function() {
 });
 
 // Lease Document Routes
-Route::prefix('lease-documents')->name('lease-documents.')->group(function() {
+Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::get('/0', [LeaseDocumentController::class, 'index'])->name('index');
     Route::get('/0/create', [LeaseDocumentController::class, 'create'])->name('create');
     Route::post('/0', [LeaseDocumentController::class, 'store'])->name('store');
@@ -343,5 +359,3 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function() {
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
 });
-
-

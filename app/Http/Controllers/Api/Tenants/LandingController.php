@@ -34,7 +34,7 @@ class LandingController extends Controller
         ], [
             'email.required' => 'Email address is required.',
             'email.email' => 'Please provide a valid email address.',
-            'email.unique' => 'This email is already registered. Please use a different email or contact support.',
+            'email.unique' => 'This email is already registered as a tenant. Please use a different email or contact support.',
         ]);
 
         if ($validator->fails()) {
@@ -57,7 +57,7 @@ class LandingController extends Controller
             ]);
 
             // Generate approval token (for admin to proceed)
-            $approvalToken = $tenant->generateApprovalToken();
+            // $approvalToken = $tenant->generateApprovalToken();
 
             // Send mail to admin with proceed and view buttons
             // try {
@@ -84,8 +84,7 @@ class LandingController extends Controller
                 'tenant_id' => $tenant->id,
                 'email' => $tenant->email,
                 'status' => $tenant->status,
-                'approval_token' => $tenant->approval_token,
-            ], 'Your application has been submitted successfully. Please check your email for next steps.', 201);
+            ], 'Your application has been submitted successfully as a tenant.', 201);
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Tenant email submission failed: ' . $e->getMessage(), [
