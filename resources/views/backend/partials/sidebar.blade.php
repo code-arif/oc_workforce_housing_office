@@ -109,8 +109,8 @@
 
                 {{-- Maintanence --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
+                    <a class="side-menu__item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"
+                        href="{{ route('maintanance.index') }}">
                         <i class="fa-solid fa-screwdriver-wrench"></i>
                         <span class="side-menu__label">Maintanence</span>
                     </a>

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('maintenance_request_attachments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('maintenance_request_id')->nullable()->constrained('properties')->cascadeOnDelete();
+            $table->foreignId('maintenance_request_id')->constrained('maintenance_requests')->cascadeOnDelete();
             $table->string('attachment_path')->nullable(); // For storing array of uploaded file paths (e.g., images/videos)
             $table->timestamps();
         });
