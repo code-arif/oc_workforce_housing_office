@@ -832,7 +832,8 @@
         function submitLease(saveAsDraft = false) {
             const data = collectLeaseData();
             data.save_as_draft = saveAsDraft;
-
+            console.log(data);
+            
             // Validate
             const errors = validateLeaseData(data);
             if (errors.length > 0 && !saveAsDraft) {

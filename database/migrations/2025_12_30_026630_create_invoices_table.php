@@ -23,6 +23,7 @@ return new class extends Migration
             $table->enum('status', ['UNPAID', 'PAID', 'OVERDUE', 'CANCELLED'])->default('UNPAID');
             $table->timestamp('generated_at')->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamp('paid_at')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         }); 
     }

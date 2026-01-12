@@ -9,10 +9,12 @@ use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Invoice;
 use App\Models\LeaseAssignment;
 use App\Models\LeasePaymentSchedule;
 use App\Models\Lease\LeaseDocument;
 use App\Models\Lease\LeaseTemplate;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class LeaseController extends Controller
@@ -54,7 +56,7 @@ class LeaseController extends Controller
                     'tenant:id,email' => [
                         'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
                     ],
-                    'property:id,name,address,city,state,zip_code',
+                    'property',
                     'assignments' => function ($q) {
                         $q->select('id', 'lease_id', 'bed_id', 'is_current')
                             ->where('is_current', true)
@@ -140,11 +142,10 @@ class LeaseController extends Controller
                     }
 
                     $address = e($data->property->address);
-                    $location = e($data->property->city . ', ' . $data->property->state . ' ' . $data->property->zip_code);
+                    // $location = e($data->property->city . ', ' . $data->property->state . ' ' . $data->property->zip_code);
 
                     return '<div>
                                 <small class="text-muted d-block">' . $address . '</small>
-                                <small class="text-muted">' . $location . '</small>
                             </div>';
                 })
                 ->addColumn('tenant_name', function ($data) {
@@ -234,7 +235,12 @@ class LeaseController extends Controller
 
         try {
             // Determine status based on whether it's a draft or ready for signing
-            $status = $request->input('save_as_draft') ? 'DRAFT' : 'PENDING_TENANT_SIGN';
+            $isDraft = $request->boolean('save_as_draft');
+
+            $status = $isDraft
+                ? 'DRAFT'
+                : 'PENDING_TENANT_SIGN';
+
 
             // Create the lease
             $lease = Lease::create([
@@ -247,9 +253,9 @@ class LeaseController extends Controller
                 'rent_amount' => $request->rent_amount,
                 'deposit_amount' => $request->deposit_amount,
                 'payment_frequency' => $request->payment_frequency,
-                'deposit_collected' => $request->has('deposit_collected') ? true : false,
-                'send_for_signature' => $request->has('send_for_signature') ? true : false,
-                'send_welcome_email' => $request->has('send_welcome_email') ? true : false,
+                'deposit_collected'  => $request->boolean('deposit_collected'),
+                'send_for_signature' => $request->boolean('send_for_signature'),
+                'send_welcome_email' => $request->boolean('send_welcome_email'),
                 'notes' => $request->notes,
                 'created_by' => auth()->id(),
             ]);
@@ -278,10 +284,16 @@ class LeaseController extends Controller
                 ]);
             }
 
+            // Generate invoices for each tenant
+            $depositCollected = $request->boolean('deposit_collected');
+            foreach ($request->tenant_ids as $tenantId) {
+                $this->generateInvoices($lease, $tenantId, $request->due_day, $request->first_invoice_date, $depositCollected);
+            }
+            Log::info('Invoices generated for lease ID: ' . $lease->id);
             // Create lease document if template is selected and not a draft
-            if ($request->lease_template_id && !$request->input('save_as_draft')) {
+           if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
                 $template = LeaseTemplate::find($request->lease_template_id);
-                
+                Log::info('Creating lease document using template ID: ' . $request->lease_template_id);
                 // Create document for each tenant
                 foreach ($request->tenant_ids as $tenantId) {
                     LeaseDocument::create([
@@ -355,7 +367,69 @@ class LeaseController extends Controller
                 'description' => 'Monthly Rent - ' . $currentDate->format('F Y'),
             ]);
 
+            // Move to next month
+            $currentDate->modify('+1 month');
+            $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+    }
+
+    /**
+     * Generate invoices for the lease
+     */
+    private function generateInvoices(Lease $lease, int $tenantId, int $dueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false)
+    {
+        $startDate = new \DateTime($lease->start_date);
+        $endDate = new \DateTime($lease->end_date);
+        $isMonthToMonth = ($lease->start_date === $lease->end_date);
+        
+        // Use first invoice date or calculate from start date
+        $currentDate = $firstInvoiceDate 
+            ? new \DateTime($firstInvoiceDate) 
+            : clone $startDate;
+        
+        $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        
+        // If current due date is before start, move to next month
+        if ($currentDate < $startDate) {
+            $currentDate->modify('+1 month');
+            $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+
+        $invoiceNumber = 1;
+        $isFirstInvoice = true;
+
+        // For month-to-month, only create first invoice
+        $maxInvoices = $isMonthToMonth ? 1 : 999;
+        $invoiceCount = 0;
+
+        while (($isMonthToMonth || $currentDate <= $endDate) && $invoiceCount < $maxInvoices) {
+            $invoiceCount++;
             
+            // Calculate amount for this invoice
+            $amount = $lease->rent_amount;
+            $type = 'RENT';
+            
+            // If first invoice and deposit not collected, add deposit to first invoice
+            if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                $amount += $lease->deposit_amount;
+            }
+
+            // Generate unique invoice number
+            $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+
+            Invoice::create([
+                'lease_id' => $lease->id,
+                'tenant_id' => $tenantId,
+                'invoice_number' => $invoiceNumberStr,
+                'amount' => $amount,
+                'due_date' => $currentDate->format('Y-m-d'),
+                'type' => $type,
+                'status' => 'UNPAID',
+                'generated_at' => now(),
+            ]);
+
+            $isFirstInvoice = false;
+            $invoiceNumber++;
 
             // Move to next month
             $currentDate->modify('+1 month');
@@ -372,7 +446,7 @@ class LeaseController extends Controller
             'assignments.bed.room',
             'documents.template',
             'invoices',
-            'payments'
+            // 'payments'
         ])->findOrFail($id);
 
         // Get all leases for sidebar

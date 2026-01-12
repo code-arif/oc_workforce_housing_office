@@ -228,7 +228,7 @@
                                     <h5 class="section-title mb-0">
                                         <i class="fe fe-file-text me-2"></i> Open Documents
                                         <span class="badge bg-secondary ms-2 document-count">
-                                            {{ $lease->documents->where('tenant_signed_at', null)->orWhere('admin_signed_at', null)->count() }}
+                                            {{ $lease->documents->where('tenant_signed_at', null)->count() }}
                                         </span>
                                     </h5>
                                     <button class="btn btn-sm btn-outline-primary" id="collapseOpenDocs">
@@ -237,7 +237,7 @@
                                 </div>
 
                                 <div class="document-section" id="openDocsSection">
-                                    @if ($lease->documents->where('tenant_signed_at', null)->orWhere('admin_signed_at', null)->count() > 0)
+                                    @if ($lease->documents->where('tenant_signed_at', null)->count() > 0)
                                         @foreach ($lease->documents as $doc)
                                             @if (!$doc->tenant_signed_at || !$doc->admin_signed_at)
                                                 <div class="document-card">
@@ -414,14 +414,14 @@
             $(`.lease-item[data-lease-id="${leaseId}"]`).addClass('active');
 
             // Update URL without page reload
-            const newUrl = `{{ route('leases.show', '') }}/${leaseId}`;
+            const newUrl = `{{ route('leases.show', ':id') }}`.replace(':id', leaseId);
             window.history.pushState({
                 leaseId: leaseId
             }, '', newUrl);
 
             // Fetch lease details
             $.ajax({
-                url: `{{ route('leases.details', '') }}/${leaseId}`,
+                url: `{{ route('leases.details', ':id') }}`.replace(':id', leaseId),
                 type: 'GET',
                 success: function(response) {
                     NProgress.done();
