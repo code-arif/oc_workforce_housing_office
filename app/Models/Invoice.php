@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    // use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'lease_id',

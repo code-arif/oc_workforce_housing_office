@@ -216,7 +216,7 @@ class LeaseController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
-        $request->validate([
+        $rules = [
             'property_id' => 'required|exists:properties,id',
             'bed_id' => 'required|exists:beds,id',
             'season_id' => 'required|exists:seasons,id',
@@ -225,11 +225,21 @@ class LeaseController extends Controller
             'rent_amount' => 'required|numeric|min:0',
             'deposit_amount' => 'required|numeric|min:0',
             'payment_frequency' => 'required|in:WEEKLY,BIWEEKLY,MONTHLY,BIMONTHLY,SEMIANNUAL,CUSTOM',
-            'due_day' => 'required|integer|min:1|max:28',
             'tenant_ids' => 'required|array|min:1',
             'tenant_ids.*' => 'exists:tenants,id',
             'lease_template_id' => 'nullable|exists:lease_templates,id',
-        ]);
+        ];
+
+        // Conditional validation based on payment frequency
+        if ($request->payment_frequency === 'CUSTOM') {
+            $rules['custom_payments'] = 'required|array|min:1';
+            $rules['custom_payments.*.due_date'] = 'required|date';
+            $rules['custom_payments.*.amount'] = 'required|numeric|min:0';
+        } else {
+            $rules['due_day'] = 'required|integer|min:1|max:28';
+        }
+
+        $request->validate($rules);
 
         DB::beginTransaction();
 
@@ -269,26 +279,40 @@ class LeaseController extends Controller
                 'is_current' => true,
             ]);
 
-            // Generate payment schedule if not month-to-month
-            if ($request->end_date) {
-                $this->generatePaymentSchedule($lease, $request->due_day, $request->first_invoice_date);
-            } else {
-                // For month-to-month, create first month's payment
-                LeasePaymentSchedule::create([
-                    'lease_id' => $lease->id,
-                    'due_date' => $request->first_invoice_date ?? $request->start_date,
-                    'amount' => $request->rent_amount,
-                    'period_start' => $request->start_date,
-                    'period_end' => date('Y-m-d', strtotime($request->start_date . ' +1 month')),
-                    'description' => 'Monthly Rent',
-                ]);
-            }
-
-            // Generate invoices for each tenant
+            // Handle payment schedule and invoices based on payment frequency
+            $isCustomPayment = $request->payment_frequency === 'CUSTOM';
             $depositCollected = $request->boolean('deposit_collected');
-            foreach ($request->tenant_ids as $tenantId) {
-                $this->generateInvoices($lease, $tenantId, $request->due_day, $request->first_invoice_date, $depositCollected);
+
+            if ($isCustomPayment) {
+                // Custom payment schedule
+                $this->generateCustomPaymentSchedule($lease, $request->custom_payments);
+                
+                // Generate custom invoices for each tenant
+                foreach ($request->tenant_ids as $tenantId) {
+                    $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected);
+                }
+            } else {
+                // Standard payment schedule
+                if ($request->end_date) {
+                    $this->generatePaymentSchedule($lease, $request->due_day, $request->first_invoice_date);
+                } else {
+                    // For month-to-month, create first month's payment
+                    LeasePaymentSchedule::create([
+                        'lease_id' => $lease->id,
+                        'due_date' => $request->first_invoice_date ?? $request->start_date,
+                        'amount' => $request->rent_amount,
+                        'period_start' => $request->start_date,
+                        'period_end' => date('Y-m-d', strtotime($request->start_date . ' +1 month')),
+                        'description' => 'Monthly Rent',
+                    ]);
+                }
+
+                // Generate standard invoices for each tenant
+                foreach ($request->tenant_ids as $tenantId) {
+                    $this->generateInvoices($lease, $tenantId, $request->due_day ?? 1, $request->first_invoice_date, $depositCollected);
+                }
             }
+            
             Log::info('Invoices generated for lease ID: ' . $lease->id);
             // Create lease document if template is selected and not a draft
            if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
@@ -434,6 +458,64 @@ class LeaseController extends Controller
             // Move to next month
             $currentDate->modify('+1 month');
             $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+    }
+
+    /**
+     * Generate custom payment schedule for the lease
+     */
+    private function generateCustomPaymentSchedule(Lease $lease, array $customPayments)
+    {
+        foreach ($customPayments as $payment) {
+            LeasePaymentSchedule::create([
+                'lease_id' => $lease->id,
+                'due_date' => $payment['due_date'],
+                'amount' => $payment['amount'],
+                'period_start' => $payment['due_date'],
+                'period_end' => $payment['due_date'],
+                'description' => $payment['description'] ?? 'Custom Payment',
+            ]);
+        }
+    }
+
+    /**
+     * Generate custom invoices for the lease
+     */
+    private function generateCustomInvoices(Lease $lease, int $tenantId, array $customPayments, bool $depositCollected = false)
+    {
+        // Sort payments by due date
+        usort($customPayments, function($a, $b) {
+            return strtotime($a['due_date']) - strtotime($b['due_date']);
+        });
+
+        $invoiceNumber = 1;
+        $isFirstInvoice = true;
+
+        foreach ($customPayments as $payment) {
+            $amount = $payment['amount'];
+            $type = 'RENT';
+
+            // If first invoice and deposit not collected, add deposit to first invoice
+            if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                $amount += $lease->deposit_amount;
+            }
+
+            // Generate unique invoice number
+            $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+
+            Invoice::create([
+                'lease_id' => $lease->id,
+                'tenant_id' => $tenantId,
+                'invoice_number' => $invoiceNumberStr,
+                'amount' => $amount,
+                'due_date' => $payment['due_date'],
+                'type' => $type,
+                'status' => 'UNPAID',
+                'generated_at' => now(),
+            ]);
+
+            $isFirstInvoice = false;
+            $invoiceNumber++;
         }
     }
 
