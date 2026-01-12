@@ -277,7 +277,12 @@
         function validateAndNextStep(step) {
             if (currentStep === 1) {
                 if (!validateStep1()) {
-                    alert('Please complete all required fields before proceeding.');
+                    Swal.fire({
+                        title: "Form Incomplete",
+                        text: 'Please complete all required fields before proceeding.',
+                        icon: "question"
+                    });
+                    // alert('Please complete all required fields before proceeding.');
                     return;
                 }
             }
@@ -503,13 +508,21 @@
             $('#addExistingTenantBtn').off('click').on('click', function() {
                 const tenantId = $('#existingTenantSelect').val();
                 if (!tenantId) {
-                    alert('Please select a tenant first');
+                    Swal.fire({
+                        title: "Tenant Not Selected",
+                        text: "Please select a tenant before adding.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
                 // Check if already added
                 if (selectedTenants.find(t => t.id == tenantId)) {
-                    alert('This tenant has already been added to this lease');
+                    Swal.fire({
+                        title: "Already Added",
+                        text: "This tenant has already been added to this lease.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
@@ -536,14 +549,22 @@
 
                 // Validation
                 if (!firstName || !lastName || !email || !phone) {
-                    alert('Please fill in all required fields');
+                    Swal.fire({
+                        title: "Incomplete Information",
+                        text: "Please fill in all required fields.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
                 // Email validation
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(email)) {
-                    alert('Please enter a valid email address');
+                    Swal.fire({
+                        title: "Invalid Email",
+                        text: "Please enter a valid email address.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
@@ -571,10 +592,17 @@
 
                             // Reload tenant dropdown
                             loadActiveTenants();
-
-                            alert('Tenant created successfully!');
+                            Swal.fire({
+                                title: "Tenant Created",
+                                text: "The tenant has been successfully created.",
+                                icon: "success"
+                            });
                         } else {
-                            alert(response.message || 'Failed to create tenant');
+                            Swal.fire({
+                                title: "Creation Failed",
+                                text: "Failed to create tenant." + (response.message ? ' ' + response.message : ''),
+                                icon: "error"
+                            });
                         }
                     },
                     error: function(xhr) {
@@ -582,7 +610,11 @@
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMsg = xhr.responseJSON.message;
                         }
-                        alert(errorMsg);
+                        Swal.fire({
+                                title: "Error",
+                                text: errorMsg,
+                                icon: "error"
+                            });
                     },
                     complete: function() {
                         btn.prop('disabled', false).html('<i class="fe fe-save me-1"></i> Save & Add Tenant');
@@ -837,17 +869,37 @@
             // Validate
             const errors = validateLeaseData(data);
             if (errors.length > 0 && !saveAsDraft) {
-                alert('Please fix the following errors:\n\n' + errors.join('\n'));
+                Swal.fire({
+                    title: "Validation Error",
+                    text: 'Please fix the following errors:\n\n' + errors.join('\n, '),
+                    icon: "error"
+                });
+                // alert();
                 return;
             }
 
             // Confirm submission
             const confirmMsg = saveAsDraft 
-                ? 'Are you sure you want to save this lease as a draft?' 
-                : 'Are you sure you want to create this lease and send it for signing?';
-            
-            if (!confirm(confirmMsg)) return;
+                ? 'You want to save this lease as a draft?' 
+                : 'You want to create this lease and send it for signing?';
+            Swal.fire({
+                title: "Are you sure?",
+                text: confirmMsg,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, do it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Proceed with submission
+                    proceedWithSubmission(data, saveAsDraft);
+                }
+            });
+        }
 
+        function proceedWithSubmission(data, saveAsDraft) {
+            
             // Show loading state
             const btn = saveAsDraft ? $('#saveDraftBtn') : $('#createLeaseBtn');
             const originalText = btn.html();
@@ -859,12 +911,20 @@
                 data: data,
                 success: function(response) {
                     if (response.success) {
-                        alert(response.message);
+                        Swal.fire({
+                                title: "Success",
+                                text: response.message,
+                                icon: "success"
+                            });
                         if (response.redirect_url) {
                             window.location.href = response.redirect_url;
                         }
                     } else {
-                        alert(response.message || 'Failed to create lease');
+                        Swal.fire({
+                                title: "Hmm...",
+                                text:  (response.message || 'Failed to create lease') + '\n\n' + response.errors.join('\n'),
+                                icon: "error"
+                            });
                         btn.prop('disabled', false).html(originalText);
                     }
                 },
@@ -879,7 +939,11 @@
                             errorMsg += '\n\n' + validationErrors.join('\n');
                         }
                     }
-                    alert(errorMsg);
+                    Swal.fire({
+                        title: "Error",
+                        text: errorMsg,
+                        icon: "error"
+                    });
                     btn.prop('disabled', false).html(originalText);
                 }
             });

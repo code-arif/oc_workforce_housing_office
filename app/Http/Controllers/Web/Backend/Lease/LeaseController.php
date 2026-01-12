@@ -300,7 +300,7 @@ class LeaseController extends Controller
                         'lease_id' => $lease->id,
                         'lease_template_id' => $request->lease_template_id,
                         'tenant_id' => $tenantId,
-                        'rendered_content' => $template->content ?? '', // Will be rendered later by service
+                        'rendered_content' => $template->document_path ?? '', // Will be rendered later by service
                         'status' => 'pending_signatures',
                     ]);
                 }

@@ -766,9 +766,7 @@
                                         </div>
                                     </div>
 
-                                    <button type="button" class="btn btn-outline-primary w-100 mt-4">
-                                        View/Edit Rent Schedule
-                                    </button>
+                                    
                                 </div>
                             </div>
                         </div>
