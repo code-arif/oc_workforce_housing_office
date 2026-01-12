@@ -175,8 +175,12 @@ class LeaseController extends Controller
                 })
                 ->addColumn('rent', function ($data) {
                     $frequency = str_replace('_', ' ', ucwords(strtolower($data->payment_frequency)));
+                    $totalduration = $data->start_date && $data->end_date
+                        ? (new \DateTime($data->end_date))->diff(new \DateTime($data->start_date))->m + 1
+                        : 0;
+                    $totalRent = number_format($data->rent_amount * $totalduration, 2);
                     return '<div>
-                                <div class="fw-semibold">$' . number_format($data->rent_amount, 2) . '</div>
+                                <div class="fw-semibold">$' . $totalRent . '</div>
                                 <small class="text-muted">' . $frequency . '</small>
                             </div>';
                 })
