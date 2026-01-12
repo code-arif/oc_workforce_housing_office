@@ -9,6 +9,12 @@ use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Invoice;
+use App\Models\LeaseAssignment;
+use App\Models\LeasePaymentSchedule;
+use App\Models\Lease\LeaseDocument;
+use App\Models\Lease\LeaseTemplate;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
 class LeaseController extends Controller
@@ -46,20 +52,19 @@ class LeaseController extends Controller
                     'leases.payment_frequency',
                     'leases.created_at'
                 ])
-            
-                // ->with([
-                //     'tenant:id,email' => [
-                //         'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
-                //     ],
-                //     'property:id,name',
-                //     'assignments' => function ($q) {
-                //         $q->select('id', 'lease_id', 'bed_id', 'is_current')
-                //             ->where('is_current', true)
-                //             ->whereNull('deleted_at')
-                //             ->with('bed:id,bed_number,room_id');
-                //     },
-                //     'documents:id,lease_id,tenant_signed_at,admin_signed_at'
-                // ])
+                ->with([
+                    'tenant:id,email' => [
+                        'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'
+                    ],
+                    'property',
+                    'assignments' => function ($q) {
+                        $q->select('id', 'lease_id', 'bed_id', 'is_current')
+                            ->where('is_current', true)
+                            ->whereNull('deleted_at')
+                            ->with('bed:id,bed_number,room_id');
+                    },
+                    'documents:id,lease_id,tenant_signed_at,admin_signed_at'
+                ])
                 ->orderBy('leases.id', 'desc');
 
             // Status filter
@@ -137,11 +142,10 @@ class LeaseController extends Controller
                     }
 
                     $address = e($data->property->address);
-                    $location = e($data->property->city . ', ' . $data->property->state . ' ' . $data->property->zip_code);
+                    // $location = e($data->property->city . ', ' . $data->property->state . ' ' . $data->property->zip_code);
 
                     return '<div>
                                 <small class="text-muted d-block">' . $address . '</small>
-                                <small class="text-muted">' . $location . '</small>
                             </div>';
                 })
                 ->addColumn('tenant_name', function ($data) {
@@ -204,7 +208,233 @@ class LeaseController extends Controller
 
         $tenants = Tenant::with(['profile'])->where('status', 'active')->get();
 
-        return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants'));
+        $leaseTemplates = LeaseTemplate::where('is_active', true)->get();
+
+        return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants', 'leaseTemplates'));
+    }
+
+    public function store(Request $request)
+    {
+        // dd($request->all());
+        $request->validate([
+            'property_id' => 'required|exists:properties,id',
+            'bed_id' => 'required|exists:beds,id',
+            'season_id' => 'required|exists:seasons,id',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'rent_amount' => 'required|numeric|min:0',
+            'deposit_amount' => 'required|numeric|min:0',
+            'payment_frequency' => 'required|in:WEEKLY,BIWEEKLY,MONTHLY,BIMONTHLY,SEMIANNUAL,CUSTOM',
+            'due_day' => 'required|integer|min:1|max:28',
+            'tenant_ids' => 'required|array|min:1',
+            'tenant_ids.*' => 'exists:tenants,id',
+            'lease_template_id' => 'nullable|exists:lease_templates,id',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            // Determine status based on whether it's a draft or ready for signing
+            $isDraft = $request->boolean('save_as_draft');
+
+            $status = $isDraft
+                ? 'DRAFT'
+                : 'PENDING_TENANT_SIGN';
+
+
+            // Create the lease
+            $lease = Lease::create([
+                'tenant_id' => $request->tenant_ids[0], // Primary tenant
+                'property_id' => $request->property_id,
+                'season_id' => $request->season_id,
+                'status' => $status,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date ?? $request->start_date, // For month-to-month, use start_date
+                'rent_amount' => $request->rent_amount,
+                'deposit_amount' => $request->deposit_amount,
+                'payment_frequency' => $request->payment_frequency,
+                'deposit_collected'  => $request->boolean('deposit_collected'),
+                'send_for_signature' => $request->boolean('send_for_signature'),
+                'send_welcome_email' => $request->boolean('send_welcome_email'),
+                'notes' => $request->notes,
+                'created_by' => auth()->id(),
+            ]);
+
+            // Create lease assignment for the bed
+            LeaseAssignment::create([
+                'lease_id' => $lease->id,
+                'bed_id' => $request->bed_id,
+                'assigned_at' => now(),
+                'actual_move_in' => $request->start_date,
+                'is_current' => true,
+            ]);
+
+            // Generate payment schedule if not month-to-month
+            if ($request->end_date) {
+                $this->generatePaymentSchedule($lease, $request->due_day, $request->first_invoice_date);
+            } else {
+                // For month-to-month, create first month's payment
+                LeasePaymentSchedule::create([
+                    'lease_id' => $lease->id,
+                    'due_date' => $request->first_invoice_date ?? $request->start_date,
+                    'amount' => $request->rent_amount,
+                    'period_start' => $request->start_date,
+                    'period_end' => date('Y-m-d', strtotime($request->start_date . ' +1 month')),
+                    'description' => 'Monthly Rent',
+                ]);
+            }
+
+            // Generate invoices for each tenant
+            $depositCollected = $request->boolean('deposit_collected');
+            foreach ($request->tenant_ids as $tenantId) {
+                $this->generateInvoices($lease, $tenantId, $request->due_day, $request->first_invoice_date, $depositCollected);
+            }
+            Log::info('Invoices generated for lease ID: ' . $lease->id);
+            // Create lease document if template is selected and not a draft
+           if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
+                $template = LeaseTemplate::find($request->lease_template_id);
+                Log::info('Creating lease document using template ID: ' . $request->lease_template_id);
+                // Create document for each tenant
+                foreach ($request->tenant_ids as $tenantId) {
+                    LeaseDocument::create([
+                        'lease_id' => $lease->id,
+                        'lease_template_id' => $request->lease_template_id,
+                        'tenant_id' => $tenantId,
+                        'rendered_content' => $template->content ?? '', // Will be rendered later by service
+                        'status' => 'pending_signatures',
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $request->input('save_as_draft')
+                    ? 'Lease saved as draft successfully!'
+                    : 'Lease created successfully and sent for signing!',
+                'lease_id' => $lease->id,
+                'redirect_url' => route('leases.show', $lease->id),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create lease: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate payment schedule for the lease
+     */
+    private function generatePaymentSchedule(Lease $lease, int $dueDay, ?string $firstInvoiceDate = null)
+    {
+        $startDate = new \DateTime($lease->start_date);
+        $endDate = new \DateTime($lease->end_date);
+
+        // Use first invoice date or calculate from start date
+        $currentDate = $firstInvoiceDate
+            ? new \DateTime($firstInvoiceDate)
+            : clone $startDate;
+
+        $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+
+        // If current due date is before start, move to next month
+        if ($currentDate < $startDate) {
+            $currentDate->modify('+1 month');
+            $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+
+        while ($currentDate <= $endDate) {
+            $periodStart = clone $currentDate;
+            $periodEnd = clone $currentDate;
+            $periodEnd->modify('+1 month')->modify('-1 day');
+
+            // Don't exceed lease end date
+            if ($periodEnd > $endDate) {
+                $periodEnd = clone $endDate;
+            }
+
+            LeasePaymentSchedule::create([
+                'lease_id' => $lease->id,
+                'due_date' => $currentDate->format('Y-m-d'),
+                'amount' => $lease->rent_amount,
+                'period_start' => $periodStart->format('Y-m-d'),
+                'period_end' => $periodEnd->format('Y-m-d'),
+                'description' => 'Monthly Rent - ' . $currentDate->format('F Y'),
+            ]);
+
+            // Move to next month
+            $currentDate->modify('+1 month');
+            $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+    }
+
+    /**
+     * Generate invoices for the lease
+     */
+    private function generateInvoices(Lease $lease, int $tenantId, int $dueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false)
+    {
+        $startDate = new \DateTime($lease->start_date);
+        $endDate = new \DateTime($lease->end_date);
+        $isMonthToMonth = ($lease->start_date === $lease->end_date);
+
+        // Use first invoice date or calculate from start date
+        $currentDate = $firstInvoiceDate
+            ? new \DateTime($firstInvoiceDate)
+            : clone $startDate;
+
+        $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+
+        // If current due date is before start, move to next month
+        if ($currentDate < $startDate) {
+            $currentDate->modify('+1 month');
+            $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+
+        $invoiceNumber = 1;
+        $isFirstInvoice = true;
+
+        // For month-to-month, only create first invoice
+        $maxInvoices = $isMonthToMonth ? 1 : 999;
+        $invoiceCount = 0;
+
+        while (($isMonthToMonth || $currentDate <= $endDate) && $invoiceCount < $maxInvoices) {
+            $invoiceCount++;
+
+            // Calculate amount for this invoice
+            $amount = $lease->rent_amount;
+            $type = 'RENT';
+
+            // If first invoice and deposit not collected, add deposit to first invoice
+            if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                $amount += $lease->deposit_amount;
+            }
+
+            // Generate unique invoice number
+            $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+
+            Invoice::create([
+                'lease_id' => $lease->id,
+                'tenant_id' => $tenantId,
+                'invoice_number' => $invoiceNumberStr,
+                'amount' => $amount,
+                'due_date' => $currentDate->format('Y-m-d'),
+                'type' => $type,
+                'status' => 'UNPAID',
+                'generated_at' => now(),
+            ]);
+
+            $isFirstInvoice = false;
+            $invoiceNumber++;
+
+            // Move to next month
+            $currentDate->modify('+1 month');
+            $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
     }
 
     public function show($id)
@@ -216,7 +446,7 @@ class LeaseController extends Controller
             'assignments.bed.room',
             'documents.template',
             'invoices',
-            'payments'
+            // 'payments'
         ])->findOrFail($id);
 
         // Get all leases for sidebar
@@ -228,7 +458,7 @@ class LeaseController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('backend.layouts.leases.lease-detail', compact('lease', 'leases'));
+        return view('backend.layouts.leases.lease.lease-detail', compact('lease', 'leases'));
     }
 
     public function details($id)

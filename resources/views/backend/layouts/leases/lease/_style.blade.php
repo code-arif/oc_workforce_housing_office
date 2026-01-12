@@ -513,4 +513,89 @@
         height: 14px;
         border-width: 2px;
     }
+
+    /* Finalize Lease Section - Minimal Design */
+    .finalize-section {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .finalize-section .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .finalize-section .section-header h6 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .finalize-section .section-header .btn-link {
+        font-size: 12px;
+        padding: 0;
+        text-decoration: none;
+    }
+
+    .finalize-section .section-content {
+        padding: 16px;
+    }
+
+    .finalize-section .info-item {
+        margin-bottom: 12px;
+    }
+
+    .finalize-section .info-item .label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        color: #6c757d;
+        margin-bottom: 2px;
+        letter-spacing: 0.5px;
+    }
+
+    .finalize-section .info-item .value {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .finalize-section .tenant-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .finalize-section .tenant-chip {
+        display: inline-flex;
+        align-items: center;
+        background: #e3f2fd;
+        color: #1565c0;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .finalize-section .tenant-chip i {
+        margin-right: 6px;
+        font-size: 12px;
+    }
+
+    /* Create Lease Button */
+    #createLeaseBtn {
+        min-width: 140px;
+    }
+
+    #saveDraftBtn {
+        min-width: 120px;
+    }
 </style>

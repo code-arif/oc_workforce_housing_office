@@ -2,6 +2,7 @@
 
 namespace App\Models\Lease;
 
+use App\Models\Lease;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -10,6 +11,7 @@ class LeaseDocument extends Model
     use HasFactory;
 
     protected $fillable = [
+        'lease_id',
         'lease_template_id',
         'tenant_id',
         'rendered_content',
@@ -26,11 +28,27 @@ class LeaseDocument extends Model
     ];
 
     /**
+     * Get the lease for this document
+     */
+    public function lease()
+    {
+        return $this->belongsTo(Lease::class);
+    }
+
+    /**
      * Get the template used for this document
      */
     public function leaseTemplate()
     {
         return $this->belongsTo(LeaseTemplate::class);
+    }
+
+    /**
+     * Alias for leaseTemplate for compatibility
+     */
+    public function template()
+    {
+        return $this->belongsTo(LeaseTemplate::class, 'lease_template_id');
     }
 
     /**
