@@ -21,9 +21,15 @@ class Lease extends Model
         'rent_amount',
         'deposit_amount',
         'payment_frequency',
+
+        'deposit_collected',
+        'send_for_signature',
+        'send_welcome_email',
         'notes',
         'created_by',
     ];
+
+    
 
     public function property()
     {
@@ -48,6 +54,14 @@ class Lease extends Model
     public function tenant()
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * Get the payment schedules for the lease
+     */
+    public function paymentSchedules()
+    {
+        return $this->hasMany(LeasePaymentSchedule::class);
     }
 
     public function created_by()
