@@ -2,16 +2,23 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
-use App\Http\Controllers\Controller;
-use App\Models\MaintenanceRequest;
-use App\Models\MaintenanceRequestAttachment;
+use Exception;
+use App\Helper\Helper;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use App\Models\MaintenanceRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use App\Models\MaintenanceRequestAttachment;
+use App\Http\Resources\Maintanace\MaintenanceRequestResource;
 
 class MaintananceController extends Controller
 {
+    use ApiResponse;
+
     /**
      * List tenant maintenance requests
      */
@@ -28,7 +35,7 @@ class MaintananceController extends Controller
                 ->paginate($perPage);
 
             return $this->success($requests, 'Maintenance requests fetched successfully', 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Maintenance list error: ' . $e->getMessage());
             return $this->error([], 'Failed to load maintenance requests', 500);
         }
@@ -40,7 +47,7 @@ class MaintananceController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'property_id'      => 'required|exists:properties,id',
+            'property_id'      => 'nullable|exists:properties,id',
             'unit'             => 'nullable|string|max:50',
             'title'            => 'required|string|max:255',
             'category'         => 'required|in:ac,appliance,electrical,heat,kitchen,plumbing,other',
@@ -76,27 +83,31 @@ class MaintananceController extends Controller
 
             // Handle attachments
             if ($request->hasFile('attachments')) {
-                $files = [];
+                $files = $request->file('attachments');
 
-                foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('maintenance', 'public');
-                    $files[] = $path;
+                if (!is_array($files)) {
+                    $files = [$files];
                 }
 
-                MaintenanceRequestAttachment::create([
-                    'maintenance_request_id' => $maintenance->id,
-                    'attachments' => $files
-                ]);
+                foreach ($files as $file) {
+                    if ($file instanceof UploadedFile) {
+                        $path = Helper::uploadImage($file, 'maintenance');
+                        MaintenanceRequestAttachment::create([
+                            'maintenance_request_id' => $maintenance->id,
+                            'attachment_path' => $path
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
 
             return $this->success(
-                $maintenance->load('attachments'),
+                new MaintenanceRequestResource($maintenance->load('attachments')),
                 'Maintenance request created successfully',
                 201
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Maintenance store error: ' . $e->getMessage());
             return $this->error([], 'Failed to create maintenance request', 500);
@@ -115,8 +126,12 @@ class MaintananceController extends Controller
                 ->with('attachments')
                 ->findOrFail($maintananceId);
 
-            return $this->success($request, 'Maintenance request loaded', 200);
-        } catch (\Exception $e) {
+            return $this->success(
+                new MaintenanceRequestResource($request->load('attachments')),
+                'Maintenance request loaded',
+                200
+            );
+        } catch (Exception $e) {
             Log::error('Maintenance edit error: ' . $e->getMessage());
             return $this->error([], 'Maintenance request not found', 404);
         }
@@ -125,7 +140,7 @@ class MaintananceController extends Controller
     /**
      * Update maintenance request
      */
-    public function update(Request $request, $maintananceId)
+    public function update(Request $request, $maintenanceId)
     {
         $validator = Validator::make($request->all(), [
             'unit'             => 'nullable|string|max:50',
@@ -147,9 +162,11 @@ class MaintananceController extends Controller
 
             $tenant = auth('api')->user();
 
+            // Find the maintenance request owned by this tenant
             $maintenance = MaintenanceRequest::where('tenant_id', $tenant->id)
-                ->findOrFail($maintananceId);
+                ->findOrFail($maintenanceId);
 
+            // Update only the fields that are provided
             $maintenance->update($request->only([
                 'unit',
                 'title',
@@ -160,29 +177,36 @@ class MaintananceController extends Controller
                 'status'
             ]));
 
-            // New attachments
+            // Handle NEW attachments (add only — existing ones remain untouched)
             if ($request->hasFile('attachments')) {
-                $files = [];
+                $files = $request->file('attachments');
 
-                foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('maintenance', 'public');
-                    $files[] = $path;
+                // Normalize to array if single file
+                if (!is_array($files)) {
+                    $files = [$files];
                 }
 
-                MaintenanceRequestAttachment::create([
-                    'maintenance_request_id' => $maintenance->id,
-                    'attachments' => $files
-                ]);
+                foreach ($files as $file) {
+                    if ($file instanceof UploadedFile) {
+                        $path = Helper::uploadImage($file, 'maintenance'); // same as store
+
+                        MaintenanceRequestAttachment::create([
+                            'maintenance_request_id' => $maintenance->id,
+                            'attachment_path'        => $path,
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
 
+            // Return clean response using Resource (same as store)
             return $this->success(
-                $maintenance->load('attachments'),
+                new MaintenanceRequestResource($maintenance->load('attachments')),
                 'Maintenance request updated successfully',
                 200
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Maintenance update error: ' . $e->getMessage());
             return $this->error([], 'Failed to update maintenance request', 500);
@@ -192,22 +216,34 @@ class MaintananceController extends Controller
     /**
      * Delete maintenance request
      */
-    public function destroy($maintananceId)
+    public function destroy($maintenanceId)
     {
         try {
             DB::beginTransaction();
 
             $tenant = auth('api')->user();
 
+            // withTrashed() will also find soft deleted if it has already been deleted
             $maintenance = MaintenanceRequest::where('tenant_id', $tenant->id)
-                ->findOrFail($maintananceId);
+                ->with('attachments')
+                ->find($maintenanceId);
 
-            $maintenance->delete();
+            if (!$maintenance) {
+                return $this->error([], 'Maintenance request not found!', 404);
+            }
+
+            // Physically delete the files
+            foreach ($maintenance->attachments as $attachment) {
+                Helper::deleteImage($attachment->attachment_path);
+            }
+
+            $maintenance->delete();           // soft delete
+            // $maintenance->forceDelete();   // permanent delete
 
             DB::commit();
 
             return $this->success([], 'Maintenance request deleted successfully', 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Maintenance delete error: ' . $e->getMessage());
             return $this->error([], 'Failed to delete maintenance request', 500);

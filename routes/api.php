@@ -96,16 +96,6 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
             Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
         });
-
-
-        // Maintance routes
-        Route::prefix('tenant/maintanance')->group(function () {
-            Route::get('/list', [MaintananceController::class, 'index']);
-            Route::post('/store', [MaintananceController::class, 'store']);
-            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
-            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
-            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
-        });
     });
 });
 
@@ -124,5 +114,15 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
         Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
         Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+
+
+        // Maintance routes
+        Route::prefix('/maintanance')->group(function () {
+            Route::get('/list', [MaintananceController::class, 'index']);
+            Route::post('/store', [MaintananceController::class, 'store']); // done
+            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']); // done
+            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']); // done
+            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
+        });
     });
 });

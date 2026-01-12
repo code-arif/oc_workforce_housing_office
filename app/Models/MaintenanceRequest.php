@@ -24,7 +24,7 @@ class MaintenanceRequest extends Model
 
     protected $casts = [
         'is_urgent'       => 'boolean',
-        'grant_permission'=> 'boolean',
+        'grant_permission' => 'boolean',
     ];
 
     /*
