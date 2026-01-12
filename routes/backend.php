@@ -34,6 +34,7 @@ use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -270,6 +271,18 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
     Route::get('/maintanance/{id}', [MaintananceController::class, 'show'])->name('show'); // done
     Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
 });
+
+/*
+|--------------------------------------------------------------------------
+| Messaging/Mailing Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('/messaging')->name('messaging.')->group(function () {
+    Route::get('/', [MessagingController::class, 'index'])->name('index'); // done
+    Route::get('/compose', [MessagingController::class, 'compose'])->name('compose'); // done
+    Route::get('/read', [MessagingController::class, 'read'])->name('read'); // done
+});
+
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {
