@@ -232,6 +232,8 @@ Route::group([], function () {
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+    Route::post('/tenants/update', [TenantManageController::class, 'update'])->name('tenants.update');
+    Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
 
     // Tenant API routes for lease creation
     Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
