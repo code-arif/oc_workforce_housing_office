@@ -34,6 +34,7 @@ use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -230,7 +231,7 @@ Route::group([], function () {
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
-    
+
     // Tenant API routes for lease creation
     Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
     Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
@@ -251,6 +252,23 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::post('/store', [LeaseController::class, 'store'])->name('store');
     Route::put('/{id}/update', [LeaseController::class, 'update'])->name('update');
     Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Maintanance Management Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('/maintanance')->name('maintanance.')->group(function () {
+    Route::get('/list', [MaintananceController::class, 'index'])->name('index'); // done
+    Route::get('/get-data', [MaintananceController::class, 'getData'])->name('getData'); // done
+    Route::get('/create', [MaintananceController::class, 'create'])->name('create'); // done
+    Route::post('/store', [MaintananceController::class, 'store'])->name('store'); // done
+    Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit'])->name('edit'); // done
+    Route::post('/update/{maintananceId}', [MaintananceController::class, 'update'])->name('update'); // done
+    Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy'])->name('delete'); //done
+    Route::get('/maintanance/{id}', [MaintananceController::class, 'show'])->name('show'); // done
+    Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
 });
 
 //! Route for Profile Settings
@@ -386,4 +404,3 @@ Route::middleware(['auth', 'admin'])->group(function () {
         return response()->json(['success' => true, 'data' => $room->beds]);
     })->name('backend.rooms.beds');
 });
-

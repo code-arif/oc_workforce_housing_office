@@ -8,12 +8,9 @@ class MaintenanceRequestAttachment extends Model
 {
     protected $fillable = [
         'maintenance_request_id',
-        'attachments',
+        'attachment_path',
     ];
 
-    protected $casts = [
-        'attachments' => 'array', // because you are storing multiple files
-    ];
 
     /*
     |--------------------------------------------------------------------------

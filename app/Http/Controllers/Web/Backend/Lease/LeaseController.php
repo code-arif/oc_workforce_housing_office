@@ -310,8 +310,8 @@ class LeaseController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $request->input('save_as_draft') 
-                    ? 'Lease saved as draft successfully!' 
+                'message' => $request->input('save_as_draft')
+                    ? 'Lease saved as draft successfully!'
                     : 'Lease created successfully and sent for signing!',
                 'lease_id' => $lease->id,
                 'redirect_url' => route('leases.show', $lease->id),
@@ -319,7 +319,7 @@ class LeaseController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create lease: ' . $e->getMessage(),
@@ -334,14 +334,14 @@ class LeaseController extends Controller
     {
         $startDate = new \DateTime($lease->start_date);
         $endDate = new \DateTime($lease->end_date);
-        
+
         // Use first invoice date or calculate from start date
-        $currentDate = $firstInvoiceDate 
-            ? new \DateTime($firstInvoiceDate) 
+        $currentDate = $firstInvoiceDate
+            ? new \DateTime($firstInvoiceDate)
             : clone $startDate;
-        
+
         $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
-        
+
         // If current due date is before start, move to next month
         if ($currentDate < $startDate) {
             $currentDate->modify('+1 month');
@@ -352,7 +352,7 @@ class LeaseController extends Controller
             $periodStart = clone $currentDate;
             $periodEnd = clone $currentDate;
             $periodEnd->modify('+1 month')->modify('-1 day');
-            
+
             // Don't exceed lease end date
             if ($periodEnd > $endDate) {
                 $periodEnd = clone $endDate;
@@ -381,14 +381,14 @@ class LeaseController extends Controller
         $startDate = new \DateTime($lease->start_date);
         $endDate = new \DateTime($lease->end_date);
         $isMonthToMonth = ($lease->start_date === $lease->end_date);
-        
+
         // Use first invoice date or calculate from start date
-        $currentDate = $firstInvoiceDate 
-            ? new \DateTime($firstInvoiceDate) 
+        $currentDate = $firstInvoiceDate
+            ? new \DateTime($firstInvoiceDate)
             : clone $startDate;
-        
+
         $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
-        
+
         // If current due date is before start, move to next month
         if ($currentDate < $startDate) {
             $currentDate->modify('+1 month');
@@ -404,11 +404,11 @@ class LeaseController extends Controller
 
         while (($isMonthToMonth || $currentDate <= $endDate) && $invoiceCount < $maxInvoices) {
             $invoiceCount++;
-            
+
             // Calculate amount for this invoice
             $amount = $lease->rent_amount;
             $type = 'RENT';
-            
+
             // If first invoice and deposit not collected, add deposit to first invoice
             if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
                 $amount += $lease->deposit_amount;

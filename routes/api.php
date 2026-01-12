@@ -124,5 +124,15 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
         Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
         Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+
+
+        // Maintance routes
+        Route::prefix('/maintanance')->group(function () {
+            Route::get('/list', [MaintananceController::class, 'index']);
+            Route::post('/store', [MaintananceController::class, 'store']); // done
+            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']); // done
+            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']); // done
+            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
+        });
     });
 });
