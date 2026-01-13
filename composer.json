@@ -27,6 +27,7 @@
         "spatie/pdf-to-image": "^1.2",
         "stripe/stripe-php": "^16.4",
         "tymon/jwt-auth": "^2.1",
+        "webklex/php-imap": "*",
         "yajra/laravel-datatables-oracle": "^11.0"
     },
     "require-dev": {
