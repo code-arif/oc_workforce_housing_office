@@ -11,7 +11,7 @@
         "google/apiclient": "^2.0",
         "ibnuhalimm/laravel-pdf-to-html": "^1.2",
         "laravel/breeze": "^2.3",
-        "laravel/cashier": "*",
+        "laravel/cashier": "^15.0",
         "laravel/framework": "^11.31",
         "laravel/reverb": "^1.5",
         "laravel/socialite": "^5.23",
@@ -27,7 +27,6 @@
         "spatie/pdf-to-image": "^1.2",
         "stripe/stripe-php": "^16.4",
         "tymon/jwt-auth": "^2.1",
-        "webklex/php-imap": "*",
         "yajra/laravel-datatables-oracle": "^11.0"
     },
     "require-dev": {

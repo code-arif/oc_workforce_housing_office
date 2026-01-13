@@ -279,10 +279,23 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
 | Messaging/Mailing Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('/messaging')->name('messaging.')->group(function () {
-    Route::get('/', [MessagingController::class, 'index'])->name('index'); // done
-    Route::get('/compose', [MessagingController::class, 'compose'])->name('compose'); // done
-    Route::get('/read', [MessagingController::class, 'read'])->name('read'); // done
+// routes/web.php or your backend routes file
+
+Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(function () {
+    Route::get('/', [MessagingController::class, 'index'])->name('index');
+    Route::get('/read/{id}', [MessagingController::class, 'read'])->name('read');
+
+    // AJAX Routes
+    Route::post('/sync', [MessagingController::class, 'sync'])->name('sync');
+    Route::get('/messages', [MessagingController::class, 'getMessages'])->name('messages');
+    Route::post('/send', [MessagingController::class, 'send'])->name('send');
+    Route::post('/draft', [MessagingController::class, 'saveDraft'])->name('draft.save');
+    Route::post('/{id}/toggle-read', [MessagingController::class, 'toggleRead'])->name('toggle.read');
+    Route::post('/{id}/toggle-star', [MessagingController::class, 'toggleStar'])->name('toggle.star');
+    Route::post('/{id}/move', [MessagingController::class, 'moveToFolder'])->name('move');
+    Route::delete('/{id}', [MessagingController::class, 'delete'])->name('delete');
+    Route::post('/bulk-action', [MessagingController::class, 'bulkAction'])->name('bulk.action');
+    Route::get('/attachment/{id}', [MessagingController::class, 'downloadAttachment'])->name('attachment.download');
 });
 
 
