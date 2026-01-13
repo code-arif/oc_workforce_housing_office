@@ -250,4 +250,21 @@ class CmsController extends Controller
             ]
         ], 'Pricing page data retrieved successfully');
     }
+
+    /**
+     * CMS Reservation page data
+     */
+    public function reservation()
+    {
+        $hero = CMS::where('page', 'reservation')
+            ->where('section', 'hero')
+            ->where('name', 'item')
+            ->get();
+
+        return $this->success([
+            'pricing' => [
+                'hero' => CMSResource::collection($hero),
+            ]
+        ], 'Reservation page data retrieved successfully');
+    }
 }
