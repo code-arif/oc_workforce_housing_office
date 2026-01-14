@@ -1,4 +1,12 @@
+
 <script>
+    $('.datepicker2').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        width: 300
+    });
+
         let currentStep = 1;
         const totalSteps = 5;
         let leaseData = {

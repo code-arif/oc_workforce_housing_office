@@ -153,11 +153,8 @@
                                     <tr>
                                         <th>Status</th>
                                         <th>Property</th>
-                                        <th>Unit</th>
-                                        <th>Address</th>
                                         <th>Tenant</th>
-                                        <th>Start</th>
-                                        <th>End</th>
+                                        <th>Lease Duration</th>
                                         <th>Rent</th>
                                         <th>Signatures</th>
                                     </tr>
@@ -199,34 +196,14 @@
                         orderable: false
                     },
                     {
-                        data: 'property_unit',
-                        name: 'unit',
-                        orderable: false,
-                        visible: false
-                    },
-                    {
-                        data: 'address',
-                        name: 'address',
-                        orderable: false
-                    },
-                    {
                         data: 'tenant_name',
                         name: 'tenant',
                         orderable: false
                     },
                     {
-                        data: 'start_date',
-                        name: 'start_date',
-                        render: function(data) {
-                            return moment(data).format('MMM DD, YYYY');
-                        }
-                    },
-                    {
-                        data: 'end_date',
-                        name: 'end_date',
-                        render: function(data) {
-                            return moment(data).format('MMM DD, YYYY');
-                        }
+                        data: 'dates',
+                        name: 'dates',
+                        orderable: true
                     },
                     {
                         data: 'rent',

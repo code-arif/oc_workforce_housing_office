@@ -252,6 +252,17 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::post('/store', [LeaseController::class, 'store'])->name('store');
     Route::put('/{id}/update', [LeaseController::class, 'update'])->name('update');
     Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/collect-deposit', [LeaseController::class, 'collectDeposit'])->name('collect.deposit');
+});
+
+// Invoice Routes
+Route::prefix('invoices')->name('invoices.')->group(function () {
+    Route::get('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'show'])->name('show');
+    Route::put('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'update'])->name('update');
+    Route::post('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'storePayment'])->name('payments.store');
+    Route::get('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'getPayments'])->name('payments.index');
+    Route::post('/{id}/mark-paid', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'markPaid'])->name('mark.paid');
+    Route::post('/{id}/cancel', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancel'])->name('cancel');
 });
 
 /*

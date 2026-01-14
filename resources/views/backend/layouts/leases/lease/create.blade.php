@@ -153,12 +153,12 @@
                                             <div class="row mt-4" id="dateSelectionSection" style="display: none;">
                                                 <div class="col-md-6">
                                                     <label class="form-label">Lease Begin Date <span class="text-danger">*</span></label>
-                                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                                    <input type="text" class="form-control datepicker2" id="start_date" name="start_date" required>
                                                     <small class="text-muted" id="startDateHint"></small>
                                                 </div>
                                                 <div class="col-md-6" id="endDateField">
                                                     <label class="form-label">Lease End Date <span class="text-danger" id="endDateRequired">*</span></label>
-                                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                                    <input type="text" class="form-control datepicker2" id="end_date" name="end_date">
                                                     <small class="text-muted" id="endDateHint"></small>
                                                 </div>
                                             </div>
@@ -210,7 +210,7 @@
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Deposit Due Date <span class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control" id="deposit_due_date" name="deposit_due_date" required>
+                                                        <input type="text" class="form-control datepicker2" id="deposit_due_date" name="deposit_due_date" required>
                                                     </div>
                                                 </div>
                                                 <div class="form-check mt-3">
@@ -262,7 +262,7 @@
                                                     </div>
                                                     <div class="col-md-6" id="standardFirstInvoiceContainer">
                                                         <label class="form-label">First Rental Invoice Due <span class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control" id="first_invoice_date" name="first_invoice_date" required>
+                                                        <input type="text" class="form-control datepicker2" id="first_invoice_date" name="first_invoice_date" required>
                                                         <small class="text-muted">First invoice will be created with this due date</small>
                                                     </div>
                                                 </div>
@@ -299,11 +299,11 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="additional-fee-btn">
+                                                {{-- <div class="additional-fee-btn">
                                                     <button type="button" class="btn btn-link text-primary p-0">
                                                         <i class="fe fe-plus-circle me-1"></i> Add Additional Fee (Optional)
                                                     </button>
-                                                </div>
+                                                </div> --}}
                                             </div>
 
                                             <div class="d-flex justify-content-between mt-4">
@@ -832,6 +832,8 @@
 @endsection
 
 @push('scripts')
+<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+
     @include('backend.layouts.leases.lease._script')
 @endpush
 

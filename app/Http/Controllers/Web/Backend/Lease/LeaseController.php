@@ -61,7 +61,7 @@ class LeaseController extends Controller
                         $q->select('id', 'lease_id', 'bed_id', 'is_current')
                             ->where('is_current', true)
                             ->whereNull('deleted_at')
-                            ->with('bed:id,bed_number,room_id');
+                            ->with('bed:id,bed_label,room_id');
                     },
                     'documents:id,lease_id,tenant_signed_at,admin_signed_at'
                 ])
@@ -128,24 +128,12 @@ class LeaseController extends Controller
 
                     $assignment = $data->assignments->first();
                     $unitInfo = $assignment && $assignment->bed
-                        ? e($assignment->bed->bed_number)
+                        ? e($assignment->bed->bed_label)
                         : 'N/A';
 
                     return '<div>
                                 <div class="fw-semibold">' . e($data->property->name) . '</div>
                                 <small class="text-muted">' . $unitInfo . '</small>
-                            </div>';
-                })
-                ->addColumn('address', function ($data) {
-                    if (!$data->property) {
-                        return '<span class="text-muted">N/A</span>';
-                    }
-
-                    $address = e($data->property->address);
-                    // $location = e($data->property->city . ', ' . $data->property->state . ' ' . $data->property->zip_code);
-
-                    return '<div>
-                                <small class="text-muted d-block">' . $address . '</small>
                             </div>';
                 })
                 ->addColumn('tenant_name', function ($data) {
@@ -169,8 +157,8 @@ class LeaseController extends Controller
                     $end = date('M d, Y', strtotime($data->end_date));
 
                     return '<div>
-                                <small class="text-muted d-block">Start: ' . $start . '</small>
-                                <small class="text-muted">End: ' . $end . '</small>
+                                <span class="text-muted d-block">Start: ' . $start . '</span>
+                                <span class="text-muted">End: ' . $end . '</span>
                             </div>';
                 })
                 ->addColumn('rent', function ($data) {
@@ -328,7 +316,7 @@ class LeaseController extends Controller
                         'lease_id' => $lease->id,
                         'lease_template_id' => $request->lease_template_id,
                         'tenant_id' => $tenantId,
-                        'rendered_content' => $template->document_path ?? '', // Will be rendered later by service
+                        'rendered_content' => $template->pdf_path ?? '', // Will be rendered later by service
                         'status' => 'pending_signatures',
                     ]);
                 }
@@ -436,25 +424,41 @@ class LeaseController extends Controller
             // Calculate amount for this invoice
             $amount = $lease->rent_amount;
             $type = 'RENT';
+            // Generate unique invoice number
+            $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
 
             // If first invoice and deposit not collected, add deposit to first invoice
             if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
-                $amount += $lease->deposit_amount;
-            }
 
-            // Generate unique invoice number
-            $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+                Invoice::create([
+                    'lease_id' => $lease->id,
+                    'tenant_id' => $tenantId,
+                    'invoice_number' => $invoiceNumberStr,
+                    'amount' => $lease->deposit_amount,
+                    'total_amount' => $lease->deposit_amount,
+                    'balance_due' => $lease->deposit_amount,
+                    'due_date' => $currentDate->format('Y-m-d'),
+                    'type' => 'DEPOSIT',
+                    'status' => 'UNPAID',
+                    'issue_date' => now(),
+                    'includes_deposit' => $depositCollected,
+                ]);
+            }
 
             Invoice::create([
                 'lease_id' => $lease->id,
                 'tenant_id' => $tenantId,
                 'invoice_number' => $invoiceNumberStr,
                 'amount' => $amount,
+                'total_amount' => $amount,
+                'balance_due' => $amount,
                 'due_date' => $currentDate->format('Y-m-d'),
                 'type' => $type,
                 'status' => 'UNPAID',
-                'generated_at' => now(),
+                'issue_date' => now(),
+                'is_first_invoice' => $isFirstInvoice,
             ]);
+               
 
             $isFirstInvoice = false;
             $invoiceNumber++;
@@ -499,23 +503,39 @@ class LeaseController extends Controller
             $amount = $payment['amount'];
             $type = 'RENT';
 
-            // If first invoice and deposit not collected, add deposit to first invoice
-            if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
-                $amount += $lease->deposit_amount;
-            }
-
             // Generate unique invoice number
             $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+            
+            // If first invoice and deposit not collected, add deposit to first invoice
+            if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                
+                Invoice::create([
+                    'lease_id' => $lease->id,
+                    'tenant_id' => $tenantId,
+                    'invoice_number' => $invoiceNumberStr,
+                    'amount' => $lease->deposit_amount,
+                    'total_amount' => $lease->deposit_amount,
+                    'balance_due' => $lease->deposit_amount,
+                    'due_date' => $payment['due_date'],
+                    'type' => 'DEPOSIT',
+                    'status' => 'UNPAID',
+                    'issue_date' => now(),
+                    'includes_deposit' => $depositCollected,
+                ]);
+            }  
 
             Invoice::create([
                 'lease_id' => $lease->id,
                 'tenant_id' => $tenantId,
                 'invoice_number' => $invoiceNumberStr,
                 'amount' => $amount,
+                'total_amount' => $amount,
+                'balance_due' => $amount,
                 'due_date' => $payment['due_date'],
                 'type' => $type,
                 'status' => 'UNPAID',
-                'generated_at' => now(),
+                'issue_date' => now(),
+                'is_first_invoice' => $isFirstInvoice,
             ]);
 
             $isFirstInvoice = false;
@@ -604,5 +624,31 @@ class LeaseController extends Controller
                 'notes' => $lease->notes
             ]
         ]);
+    }
+
+    /**
+     * Mark security deposit as collected
+     */
+    public function collectDeposit($id)
+    {
+        try {
+            $lease = Lease::findOrFail($id);
+            
+            $lease->update([
+                'deposit_collected' => true
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Security deposit marked as collected successfully.'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to collect deposit: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update deposit status.'
+            ], 500);
+        }
     }
 }
