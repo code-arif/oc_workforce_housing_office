@@ -1,11 +1,7 @@
 
 <script>
-    $('.datepicker2').datepicker({
-        format: 'yyyy-mm-dd',
-        autoclose: true,
-        todayHighlight: true,
-        width: 300
-    });
+    
+
 
         let currentStep = 1;
         const totalSteps = 5;
@@ -21,6 +17,18 @@
         };
 
         $(document).ready(function() {
+            $('.datepicker2').each(function () {
+                const value = $(this).val();
+
+                $(this).datepicker({
+                    format: 'yyyy-mm-dd',
+                    autoclose: true
+                });
+
+                if (value) {
+                    $(this).datepicker('setDate', value);
+                }
+            });
             updateNavigationButtons();
             initializeSelect2();
             setupPropertyHierarchy();
@@ -213,7 +221,7 @@
                         <div class="col-md-4">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text"><i class="fe fe-calendar"></i></span>
-                                <input type="date" class="form-control custom-payment-date" 
+                                <input type="text" class="form-control custom-payment-date datepicker2" 
                                     value="${dueDate}" placeholder="Due Date" required>
                             </div>
                         </div>
@@ -246,6 +254,20 @@
             // Bind change events
             $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-amount').on('input', function() {
                 updateCustomPaymentsSummary();
+            });
+            
+            // Initialize datepicker for the new custom payment date input
+            $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-date').each(function () {
+                const value = $(this).val();
+
+                $(this).datepicker({
+                    format: 'yyyy-mm-dd',
+                    autoclose: true
+                });
+
+                if (value) {
+                    $(this).datepicker('setDate', value);
+                }
             });
         }
 
@@ -344,8 +366,8 @@
             const endDate = leaseData.end_date ? new Date(leaseData.end_date) : new Date(startDate);
             // endDate.setFullYear(startDate.getFullYear() + 1); // 1 year lease
             
-            $('#start_date').val(formatDateForInput(startDate));
-            $('#end_date').val(formatDateForInput(endDate)).prop('readonly', false);
+            $('#start_date').val(formatDateForInput(startDate)).datepicker('update');
+            $('#end_date').val(formatDateForInput(endDate)).prop('readonly', false).datepicker('update');
             
             $('#endDateField').show();
             $('#endDateRequired').show();
@@ -531,7 +553,7 @@
         function populateStep2Data() {
             // Auto-populate deposit due date (same as lease start date)
             if (leaseData.start_date) {
-                $('#deposit_due_date').val(leaseData.start_date);
+                $('#deposit_due_date').val(leaseData.start_date).datepicker('update');
             }
 
             // Auto-populate first invoice date
@@ -548,7 +570,7 @@
                     firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
                 }
                 
-                $('#first_invoice_date').val(formatDateForInput(firstInvoiceDate));
+                $('#first_invoice_date').val(formatDateForInput(firstInvoiceDate)).datepicker('update');
             }
 
             // Update property info banner
