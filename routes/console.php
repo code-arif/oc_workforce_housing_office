@@ -2,8 +2,10 @@
 
 use App\Models\EmailMessage;
 use App\Models\TeamLocation;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -20,10 +22,10 @@ Schedule::command('emails:sync')
     ->withoutOverlapping()
     ->runInBackground()
     ->onSuccess(function () {
-        \Log::info('Email sync completed successfully');
+        Log::info('Email sync completed successfully');
     })
     ->onFailure(function () {
-        \Log::error('Email sync failed');
+        Log::error('Email sync failed');
     });
 
 // Clean up old trash emails (older than 30 days)
@@ -32,19 +34,19 @@ Schedule::call(function () {
         ->where('updated_at', '<', now()->subDays(30))
         ->forceDelete();
 
-    \Log::info("Cleaned up {$deleted} old trash emails");
+    Log::info("Cleaned up {$deleted} old trash emails");
 })->daily()->at('02:00');
 
 // Clean up temporary attachments
 Schedule::call(function () {
-    \Storage::deleteDirectory('temp_attachments');
-    \Storage::makeDirectory('temp_attachments');
+    Storage::deleteDirectory('temp_attachments');
+    Storage::makeDirectory('temp_attachments');
 
-    \Log::info('Cleaned up temporary attachments');
+    Log::info('Cleaned up temporary attachments');
 })->daily()->at('03:00');
 
 // Optional: Database backup before cleanup
 Schedule::call(function () {
-    \Artisan::call('backup:run --only-db');
+    Artisan::call('backup:run --only-db');
 })->weekly()->sundays()->at('01:00');
 

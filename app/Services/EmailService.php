@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Carbon\Carbon;
 use App\Models\EmailDraft;
 use App\Models\EmailAccount;
@@ -31,7 +32,7 @@ class EmailService
             }
 
             return true;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Email sync failed: ' . $e->getMessage());
             return false;
         }

@@ -451,7 +451,7 @@ Subject: {{ $message->subject }}
                         $('#composeModal').modal('hide');
                         toastr.success('Email sent successfully');
                         setTimeout(() => window.location.href = '{{ route('messaging.index') }}',
-                        1000);
+                            1000);
                     } else {
                         toastr.error(response.message || 'Failed to send email');
                     }

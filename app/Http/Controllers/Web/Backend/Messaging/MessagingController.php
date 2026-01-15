@@ -159,20 +159,59 @@ class MessagingController extends Controller
      */
     public function send(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'to' => 'required|array',
+        // Accept both string and array formats
+        $toField = $request->input('to');
+        $ccField = $request->input('cc');
+        $bccField = $request->input('bcc');
+
+        // Convert string to array if needed
+        if (is_string($toField)) {
+            $toField = json_decode($toField, true) ?? [];
+        }
+        if (is_string($ccField)) {
+            $ccField = json_decode($ccField, true) ?? [];
+        }
+        if (is_string($bccField)) {
+            $bccField = json_decode($bccField, true) ?? [];
+        }
+
+        // Ensure all items have 'email' key
+        $toField = collect($toField)->map(function ($item) {
+            return is_string($item) ? ['email' => $item] : $item;
+        })->toArray();
+
+        $ccField = collect($ccField)->map(function ($item) {
+            return is_string($item) ? ['email' => $item] : $item;
+        })->toArray();
+
+        $bccField = collect($bccField)->map(function ($item) {
+            return is_string($item) ? ['email' => $item] : $item;
+        })->toArray();
+
+        $validator = Validator::make([
+            'to' => $toField,
+            'cc' => $ccField,
+            'bcc' => $bccField,
+            'subject' => $request->subject,
+            'body' => $request->body,
+            'attachments' => $request->file('attachments'),
+        ], [
+            'to' => 'required|array|min:1',
             'to.*.email' => 'required|email',
             'subject' => 'required|string|max:500',
             'body' => 'required|string',
             'cc' => 'nullable|array',
+            'cc.*.email' => 'nullable|email',
             'bcc' => 'nullable|array',
+            'bcc.*.email' => 'nullable|email',
             'attachments.*' => 'nullable|file|max:25600', // 25MB
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors()->first()
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -191,9 +230,9 @@ class MessagingController extends Controller
         }
 
         $data = [
-            'to' => $request->to,
-            'cc' => $request->cc ?? [],
-            'bcc' => $request->bcc ?? [],
+            'to' => $toField,
+            'cc' => $ccField,
+            'bcc' => $bccField,
             'subject' => $request->subject,
             'body' => $request->body,
             'attachments' => $attachmentPaths,
