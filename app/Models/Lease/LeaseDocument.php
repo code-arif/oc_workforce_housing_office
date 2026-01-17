@@ -3,6 +3,7 @@
 namespace App\Models\Lease;
 
 use App\Models\Lease;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -27,6 +28,17 @@ class LeaseDocument extends Model
         'tenant_signed_at' => 'datetime'
     ];
 
+    public static $statuses = [
+        'draft',
+        'pending_signatures',
+        'signed',
+        'cancelled'
+    ];
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class, 'tenant_id');
+    }
     /**
      * Get the lease for this document
      */

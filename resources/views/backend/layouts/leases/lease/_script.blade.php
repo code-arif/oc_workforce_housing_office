@@ -1,8 +1,5 @@
 
 <script>
-    
-
-
         let currentStep = 1;
         const totalSteps = 5;
         let leaseData = {

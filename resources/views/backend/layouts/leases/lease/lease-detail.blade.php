@@ -10,7 +10,7 @@
                 <!-- Lease Detail Container -->
                 <div class="lease-detail-container">
 
-                    <!-- Left Sidebar - Lease List -->
+                    {{-- <!-- Left Sidebar - Lease List -->
                     <div class="lease-sidebar">
                         <div class="sidebar-header">
                             <div class="d-flex justify-content-between align-items-center">
@@ -82,7 +82,7 @@
                                 </div>
                             @endforeach
                         </div>
-                    </div>
+                    </div> --}}
 
                     <!-- Right Content - Lease Details -->
                     <div class="lease-content">
@@ -164,7 +164,7 @@
                                         </div>
                                         <div class="mt-2">
                                             <span class="text-primary fw-bold fs-5 lease-rent-amount">
-                                                ${{ number_format($lease->rent_amount, 2) }}
+                                                ${{ number_format($lease->invoices->where('type', 'RENT')->sum('amount'), 2) }}
                                             </span>
                                             <span class="text-muted ms-2 lease-payment-frequency">
                                                 {{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }}
@@ -172,7 +172,7 @@
                                             </span>
                                             <span class="text-muted ms-3">|</span>
                                             <span class="text-muted ms-3">
-                                                Due on {{ $lease->payment_frequency == 'WEEKLY' ? 'Thursday' : '1st' }} of
+                                                Next Due on {{ $lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first() ? date('M d, Y', strtotime($lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first()->due_date)) : 'N/A' }} of
                                                 every
                                                 {{ str_replace('_', ' ', strtolower($lease->payment_frequency)) }}
                                             </span>
@@ -259,7 +259,10 @@
                                                                 @endif
                                                             </div>
                                                         </div>
-                                                        <div>
+                                                        <div class="d-flex gap-2">
+                                                            <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview Document">
+                                                                <i class="fe fe-eye"></i>
+                                                            </a>
                                                             <button class="btn btn-sm btn-primary">Sign Document</button>
                                                         </div>
                                                     </div>
@@ -273,9 +276,15 @@
                                             </div>
                                             <h6>No Open Documents Found</h6>
                                             <p class="text-muted">All documents have been signed</p>
-                                            <button class="btn btn-sm btn-primary mt-2">
-                                                <i class="fe fe-plus me-1"></i> Sign a Document
-                                            </button>
+                                            @if($lease->documents->count() > 0)
+                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $lease->documents->first()->id]) }}" class="btn btn-sm btn-outline-primary mt-2">
+                                                    <i class="fe fe-eye me-1"></i> View Signed Document
+                                                </a>
+                                            @else
+                                                <button class="btn btn-sm btn-primary mt-2">
+                                                    <i class="fe fe-plus me-1"></i> Sign a Document
+                                                </button>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>
@@ -422,17 +431,26 @@
                                                             <div class="d-flex align-items-center">
                                                                 <i class="fe fe-file-text text-success me-2"></i>
                                                                 <div>
-                                                                    <div class="fw-semibold">Lease Signed</div>
+                                                                    <div class="fw-semibold">{{ $doc->template ? $doc->template->name : 'Lease Agreement' }}</div>
                                                                     <small class="text-muted">
-                                                                        Lease Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
+                                                                        Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
                                                                     </small>
                                                                 </div>
                                                             </div>
-                                                            <div class="text-end">
-                                                                <div class="text-muted small">
-                                                                    {{ date('M d, Y | g:i A', strtotime($doc->admin_signed_at)) }}
+                                                            <div class="d-flex align-items-center gap-3">
+                                                                <div class="text-end">
+                                                                    <div class="text-muted small">
+                                                                        {{ date('M d, Y | g:i A', strtotime($doc->admin_signed_at)) }}
+                                                                    </div>
                                                                 </div>
-                                                                <a href="#" class="text-primary small">Download</a>
+                                                                <div class="d-flex gap-2">
+                                                                    <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview">
+                                                                        <i class="fe fe-eye"></i>
+                                                                    </a>
+                                                                    <a href="{{ route('lease-documents.download-pdf', $doc->id) }}" class="btn btn-sm btn-outline-success" target="_blank" title="Download">
+                                                                        <i class="fe fe-download"></i>
+                                                                    </a>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -621,7 +639,7 @@
 
 @push('styles')
 <style>
-    
+
     /* Color utilities */
     .bg-warning-light {
         background: rgba(255, 193, 7, 0.15) !important;

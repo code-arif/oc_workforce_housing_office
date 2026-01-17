@@ -25,8 +25,8 @@ return new class extends Migration
             $table->foreignId('lease_template_id')->constrained()->onDelete('cascade');
             $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->text('rendered_content'); // HTML with filled placeholders
-            $table->string('admin_signature')->nullable();
-            $table->string('tenant_signature')->nullable();
+            $table->longText('admin_signature')->nullable();
+            $table->longText('tenant_signature')->nullable();
             $table->timestamp('admin_signed_at')->nullable();
             $table->timestamp('tenant_signed_at')->nullable();
             $table->enum('status', ['draft', 'pending_signatures', 'signed', 'cancelled'])->default('draft');
