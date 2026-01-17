@@ -140,7 +140,18 @@
                             let options = '<option value="">Select Bed</option>';
                             if (response.data && response.data.length > 0) {
                                 response.data.forEach(bed => {
-                                    options += `<option value="${bed.id}">${bed.bed_label || bed.bed_number || 'Bed ' + bed.id}</option>`;
+                                    let bedLabel = bed.bed_label || bed.bed_number || 'Bed ' + bed.id;
+                                    let isDisabled = '';
+                                    let bookedInfo = '';
+                                    
+                                    // Check if bed is booked and show lease info
+                                    if (bed.is_booked && bed.lease_info) {
+                                        const leaseInfo = bed.lease_info;
+                                        bookedInfo = ` [BOOKED: ${leaseInfo.start_date_formatted} - ${leaseInfo.end_date_formatted}]`;
+                                        isDisabled = 'disabled';
+                                    }
+                                    // ${isDisabled}
+                                    options += `<option value="${bed.id}"  data-booked="${bed.is_booked ? '1' : '0'}" data-lease='${JSON.stringify(bed.lease_info || {})}'>${bedLabel}${bookedInfo}</option>`;
                                 });
                                 $('#bed_id').html(options).prop('disabled', false);
                             } else {

@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Web\Backend\Lease;
 
+use App\Models\Bed;
 use App\Models\Lease;
 use App\Models\Season;
 use App\Models\Tenant;
+use App\Models\Invoice;
 use App\Models\Property;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
-use App\Models\Invoice;
 use App\Models\LeaseAssignment;
-use App\Models\LeasePaymentSchedule;
+use Illuminate\Support\Facades\DB;
 use App\Models\Lease\LeaseDocument;
 use App\Models\Lease\LeaseTemplate;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use App\Models\LeasePaymentSchedule;
 use Yajra\DataTables\Facades\DataTables;
 
 class LeaseController extends Controller
@@ -263,13 +264,18 @@ class LeaseController extends Controller
             ]);
 
             // Create lease assignment for the bed
-            LeaseAssignment::create([
+            $assignlease = LeaseAssignment::create([
                 'lease_id' => $lease->id,
                 'bed_id' => $request->bed_id,
                 'assigned_at' => now(),
                 'actual_move_in' => $request->start_date,
                 'is_current' => true,
             ]);
+
+            if($lease && $assignlease){
+                $bed = \App\Models\Bed::find($request->bed_id);
+                $bed->update(['status' => 'OCCUPIED']);
+            }
 
             // Handle payment schedule and invoices based on payment frequency
             $isCustomPayment = $request->payment_frequency === 'CUSTOM';
@@ -650,5 +656,70 @@ class LeaseController extends Controller
                 'message' => 'Failed to update deposit status.'
             ], 500);
         }
+    }
+
+    public function getUnits($propertyId)
+    {
+        $property = \App\Models\Property::with('units')->find($propertyId);
+        if (!$property) {
+            return response()->json(['success' => false, 'data' => [], 'message' => 'Property not found'], 404);
+        }
+        return response()->json(['success' => true, 'data' => $property->units]);
+    }
+
+    public function getRooms($unitId) 
+    {
+        $unit = \App\Models\Unit::with('rooms')->find($unitId);
+        if (!$unit) {
+            return response()->json(['success' => false, 'data' => [], 'message' => 'Unit not found'], 404);
+        }
+        return response()->json(['success' => true, 'data' => $unit->rooms]);
+    }
+
+    public function getBeds($roomId) 
+    {
+        $room = \App\Models\Room::with('beds')->find($roomId);
+        if (!$room) {
+            return response()->json(['success' => false, 'data' => [], 'message' => 'Room not found'], 404);
+        }
+
+        // Get all beds for this room with their active lease assignments
+        $beds = Bed::where('room_id', $roomId)
+            ->with(['leaseAssignments' => function ($query) {
+                $query->where('is_current', true)
+                    ->whereNull('deleted_at')
+                    ->with(['lease' => function ($q) {
+                        $q->whereIn('status', ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])
+                          ->select('id', 'start_date', 'end_date', 'status', 'tenant_id')
+                          ->with('tenant:id,email');
+                    }]);
+            }])
+            ->get();
+
+        // Format the response with lease info for each bed
+        $bedsData = $beds->map(function ($bed) {
+            $activeAssignment = $bed->leaseAssignments->first();
+            $activeLease = $activeAssignment ? $activeAssignment->lease : null;
+
+            return [
+                'id' => $bed->id,
+                'bed_number' => $bed->bed_number,
+                'bed_label' => $bed->bed_label ?? $bed->bed_number,
+                'room_id' => $bed->room_id,
+                'is_booked' => $activeLease ? true : false,
+                'lease_info' => $activeLease ? [
+                    'lease_id' => $activeLease->id,
+                    'status' => $activeLease->status,
+                    'start_date' => $activeLease->start_date,
+                    'end_date' => $activeLease->end_date,
+                    'start_date_formatted' => date('M d, Y', strtotime($activeLease->start_date)),
+                    'end_date_formatted' => date('M d, Y', strtotime($activeLease->end_date)),
+                    'tenant_email' => $activeLease->tenant ? $activeLease->tenant->email : null,
+                ] : null,
+            ];
+        });
+
+        // Log::info('Beds for room ID ' . $roomId . ': ' . $bedsData->toJson());
+        return response()->json(['success' => true, 'data' => $bedsData]);
     }
 }

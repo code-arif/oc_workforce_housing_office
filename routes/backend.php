@@ -392,29 +392,11 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
 // Hierarchical Property API Routes for Lease Creation
 Route::middleware(['auth', 'admin'])->group(function () {
     // Get units by property
-    Route::get('/properties/{property}/units', function ($propertyId) {
-        $property = \App\Models\Property::with('units')->find($propertyId);
-        if (!$property) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Property not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $property->units]);
-    })->name('backend.properties.units');
+    Route::get('/properties/{property}/units', [LeaseController::class, 'getUnits'])->name('backend.properties.units');
 
     // Get rooms by unit
-    Route::get('/units/{unit}/rooms', function ($unitId) {
-        $unit = \App\Models\Unit::with('rooms')->find($unitId);
-        if (!$unit) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Unit not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $unit->rooms]);
-    })->name('backend.units.rooms');
+    Route::get('/units/{unit}/rooms', [LeaseController::class, 'getRooms'])->name('backend.units.rooms');
 
     // Get beds by room
-    Route::get('/rooms/{room}/beds', function ($roomId) {
-        $room = \App\Models\Room::with('beds')->find($roomId);
-        if (!$room) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Room not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $room->beds]);
-    })->name('backend.rooms.beds');
+    Route::get('/rooms/{room}/beds', [LeaseController::class, 'getBeds'])->name('backend.rooms.beds');
 });
