@@ -43,19 +43,12 @@
                 <tr>
                     <td align="center">
                         <a href="{{ $viewUrl }}" class="action-button"
-                            style="display: inline-block; background-color: #000000; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
+                            style="display: inline-block; background-color: #D9A600; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
                             View Dashboard
                         </a>
                     </td>
                 </tr>
             </table>
-        </div>
-
-        <div style="background-color: #f8f8f8; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <p style="margin: 0; font-size: 14px;">
-                <strong>Note:</strong> This is an automated notification for a new application submission.
-                The approval link above is valid for 7 days. Application was submitted on {{ $currentDate }}.
-            </p>
         </div>
     </div>
 @endsection

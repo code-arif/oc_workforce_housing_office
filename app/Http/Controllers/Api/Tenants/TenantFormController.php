@@ -25,52 +25,14 @@ class TenantFormController extends Controller
     use ApiResponse;
 
     /**
-     * Show tenant application form
-     */
-    public function show($token)
-    {
-        try {
-            $tenantId = Cache::get("tenant_form_token_{$token}");
-
-            if (!$tenantId) {
-                return $this->error([], 'Invalid or expired form access token.', 403);
-            }
-
-            $tenant = Tenant::find($tenantId);
-
-            if (!$tenant) {
-                return $this->error([], 'Tenant not found.', 404);
-            }
-
-            if ($tenant->profile) {
-                return $this->error([
-                    'status' => $tenant->status
-                ], 'You have already submitted your application.', 400);
-            }
-
-            return $this->success([
-                'tenant' => [
-                    'id' => $tenant->id,
-                    'email' => $tenant->email,
-                    'status' => $tenant->status
-                ],
-                'token' => $token
-            ], 'Form access granted');
-        } catch (Exception $e) {
-            Log::error('Tenant form show error: ' . $e->getMessage());
-            return $this->error([], 'Something went wrong.', 500);
-        }
-    }
-
-    /**
      * Submit application form
      */
-    public function submit(TenentApplicationRequest $request, $token)
+    public function submit(TenentApplicationRequest $request)
     {
         try {
             $tenantId = Tenant::select('id')
                 ->whereNotNull('approval_token')
-                ->where('approval_token', $token)
+                ->where('approval_token',  $request->approval_token)
                 ->value('id');
 
             if (!$tenantId) {

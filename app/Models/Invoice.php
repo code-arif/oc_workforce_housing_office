@@ -10,9 +10,9 @@ class Invoice extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'lease_id', 'tenant_id', 'invoice_number', 'amount', 
+        'lease_id', 'tenant_id', 'invoice_number', 'amount',
         'total_amount', 'paid_amount', 'balance_due', 'issue_date',
-        'due_date', 'type', 'status', 'is_first_invoice', 
+        'due_date', 'type', 'status', 'is_first_invoice',
         'includes_deposit', 'paid_at', 'notes', 'metadata'
     ];
 
@@ -32,7 +32,7 @@ class Invoice extends Model
 
     public function tenant()
     {
-        return $this->belongsTo(User::class, 'tenant_id');
+        return $this->belongsTo(Tenant::class, 'tenant_id');
     }
 
     public function payments()
@@ -47,8 +47,8 @@ class Invoice extends Model
 
     public function isOverdue()
     {
-        return $this->status !== 'PAID' && 
-               $this->status !== 'CANCELLED' && 
+        return $this->status !== 'PAID' &&
+               $this->status !== 'CANCELLED' &&
                $this->due_date < now();
     }
 
