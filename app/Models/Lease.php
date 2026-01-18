@@ -21,7 +21,6 @@ class Lease extends Model
         'rent_amount',
         'deposit_amount',
         'payment_frequency',
-
         'deposit_collected',
         'send_for_signature',
         'send_welcome_email',
@@ -29,8 +28,14 @@ class Lease extends Model
         'created_by',
     ];
 
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'deposit_collected' => 'boolean',
+        'send_for_signature' => 'boolean',
+        'send_welcome_email' => 'boolean',
+    ];    
     
-
     public function property()
     {
         return $this->belongsTo(Property::class);

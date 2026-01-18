@@ -695,7 +695,7 @@ class LeaseController extends Controller
                     }]);
             }])
             ->get();
-
+ 
         // Format the response with lease info for each bed
         $bedsData = $beds->map(function ($bed) {
             $activeAssignment = $bed->leaseAssignments->first();
