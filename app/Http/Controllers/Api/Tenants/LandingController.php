@@ -57,7 +57,7 @@ class LandingController extends Controller
             ]);
 
             // Generate approval token (for admin to proceed)
-            // $approvalToken = $tenant->generateApprovalToken();
+            $approvalToken = $tenant->generateApprovalToken();
 
             // Send mail to admin with proceed and view buttons
             // try {
@@ -84,6 +84,8 @@ class LandingController extends Controller
                 'tenant_id' => $tenant->id,
                 'email' => $tenant->email,
                 'status' => $tenant->status,
+                'approval_token' => $tenant->approval_token,
+                'expires_at' => $tenant->approval_token_expires_at,
             ], 'Your application has been submitted successfully as a tenant.', 201);
         } catch (Exception $e) {
             DB::rollBack();
@@ -92,71 +94,6 @@ class LandingController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return $this->error([], 'Failed to submit application. Please try again later.', 500);
-        }
-    }
-
-
-    /**
-     * Handle admin's proceed action
-     * This will change status to 'processing' and send form link to tenant
-     */
-    public function adminEmailProceed(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'tenant_id' => 'required|exists:tenants,id',
-            'approval_token' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError(
-                $validator->errors()->toArray(),
-                'Validation failed',
-                422
-            );
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $tenant = Tenant::findOrFail($request->tenant_id);
-
-            // Verify approval token
-            if ($tenant->approval_token !== $request->approval_token) {
-                return $this->error([], 'Invalid approval token.', 403);
-            }
-
-            // Check if token expired
-            if ($tenant->approval_token_expires_at && now()->isAfter($tenant->approval_token_expires_at)) {
-                return $this->error([], 'Approval token has expired.', 403);
-            }
-
-            $approvalToken = $tenant->generateApprovalToken();
-
-            // Update status to processing
-            $tenant->update([
-                'status' => 'processing'
-            ]);
-
-            // Generate frontend form URL
-            $formUrl = config('app.frontend_url') . "/apply-lease/{$tenant->approval_token}";
-
-            // Send email to tenant with form link
-            // Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formUrl));
-
-            DB::commit();
-
-            return $this->success([
-                'tenant_id' => $tenant->id,
-                'email' => $tenant->email,
-                'status' => $tenant->status,
-                'form_url' => $formUrl,
-                'form_token' => $tenant->approval_token,
-                'expires_at' => now()->addDays(7)->toDateTimeString()
-            ], 'Form link generated and sent to tenant successfully.', 200);
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Admin proceed action failed: ' . $e->getMessage());
-            return $this->error([], 'Failed to process request.', 500);
         }
     }
 

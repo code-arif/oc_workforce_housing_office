@@ -8,9 +8,11 @@ use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Auth\AuthenticationController;
 use App\Http\Controllers\Api\Tenants\MaintananceController;
 use App\Http\Controllers\Api\Tenants\PasswordResetController;
-use App\Http\Controllers\Api\Tenants\TenantDashboardController;
-use App\Http\Controllers\Api\Tenants\TenantPasswordController;
+use App\Http\Controllers\Api\Tenants\TenantPaymentController;
 use App\Http\Controllers\Api\Tenants\TenantProfileController;
+use App\Http\Controllers\Api\Tenants\TenantPasswordController;
+use App\Http\Controllers\Api\Tenants\TenantDashboardController;
+use App\Http\Controllers\Api\Tenants\TenantLeaseSignController;
 
 //health-check
 Route::get('/health', function () {
@@ -23,25 +25,6 @@ Route::get('/health', function () {
 
 //Guest user routes
 Route::group(['middleware' => 'guest:api'], function () {
-
-    // Property Creation - Unit/Room/Bed API
-    Route::get('/unit/{unitId}/rooms', function ($unitId) {
-        $unit = \App\Models\Unit::with('rooms')->find($unitId);
-        if (!$unit) {
-            return response()->json(['rooms' => []]);
-        }
-        return response()->json(['rooms' => $unit->rooms]);
-    })->name('api.unit.rooms');
-
-    Route::post('/rooms/beds', function (\Illuminate\Http\Request $request) {
-        $roomId = $request->input('room_id');
-        if (empty($roomId)) {
-            return response()->json(['beds' => []]);
-        }
-        $beds = \App\Models\Bed::where('room_id', $roomId)->with('room')->get();
-        return response()->json(['beds' => $beds]);
-    })->name('api.rooms.beds');
-
     /*
     |--------------------------------------------------------------------------
     | Cms Routes
@@ -60,7 +43,7 @@ Route::group(['middleware' => 'guest:api'], function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Tenent Management Routes
+    | Tenent Routes
     |--------------------------------------------------------------------------
     */
     // Public Routes
@@ -71,14 +54,12 @@ Route::group(['middleware' => 'guest:api'], function () {
 
         // Admin Actions
         Route::prefix('admin')->group(function () {
-            Route::post('/tenant/proceed/email', [LandingController::class, 'adminEmailProceed']); // only for developemnt purpose
             Route::post('/tenant/proceed/application', [LandingController::class, 'adminApplicationProceed']); // only for developemnt purpose
         });
 
         // Tenant Form (Token-based)
         Route::prefix('tenant/form')->group(function () {
-            Route::get('/{token}', [TenantFormController::class, 'show']);
-            Route::post('/{token}', [TenantFormController::class, 'submit']); // done
+            Route::post('/', [TenantFormController::class, 'submit']); // done
         });
 
         // Tenant Authentication
@@ -96,16 +77,6 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // done
             Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
             Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
-        });
-
-
-        // Maintance routes
-        Route::prefix('tenant/maintanance')->group(function () {
-            Route::get('/list', [MaintananceController::class, 'index']);
-            Route::post('/store', [MaintananceController::class, 'store']);
-            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
-            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
-            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
         });
     });
 });
@@ -126,6 +97,39 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
         Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
 
+        // Lease Routes
+        Route::prefix('leases')->name('leases.')->group(function () {
+            Route::get('/', [TenantDashboardController::class, 'leases']); // done
+            Route::get('/{leaseId}', [TenantDashboardController::class, 'leaseDetails']); // done
+        });
+
+        // Invoice Routes
+        Route::prefix('invoices')->name('invoices.')->group(function () {
+            Route::get('/', [TenantDashboardController::class, 'invoices']);
+            Route::get('/{invoiceId}', [TenantDashboardController::class, 'invoiceDetails']);
+        });
+
+        // Payment History & Transactions
+        Route::get('/payments', [TenantDashboardController::class, 'paymentHistory']);
+        Route::get('/transactions', [TenantDashboardController::class, 'transactions']);
+
+
+        // Lease Signing Routes
+        Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
+            Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument'])->name('document');
+            Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease'])->name('sign');
+            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility'])->name('eligibility');
+            Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument'])->name('preview');
+        });
+
+        // Payment Routes (Stripe)
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails'])->name('details');
+            Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession'])->name('checkout.create');
+            Route::post('/verify', [TenantPaymentController::class, 'verifyPayment'])->name('verify');
+            Route::post('/calculate', [TenantPaymentController::class, 'calculatePayment'])->name('calculate');
+            Route::get('/history', [TenantPaymentController::class, 'paymentHistory'])->name('history');
+        });
 
         // Maintance routes
         Route::prefix('/maintanance')->group(function () {
