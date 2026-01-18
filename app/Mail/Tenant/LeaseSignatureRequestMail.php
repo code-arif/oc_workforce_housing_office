@@ -20,7 +20,7 @@ class LeaseSignatureRequestMail extends Mailable implements ShouldQueue
     public $property;
     public $leaseDocument;
     public $signatureUrl;
-    public $unit;
+    public $bed;
 
     /**
      * Create a new message instance.
@@ -31,7 +31,7 @@ class LeaseSignatureRequestMail extends Mailable implements ShouldQueue
         $this->leaseDocument = $leaseDocument;
         $this->tenant = $lease->tenant;
         $this->property = $lease->property;
-        $this->unit = $lease->assignments()->first()->bed ?? null;
+        $this->bed = $lease->assignments()->first()->bed ?? null;
 
         // Build the API URL for the tenant dashboard (Next.js frontend)
         $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
@@ -82,7 +82,7 @@ class LeaseSignatureRequestMail extends Mailable implements ShouldQueue
             ->with([
                 'tenant' => $this->tenant,
                 'property' => $this->property,
-                'unit' => $this->unit,
+                'bed' => $this->bed,
                 'lease' => $this->lease,
                 'leaseDocument' => $this->leaseDocument,
                 'signatureUrl' => $this->signatureUrl,

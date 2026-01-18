@@ -141,12 +141,12 @@
                                         @endif
                                     </div>
                                     <div class="text-end mb-3">
-                                        <button class="btn btn-sm btn-outline-primary me-2">
-                                            <i class="fe fe-edit me-1"></i> Edit
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger">
-                                            <i class="fe fe-trash me-1"></i> Delete
-                                        </button>
+                                        @if ($lease->status == 'PENDING_TENANT_SIGN' || $lease->status == 'DRAFT')
+                                            <a href="{{ route('leases.resend.signature', $lease->id) }}" class="btn btn-sm btn-outline-primary me-2"
+                                                id="resendSignatureMail">
+                                                <i class="fe fe-mail me-1"></i> Resend Signature Request
+                                            </a>                                            
+                                        @endif
                                     </div>
                                 </div>
 
@@ -667,6 +667,31 @@
             const icon = $(this).find('i');
             $('#openDocsSection').slideToggle(function() {
                 icon.toggleClass('fe-minus fe-plus');
+            });
+        });
+
+        $('#resendSignatureMail').click(function(e) {
+            e.preventDefault();
+            const url = $(this).attr('href');
+            NProgress.start();
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        toastr.success('Signature request email resent successfully');
+                    } else {
+                        toastr.error('Failed to resend signature request email');
+                    }
+                },
+                error: function() {
+                    NProgress.done();
+                    toastr.error('An error occurred while resending the email');
+                }
             });
         });
     </script>

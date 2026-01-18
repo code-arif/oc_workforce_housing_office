@@ -12,7 +12,7 @@
 
         <div class="highlight-box">
             <h3 style="color: #D9A600; margin-bottom: 15px;">📋 Lease Agreement Details:</h3>
-            <p><strong>Property:</strong> {{ $property->name ?? 'N/A' }} -> {{ $unit ?? 'N/A' }}</p>
+            <p><strong>Property:</strong> {{ $property->name ?? 'N/A' }} -> {{ $bed->bed_label ?? 'N/A' }}</p>
             <p><strong>Address:</strong> {{ $property->address ?? 'N/A' }}{{ isset($property->city) ? ', ' . $property->city : '' }}{{ isset($property->state) ? ', ' . $property->state : '' }} {{ $property->zip_code ?? '' }}</p>
             <p><strong>Lease Start Date:</strong> {{ \Carbon\Carbon::parse($lease->start_date)->format('F d, Y') }}</p>
             <p><strong>Lease End Date:</strong> {{ \Carbon\Carbon::parse($lease->end_date)->format('F d, Y') }}</p>

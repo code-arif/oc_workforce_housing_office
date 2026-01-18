@@ -110,11 +110,11 @@ Route::group(['middleware' => 'guest:api'], function () {
         });
 
         // Lease Document Signature Routes (Token-based, no auth required)
-        Route::prefix('tenant/lease')->group(function () {
-            Route::get('/document/{documentId}', [LeaseDocumentController::class, 'getDocument']);
-            Route::post('/document/{documentId}/sign', [LeaseDocumentController::class, 'signDocument']);
-            Route::get('/document/{documentId}/download', [LeaseDocumentController::class, 'downloadDocument']);
-        });
+        // Route::prefix('tenant/lease')->group(function () {
+        //     Route::get('/document/{documentId}', [LeaseDocumentController::class, 'getDocument']);
+        //     Route::post('/document/{documentId}/sign', [LeaseDocumentController::class, 'signDocument']);
+        //     Route::get('/document/{documentId}/download', [LeaseDocumentController::class, 'downloadDocument']);
+        // });
     });
 });
 
