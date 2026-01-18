@@ -2,10 +2,7 @@
 
 namespace App\Helper;
 
-use DateTime;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 
 class Helper

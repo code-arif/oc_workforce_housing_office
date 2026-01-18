@@ -105,8 +105,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Invoice Routes
         Route::prefix('invoices')->name('invoices.')->group(function () {
-            Route::get('/', [TenantDashboardController::class, 'invoices']);
-            Route::get('/{invoiceId}', [TenantDashboardController::class, 'invoiceDetails']);
+            Route::get('/', [TenantDashboardController::class, 'invoices']); // done
+            Route::get('/{invoiceId}', [TenantDashboardController::class, 'invoiceDetails']); // done
         });
 
         // Payment History & Transactions
@@ -116,10 +116,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Lease Signing Routes
         Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
-            Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument'])->name('document');
-            Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease'])->name('sign');
-            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility'])->name('eligibility');
-            Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument'])->name('preview');
+            Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']);
+            Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease']);
+            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']);
+            Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']);
         });
 
         // Payment Routes (Stripe)

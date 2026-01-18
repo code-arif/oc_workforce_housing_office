@@ -181,4 +181,59 @@ class TenantDashboardController extends Controller
             return $this->error([], $e->getMessage(), 500);
         }
     }
+
+    /**
+     * Get specific invoice details
+     */
+    public function invoiceDetails(Request $request, $invoiceId)
+    {
+        try {
+            $tenant = $request->user();
+            $invoice = $this->leaseService->getInvoiceDetails($invoiceId, $tenant->id);
+
+            if (!$invoice) {
+                return $this->error([], 'Invoice not found or unauthorized', 404);
+            }
+
+            return $this->success([
+                'invoice' => $invoice
+            ], 'Invoice details retrieved successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get payment history
+     */
+    public function paymentHistory(Request $request)
+    {
+        try {
+            $tenant = $request->user();
+            $payments = $this->leaseService->getPaymentHistory($tenant->id);
+
+            return $this->success([
+                'payments' => $payments
+            ], 'Payment history retrieved successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get transaction history
+     */
+    public function transactions(Request $request)
+    {
+        try {
+            $tenant = $request->user();
+            $transactions = $this->leaseService->getTransactions($tenant->id);
+
+            return $this->success([
+                'transactions' => $transactions
+            ], 'Transactions retrieved successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
 }

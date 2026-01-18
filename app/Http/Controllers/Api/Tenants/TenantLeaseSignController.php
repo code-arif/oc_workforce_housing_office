@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
+use Exception;
 use App\Traits\ApiResponse;
-use App\Services\Tenants\LeaseSigningService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Tenants\LeaseSigningService;
+use App\Http\Resources\Lease\LeaseDocumentResource;
 
 class TenantLeaseSignController extends Controller
 {
@@ -34,10 +36,9 @@ class TenantLeaseSignController extends Controller
             }
 
             return $this->success([
-                'document' => $document
+                'document' => new LeaseDocumentResource($document)
             ], 'Lease document retrieved successfully');
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -76,7 +77,6 @@ class TenantLeaseSignController extends Controller
                 'lease' => $result['lease'],
                 'document' => $result['document']
             ], 'Lease signed successfully');
-
         } catch (\Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
@@ -98,7 +98,6 @@ class TenantLeaseSignController extends Controller
                 'lease_status' => $eligibility['lease_status'],
                 'document_status' => $eligibility['document_status'] ?? null,
             ], 'Eligibility checked successfully');
-
         } catch (\Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
@@ -121,7 +120,6 @@ class TenantLeaseSignController extends Controller
             return $this->success([
                 'document_url' => $documentPath
             ], 'Document path retrieved successfully');
-
         } catch (\Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }

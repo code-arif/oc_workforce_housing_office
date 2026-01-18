@@ -23,35 +23,22 @@ class LeaseSigningService
             return null;
         }
 
-        $document = LeaseDocument::with('template')
+        // $document = LeaseDocument::with('template')
+        //     ->where('lease_id', $leaseId)
+        //     ->where('tenant_id', $tenantId)
+        //     ->first();
+
+        $document = LeaseDocument::with(['template', 'lease.property'])
             ->where('lease_id', $leaseId)
             ->where('tenant_id', $tenantId)
             ->first();
+
 
         if (!$document) {
             return null;
         }
 
-        return [
-            'id' => $document->id,
-            'lease' => [
-                'id' => $lease->id,
-                'status' => $lease->status,
-                'start_date' => $lease->start_date,
-                'end_date' => $lease->end_date,
-                'rent_amount' => $lease->rent_amount,
-                'deposit_amount' => $lease->deposit_amount,
-                'property' => $lease->property,
-            ],
-            'template_name' => $document->template->name ?? 'Lease Agreement',
-            'rendered_content' => $document->rendered_content,
-            'tenant_signed_at' => $document->tenant_signed_at,
-            'admin_signed_at' => $document->admin_signed_at,
-            'tenant_signature' => $document->tenant_signature,
-            'admin_signature' => $document->admin_signature,
-            'status' => $document->status,
-            'can_sign' => !$document->tenant_signed_at && $lease->status === 'PENDING_TENANT_SIGN',
-        ];
+        return $document;
     }
 
     /**
