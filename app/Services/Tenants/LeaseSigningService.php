@@ -2,7 +2,9 @@
 
 namespace App\Services\Tenants;
 
+use Exception;
 use App\Models\Lease;
+use App\Helper\FileUrl;
 use Illuminate\Support\Facades\DB;
 use App\Models\Lease\LeaseDocument;
 use Illuminate\Support\Facades\Storage;
@@ -96,7 +98,7 @@ class LeaseSigningService
                 $image = str_replace(' ', '+', $image);
                 $imageName = 'signatures/tenant_' . $tenantId . '_lease_' . $leaseId . '_' . time() . '.png';
 
-                Storage::disk('private')->put($imageName, base64_decode($image));
+                Storage::disk('public')->put($imageName, base64_decode($image));
                 $signaturePath = $imageName;
             }
 
@@ -105,8 +107,8 @@ class LeaseSigningService
                 'tenant_signed_at' => now(),
                 'tenant_signature' => $signaturePath ?? $signature,
                 'tenant_signature_type' => $signatureType,
-                'tenant_signature_ip' => $ipAddress,
-                'status' => 'pending_admin_signature',
+                // 'tenant_signature_ip' => $ipAddress,
+                // 'status' => 'pending_admin_signature',
             ]);
 
             // Update lease status
@@ -129,7 +131,7 @@ class LeaseSigningService
                     'status' => $document->status,
                 ]
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             throw $e;
         }
@@ -202,8 +204,11 @@ class LeaseSigningService
             return null;
         }
 
-        // Return the rendered content or document path
-        // This could be a URL to view the PDF or the content itself
-        return $document->rendered_content;
+        $rendered_content = FileUrl::resolve(
+            $document->rendered_content,
+            'public'
+        );
+        
+        return $rendered_content;
     }
 }

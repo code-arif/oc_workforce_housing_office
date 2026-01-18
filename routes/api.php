@@ -110,30 +110,30 @@ Route::group(['middleware' => 'auth:api'], function () {
         });
 
         // Payment History & Transactions
-        Route::get('/payments', [TenantDashboardController::class, 'paymentHistory']);
-        Route::get('/transactions', [TenantDashboardController::class, 'transactions']);
+        Route::get('/payments', [TenantDashboardController::class, 'paymentHistory']); // ISSUE
+        Route::get('/transactions', [TenantDashboardController::class, 'transactions']); // ISSUE
 
 
         // Lease Signing Routes
         Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
-            Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']);
-            Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease']);
-            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']);
-            Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']);
+            Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']); // done
+            Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease']); // done
+            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']); // ISSUE
+            Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']); // done
         });
 
         // Payment Routes (Stripe)
         Route::prefix('payments')->name('payments.')->group(function () {
-            Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails'])->name('details');
-            Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession'])->name('checkout.create');
-            Route::post('/verify', [TenantPaymentController::class, 'verifyPayment'])->name('verify');
-            Route::post('/calculate', [TenantPaymentController::class, 'calculatePayment'])->name('calculate');
-            Route::get('/history', [TenantPaymentController::class, 'paymentHistory'])->name('history');
+            Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails']); // done
+            Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession']); // ISSUE
+            Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
+            Route::post('/calculate', [TenantPaymentController::class, 'calculatePayment']); 
+            Route::get('/history', [TenantPaymentController::class, 'paymentHistory']);
         });
 
         // Maintance routes
         Route::prefix('/maintanance')->group(function () {
-            Route::get('/list', [MaintananceController::class, 'index']);
+            Route::get('/list', [MaintananceController::class, 'index']); // done
             Route::post('/store', [MaintananceController::class, 'store']); // done
             Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']); // done
             Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']); // done

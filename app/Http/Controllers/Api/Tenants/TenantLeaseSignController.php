@@ -77,7 +77,7 @@ class TenantLeaseSignController extends Controller
                 'lease' => $result['lease'],
                 'document' => $result['document']
             ], 'Lease signed successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -98,7 +98,7 @@ class TenantLeaseSignController extends Controller
                 'lease_status' => $eligibility['lease_status'],
                 'document_status' => $eligibility['document_status'] ?? null,
             ], 'Eligibility checked successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -120,7 +120,7 @@ class TenantLeaseSignController extends Controller
             return $this->success([
                 'document_url' => $documentPath
             ], 'Document path retrieved successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }

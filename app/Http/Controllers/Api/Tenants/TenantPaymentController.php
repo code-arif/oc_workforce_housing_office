@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
+use Exception;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -34,7 +35,7 @@ class TenantPaymentController extends Controller
             }
 
             return $this->success($paymentDetails['data'], 'Payment details retrieved successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -77,7 +78,7 @@ class TenantPaymentController extends Controller
                 'checkout_url' => $result['checkout_url'],
                 'total_amount' => $result['total_amount'],
             ], 'Checkout session created successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -111,7 +112,7 @@ class TenantPaymentController extends Controller
                 'payment' => $result['payment'],
                 'invoice' => $result['invoice'],
             ], 'Payment verified successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -129,7 +130,7 @@ class TenantPaymentController extends Controller
             }
 
             return response()->json(['success' => true]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -147,7 +148,7 @@ class TenantPaymentController extends Controller
             return $this->success([
                 'payments' => $payments
             ], 'Payment history retrieved successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
@@ -182,7 +183,7 @@ class TenantPaymentController extends Controller
             }
 
             return $this->success($calculation['data'], 'Payment calculated successfully');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
     }
