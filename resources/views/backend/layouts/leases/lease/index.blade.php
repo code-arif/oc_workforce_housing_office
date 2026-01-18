@@ -117,15 +117,8 @@
                         <form id="filterForm" class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label">Status</label>
-                                <select class="form-select" name="status" id="statusFilter">
-                                    <option value="">All Statuses</option>
-                                    <option value="ACTIVE">Active</option>
-                                    <option value="DRAFT">Draft</option>
-                                    <option value="PENDING_TENANT_SIGN">Pending Tenant</option>
-                                    <option value="PENDING_ADMIN_SIGN">Pending Admin</option>
-                                    <option value="TERMINATED">Terminated</option>
-                                    <option value="COMPLETED">Completed</option>
-                                </select>
+                                <input type="text" class="form-control select3" name="status" id="statusFilter"
+                                    data-placeholder="Select Status">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Date From</label>
@@ -153,11 +146,8 @@
                                     <tr>
                                         <th>Status</th>
                                         <th>Property</th>
-                                        <th>Unit</th>
-                                        <th>Address</th>
                                         <th>Tenant</th>
-                                        <th>Start</th>
-                                        <th>End</th>
+                                        <th>Lease Duration</th>
                                         <th>Rent</th>
                                         <th>Signatures</th>
                                     </tr>
@@ -199,34 +189,14 @@
                         orderable: false
                     },
                     {
-                        data: 'property_unit',
-                        name: 'unit',
-                        orderable: false,
-                        visible: false
-                    },
-                    {
-                        data: 'address',
-                        name: 'address',
-                        orderable: false
-                    },
-                    {
                         data: 'tenant_name',
                         name: 'tenant',
                         orderable: false
                     },
                     {
-                        data: 'start_date',
-                        name: 'start_date',
-                        render: function(data) {
-                            return moment(data).format('MMM DD, YYYY');
-                        }
-                    },
-                    {
-                        data: 'end_date',
-                        name: 'end_date',
-                        render: function(data) {
-                            return moment(data).format('MMM DD, YYYY');
-                        }
+                        data: 'dates',
+                        name: 'dates',
+                        orderable: true
                     },
                     {
                         data: 'rent',
@@ -291,7 +261,18 @@
             $('#exportBtn').click(function() {
                 toastr.info('Export functionality coming soon');
             });
+            initializeSelect2();
         });
+
+        function initializeSelect2() {
+            if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
+                $('.select3').select2({
+                    placeholder: 'Select an option',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        }
     </script>
 @endpush
 

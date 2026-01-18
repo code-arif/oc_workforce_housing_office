@@ -69,8 +69,8 @@
                                         <div class="draggable-field" draggable="true" data-field="property_type" data-label="Property Type" data-type="text">
                                             <i class="fas fa-grip-vertical"></i> Property Type
                                         </div>
-                                        <div class="draggable-field" draggable="true" data-field="room_number" data-label="Room/Unit #" data-type="text">
-                                            <i class="fas fa-grip-vertical"></i> Room/Unit #
+                                        <div class="draggable-field" draggable="true" data-field="bed_label" data-label="Bed #" data-type="text">
+                                            <i class="fas fa-grip-vertical"></i> Bed #
                                         </div>
                                     </div>
                                 </div>

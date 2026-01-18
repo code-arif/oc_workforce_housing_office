@@ -153,12 +153,12 @@
                                             <div class="row mt-4" id="dateSelectionSection" style="display: none;">
                                                 <div class="col-md-6">
                                                     <label class="form-label">Lease Begin Date <span class="text-danger">*</span></label>
-                                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                                    <input type="text" class="form-control datepicker2" id="start_date" name="start_date" required>
                                                     <small class="text-muted" id="startDateHint"></small>
                                                 </div>
                                                 <div class="col-md-6" id="endDateField">
                                                     <label class="form-label">Lease End Date <span class="text-danger" id="endDateRequired">*</span></label>
-                                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                                    <input type="text" class="form-control datepicker2" id="end_date" name="end_date">
                                                     <small class="text-muted" id="endDateHint"></small>
                                                 </div>
                                             </div>
@@ -210,7 +210,7 @@
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Deposit Due Date <span class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control" id="deposit_due_date" name="deposit_due_date" required>
+                                                        <input type="text" class="form-control datepicker2" id="deposit_due_date" name="deposit_due_date" required>
                                                     </div>
                                                 </div>
                                                 <div class="form-check mt-3">
@@ -231,7 +231,7 @@
                                                             <option value="WEEKLY">Weekly</option>
                                                             <option value="MONTHLY" selected>Monthly</option>
                                                             <option value="YEARLY">Yearly</option>
-                                                            {{-- <option value="CUSTOM">Custom</option> --}}
+                                                            <option value="CUSTOM">Custom</option>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
@@ -246,7 +246,7 @@
                                                 <div class="row mb-3">
                                                     <div class="col-md-6">
                                                         <label class="form-label">Rent Due on the <span class="text-danger">*</span></label>
-                                                        <div class="d-flex align-items-center">
+                                                        <div class="d-flex align-items-center" id="standardDueDayContainer">
                                                             <select class="form-select" id="due_day" name="due_day" required>
                                                                 <option value="1" selected>1st</option>
                                                                 <option value="5">5th</option>
@@ -260,18 +260,50 @@
                                                             <span class="ms-2 text-muted">of every month</span>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-6" id="standardFirstInvoiceContainer">
                                                         <label class="form-label">First Rental Invoice Due <span class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control" id="first_invoice_date" name="first_invoice_date" required>
+                                                        <input type="text" class="form-control datepicker2" id="first_invoice_date" name="first_invoice_date" required>
                                                         <small class="text-muted">First invoice will be created with this due date</small>
                                                     </div>
                                                 </div>
 
-                                                <div class="additional-fee-btn">
+                                                <!-- Custom Payment Dates Section -->
+                                                <div class="custom-payment-section" id="customPaymentSection" style="display: none;">
+                                                    <div class="card border-primary mb-3">
+                                                        <div class="card-header bg-primary-light d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0"><i class="fe fe-calendar me-2"></i>Custom Payment Schedule</h6>
+                                                            <button type="button" class="btn btn-sm btn-primary" id="addCustomPaymentBtn">
+                                                                <i class="fe fe-plus me-1"></i> Add Payment Date
+                                                            </button>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p class="text-muted small mb-3">
+                                                                <i class="fe fe-info me-1"></i> Define custom payment dates with individual amounts. Each entry will generate a separate invoice.
+                                                            </p>
+                                                            
+                                                            <div id="customPaymentsList">
+                                                                <!-- Custom payment entries will be added here -->
+                                                            </div>
+                                                            
+                                                            <div class="alert alert-info mt-3" id="noCustomPaymentsAlert">
+                                                                <i class="fe fe-info me-2"></i>No custom payment dates added. Click "Add Payment Date" to create a custom schedule.
+                                                            </div>
+
+                                                            <div class="custom-payments-summary mt-3 pt-3 border-top" id="customPaymentsSummary" style="display: none;">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <span><strong>Total Payments:</strong> <span id="customPaymentsCount">0</span></span>
+                                                                    <span><strong>Total Amount:</strong> $<span id="customPaymentsTotal">0.00</span></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- <div class="additional-fee-btn">
                                                     <button type="button" class="btn btn-link text-primary p-0">
                                                         <i class="fe fe-plus-circle me-1"></i> Add Additional Fee (Optional)
                                                     </button>
-                                                </div>
+                                                </div> --}}
                                             </div>
 
                                             <div class="d-flex justify-content-between mt-4">
@@ -766,9 +798,7 @@
                                         </div>
                                     </div>
 
-                                    <button type="button" class="btn btn-outline-primary w-100 mt-4">
-                                        View/Edit Rent Schedule
-                                    </button>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -802,6 +832,8 @@
 @endsection
 
 @push('scripts')
+<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+
     @include('backend.layouts.leases.lease._script')
 @endpush
 

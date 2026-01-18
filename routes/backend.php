@@ -255,6 +255,17 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::post('/store', [LeaseController::class, 'store'])->name('store');
     Route::put('/{id}/update', [LeaseController::class, 'update'])->name('update');
     Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/collect-deposit', [LeaseController::class, 'collectDeposit'])->name('collect.deposit');
+});
+
+// Invoice Routes
+Route::prefix('invoices')->name('invoices.')->group(function () {
+    Route::get('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'show'])->name('show');
+    Route::put('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'update'])->name('update');
+    Route::post('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'storePayment'])->name('payments.store');
+    Route::get('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'getPayments'])->name('payments.index');
+    Route::post('/{id}/mark-paid', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'markPaid'])->name('mark.paid');
+    Route::post('/{id}/cancel', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancel'])->name('cancel');
 });
 
 /*
@@ -400,35 +411,20 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
+    
+    // Preview document for a lease
+    Route::get('/lease/{leaseId}/preview/{documentId?}', [LeaseDocumentController::class, 'previewForLease'])->name('preview-for-lease');
 });
 
 
 // Hierarchical Property API Routes for Lease Creation
 Route::middleware(['auth', 'admin'])->group(function () {
     // Get units by property
-    Route::get('/properties/{property}/units', function ($propertyId) {
-        $property = \App\Models\Property::with('units')->find($propertyId);
-        if (!$property) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Property not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $property->units]);
-    })->name('backend.properties.units');
+    Route::get('/properties/{property}/units', [LeaseController::class, 'getUnits'])->name('backend.properties.units');
 
     // Get rooms by unit
-    Route::get('/units/{unit}/rooms', function ($unitId) {
-        $unit = \App\Models\Unit::with('rooms')->find($unitId);
-        if (!$unit) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Unit not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $unit->rooms]);
-    })->name('backend.units.rooms');
+    Route::get('/units/{unit}/rooms', [LeaseController::class, 'getRooms'])->name('backend.units.rooms');
 
     // Get beds by room
-    Route::get('/rooms/{room}/beds', function ($roomId) {
-        $room = \App\Models\Room::with('beds')->find($roomId);
-        if (!$room) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Room not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $room->beds]);
-    })->name('backend.rooms.beds');
+    Route::get('/rooms/{room}/beds', [LeaseController::class, 'getBeds'])->name('backend.rooms.beds');
 });

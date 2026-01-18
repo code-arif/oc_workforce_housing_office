@@ -43,7 +43,7 @@ class Lease extends Model
 
     public function assignments()
     {
-        return $this->hasMany(LeaseAssignment::class);
+        return $this->hasMany(LeaseAssignment::class, 'lease_id');
     }
 
     public function documents()

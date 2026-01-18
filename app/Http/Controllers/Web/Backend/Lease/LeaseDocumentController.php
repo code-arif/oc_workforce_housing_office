@@ -4,14 +4,214 @@ namespace App\Http\Controllers\Web\Backend\Lease;
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Models\Lease;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 use App\Models\Lease\LeaseDocument;
 use App\Models\Lease\LeaseTemplate;
 use App\Http\Controllers\Controller;
+use App\Services\DynamicDocumentGenerationService;
 
 class LeaseDocumentController extends Controller
 {
+    protected $documentService;
+
+    public function __construct(DynamicDocumentGenerationService $documentService)
+    {
+        $this->documentService = $documentService;
+    }
+
+    /**
+     * Preview document for a specific lease
+     */
+    public function previewForLease($leaseId, $documentId = null)
+    {
+        $lease = Lease::with(['property', 'tenant.profile', 'assignments.bed.room.unit', 'documents.leaseTemplate'])
+            ->findOrFail($leaseId);
+
+        // Get the document - either specific one or first available
+        if ($documentId) {
+            $document = $lease->documents()->with('leaseTemplate')->findOrFail($documentId);
+        } else {
+            $document = $lease->documents()->with('leaseTemplate')->first();
+        }
+
+        if (!$document) {
+            return redirect()->route('leases.show', $leaseId)
+                ->with('error', 'No document found for this lease');
+        }
+
+        $template = $document->leaseTemplate;
+
+        if (!$template) {
+            return redirect()->route('leases.show', $leaseId)
+                ->with('error', 'No template associated with this document');
+        }
+
+        // Extract actual lease data for placeholders
+        $leaseData = $this->extractPlaceholderData($lease);
+
+        // Get PDF URL
+        $pdfPath = $template->pdf_path ?? $template->document_path ?? null;
+        $pdfUrl = $pdfPath ? asset('storage/' . $pdfPath) : null;
+
+        // Get placeholders and signatures from template
+        $placeholders = is_array($template->placeholders) ? $template->placeholders : (json_decode($template->placeholders, true) ?? []);
+        $signatures = is_array($template->signatures) ? $template->signatures : (json_decode($template->signatures, true) ?? []);
+
+        // Return view for full page preview with PDF.js support
+        return view('backend.layouts.leases.lease.document-preview', compact(
+            'lease', 
+            'document', 
+            'template', 
+            'pdfUrl',
+            'placeholders',
+            'signatures',
+            'leaseData'
+        ));
+    }
+
+    /**
+     * Generate preview content with actual lease data
+     */
+    private function generatePreviewContent($lease, $template, $document)
+    {
+        // If the document already has rendered content, use it
+        if ($document->rendered_content && !str_starts_with($document->rendered_content, 'lease-templates/')) {
+            return $document->rendered_content;
+        }
+
+        // Otherwise, generate from template with lease data
+        $placeholderData = $this->extractPlaceholderData($lease);
+        
+        // Get template content
+        $content = $template->content ?? '';
+        
+        // If content is empty but we have a PDF path, return a PDF viewer
+        if (empty($content) && ($template->pdf_path || $template->document_path)) {
+            $pdfPath = $template->pdf_path ?? $template->document_path;
+            return $this->generatePdfPreviewHtml($pdfPath, $placeholderData);
+        }
+
+        // Replace placeholders in content
+        $renderedContent = $this->replacePlaceholders($content, $placeholderData);
+
+        // Update the document with rendered content
+        if ($document->rendered_content !== $renderedContent) {
+            $document->update(['rendered_content' => $renderedContent]);
+        }
+
+        return $renderedContent;
+    }
+
+    /**
+     * Extract placeholder data from lease
+     */
+    private function extractPlaceholderData($lease)
+    {
+        $tenant = $lease->tenant;
+        $profile = $tenant?->profile;
+        $property = $lease->property;
+        $assignment = $lease->assignments->where('is_current', true)->first();
+        $bed = $assignment?->bed;
+        $room = $bed?->room;
+        $unit = $room?->unit;
+
+        $tenantName = $profile ? 
+            trim($profile->first_name . ' ' . ($profile->middle_name ? $profile->middle_name . ' ' : '') . ($profile->last_name ?? '')) : 
+            'N/A';
+
+        return [
+            // Tenant Info
+            'tenant_name' => $tenantName,
+            'tenant_first_name' => $profile?->first_name ?? '',
+            'tenant_last_name' => $profile?->last_name ?? '',
+            'tenant_email' => $tenant?->email ?? '',
+            'tenant_phone' => $profile?->phone ?? '',
+            'tenant_address' => $profile?->address ?? '',
+            'tenant_city' => $profile?->city ?? '',
+            'tenant_state' => $profile?->state ?? '',
+            'tenant_zip' => $profile?->zip ?? '',
+            
+            // Property Info
+            'property_name' => $property?->name ?? '',
+            'property_address' => $property?->address ?? '',
+            'property_city' => $property?->city ?? '',
+            'property_state' => $property?->state ?? '',
+            'property_zip' => $property?->zip ?? '',
+            'unit_number' => $unit?->unit_number ?? '',
+            'room_number' => $room?->room_number ?? '',
+            'bed_label' => $bed?->bed_label ?? '',
+            
+            // Lease Info
+            'lease_start_date' => $lease->start_date ? date('F d, Y', strtotime($lease->start_date)) : '',
+            'lease_end_date' => $lease->end_date ? date('F d, Y', strtotime($lease->end_date)) : '',
+            'monthly_rent' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
+            'rent_amount' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
+            'security_deposit' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
+            'deposit_amount' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
+            'payment_frequency' => ucwords(strtolower(str_replace('_', ' ', $lease->payment_frequency ?? ''))),
+            'lease_term' => $this->calculateLeaseTerm($lease->start_date, $lease->end_date),
+            
+            // Other
+            'current_date' => date('F d, Y'),
+            'admin_name' => auth()->user()?->name ?? 'Property Manager',
+            'admin_email' => auth()->user()?->email ?? '',
+        ];
+    }
+
+    /**
+     * Calculate lease term in months
+     */
+    private function calculateLeaseTerm($startDate, $endDate)
+    {
+        if (!$startDate || !$endDate) return 'Month-to-Month';
+        
+        $start = \Carbon\Carbon::parse($startDate);
+        $end = \Carbon\Carbon::parse($endDate);
+        $months = $start->diffInMonths($end);
+        
+        if ($months == 12) return '1 Year';
+        if ($months == 6) return '6 Months';
+        if ($months == 1) return '1 Month';
+        
+        return $months . ' Months';
+    }
+
+    /**
+     * Generate HTML for PDF preview with overlay data
+     */
+    private function generatePdfPreviewHtml($pdfPath, $placeholderData)
+    {
+        $pdfUrl = asset('storage/' . $pdfPath);
+        
+        // Build data display
+        $dataHtml = '<div class="placeholder-data-overlay">';
+        $dataHtml .= '<h5>Lease Data Applied:</h5>';
+        $dataHtml .= '<ul>';
+        foreach ($placeholderData as $key => $value) {
+            if (!empty($value)) {
+                $label = ucwords(str_replace('_', ' ', $key));
+                $dataHtml .= "<li><strong>{$label}:</strong> {$value}</li>";
+            }
+        }
+        $dataHtml .= '</ul></div>';
+
+        return '
+            <div class="pdf-preview-container">
+                <div class="pdf-data-summary">
+                    ' . $dataHtml . '
+                </div>
+                <div class="pdf-embed-container">
+                    <iframe src="' . $pdfUrl . '#toolbar=1&navpanes=0" 
+                            width="100%" 
+                            height="800px" 
+                            style="border: none;"></iframe>
+                </div>
+            </div>
+        ';
+    }
+
     public function create()
     {
         $templates = LeaseTemplate::where('is_active', true)->get();
@@ -115,6 +315,13 @@ class LeaseDocumentController extends Controller
             'status' => $document->tenant_signature ? 'signed' : 'pending_signatures'
         ]);
 
+        // If tenant has also signed, mark lease as ACTIVE
+        if ($document->tenant_signature) {
+            $document->lease->update(['status' => 'ACTIVE']);
+        } else {
+            $document->lease->update(['status' => 'PENDING_TENANT_SIGN']);
+        }
+        
         return response()->json([
             'success' => true,
             'message' => 'Admin signature saved successfully'
@@ -134,6 +341,14 @@ class LeaseDocumentController extends Controller
             'tenant_signed_at' => now(),
             'status' => $document->admin_signature ? 'signed' : 'pending_signatures'
         ]);
+
+        if ($document->admin_signature) {
+            $document->lease->update(['status' => 'ACTIVE']);
+        } else {
+            $document->update(['status' => 'pending_signatures']);
+            $document->lease->update(['status' => 'PENDING_ADMIN_SIGN']);
+        }
+        
 
         return response()->json([
             'success' => true,

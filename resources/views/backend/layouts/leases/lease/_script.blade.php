@@ -1,3 +1,4 @@
+
 <script>
         let currentStep = 1;
         const totalSteps = 5;
@@ -13,10 +14,23 @@
         };
 
         $(document).ready(function() {
+            $('.datepicker2').each(function () {
+                const value = $(this).val();
+
+                $(this).datepicker({
+                    format: 'yyyy-mm-dd',
+                    autoclose: true
+                });
+
+                if (value) {
+                    $(this).datepicker('setDate', value);
+                }
+            });
             updateNavigationButtons();
             initializeSelect2();
             setupPropertyHierarchy();
             setupLeaseTermHandler();
+            setupCustomPaymentHandler();
 
             // Form field changes
             $('#start_date, #end_date').on('change', function() {
@@ -126,7 +140,18 @@
                             let options = '<option value="">Select Bed</option>';
                             if (response.data && response.data.length > 0) {
                                 response.data.forEach(bed => {
-                                    options += `<option value="${bed.id}">${bed.bed_label || bed.bed_number || 'Bed ' + bed.id}</option>`;
+                                    let bedLabel = bed.bed_label || bed.bed_number || 'Bed ' + bed.id;
+                                    let isDisabled = '';
+                                    let bookedInfo = '';
+                                    
+                                    // Check if bed is booked and show lease info
+                                    if (bed.is_booked && bed.lease_info) {
+                                        const leaseInfo = bed.lease_info;
+                                        bookedInfo = ` [BOOKED: ${leaseInfo.start_date_formatted} - ${leaseInfo.end_date_formatted}]`;
+                                        isDisabled = 'disabled';
+                                    }
+                                    // ${isDisabled}
+                                    options += `<option value="${bed.id}"  data-booked="${bed.is_booked ? '1' : '0'}" data-lease='${JSON.stringify(bed.lease_info || {})}'>${bedLabel}${bookedInfo}</option>`;
                                 });
                                 $('#bed_id').html(options).prop('disabled', false);
                             } else {
@@ -159,6 +184,144 @@
                 }
                 validateStep1();
             });
+        }
+
+        // Custom Payment Schedule Handler
+        let customPayments = [];
+        let customPaymentCounter = 0;
+
+        function setupCustomPaymentHandler() {
+            // Toggle custom payment section based on payment frequency
+            $('#payment_frequency').on('change', function() {
+                const frequency = $(this).val();
+                
+                if (frequency === 'CUSTOM') {
+                    $('#customPaymentSection').slideDown();
+                    $('#standardDueDayContainer').closest('.col-md-6').hide();
+                    $('#standardFirstInvoiceContainer').hide();
+                    $('#due_day').prop('required', false);
+                    $('#first_invoice_date').prop('required', false);
+                } else {
+                    $('#customPaymentSection').slideUp();
+                    $('#standardDueDayContainer').closest('.col-md-6').show();
+                    $('#standardFirstInvoiceContainer').show();
+                    $('#due_day').prop('required', true);
+                    $('#first_invoice_date').prop('required', true);
+                }
+                
+                updateRentalSummary();
+            });
+
+            // Add custom payment button
+            $('#addCustomPaymentBtn').on('click', function() {
+                addCustomPaymentEntry();
+            });
+        }
+
+        function addCustomPaymentEntry(dueDate = '', amount = '', description = '') {
+            customPaymentCounter++;
+            const rentAmount = parseFloat($('#rent_amount').val()) || 0;
+            const defaultAmount = amount || rentAmount;
+            
+            const paymentHtml = `
+                <div class="custom-payment-entry mb-2" data-payment-id="${customPaymentCounter}">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="fe fe-calendar"></i></span>
+                                <input type="text" class="form-control custom-payment-date datepicker2" 
+                                    value="${dueDate}" placeholder="Due Date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control custom-payment-amount" 
+                                    value="${defaultAmount}" min="0" step="0.01" placeholder="Amount" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control form-control-sm custom-payment-description" 
+                                value="${description}" placeholder="Description (optional)">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCustomPaymentEntry(${customPaymentCounter})">
+                                <i class="fe fe-trash-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#customPaymentsList').append(paymentHtml);
+            $('#noCustomPaymentsAlert').hide();
+            $('#customPaymentsSummary').show();
+            
+            updateCustomPaymentsSummary();
+            
+            // Bind change events
+            $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-amount').on('input', function() {
+                updateCustomPaymentsSummary();
+            });
+            
+            // Initialize datepicker for the new custom payment date input
+            $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-date').each(function () {
+                const value = $(this).val();
+
+                $(this).datepicker({
+                    format: 'yyyy-mm-dd',
+                    autoclose: true
+                });
+
+                if (value) {
+                    $(this).datepicker('setDate', value);
+                }
+            });
+        }
+
+        function removeCustomPaymentEntry(paymentId) {
+            $(`[data-payment-id="${paymentId}"]`).remove();
+            
+            if ($('#customPaymentsList .custom-payment-entry').length === 0) {
+                $('#noCustomPaymentsAlert').show();
+                $('#customPaymentsSummary').hide();
+            }
+            
+            updateCustomPaymentsSummary();
+        }
+
+        function updateCustomPaymentsSummary() {
+            let total = 0;
+            let count = 0;
+            
+            $('#customPaymentsList .custom-payment-entry').each(function() {
+                const amount = parseFloat($(this).find('.custom-payment-amount').val()) || 0;
+                total += amount;
+                count++;
+            });
+            
+            $('#customPaymentsCount').text(count);
+            $('#customPaymentsTotal').text(total.toFixed(2));
+        }
+
+        function getCustomPayments() {
+            const payments = [];
+            
+            $('#customPaymentsList .custom-payment-entry').each(function() {
+                const dueDate = $(this).find('.custom-payment-date').val();
+                const amount = parseFloat($(this).find('.custom-payment-amount').val()) || 0;
+                const description = $(this).find('.custom-payment-description').val();
+                
+                if (dueDate && amount > 0) {
+                    payments.push({
+                        due_date: dueDate,
+                        amount: amount,
+                        description: description || 'Custom Payment'
+                    });
+                }
+            });
+            
+            return payments;
         }
 
         function setupLeaseTermHandler() {
@@ -211,8 +374,8 @@
             const endDate = leaseData.end_date ? new Date(leaseData.end_date) : new Date(startDate);
             // endDate.setFullYear(startDate.getFullYear() + 1); // 1 year lease
             
-            $('#start_date').val(formatDateForInput(startDate));
-            $('#end_date').val(formatDateForInput(endDate)).prop('readonly', false);
+            $('#start_date').val(formatDateForInput(startDate)).datepicker('update');
+            $('#end_date').val(formatDateForInput(endDate)).prop('readonly', false).datepicker('update');
             
             $('#endDateField').show();
             $('#endDateRequired').show();
@@ -277,7 +440,12 @@
         function validateAndNextStep(step) {
             if (currentStep === 1) {
                 if (!validateStep1()) {
-                    alert('Please complete all required fields before proceeding.');
+                    Swal.fire({
+                        title: "Form Incomplete",
+                        text: 'Please complete all required fields before proceeding.',
+                        icon: "question"
+                    });
+                    // alert('Please complete all required fields before proceeding.');
                     return;
                 }
             }
@@ -335,8 +503,10 @@
             if (startDate && endDate && leaseData.lease_type === 'fixed') {
                 const start = new Date(startDate);
                 const end = new Date(endDate);
-                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-                const months = Math.ceil(days / 30);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1; // +1 for inclusive
+                
+                // Calculate actual calendar months difference
+                const months = calculateCalendarMonths(start, end);
                 $('#leaseDuration').text(`for ${months} month${months > 1 ? 's' : ''} (${days} days)`);
 
                 // Calculate total rent
@@ -351,6 +521,18 @@
             const date = new Date(dateString);
             const options = { year: 'numeric', month: 'short', day: '2-digit' };
             return date.toLocaleDateString('en-US', options);
+        }
+
+        function calculateCalendarMonths(startDate, endDate) {
+            // Calculate actual calendar months between two dates
+            // April 1 to July 31 = 4 months (April, May, June, July)
+            let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
+            months += endDate.getMonth() - startDate.getMonth();
+            
+            // Add 1 for inclusive month counting (covers both start and end months)
+            months += 1;
+            
+            return Math.max(1, months); // At least 1 month
         }
 
         function nextStep(step) {
@@ -379,7 +561,7 @@
         function populateStep2Data() {
             // Auto-populate deposit due date (same as lease start date)
             if (leaseData.start_date) {
-                $('#deposit_due_date').val(leaseData.start_date);
+                $('#deposit_due_date').val(leaseData.start_date).datepicker('update');
             }
 
             // Auto-populate first invoice date
@@ -396,7 +578,7 @@
                     firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
                 }
                 
-                $('#first_invoice_date').val(formatDateForInput(firstInvoiceDate));
+                $('#first_invoice_date').val(formatDateForInput(firstInvoiceDate)).datepicker('update');
             }
 
             // Update property info banner
@@ -503,13 +685,21 @@
             $('#addExistingTenantBtn').off('click').on('click', function() {
                 const tenantId = $('#existingTenantSelect').val();
                 if (!tenantId) {
-                    alert('Please select a tenant first');
+                    Swal.fire({
+                        title: "Tenant Not Selected",
+                        text: "Please select a tenant before adding.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
                 // Check if already added
                 if (selectedTenants.find(t => t.id == tenantId)) {
-                    alert('This tenant has already been added to this lease');
+                    Swal.fire({
+                        title: "Already Added",
+                        text: "This tenant has already been added to this lease.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
@@ -536,14 +726,22 @@
 
                 // Validation
                 if (!firstName || !lastName || !email || !phone) {
-                    alert('Please fill in all required fields');
+                    Swal.fire({
+                        title: "Incomplete Information",
+                        text: "Please fill in all required fields.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
                 // Email validation
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(email)) {
-                    alert('Please enter a valid email address');
+                    Swal.fire({
+                        title: "Invalid Email",
+                        text: "Please enter a valid email address.",
+                        icon: "warning"
+                    });
                     return;
                 }
 
@@ -571,10 +769,17 @@
 
                             // Reload tenant dropdown
                             loadActiveTenants();
-
-                            alert('Tenant created successfully!');
+                            Swal.fire({
+                                title: "Tenant Created",
+                                text: "The tenant has been successfully created.",
+                                icon: "success"
+                            });
                         } else {
-                            alert(response.message || 'Failed to create tenant');
+                            Swal.fire({
+                                title: "Creation Failed",
+                                text: "Failed to create tenant." + (response.message ? ' ' + response.message : ''),
+                                icon: "error"
+                            });
                         }
                     },
                     error: function(xhr) {
@@ -582,7 +787,11 @@
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             errorMsg = xhr.responseJSON.message;
                         }
-                        alert(errorMsg);
+                        Swal.fire({
+                                title: "Error",
+                                text: errorMsg,
+                                icon: "error"
+                            });
                     },
                     complete: function() {
                         btn.prop('disabled', false).html('<i class="fe fe-save me-1"></i> Save & Add Tenant');
@@ -775,6 +984,9 @@
 
         // Lease Submission Functions
         function collectLeaseData() {
+            const paymentFrequency = $('#payment_frequency').val() || 'MONTHLY';
+            const isCustomPayment = paymentFrequency === 'CUSTOM';
+            
             return {
                 // Property & Bed
                 property_id: leaseData.property_id,
@@ -791,10 +1003,13 @@
                 // Rent & Deposit
                 rent_amount: parseFloat($('#rent_amount').val()) || 0,
                 deposit_amount: parseFloat($('#deposit_amount').val()) || 0,
-                payment_frequency: $('#payment_frequency').val() || 'MONTHLY',
-                due_day: parseInt($('#due_day').val()) || 1,
-                first_invoice_date: $('#first_invoice_date').val() || null,
+                payment_frequency: paymentFrequency,
+                due_day: isCustomPayment ? null : (parseInt($('#due_day').val()) || 1),
+                first_invoice_date: isCustomPayment ? null : ($('#first_invoice_date').val() || null),
                 deposit_collected: $('#deposit_collected').is(':checked'),
+                
+                // Custom Payments (only if CUSTOM frequency)
+                custom_payments: isCustomPayment ? getCustomPayments() : [],
                 
                 // Tenants
                 tenant_ids: selectedTenants.map(t => t.id),
@@ -825,6 +1040,13 @@
             if (data.lease_type === 'fixed' && !data.end_date) errors.push('Please select an end date for fixed term lease');
             if (!data.rent_amount || data.rent_amount <= 0) errors.push('Please enter a valid rent amount');
             if (data.tenant_ids.length === 0) errors.push('Please add at least one tenant');
+            
+            // Custom payment validation
+            if (data.payment_frequency === 'CUSTOM') {
+                if (!data.custom_payments || data.custom_payments.length === 0) {
+                    errors.push('Please add at least one custom payment date');
+                }
+            }
 
             return errors;
         }
@@ -837,17 +1059,37 @@
             // Validate
             const errors = validateLeaseData(data);
             if (errors.length > 0 && !saveAsDraft) {
-                alert('Please fix the following errors:\n\n' + errors.join('\n'));
+                Swal.fire({
+                    title: "Validation Error",
+                    text: 'Please fix the following errors:\n\n' + errors.join('\n, '),
+                    icon: "error"
+                });
+                // alert();
                 return;
             }
 
             // Confirm submission
             const confirmMsg = saveAsDraft 
-                ? 'Are you sure you want to save this lease as a draft?' 
-                : 'Are you sure you want to create this lease and send it for signing?';
-            
-            if (!confirm(confirmMsg)) return;
+                ? 'You want to save this lease as a draft?' 
+                : 'You want to create this lease and send it for signing?';
+            Swal.fire({
+                title: "Are you sure?",
+                text: confirmMsg,
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, do it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Proceed with submission
+                    proceedWithSubmission(data, saveAsDraft);
+                }
+            });
+        }
 
+        function proceedWithSubmission(data, saveAsDraft) {
+            
             // Show loading state
             const btn = saveAsDraft ? $('#saveDraftBtn') : $('#createLeaseBtn');
             const originalText = btn.html();
@@ -859,12 +1101,20 @@
                 data: data,
                 success: function(response) {
                     if (response.success) {
-                        alert(response.message);
+                        Swal.fire({
+                                title: "Success",
+                                text: response.message,
+                                icon: "success"
+                            });
                         if (response.redirect_url) {
                             window.location.href = response.redirect_url;
                         }
                     } else {
-                        alert(response.message || 'Failed to create lease');
+                        Swal.fire({
+                                title: "Hmm...",
+                                text:  (response.message || 'Failed to create lease') + '\n\n' + response.errors.join('\n'),
+                                icon: "error"
+                            });
                         btn.prop('disabled', false).html(originalText);
                     }
                 },
@@ -879,7 +1129,11 @@
                             errorMsg += '\n\n' + validationErrors.join('\n');
                         }
                     }
-                    alert(errorMsg);
+                    Swal.fire({
+                        title: "Error",
+                        text: errorMsg,
+                        icon: "error"
+                    });
                     btn.prop('disabled', false).html(originalText);
                 }
             });
