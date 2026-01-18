@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Mail\TenantApplication;
+namespace App\Mail\Tenant;
 
 use App\Models\Lease;
+use App\Models\Lease\LeaseDocument;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -10,28 +11,44 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TenantWelcomeMail extends Mailable implements ShouldQueue
+class LeaseSignatureRequestMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $lease;
     public $tenant;
     public $property;
-    public $supportUrl;
-    public $tenantPortalUrl;
+    public $leaseDocument;
+    public $signatureUrl;
+    public $unit;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Lease $lease)
+    public function __construct(Lease $lease, LeaseDocument $leaseDocument)
     {
         $this->lease = $lease;
+        $this->leaseDocument = $leaseDocument;
         $this->tenant = $lease->tenant;
         $this->property = $lease->property;
+        $this->unit = $lease->assignments()->first()->bed ?? null;
 
-        // Support URL or general info page
-        $this->supportUrl = config('app.frontend_url') . '/contact';
-        $this->tenantPortalUrl = config('app.frontend_url') . '/tenant/dashboard';
+        // Build the API URL for the tenant dashboard (Next.js frontend)
+        $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+        $this->signatureUrl = $frontendUrl . '/tenant/lease/sign/' . $leaseDocument->id . '?token=' . $this->generateSignatureToken();
+    }
+
+    /**
+     * Generate a secure token for the signature URL
+     */
+    protected function generateSignatureToken(): string
+    {
+        return base64_encode(json_encode([
+            'document_id' => $this->leaseDocument->id,
+            'tenant_id' => $this->tenant->id,
+            'lease_id' => $this->lease->id,
+            'expires' => now()->addDays(7)->timestamp,
+        ]));
     }
 
     /**
@@ -40,7 +57,7 @@ class TenantWelcomeMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Welcome to ' . config('app.name') . ' - Your Tenancy Confirmation',
+            subject: 'Action Required: Sign Your Lease Agreement - ' . config('app.name'),
         );
     }
 
@@ -50,7 +67,7 @@ class TenantWelcomeMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.tenant.welcome',
+            view: 'emails.tenant.lease-signature-request',
         );
     }
 
@@ -65,14 +82,16 @@ class TenantWelcomeMail extends Mailable implements ShouldQueue
             ->with([
                 'tenant' => $this->tenant,
                 'property' => $this->property,
+                'unit' => $this->unit,
                 'lease' => $this->lease,
-                'supportUrl' => $this->supportUrl,
-                'tenantPortalUrl' => $this->tenantPortalUrl,
+                'leaseDocument' => $this->leaseDocument,
+                'signatureUrl' => $this->signatureUrl,
                 'companyName' => config('app.name', 'OC Workforce Housing'),
                 'companyEmail' => config('mail.admin_email'),
                 'companyPhone' => config('app.phone', '(443) 336-5182'),
                 'senderName' => 'Property Management Team',
                 'currentYear' => now()->year,
+                'expirationDays' => 7,
             ]);
     }
 

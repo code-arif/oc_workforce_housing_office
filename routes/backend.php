@@ -256,11 +256,13 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::put('/{id}/update', [LeaseController::class, 'update'])->name('update');
     Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
     Route::post('/{id}/collect-deposit', [LeaseController::class, 'collectDeposit'])->name('collect.deposit');
+    Route::post('/{id}/resend-for-signature', [LeaseController::class, 'resendForSignature'])->name('resend.signature');
 });
 
 // Invoice Routes
 Route::prefix('invoices')->name('invoices.')->group(function () {
     Route::get('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'show'])->name('show');
+    Route::get('/{id}/download-pdf', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'downloadPdf'])->name('download.pdf');
     Route::put('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'update'])->name('update');
     Route::post('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'storePayment'])->name('payments.store');
     Route::get('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'getPayments'])->name('payments.index');

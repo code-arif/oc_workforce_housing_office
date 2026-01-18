@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             SeasonSeeder::class,
             LeaseSeeder::class,
             LeaseAssignmentSeeder::class,
+            AmenitySeeder::class,
         ]);
     }
 }

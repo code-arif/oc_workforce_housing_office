@@ -127,7 +127,7 @@
                                             $fieldName = $placeholder['field'] ?? 'field';
                                             $fieldValue = $leaseData[$fieldName] ?? 'N/A';
                                         @endphp
-                                        <div class="placeholder-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                        <div class="placeholder-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light  ">
                                             <div>
                                                 <span class="badge bg-primary me-2">{{ $index + 1 }}</span>
                                                 <strong class="small">{{ ucwords(str_replace('_', ' ', $fieldName)) }}</strong>
@@ -156,7 +156,7 @@
                             @if(count($signatures) > 0)
                                 <div class="signature-list">
                                     @foreach($signatures as $index => $signature)
-                                        <div class="signature-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                        <div class="signature-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light ">
                                             <div>
                                                 <span class="badge bg-warning text-dark me-2">{{ $index + 1 }}</span>
                                                 <strong class="small">{{ $signature['label'] ?? 'Signature' }}</strong>
@@ -344,7 +344,7 @@
     }
 
     .placeholder-overlay .overlay-content {
-        padding: 0 2px;
+        padding: 10px 20px;
         font-size: 10px;
         font-weight: 500;
         color: #000000;
@@ -687,8 +687,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Coordinates are stored at scale 1.0, multiply by current scale
         const x = (parseFloat(p.x) || 0) * scale;
         const y = (parseFloat(p.y) || 0) * scale;
-        const width = (parseFloat(p.width) || 150) * scale;
-        const height = (parseFloat(p.height) || 20) * scale;
+        const width = (parseFloat(p.width) || 150) * 1;
+        const height = (parseFloat(p.height) || 20) * 1;
 
         overlay.style.left = x + 'px';
         overlay.style.top = y + 'px';

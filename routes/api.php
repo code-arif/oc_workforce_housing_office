@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Tenants\PasswordResetController;
 use App\Http\Controllers\Api\Tenants\TenantDashboardController;
 use App\Http\Controllers\Api\Tenants\TenantPasswordController;
 use App\Http\Controllers\Api\Tenants\TenantProfileController;
+use App\Http\Controllers\Api\Tenants\LeaseDocumentController;
 
 //health-check
 Route::get('/health', function () {
@@ -106,6 +107,13 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
             Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
             Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
+        });
+
+        // Lease Document Signature Routes (Token-based, no auth required)
+        Route::prefix('tenant/lease')->group(function () {
+            Route::get('/document/{documentId}', [LeaseDocumentController::class, 'getDocument']);
+            Route::post('/document/{documentId}/sign', [LeaseDocumentController::class, 'signDocument']);
+            Route::get('/document/{documentId}/download', [LeaseDocumentController::class, 'downloadDocument']);
         });
     });
 });

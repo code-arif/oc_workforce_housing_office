@@ -27,9 +27,9 @@
                         <a href="{{ route('leases.show', $invoice->lease_id) }}" class="btn btn-outline-secondary">
                             <i class="fe fe-arrow-left me-2"></i>Back to Lease
                         </a>
-                        {{-- <button class="btn btn-outline-primary" onclick="window.print()">
-                            <i class="fe fe-printer me-2"></i>Print
-                        </button> --}}
+                        <a href="{{ route('invoices.download.pdf', $invoice->id) }}" class="btn btn-outline-primary">
+                            <i class="fe fe-download me-2"></i>Download PDF
+                        </a>
                         @if($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED' && $canMakePayment)
                         <button class="btn btn-success" onclick="showPaymentForm()">
                             <i class="fe fe-dollar-sign me-2"></i>Make Payment

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
@@ -564,5 +565,59 @@ class InvoiceController extends Controller
         }
         
         return $description;
+    }
+
+    /**
+     * Download invoice as PDF.
+     */
+    public function downloadPdf($id)
+    {
+        $invoice = Invoice::with([
+            'lease.property', 
+            'lease.tenant.profile', 
+            'lease.assignments.bed',
+            'payments' => function($query) {
+                $query->orderBy('payment_date', 'desc');
+            }
+        ])->findOrFail($id);
+
+        $lease = $invoice->lease;
+
+        // Determine if this is the first invoice
+        $firstInvoice = $lease->invoices()
+            ->where('type', 'RENT')
+            ->orderBy('created_at', 'asc')
+            ->first();
+
+        $isFirstInvoice = $firstInvoice && $firstInvoice->id === $invoice->id;
+
+        // Calculate totals
+        $totalDue = $invoice->total_amount;
+        
+        if (!$totalDue || $totalDue == 0) {
+            $totalDue = $invoice->amount;
+            if ($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0) {
+                $totalDue += $lease->deposit_amount;
+            }
+        }
+
+        $totalPaid = $invoice->paid_amount ?? $invoice->payments->sum('amount');
+        $balanceDue = $invoice->balance_due ?? ($totalDue - $totalPaid);
+
+        $data = compact(
+            'invoice', 
+            'lease', 
+            'isFirstInvoice',
+            'totalDue',
+            'totalPaid',
+            'balanceDue'
+        );
+
+        $pdf = Pdf::loadView('backend.layouts.leases.invoice.pdf', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        $filename = 'Invoice-' . ($invoice->invoice_number ?? 'INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT)) . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }

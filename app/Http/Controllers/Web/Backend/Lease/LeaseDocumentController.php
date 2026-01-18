@@ -144,8 +144,8 @@ class LeaseDocumentController extends Controller
             'bed_label' => $bed?->bed_label ?? '',
             
             // Lease Info
-            'lease_start_date' => $lease->start_date ? date('F d, Y', strtotime($lease->start_date)) : '',
-            'lease_end_date' => $lease->end_date ? date('F d, Y', strtotime($lease->end_date)) : '',
+            'lease_start_date' => $lease->start_date ? date(' d M, Y', strtotime($lease->start_date)) : '',
+            'lease_end_date' => $lease->end_date ? date(' d M, Y', strtotime($lease->end_date)) : '',
             'monthly_rent' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
             'rent_amount' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
             'security_deposit' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
@@ -154,7 +154,7 @@ class LeaseDocumentController extends Controller
             'lease_term' => $this->calculateLeaseTerm($lease->start_date, $lease->end_date),
             
             // Other
-            'current_date' => date('F d, Y'),
+            'current_date' => date(' d M, Y'),
             'admin_name' => auth()->user()?->name ?? 'Property Manager',
             'admin_email' => auth()->user()?->email ?? '',
         ];

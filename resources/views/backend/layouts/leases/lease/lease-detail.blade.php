@@ -151,7 +151,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <h3 class="mb-1 lease-property-title">
                                             {{ $lease->property ? $lease->property->name : 'N/A' }} |
                                             {{ $lease->assignments->where('is_current', true)->first() && $lease->assignments->where('is_current', true)->first()->bed ? $lease->assignments->where('is_current', true)->first()->bed->bed_label : 'N/A' }}
@@ -178,7 +178,41 @@
                                             </span>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4 d-flex align-items-center">
+                                        <div class="me-2">
+                                            <h6 class="mb-1">Invoice Information</h6>
+                                            <p class="text-muted mb-0">
+                                                Details about the Invoice associated with this lease
+                                            </p>
+                                            <ul>
+                                                <li>
+                                                    <strong>Total Rent Invoiced:</strong>
+                                                    ${{ number_format($lease->invoices->where('type', 'RENT')->sum('amount'), 2) }}
+                                                </li>
+                                                <li>
+                                                    <strong>Total Rent Paid:</strong>
+                                                    ${{ number_format($lease->invoices->where('type', 'RENT')->where('status', 'PAID')->sum('amount'), 2) }}
+                                                </li>
+                                                <li>
+                                                    <strong>Outstanding Rent:</strong>
+                                                    ${{ number_format($lease->invoices->where('type', 'RENT')->whereIn('status', ['UNPAID', 'PARTIAL'])->sum('amount') - $lease->invoices->where('type', 'RENT')->where('status', 'PARTIAL')->sum('amount_paid'), 2) }}
+                                                </li>
+                                                
+                                            </ul>
+                                        </div>
+                                        <ul>
+                                            @if($lease->status == 'ACTIVE')
+                                            @foreach ($lease->invoices as $key => $invoice)
+                                            <li class="mb-1" > 
+                                                <a href="{{ route('invoices.show', $invoice->id) }}"
+                                                        style="{{$invoice->status == 'UNPAID' ? '' : 'color: var(--bs-green)'}}"> {{ $invoice->invoice_number }}@if(!$loop->last),@endif
+                                                </a>
+                                            </li>
+                                            @endforeach
+                                            @endif
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-4">
                                         @php
                                             $profile = $lease->tenant ? $lease->tenant->profile : null;
                                             $fullName = $profile
@@ -260,10 +294,11 @@
                                                             </div>
                                                         </div>
                                                         <div class="d-flex gap-2">
-                                                            <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview Document">
-                                                                <i class="fe fe-eye"></i>
+                                                            <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}"
+                                                                 class="btn btn-sm btn-primary" title="Preview Document">
+                                                                <i class="fe fe-eye"></i> Sign Document
                                                             </a>
-                                                            <button class="btn btn-sm btn-primary">Sign Document</button>
+                                                            {{-- <button class="btn btn-sm btn-primary"></button> --}}
                                                         </div>
                                                     </div>
                                                 </div>

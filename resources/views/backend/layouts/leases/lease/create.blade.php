@@ -555,7 +555,7 @@
                                         </div> --}}
 
                                         <!-- Partial Payment Toggle -->
-                                        <div class="partial-payment-section mt-4">
+                                        {{-- <div class="partial-payment-section mt-4">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <strong>Partial Payment</strong>
@@ -568,7 +568,7 @@
                                                     </label>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> --}}
                                     </div>
                                 </div>
                             </div>

@@ -16,10 +16,14 @@ use App\Models\Lease\LeaseTemplate;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\LeasePaymentSchedule;
+use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
+use App\Mail\TenantApplication\TenantWelcomeMail;
+use App\Mail\Tenant\LeaseSignatureRequestMail;
 
 class LeaseController extends Controller
 {
+
     public function index(Request $request)
     {
         // Get statistics
@@ -326,6 +330,15 @@ class LeaseController extends Controller
                         'status' => 'pending_signatures',
                     ]);
                 }
+            }
+
+            // Send welcome email if enabled
+            if ($request->boolean('send_welcome_email')) {
+                $this->sendWelcomeEmail($lease);
+            }
+            if($request->boolean('send_for_signature') && !$isDraft){
+                // Trigger sending for signature process
+                $this->sendLeaseForSignature($lease);
             }
 
             DB::commit();
@@ -721,5 +734,95 @@ class LeaseController extends Controller
 
         // Log::info('Beds for room ID ' . $roomId . ': ' . $bedsData->toJson());
         return response()->json(['success' => true, 'data' => $bedsData]);
+    }
+
+    private function sendWelcomeEmail(Lease $lease)
+    {
+        try {
+            // Load necessary relationships
+            $lease->load(['tenant', 'property']);
+            
+            // Check if tenant exists
+            if (!$lease->tenant) {
+                Log::warning('Cannot send welcome email - No tenant associated with lease ID: ' . $lease->id);
+                return;
+            }
+
+            // Check if welcome email should be sent
+            if (!$lease->send_welcome_email) {
+                Log::info('Welcome email not sent - send_welcome_email flag is false for lease ID: ' . $lease->id);
+                return;
+            }
+
+            // Send the welcome email
+            Mail::to($lease->tenant->email)->send(new TenantWelcomeMail($lease));
+            
+            Log::info('Welcome email sent successfully for lease ID: ' . $lease->id . ' to ' . $lease->tenant->email);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send welcome email for lease ID: ' . $lease->id . ' - Error: ' . $e->getMessage());
+            
+            // Optional: You might want to throw the exception or handle it differently
+            // throw $e;
+        }
+    }
+
+    private function sendLeaseForSignature(Lease $lease)
+    {
+        try {
+            // Load necessary relationships
+            $lease->load(['tenant.profile', 'property', 'documents']);
+            
+            // Check if tenant exists
+            if (!$lease->tenant) {
+                Log::warning('Cannot send signature request - No tenant associated with lease ID: ' . $lease->id);
+                return;
+            }
+
+            // Get the lease document
+            $leaseDocument = $lease->documents->first();
+            
+            if (!$leaseDocument) {
+                Log::warning('Cannot send signature request - No document found for lease ID: ' . $lease->id);
+                return;
+            }
+
+            // Update document status to pending signatures
+            $leaseDocument->update([
+                'status' => 'pending_signatures'
+            ]);
+
+            // Send the signature request email
+            Mail::to($lease->tenant->email)->send(new LeaseSignatureRequestMail($lease, $leaseDocument));
+            
+            Log::info('Lease signature request email sent successfully for lease ID: ' . $lease->id . ' to ' . $lease->tenant->email);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send lease signature request for lease ID: ' . $lease->id . ' - Error: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Resend lease for signature
+     */
+    public function resendForSignature($id)
+    {
+        try {
+            $lease = Lease::with(['tenant.profile', 'property', 'documents'])->findOrFail($id);
+            
+            $this->sendLeaseForSignature($lease);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lease signature request has been resent to ' . $lease->tenant->email
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to resend lease for signature: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to resend signature request: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
