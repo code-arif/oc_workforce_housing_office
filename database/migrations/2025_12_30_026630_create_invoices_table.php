@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
+
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lease_id')->constrained()->cascadeOnDelete();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('total_amount', 10, 2); // Total including deposit if applicable
             $table->decimal('paid_amount', 10, 2)->default(0.00); // Track total paid
             $table->decimal('balance_due', 10, 2); // Remaining balance
-            $table->date('issue_date')->default(DB::raw('CURRENT_DATE'));
+            $table->date('issue_date')->nullable();
             $table->date('due_date');
             $table->enum('type', ['DEPOSIT', 'RENT', 'FEE', 'OTHER'])->default('RENT');
             $table->enum('status', ['UNPAID', 'PARTIAL', 'PAID', 'OVERDUE', 'CANCELLED'])->default('UNPAID');
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->json('metadata')->nullable(); // For additional data
             $table->softDeletes();
             $table->timestamps();
-            
+
             // Indexes for better performance
             $table->index(['tenant_id', 'status']);
             $table->index(['lease_id', 'due_date']);

@@ -118,8 +118,8 @@
 
                 {{-- Messaging --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
+                    <a class="side-menu__item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}"
+                        href="{{ route('messaging.index') }}">
                         <i class="fa-solid fa-message"></i>
                         <span class="side-menu__label">Messaging</span>
                     </a>

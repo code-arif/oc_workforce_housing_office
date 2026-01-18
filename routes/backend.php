@@ -34,6 +34,7 @@ use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -231,6 +232,8 @@ Route::group([], function () {
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+    Route::post('/tenants/update', [TenantManageController::class, 'update'])->name('tenants.update');
+    Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
 
     // Tenant API routes for lease creation
     Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
@@ -281,6 +284,31 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
     Route::get('/maintanance/{id}', [MaintananceController::class, 'show'])->name('show'); // done
     Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
 });
+
+/*
+|--------------------------------------------------------------------------
+| Messaging/Mailing Routes
+|--------------------------------------------------------------------------
+*/
+// routes/web.php or your backend routes file
+
+Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(function () {
+    Route::get('/', [MessagingController::class, 'index'])->name('index');
+    Route::get('/read/{id}', [MessagingController::class, 'read'])->name('read');
+
+    // AJAX Routes
+    Route::post('/sync', [MessagingController::class, 'sync'])->name('sync');
+    Route::get('/messages', [MessagingController::class, 'getMessages'])->name('messages');
+    Route::post('/send', [MessagingController::class, 'send'])->name('send');
+    Route::post('/draft', [MessagingController::class, 'saveDraft'])->name('draft.save');
+    Route::post('/{id}/toggle-read', [MessagingController::class, 'toggleRead'])->name('toggle.read');
+    Route::post('/{id}/toggle-star', [MessagingController::class, 'toggleStar'])->name('toggle.star');
+    Route::post('/{id}/move', [MessagingController::class, 'moveToFolder'])->name('move');
+    Route::delete('/{id}', [MessagingController::class, 'delete'])->name('delete');
+    Route::post('/bulk-action', [MessagingController::class, 'bulkAction'])->name('bulk.action');
+    Route::get('/attachment/{id}', [MessagingController::class, 'downloadAttachment'])->name('attachment.download');
+});
+
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {
