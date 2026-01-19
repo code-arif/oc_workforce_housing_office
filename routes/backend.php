@@ -226,19 +226,23 @@ Route::prefix('cms')->name('cms.')->group(function () {
 | Tenent Management Routes
 |--------------------------------------------------------------------------
 */
-Route::group([], function () {
-    Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
-    Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
-    Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
-    Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
-    Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
-    Route::post('/tenants/update', [TenantManageController::class, 'update'])->name('tenants.update');
-    Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
+Route::group(['prefix' => 'tenants', 'as' => 'tenants.'], function () {
+    Route::get('/', [TenantManageController::class, 'index'])->name('index');
+    Route::get('/get-data', [TenantManageController::class, 'getData'])->name('get.data');
 
-    // Tenant API routes for lease creation
-    Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
-    Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
+    Route::get('/create', [TenantManageController::class, 'create'])->name('create');
+    Route::post('/', [TenantManageController::class, 'store'])->name('store');
+
+    Route::get('/active', [TenantManageController::class, 'getActiveTenants'])->name('active');
+    Route::post('/quick-create', [TenantManageController::class, 'quickCreate'])->name('quick-create');
+
+    Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('details');
+    Route::get('/{id}', [TenantManageController::class, 'show'])->name('show');
+
+    Route::put('/{id}', [TenantManageController::class, 'update'])->name('update');
+    Route::delete('/{id}', [TenantManageController::class, 'destroy'])->name('destroy');
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -411,7 +415,7 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
-    
+
     // Preview document for a lease
     Route::get('/lease/{leaseId}/preview/{documentId?}', [LeaseDocumentController::class, 'previewForLease'])->name('preview-for-lease');
 });

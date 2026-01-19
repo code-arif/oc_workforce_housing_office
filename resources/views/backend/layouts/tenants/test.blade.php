@@ -10,6 +10,54 @@
                 <!-- Tenant Detail Container -->
                 <div class="tenant-detail-container">
 
+                    <!-- Left Sidebar - Tenant List -->
+                    <div class="tenant-sidebar">
+                        <div class="sidebar-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Tenants</h5>
+                                <a href="{{ route('tenants.index') }}" class="btn btn-sm btn-light">
+                                    <i class="fe fe-arrow-left"></i>
+                                </a>
+                            </div>
+                            <div class="search-box mt-3">
+                                <input type="text" class="form-control" id="tenantSearch"
+                                    placeholder="Search tenants...">
+                            </div>
+                        </div>
+
+                        <div class="tenant-list">
+                            @foreach ($tenants as $t)
+                                @php
+                                    $tProfile = $t->profile;
+                                    $tFullName = $tProfile
+                                        ? trim(
+                                            $tProfile->first_name .
+                                                ' ' .
+                                                ($tProfile->middle_name ?? '') .
+                                                ' ' .
+                                                ($tProfile->last_name ?? ''),
+                                        )
+                                        : 'No Name';
+                                    $tAvatar =
+                                        $tProfile && $tProfile->avatar
+                                            ? asset($tProfile->avatar)
+                                            : 'https://ui-avatars.com/api/?name=' .
+                                                urlencode($tFullName) .
+                                                '&background=random';
+                                @endphp
+                                <div class="tenant-item {{ $t->id == $tenant->id ? 'active' : '' }}"
+                                    data-tenant-id="{{ $t->id }}" onclick="loadTenantDetails({{ $t->id }})">
+                                    <img src="{{ $tAvatar }}" alt="avatar" class="tenant-avatar">
+                                    <div class="tenant-info">
+                                        <div class="tenant-name">{{ $tFullName }}</div>
+                                        <div class="tenant-unit">PHILLIPS HOUSE | 206-C-1</div>
+                                    </div>
+                                    <i class="fe fe-chevron-right"></i>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <!-- Right Content - Tenant Details -->
                     <div class="tenant-content">
                         <div class="content-header">
@@ -271,35 +319,35 @@
         });
 
         // Load tenant details via AJAX
-        // function loadTenantDetails(tenantId) {
-        //     NProgress.start();
+        function loadTenantDetails(tenantId) {
+            NProgress.start();
 
-        //     // Update active state in sidebar
-        //     $('.tenant-item').removeClass('active');
-        //     $(`.tenant-item[data-tenant-id="${tenantId}"]`).addClass('active');
+            // Update active state in sidebar
+            $('.tenant-item').removeClass('active');
+            $(`.tenant-item[data-tenant-id="${tenantId}"]`).addClass('active');
 
-        //     // Update URL without page reload
-        //     const newUrl = `{{ route('tenants.show', '') }}/${tenantId}`;
-        //     window.history.pushState({
-        //         tenantId: tenantId
-        //     }, '', newUrl);
+            // Update URL without page reload
+            const newUrl = `{{ route('tenants.show', '') }}/${tenantId}`;
+            window.history.pushState({
+                tenantId: tenantId
+            }, '', newUrl);
 
-        //     // Fetch tenant details
-        //     $.ajax({
-        //         url: `{{ route('tenants.details', '') }}/${tenantId}`,
-        //         type: 'GET',
-        //         success: function(response) {
-        //             NProgress.done();
-        //             if (response.success) {
-        //                 updateTenantDetails(response.tenant);
-        //             }
-        //         },
-        //         error: function() {
-        //             NProgress.done();
-        //             toastr.error('Failed to load tenant details');
-        //         }
-        //     });
-        // }
+            // Fetch tenant details
+            $.ajax({
+                url: `{{ route('tenants.details', '') }}/${tenantId}`,
+                type: 'GET',
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        updateTenantDetails(response.tenant);
+                    }
+                },
+                error: function() {
+                    NProgress.done();
+                    toastr.error('Failed to load tenant details');
+                }
+            });
+        }
 
         // Update tenant details in the DOM
         function updateTenantDetails(tenant) {

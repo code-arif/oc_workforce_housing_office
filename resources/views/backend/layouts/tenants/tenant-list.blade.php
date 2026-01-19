@@ -292,7 +292,7 @@
                 pagingType: "full_numbers",
                 dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
                 ajax: {
-                    url: "{{ route('tenants.index') }}",
+                    url: "{{ route('tenants.get.data') }}",
                     type: "GET",
                     dataType: 'json', // Important for back/forward fix
                     data: function(d) {
