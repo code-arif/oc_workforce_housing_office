@@ -62,7 +62,7 @@
                 {{-- Applications --}}
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
+                        href="{{ route('tenants.applications.index') }}">
                         <i class="fa-solid fa-clipboard-list"></i>
                         <span class="side-menu__label">Applications</span>
                     </a>

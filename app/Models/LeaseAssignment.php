@@ -25,7 +25,7 @@ class LeaseAssignment extends Model
 
     public function bed()
     {
-        return $this->belongsTo(Bed::class);
+        return $this->belongsTo(Bed::class, 'bed_id');
     }
 
     

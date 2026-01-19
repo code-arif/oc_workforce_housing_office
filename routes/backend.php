@@ -35,6 +35,7 @@ use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
 use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
 use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
+use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -238,6 +239,14 @@ Route::group([], function () {
     // Tenant API routes for lease creation
     Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
     Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
+});
+
+Route::controller(ApplicationController::class)->group(function () {
+    Route::get('/applications', 'index')->name('tenants.applications.index');
+    Route::get('/applications/data', 'getData')->name('tenants.applications.get.data');
+    Route::get('/applications/{id}', 'show')->name('tenants.applications.show');
+    Route::post('/applications/{id}/approve', 'approve')->name('tenants.applications.approve');
+    Route::post('/applications/{id}/reject', 'reject')->name('tenants.applications.reject');
 });
 
 /*
