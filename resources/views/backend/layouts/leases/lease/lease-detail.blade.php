@@ -150,116 +150,128 @@
                                     </div>
                                 </div>
 
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <h3 class="mb-1 lease-property-title">
-                                            {{ $lease->property ? $lease->property->name : 'N/A' }} |
-                                            {{ $lease->assignments->where('is_current', true)->first() && $lease->assignments->where('is_current', true)->first()->bed ? $lease->assignments->where('is_current', true)->first()->bed->bed_label : 'N/A' }}
-                                        </h3>
-                                        <div class="lease-dates-header">
-                                            <span class="text-muted">
-                                                {{ date('M d, Y', strtotime($lease->start_date)) }} -
-                                                {{ date('M d, Y', strtotime($lease->end_date)) }}
-                                            </span>
-                                        </div>
-                                        <div class="mt-2">
-                                            <span class="text-primary fw-bold fs-5 lease-rent-amount">
-                                                ${{ number_format($lease->rent_amount, 2) }}
-                                            </span>
-                                            <span class="text-muted ms-2 lease-payment-frequency">
-                                                {{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }}
-                                                Rent
-                                            </span>
-                                             <br>
-                                            <span class="text-muted ms-3">
-                                            Next Due on {{ $lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first() ? date('M d, Y', strtotime($lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first()->due_date)) : 'N/A' }} of
-                                                every
-                                                {{ str_replace('_', ' ', strtolower($lease->payment_frequency)) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 d-flex align-items-center">
-                                        <div class="me-2">
-                                            <h6 class="mb-2">Invoice Information</h6>
-                                            
-                                            <ul>
-                                                <li>
-                                                    <strong>Total Rent Invoiced:</strong>
-                                                    ${{ number_format($lease->invoices->where('type', 'RENT')->sum('amount'), 2) }}
-                                                </li>
-                                                <li>
-                                                    <strong>Total Rent Paid:</strong>
-                                                    ${{ number_format($lease->invoices->where('type', 'RENT')->where('status', 'PAID')->sum('amount'), 2) }}
-                                                </li>
-                                                <li>
-                                                    <strong>Outstanding Rent:</strong>
-                                                    ${{ number_format($lease->invoices->where('type', 'RENT')->whereIn('status', ['UNPAID', 'PARTIAL'])->sum('amount') - $lease->invoices->where('type', 'RENT')->where('status', 'PARTIAL')->sum('amount_paid'), 2) }}
-                                                </li>
-                                                
-                                            </ul>
-                                        </div>
-                                        <ul>
-                                            @if($lease->status == 'ACTIVE')
-                                            @foreach ($lease->invoices as $key => $invoice)
-                                            @if($invoice->status == 'PAID')
-                                            
-                                            <li class="mb-1 d-inline" > 
-                                                <a href="{{ route('invoices.show', $invoice->id) }}" class="fs-8"
-                                                        style="color: var(--bs-green)"> {{ $invoice->invoice_number }}
-                                                        @if(!$loop->last),@endif
-                                                </a>
-                                            </li>
-                                            @else
-                                            <li class="mb-1 d-inline" > 
-                                                <a href="{{ route('invoices.show', $invoice->id) }}" class="fs-8"
-                                                        style="color: var(--bs-red)"> {{ $invoice->invoice_number }}
-                                                        @if(!$loop->last),@endif
-                                                </a>
-                                            </li>
-                                            @endif
-                                            @endforeach
-                                            @endif
-                                        </ul>
-                                    </div>
-                                    <div class="col-md-4">
-                                        @php
-                                            $profile = $lease->tenant ? $lease->tenant->profile : null;
-                                            $fullName = $profile
-                                                ? trim(
-                                                    $profile->first_name .
-                                                        ' ' .
-                                                        ($profile->middle_name ?? '') .
-                                                        ' ' .
-                                                        ($profile->last_name ?? ''),
-                                                )
-                                                : 'No Tenant';
-                                            $avatar =
-                                                $profile && $profile->avatar
-                                                    ? asset($profile->avatar)
-                                                    : 'https://ui-avatars.com/api/?name=' .
-                                                        urlencode($fullName) .
-                                                        '&background=random';
-                                        @endphp
-                                        <div class="d-flex align-items-center justify-content-md-end">
-                                            <img src="{{ $avatar }}" alt="avatar"
-                                                class="rounded-circle me-3 tenant-avatar" width="60" height="60"
-                                                style="object-fit: cover;">
-                                            <div>
-                                                <div class="fw-semibold fs-6 tenant-name">{{ $fullName }}</div>
-                                                <small class="text-muted d-block tenant-contact">
-                                                    <i class="fe fe-phone me-1"></i>
-                                                    {{ $profile ? $profile->phone : 'N/A' }}
-                                                </small>
-                                                <small class="text-muted d-block tenant-email">
-                                                    <i class="fe fe-mail me-1"></i>
-                                                    {{ $lease->tenant ? $lease->tenant->email : 'N/A' }}
-                                                </small>
+                                @php
+                                    $profile = $lease->tenant ? $lease->tenant->profile : null;
+                                    $fullName = $profile
+                                        ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
+                                        : 'No Tenant';
+                                    $avatar = $profile && $profile->avatar
+                                        ? asset($profile->avatar)
+                                        : 'https://ui-avatars.com/api/?name=' . urlencode($fullName) . '&background=random';
+                                    
+                                    $totalInvoiced = $lease->invoices->where('type', 'RENT')->sum('amount');
+                                    $totalPaid = $lease->invoices->where('type', 'RENT')->where('status', 'PAID')->sum('amount');
+                                    $outstanding = $lease->invoices->where('type', 'RENT')->whereIn('status', ['UNPAID', 'PARTIAL'])->sum('amount') 
+                                                 - $lease->invoices->where('type', 'RENT')->where('status', 'PARTIAL')->sum('amount_paid');
+                                    $nextDueInvoice = $lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first();
+                                    $paidInvoices = $lease->invoices->where('type', 'RENT')->where('status', 'PAID');
+                                    $unpaidInvoices = $lease->invoices->where('type', 'RENT')->where('status', 'UNPAID');
+                                @endphp
+
+                                <div class="row g-3">
+                                    <!-- Tenant Card -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="info-card tenant-card h-100">
+                                            <div class="info-card-header">
+                                                <i class="fe fe-user"></i>
+                                                <span>Tenant</span>
+                                            </div>
+                                            <div class="info-card-body">
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{{ $avatar }}" alt="avatar" class="rounded-circle tenant-avatar" width="56" height="56" style="object-fit: cover;">
+                                                    <div class="ms-3">
+                                                        <div class="fw-semibold fs-6 tenant-name">{{ $fullName }}</div>
+                                                        <small class="text-muted d-block tenant-contact">
+                                                            <i class="fe fe-phone me-1"></i>{{ $profile ? $profile->phone : 'N/A' }}
+                                                        </small>
+                                                        <small class="text-muted d-block tenant-email">
+                                                            <i class="fe fe-mail me-1"></i>{{ $lease->tenant ? $lease->tenant->email : 'N/A' }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <button class="btn btn-sm btn-outline-primary w-100">
+                                                        <i class="fe fe-user me-1"></i> View Profile
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="mt-3 text-md-end">
-                                            <button class="btn btn-sm btn-primary">
-                                                <i class="fe fe-user me-1"></i> View Tenant Profile
-                                            </button>
+                                    </div>
+
+                                    <!-- Property & Lease Details Card -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="info-card property-card h-100">
+                                            <div class="info-card-header">
+                                                <i class="fe fe-home"></i>
+                                                <span>Property & Lease</span>
+                                            </div>
+                                            <div class="info-card-body">
+                                                <h5 class="mb-2 lease-property-title">
+                                                    {{ $lease->property ? $lease->property->name : 'N/A' }}
+                                                    <span class="badge bg-light text-dark ms-1">{{ $lease->assignments->where('is_current', true)->first() && $lease->assignments->where('is_current', true)->first()->bed ? $lease->assignments->where('is_current', true)->first()->bed->bed_label : 'N/A' }}</span>
+                                                </h5>
+                                                <div class="property-detail-item">
+                                                    <i class="fe fe-calendar text-muted"></i>
+                                                    <span class="lease-dates-header">{{ date('M d, Y', strtotime($lease->start_date)) }} - {{ date('M d, Y', strtotime($lease->end_date)) }}</span>
+                                                </div>
+                                                <div class="property-detail-item">
+                                                    <i class="fe fe-dollar-sign text-primary"></i>
+                                                    <span class="fw-bold text-primary lease-rent-amount">${{ number_format($lease->rent_amount, 2) }}</span>
+                                                    <span class="text-muted lease-payment-frequency">/ {{ str_replace('_', ' ', strtolower($lease->payment_frequency)) }}</span>
+                                                </div>
+                                                @if($nextDueInvoice)
+                                                <div class="property-detail-item mt-2">
+                                                    <i class="fe fe-clock text-warning"></i>
+                                                    <span class="text-muted">Next due: <strong>{{ date('M d, Y', strtotime($nextDueInvoice->due_date)) }}</strong></span>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Invoice Summary Card -->
+                                    <div class="col-lg-4 col-md-12">
+                                        <div class="info-card invoice-summary-card h-100">
+                                            <div class="info-card-header">
+                                                <i class="fe fe-file-text"></i>
+                                                <span>Invoice Summary</span>
+                                            </div>
+                                            <div class="info-card-body">
+                                                <div class="invoice-stats">
+                                                    <div class="invoice-stat-item">
+                                                        <span class="stat-label">Total Invoiced</span>
+                                                        <span class="stat-value">${{ number_format($totalInvoiced, 2) }}</span>
+                                                    </div>
+                                                    <div class="invoice-stat-item text-success">
+                                                        <span class="stat-label">Total Paid</span>
+                                                        <span class="stat-value">${{ number_format($totalPaid, 2) }}</span>
+                                                    </div>
+                                                    <div class="invoice-stat-item text-danger">
+                                                        <span class="stat-label">Outstanding</span>
+                                                        <span class="stat-value">${{ number_format($outstanding, 2) }}</span>
+                                                    </div>
+                                                </div>
+                                                @if($lease->status == 'ACTIVE')
+                                                <div class="invoice-links mt-3">
+                                                    @if($paidInvoices->count() > 0)
+                                                    <div class="invoice-link-group">
+                                                        <span class="badge bg-success-transparent text-success me-1"><i class="fe fe-check-circle"></i> Paid:</span>
+                                                        @foreach ($paidInvoices as $invoice)
+                                                            <a href="{{ route('invoices.show', $invoice->id) }}" class="invoice-link paid">{{ $invoice->invoice_number }}</a>@if(!$loop->last), @endif
+                                                        @endforeach
+                                                    </div>
+                                                    @endif
+                                                    @if($unpaidInvoices->count() > 0)
+                                                    <div class="invoice-link-group mt-2">
+                                                        <span class="badge bg-danger-transparent text-danger me-1"><i class="fe fe-alert-circle"></i> Due:</span>
+                                                        @foreach ($unpaidInvoices as $invoice)
+                                                            <a href="{{ route('invoices.show', $invoice->id) }}" class="invoice-link unpaid">{{ $invoice->invoice_number }}</a>@if(!$loop->last), @endif
+                                                        @endforeach
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -267,19 +279,19 @@
                            
                             <!-- Open Documents Section -->
                             <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex justify-content-between align-items-center section-header" data-bs-toggle="collapse" data-bs-target="#openDocsSection">
                                     <h5 class="section-title mb-0">
                                         <i class="fe fe-file-text me-2"></i> Open Documents
                                         <span class="badge bg-secondary ms-2 document-count">
                                             {{ $lease->documents->where('tenant_signed_at', null)->count() }}
                                         </span>
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary" id="collapseOpenDocs">
+                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
                                         <i class="fe fe-minus"></i>
                                     </button>
                                 </div>
 
-                                <div class="document-section" id="openDocsSection">
+                                <div class="collapse show" id="openDocsSection">
                                     @if ($lease->documents->where('tenant_signed_at', null)->count() > 0)
                                         @foreach ($lease->documents as $doc)
                                             @if (!$doc->tenant_signed_at || !$doc->admin_signed_at)
@@ -336,16 +348,15 @@
                             @if($lease->status == 'ACTIVE')
                              <!-- Invoice Section -->
                             <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex justify-content-between align-items-center section-header" data-bs-toggle="collapse" data-bs-target="#invoiceSection">
                                     <h5 class="section-title mb-0">
                                         <i class="fe fe-file-text me-2"></i> Rent Invoices
                                         <span class="badge bg-primary ms-2">
                                             {{ $lease->invoices->where('type', 'RENT')->count() }}
                                         </span>
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse"
-                                        data-bs-target="#invoiceSection">
-                                        <i class="fe fe-plus"></i>
+                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
+                                        <i class="fe fe-minus"></i>
                                     </button>
                                 </div>
 
@@ -430,17 +441,16 @@
                             @else
                             <!-- Invoice Section -->
                             <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex justify-content-between align-items-center section-header" data-bs-toggle="collapse" data-bs-target="#invoiceSectionEmpty">
                                     <h5 class="section-title mb-0">
                                         <i class="fe fe-file-text me-2"></i> Rent Invoices
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse"
-                                        data-bs-target="#invoiceSection">
+                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
                                         <i class="fe fe-plus"></i>
                                     </button>
                                 </div>
 
-                                <div class="collapse" id="invoiceSection">
+                                <div class="collapse" id="invoiceSectionEmpty">
                                     <div class="invoice-section">
                                         <div class="empty-invoice-state">
                                             <i class="fe fe-inbox"></i>
@@ -452,15 +462,14 @@
                             @endif
                             <!-- Completed Documents Section -->
                             <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex justify-content-between align-items-center section-header" data-bs-toggle="collapse" data-bs-target="#completedDocsSection">
                                     <h5 class="section-title mb-0">
                                         <i class="fe fe-check-square me-2"></i> Completed Documents
                                         <span class="badge bg-success ms-2">
                                             {{ $lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() }}
                                         </span>
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse"
-                                        data-bs-target="#completedDocsSection">
+                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
                                         <i class="fe fe-plus"></i>
                                     </button>
                                 </div>
@@ -511,11 +520,11 @@
 
                             <!-- Lease History Section -->
                             <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex justify-content-between align-items-center section-header" data-bs-toggle="collapse" data-bs-target="#leaseHistorySection">
                                     <h5 class="section-title mb-0">
                                         <i class="fe fe-clock me-2"></i> Lease History
                                     </h5>
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#leaseHistorySection">
+                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
                                         <i class="fe fe-plus"></i>
                                     </button>
                                 </div>
@@ -671,12 +680,15 @@
             }
         });
 
-        // Collapse/expand sections
-        $('#collapseOpenDocs').click(function() {
-            const icon = $(this).find('i');
-            $('#openDocsSection').slideToggle(function() {
-                icon.toggleClass('fe-minus fe-plus');
-            });
+        // Collapse/expand sections - handle Bootstrap collapse events
+        $('.collapse').on('show.bs.collapse', function() {
+            const sectionHeader = $(this).prev('.section-header');
+            sectionHeader.find('.collapse-toggle-btn i').removeClass('fe-plus').addClass('fe-minus');
+        });
+
+        $('.collapse').on('hide.bs.collapse', function() {
+            const sectionHeader = $(this).prev('.section-header');
+            sectionHeader.find('.collapse-toggle-btn i').removeClass('fe-minus').addClass('fe-plus');
         });
 
         $('#resendSignatureMail').click(function(e) {
@@ -720,6 +732,143 @@
 
     .bg-info-light {
         background: rgba(33, 150, 243, 0.15) !important;
+    }
+
+    /* Info Cards */
+    .info-card {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .info-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .info-card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 12px 16px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #e9ecef;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-card-header i {
+        font-size: 14px;
+    }
+
+    .info-card-body {
+        padding: 16px;
+    }
+
+    .tenant-card .info-card-header {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1976d2;
+    }
+
+    .property-card .info-card-header {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        color: #388e3c;
+    }
+
+    .invoice-summary-card .info-card-header {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        color: #f57c00;
+    }
+
+    .property-detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .property-detail-item i {
+        width: 16px;
+        text-align: center;
+    }
+
+    .invoice-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .invoice-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 13px;
+    }
+
+    .invoice-stat-item .stat-label {
+        color: #6c757d;
+    }
+
+    .invoice-stat-item .stat-value {
+        font-weight: 600;
+    }
+
+    .invoice-stat-item.text-success {
+        background: rgba(76, 175, 80, 0.1);
+    }
+
+    .invoice-stat-item.text-success .stat-value {
+        color: #4caf50;
+    }
+
+    .invoice-stat-item.text-danger {
+        background: rgba(244, 67, 54, 0.1);
+    }
+
+    .invoice-stat-item.text-danger .stat-value {
+        color: #f44336;
+    }
+
+    .invoice-links {
+        border-top: 1px solid #e9ecef;
+        padding-top: 12px;
+    }
+
+    .invoice-link-group {
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    .invoice-link {
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .invoice-link.paid {
+        color: #4caf50;
+    }
+
+    .invoice-link.paid:hover {
+        color: #388e3c;
+        text-decoration: underline;
+    }
+
+    .invoice-link.unpaid {
+        color: #f44336;
+    }
+
+    .invoice-link.unpaid:hover {
+        color: #d32f2f;
+        text-decoration: underline;
     }
 
     /* Invoice List */
@@ -1035,21 +1184,70 @@
     }
 
     .detail-section {
-        margin-bottom: 30px;
+        margin-bottom: 20px;
         background: #fff;
         border: 1px solid #e9ecef;
         border-radius: 12px;
-        padding: 25px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        padding: 18px 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid transparent;
+        margin: 0;
+    }
+
+    .section-header:hover {
+        background: #f8f9fa;
+    }
+
+    .section-header[aria-expanded="true"] {
+        border-bottom: 1px solid #e9ecef;
     }
 
     .section-title {
         font-weight: 600;
         color: #2c3e50;
-        font-size: 16px;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+    }
+
+    .collapse-toggle-btn {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .collapse-toggle-btn:hover {
+        background: #e3f2fd;
+        border-color: #2196F3;
+        color: #2196F3;
+    }
+
+    .collapse-toggle-btn i {
+        font-size: 14px;
+        transition: transform 0.2s ease;
+    }
+
+    .detail-section .collapse,
+    .detail-section .collapsing {
+        padding: 0 20px;
+    }
+
+    .detail-section .collapse.show {
+        padding: 15px 20px 20px;
     }
 
     .document-section {
-        margin-top: 20px;
+        margin-top: 0;
     }
 
     .document-card {

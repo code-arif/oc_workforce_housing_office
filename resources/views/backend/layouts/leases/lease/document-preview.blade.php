@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    let currentScale = 1.2;
+    let currentScale = 1.0;
     let pdfDoc = null;
     const container = document.getElementById('pdfContainer');
 
