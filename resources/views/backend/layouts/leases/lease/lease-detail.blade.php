@@ -164,15 +164,15 @@
                                         </div>
                                         <div class="mt-2">
                                             <span class="text-primary fw-bold fs-5 lease-rent-amount">
-                                                ${{ number_format($lease->invoices->where('type', 'RENT')->sum('amount'), 2) }}
+                                                ${{ number_format($lease->rent_amount, 2) }}
                                             </span>
                                             <span class="text-muted ms-2 lease-payment-frequency">
                                                 {{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }}
                                                 Rent
                                             </span>
-                                            <span class="text-muted ms-3">|</span>
+                                             <br>
                                             <span class="text-muted ms-3">
-                                                Next Due on {{ $lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first() ? date('M d, Y', strtotime($lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first()->due_date)) : 'N/A' }} of
+                                            Next Due on {{ $lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first() ? date('M d, Y', strtotime($lease->invoices->where('type', 'RENT')->where('status', 'UNPAID')->first()->due_date)) : 'N/A' }} of
                                                 every
                                                 {{ str_replace('_', ' ', strtolower($lease->payment_frequency)) }}
                                             </span>
@@ -180,10 +180,8 @@
                                     </div>
                                     <div class="col-md-4 d-flex align-items-center">
                                         <div class="me-2">
-                                            <h6 class="mb-1">Invoice Information</h6>
-                                            <p class="text-muted mb-0">
-                                                Details about the Invoice associated with this lease
-                                            </p>
+                                            <h6 class="mb-2">Invoice Information</h6>
+                                            
                                             <ul>
                                                 <li>
                                                     <strong>Total Rent Invoiced:</strong>
@@ -203,11 +201,22 @@
                                         <ul>
                                             @if($lease->status == 'ACTIVE')
                                             @foreach ($lease->invoices as $key => $invoice)
-                                            <li class="mb-1" > 
-                                                <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                        style="{{$invoice->status == 'UNPAID' ? '' : 'color: var(--bs-green)'}}"> {{ $invoice->invoice_number }}@if(!$loop->last),@endif
+                                            @if($invoice->status == 'PAID')
+                                            
+                                            <li class="mb-1 d-inline" > 
+                                                <a href="{{ route('invoices.show', $invoice->id) }}" class="fs-8"
+                                                        style="color: var(--bs-green)"> {{ $invoice->invoice_number }}
+                                                        @if(!$loop->last),@endif
                                                 </a>
                                             </li>
+                                            @else
+                                            <li class="mb-1 d-inline" > 
+                                                <a href="{{ route('invoices.show', $invoice->id) }}" class="fs-8"
+                                                        style="color: var(--bs-red)"> {{ $invoice->invoice_number }}
+                                                        @if(!$loop->last),@endif
+                                                </a>
+                                            </li>
+                                            @endif
                                             @endforeach
                                             @endif
                                         </ul>
