@@ -11,6 +11,8 @@ use App\Models\Lease\LeaseDocument;
 use App\Models\Lease\LeaseTemplate;
 use App\Http\Controllers\Controller;
 use App\Services\DynamicDocumentGenerationService;
+use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Facades\Log;
 
 class LeaseDocumentController extends Controller
 {
@@ -356,16 +358,182 @@ class LeaseDocumentController extends Controller
         ]);
     }
 
+    /**
+     * Download PDF with dynamic data overlayed on the original template
+     */
     public function downloadPdf($id)
     {
-        $document = LeaseDocument::with(['leaseTemplate', 'tenant'])->findOrFail($id);
+        $document = LeaseDocument::with(['leaseTemplate', 'tenant', 'lease.property', 'lease.tenant.profile', 'lease.assignments.bed.room.unit'])->findOrFail($id);
         
-        $content = $document->rendered_content;
+        $template = $document->leaseTemplate;
+        
+        if (!$template) {
+            return redirect()->back()->with('error', 'No template associated with this document');
+        }
+
+        // Get the PDF path from template
+        $pdfPath = $template->pdf_path ?? $template->document_path ?? null;
+        
+        if (!$pdfPath) {
+            // Fallback to old method if no PDF template exists
+            return $this->downloadPdfFromContent($document);
+        }
+
+        $fullPdfPath = storage_path('app/public/' . $pdfPath);
+        
+        if (!file_exists($fullPdfPath)) {
+            Log::error("PDF template not found: {$fullPdfPath}");
+            return redirect()->back()->with('error', 'PDF template file not found');
+        }
+
+        // Get placeholders and signatures from template
+        $placeholders = is_array($template->placeholders) ? $template->placeholders : (json_decode($template->placeholders, true) ?? []);
+        $signatures = is_array($template->signatures) ? $template->signatures : (json_decode($template->signatures, true) ?? []);
+
+        // Get actual lease data
+        $lease = $document->lease;
+        $leaseData = $lease ? $this->extractPlaceholderData($lease) : [];
+
+        try {
+            // Generate PDF with overlays using FPDI
+            $outputPath = $this->generatePdfWithOverlays($fullPdfPath, $placeholders, $signatures, $leaseData, $document);
+            
+            $filename = 'lease_document_' . $document->id . '_' . date('Y-m-d') . '.pdf';
+            
+            return response()->download($outputPath, $filename)->deleteFileAfterSend(true);
+        } catch (\Exception $e) {
+            Log::error("Failed to generate PDF with overlays: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Generate PDF with placeholders and signatures overlayed using FPDI
+     */
+    private function generatePdfWithOverlays($pdfPath, $placeholders, $signatures, $leaseData, $document)
+    {
+        $pdf = new Fpdi();
+        
+        // Ensure output directory exists
+        $outputDir = storage_path('app/public/generated-leases');
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+        
+        $outputPath = $outputDir . '/lease_' . $document->id . '_' . time() . '.pdf';
+        
+        // Get page count from source PDF
+        $pageCount = $pdf->setSourceFile($pdfPath);
+        
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            // Import the page from source PDF
+            $templateId = $pdf->importPage($pageNo);
+            $size = $pdf->getTemplateSize($templateId);
+            
+            // Add page with same size as template
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($templateId);
+            
+            // PDF.js at scale 1.0 renders 1 PDF point = 1 pixel
+            // PDF uses 72 points per inch, FPDI uses mm
+            // Conversion: 1 point = 25.4/72 mm = 0.352778 mm
+            $pointToMm = 25.4 / 72;
+            
+            // Filter and add placeholders for this page
+            $pagePlaceholders = array_filter($placeholders, fn($p) => (int)($p['page'] ?? 1) === $pageNo);
+            
+            foreach ($pagePlaceholders as $placeholder) {
+                $fieldName = $placeholder['field'] ?? '';
+                $value = $leaseData[$fieldName] ?? '';
+                
+                if (empty($value)) continue;
+                
+                // Convert PDF point coordinates to mm
+                $x = (float)($placeholder['x'] ?? 0) * $pointToMm;
+                $y = (float)($placeholder['y'] ?? 0) * $pointToMm;
+                $width = (float)($placeholder['width'] ?? 150) * $pointToMm;
+                $height = (float)($placeholder['height'] ?? 20) * $pointToMm;
+                
+                // Set font - use a reasonable size
+                $fontSize = isset($placeholder['fontSize']) ? (float)$placeholder['fontSize'] : 10;
+                $pdf->SetFont('Helvetica', '', $fontSize);
+                $pdf->SetTextColor(0, 0, 0);
+                
+                // Position and write text
+                $pdf->SetXY($x, $y);
+                
+                // Use Cell for better text positioning
+                $pdf->Cell($width, $height, $value, 0, 0, 'L');
+            }
+            
+            // Filter and add signatures for this page
+            $pageSignatures = array_filter($signatures, fn($s) => (int)($s['page'] ?? 1) === $pageNo);
+            
+            foreach ($pageSignatures as $signature) {
+                $label = $signature['label'] ?? 'Signature';
+                $isTenantSig = stripos($label, 'tenant') !== false;
+                
+                // Check if signature exists
+                $signatureData = $isTenantSig ? $document->tenant_signature : $document->admin_signature;
+                $signedAt = $isTenantSig ? $document->tenant_signed_at : $document->admin_signed_at;
+                
+                if (empty($signatureData)) continue;
+                
+                // Convert PDF point coordinates to mm
+                $x = (float)($signature['x'] ?? 0) * $pointToMm;
+                $y = (float)($signature['y'] ?? 0) * $pointToMm;
+                $width = (float)($signature['width'] ?? 200) * $pointToMm;
+                $height = (float)($signature['height'] ?? 60) * $pointToMm;
+                
+                // Handle base64 signature image
+                if (strpos($signatureData, 'data:image') === 0) {
+                    // Save base64 to temp file
+                    $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signatureData));
+                    $tempImgPath = $outputDir . '/sig_temp_' . uniqid() . '.png';
+                    file_put_contents($tempImgPath, $imgData);
+                    
+                    try {
+                        // Add signature image
+                        $pdf->Image($tempImgPath, $x, $y, $width, $height, 'PNG');
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to add signature image: " . $e->getMessage());
+                    }
+                    
+                    // Clean up temp file
+                    @unlink($tempImgPath);
+                }
+                
+                // Add signed date below signature if available
+                if ($signedAt) {
+                    $pdf->SetFont('Helvetica', '', 8);
+                    $pdf->SetTextColor(100, 100, 100);
+                    $pdf->SetXY($x, $y + $height + 1);
+                    $pdf->Cell($width, 5, 'Signed: ' . $signedAt->format('M d, Y'), 0, 0, 'C');
+                }
+            }
+        }
+        
+        // Save the PDF to file
+        $pdf->Output($outputPath, 'F');
+        
+        return $outputPath;
+    }
+
+    /**
+     * Fallback method - download PDF from rendered HTML content (legacy)
+     */
+    private function downloadPdfFromContent($document)
+    {
+        $content = $document->rendered_content ?? '';
+        
+        if (empty($content)) {
+            return redirect()->back()->with('error', 'No content available for this document');
+        }
         
         // Replace signature placeholders with actual signatures
         $content = $this->insertSignatures($content, $document);
         
-        // Generate PDF
+        // Generate PDF using Dompdf
         $options = new Options();
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isRemoteEnabled', true);

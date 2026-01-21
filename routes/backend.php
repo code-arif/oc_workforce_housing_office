@@ -229,6 +229,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
 */
 Route::group([], function () {
     Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
+    Route::get('/tenants/data', [TenantManageController::class, 'getData'])->name('tenants.get.data');
     Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
@@ -266,6 +267,8 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
     Route::post('/{id}/collect-deposit', [LeaseController::class, 'collectDeposit'])->name('collect.deposit');
     Route::post('/{id}/resend-for-signature', [LeaseController::class, 'resendForSignature'])->name('resend.signature');
+
+    Route::get('/property/{id}/beds', [LeaseController::class, 'getBedsByProperty'])->name('property.beds');
 });
 
 // Invoice Routes
