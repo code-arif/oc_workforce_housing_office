@@ -16,11 +16,7 @@
                             <li class="breadcrumb-item active" aria-current="page">Leases</li>
                         </ol>
                     </div>
-                    <div class="ms-auto">
-                        <a href="{{ route('leases.create') }}" class="btn btn-primary">
-                            <i class="fe fe-plus me-2"></i> New Lease
-                        </a>
-                    </div>
+                    
                 </div>
 
                 <!-- Statistics Cards -->
@@ -156,12 +152,9 @@
                     <div class="card-header border-bottom">
                         <h3 class="card-title">All Leases</h3>
                         <div class="ms-auto">
-                            <button class="btn btn-sm btn-light me-2" id="exportBtn">
-                                <i class="fe fe-download me-1"></i> Export
-                            </button>
-                            <button class="btn btn-sm btn-light" id="filterBtn">
-                                <i class="fe fe-filter me-1"></i> Filter
-                            </button>
+                            <a href="{{ route('leases.create') }}" class="btn btn-primary">
+                                <i class="fe fe-plus me-2"></i> New Lease
+                            </a>
                         </div>
                     </div>
 

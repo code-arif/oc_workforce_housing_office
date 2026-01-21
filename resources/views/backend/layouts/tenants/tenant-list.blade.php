@@ -95,49 +95,35 @@
                         <div class="filter-card">
                             <div class="row align-items-end g-3">
                                 <div class="col-md-3">
-                                    <label class="form-label">Tenant Status</label>
-                                    <select class="form-select" id="statusFilter">
-                                        <option value="">All Status</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="processing">Processing</option>
-                                        <option value="under_review">Under Review</option>
-                                        <option value="approved">Approved</option>
-                                        <option value="rejected">Rejected</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                                    <label class="form-label">Tenant </label>
+                                    <input type="text" name="tenantFilter" id="tenantFilter" class="form-control"
+                                        placeholder="Search by name, email...">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Account Status</label>
-                                    <select class="form-select" id="accountStatusFilter">
-                                        <option value="">All Accounts</option>
-                                        <option value="active">Active Lease</option>
-                                        <option value="inactive">No Active Lease</option>
+                                    <label class="form-label">Property</label>
+                                    <select class="form-select select3" id="propertyFilter">
+                                        <option value="">Select Property</option>
+                                        @foreach($properties as $property)
+                                            <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label">Application Source</label>
-                                    <select class="form-select" id="sourceFilter">
-                                        <option value="">All Sources</option>
-                                        <option value="admin">Admin Created</option>
-                                        <option value="self">Self Registration</option>
-                                    </select>
+                                    <label class="form-label">Beds</label>
+                                    <select class="form-select select3" id="bedsFilter"></select>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Date From</label>
-                                    <input type="date" class="form-control" id="dateFrom">
+                                    <input type="text" class="form-control datepicker2" id="dateFrom" placeholder="Search by tenant created from...">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Date To</label>
-                                    <input type="date" class="form-control" id="dateTo">
+                                    <input type="text" class="form-control datepicker2" id="dateTo" placeholder="Search by tenant created to...">
                                 </div>
                             </div>
                             <div class="row mt-3">
                                 <div class="col-12">
-                                    <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
-                                        <i class="fe fe-filter me-1"></i> Apply Filters
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                    <button type="button" class="btn btn-secondary" id="resetFilter">
                                         <i class="fe fe-refresh-cw me-1"></i> Reset
                                     </button>
                                 </div>
@@ -254,6 +240,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
     <script>
         let dataTable;
 
@@ -265,7 +252,13 @@
                 }
             });
 
+             $('.datepicker2').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+            
             initializeDataTable();
+            initializeSelect2();
         });
 
         function initializeDataTable() {
@@ -296,6 +289,9 @@
                     type: "GET",
                     dataType: 'json', // Important for back/forward fix
                     data: function(d) {
+                        d.tenant = $('#tenantFilter').val();
+                        d.property_id = $('#propertyFilter').val();
+                        d.bed_id = $('#bedsFilter').val();
                         d.status = $('#statusFilter').val();
                         d.account_status = $('#accountStatusFilter').val();
                         d.source = $('#sourceFilter').val();
@@ -358,6 +354,46 @@
                     }
                 ]
             });
+
+            // Reset filters
+            $('#resetFilter').click(function() {
+                // $('#filterForm')[0].reset();
+                $('#propertyFilter, #bedsFilter, #tenantFilter, #statusFilter, #dateFrom, #dateTo').val(null).trigger('change');
+                $('#tenantFilter').val('');
+                dataTable.ajax.reload();
+            });
+
+            $('#propertyFilter, #bedsFilter, #statusFilter, #dateFrom, #dateTo').change(function() {
+                dataTable.ajax.reload();
+            })
+
+            $('#tenantFilter').on('keyup', function() {
+                dataTable.ajax.reload();
+            });
+
+            $('#propertyFilter').change(function() {
+                const propertyId = $(this).val();
+                $('#bedsFilter').empty().append('<option value="">All Beds</option>');
+                if (propertyId) {
+                    $.ajax({
+                        url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
+                        type: 'GET',
+                        success: function(response) {
+                            console.log(response);
+                            
+                            response.data.forEach(function(bed) {
+                                $('#bedsFilter').append(
+                                    `<option value="${bed.id}">${bed.bed_label}</option>`
+                                );
+                            });
+                            $('#bedsFilter').val(null).trigger('change');
+                        },
+                        error: function() {
+                            toastr.error('Failed to fetch beds for the selected property.');
+                        }
+                    });
+                }
+            });
         }
 
         function applyFilters() {
@@ -365,7 +401,7 @@
         }
 
         function resetFilters() {
-            $('#statusFilter, #accountStatusFilter, #sourceFilter, #dateFrom, #dateTo').val('');
+            $('#statusFilter, #tenantFilter, #sourceFilter, #dateFrom, #dateTo').val('');
             dataTable.ajax.reload();
         }
 
@@ -513,12 +549,25 @@
         function exportTenants() {
             toastr.info('Export functionality coming soon!');
         }
+
+        function initializeSelect2() {
+            if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
+                $('.select3').select2({
+                    placeholder: 'Select an option',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        }
     </script>
 @endpush
 
 @push('styles')
     <link href="{{ asset('default/datatable.css') }}" rel="stylesheet" />
     <style>
+        .select2-container {
+            width: 100% !important;
+        }
         .filter-card {
             background: #f8f9fa;
             border-radius: 8px;

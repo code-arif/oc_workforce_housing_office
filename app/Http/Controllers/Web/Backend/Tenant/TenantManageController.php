@@ -7,6 +7,7 @@ use App\Models\TenantProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Property;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -27,12 +28,14 @@ class TenantManageController extends Controller
         })->count();
         $pendingTenants = Tenant::where('status', 'pending')->count();
         $inactiveTenants = $totalTenants - $activeTenants;
+        $properties = Property::select('id', 'name')->orderBy('name')->get();
 
         return view('backend.layouts.tenants.tenant-list', compact(
             'totalTenants',
             'activeTenants',
             'pendingTenants',
-            'inactiveTenants'
+            'inactiveTenants',
+            'properties'
         ));
     }
 
@@ -56,7 +59,7 @@ class TenantManageController extends Controller
                 ->with([
                     'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar',
                     'leases' => function ($query) {
-                        $query->select('id', 'tenant_id', 'status', 'start_date', 'end_date', 'rent_amount')
+                        $query->select('id', 'tenant_id', 'property_id', 'status', 'start_date', 'end_date', 'rent_amount') // Added property_id
                             ->whereNull('deleted_at')
                             ->with([
                                 'property:id,name',
@@ -64,7 +67,7 @@ class TenantManageController extends Controller
                                     $q->select('id', 'lease_id', 'bed_id', 'is_current')
                                         ->where('is_current', true)
                                         ->whereNull('deleted_at')
-                                        ->with('bed:id,bed_number,room_id')
+                                        ->with('bed:id,bed_label,room_id')
                                         ->limit(1);
                                 }
                             ]);
@@ -103,6 +106,32 @@ class TenantManageController extends Controller
             }
             if ($request->filled('date_to')) {
                 $query->whereDate('tenants.created_at', '<=', $request->date_to);
+            }
+
+            if($request->filled('property_id')) {
+                $propertyId = $request->property_id;
+                $query->whereHas('leases', function ($q) use ($propertyId) {
+                    $q->where('property_id', $propertyId)
+                      ->whereNull('deleted_at');
+                });
+            }
+
+            if($request->filled('bed_id')) {
+                $bedId = $request->bed_id;
+                $query->whereHas('leases.assignments', function ($q) use ($bedId) {
+                    $q->where('bed_id', $bedId)
+                      ->where('is_current', true)
+                      ->whereNull('deleted_at');
+                });
+            }
+
+            if($request->filled('tenant')){
+                $tenantKeyword = $request->tenant;
+                $query->whereHas('profile', function ($q) use ($tenantKeyword) {
+                    $q->where(DB::raw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', COALESCE(last_name, ''))"), 'like', "%{$tenantKeyword}%")
+                    ->orWhere('phone', 'like', "%{$tenantKeyword}%")
+                    ->orWhere('email', 'like', "%{$tenantKeyword}%");
+                });
             }
 
             return DataTables::eloquent($query)
@@ -154,7 +183,7 @@ class TenantManageController extends Controller
 
                     $propertyName = $property ? e($property->name) : 'N/A';
                     $unitInfo = $assignment && $assignment->bed
-                        ? 'Bed ' . e($assignment->bed->bed_number)
+                        ? 'Bed: ' . e($assignment->bed->bed_label)
                         : 'N/A';
 
                     return '<div class="text-truncate">
