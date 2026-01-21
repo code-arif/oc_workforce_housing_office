@@ -396,15 +396,35 @@ class TenantManageController extends Controller
 
         $tenant = Tenant::with([
             'profile',
+            'address',
+            'emergencyContacts',
             'leases' => function ($query) {
                 $query->with([
                     'property',
-                    'assignments.bed.room'
+                    'assignments.bed.room.unit'
                 ])->orderBy('start_date', 'desc');
             }
         ])->findOrFail($id);
 
-        return view('backend.layouts.tenants.tenant-details', compact('tenant', 'tenants'));
+        // Get all invoices for this tenant
+        $invoices = \App\Models\Invoice::where('tenant_id', $id)
+            ->with(['lease.property'])
+            ->orderBy('due_date', 'desc')
+            ->get();
+
+        // Calculate invoice statistics
+        $invoiceStats = [
+            'total' => $invoices->count(),
+            'paid' => $invoices->where('status', 'PAID')->count(),
+            'unpaid' => $invoices->whereIn('status', ['UNPAID', 'PENDING'])->count(),
+            'overdue' => $invoices->filter(fn($inv) => $inv->isOverdue())->count(),
+            'partial' => $invoices->where('status', 'PARTIAL')->count(),
+            'total_amount' => $invoices->sum('total_amount'),
+            'paid_amount' => $invoices->sum('paid_amount'),
+            'balance_due' => $invoices->sum('balance_due'),
+        ];
+
+        return view('backend.layouts.tenants.tenant-details', compact('tenant', 'tenants', 'invoices', 'invoiceStats'));
     }
 
     /**

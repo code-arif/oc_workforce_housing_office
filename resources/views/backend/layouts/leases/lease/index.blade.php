@@ -97,7 +97,60 @@
                         </div>
                     </div>
                 </div>
-
+                <!-- FILTERS -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-end g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Property</label>
+                                    <select class="form-select select3" id="propertyFilter">
+                                        <option value="">Select Property</option>
+                                        @foreach ($properties as $property)
+                                            <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Bed</label>
+                                    <select class="form-select select3" id="bedFilter">
+                                        <option value="">All Beds</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Tenant</label>
+                                    <select class="form-select select3" id="tenantFilter">
+                                        <option value="">Select Tenant</option>
+                                        @foreach ($tenants as $tenant)
+                                            <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select select3" id="statusFilter">
+                                        <option value="">All Statuses</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                        <i class="fe fe-refresh-cw me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            {{-- <div class="row mt-3">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
+                                        <i class="fe fe-filter me-1"></i> Apply Filters
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                        <i class="fe fe-refresh-cw me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div> --}}
+                        </div>
+                    </div>
+                </div>
                 <!-- Leases Table -->
                 <div class="card">
                     <div class="card-header border-bottom">
@@ -172,9 +225,10 @@
                 ajax: {
                     url: '{{ route('leases.get.data') }}',
                     data: function(d) {
+                        d.property_id = $('#propertyFilter').val();
+                        d.bed_id = $('#bedFilter').val();
+                        d.tenant_id = $('#tenantFilter').val();
                         d.status = $('#statusFilter').val();
-                        d.date_from = $('#dateFrom').val();
-                        d.date_to = $('#dateTo').val();
                     }
                 },
                 columns: [{
@@ -213,7 +267,7 @@
                 order: [
                     [0, 'desc']
                 ],
-                pageLength: 25,
+                pageLength: 10,
                 dom: '<"d-flex justify-content-between align-items-center mb-3"<"showing-info">f>rtip',
                 language: {
                     search: "",
@@ -253,8 +307,36 @@
 
             // Reset filters
             $('#resetFilter').click(function() {
-                $('#filterForm')[0].reset();
+                // $('#filterForm')[0].reset();
+                $('#propertyFilter, #bedFilter, #tenantFilter, #statusFilter').val(null).trigger('change');
                 table.ajax.reload();
+            });
+            $('#propertyFilter, #bedFilter, #tenantFilter, #statusFilter').change(function() {
+                table.ajax.reload();
+            })
+
+            $('#propertyFilter').change(function() {
+                const propertyId = $(this).val();
+                $('#bedFilter').empty().append('<option value="">All Beds</option>');
+                if (propertyId) {
+                    $.ajax({
+                        url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
+                        type: 'GET',
+                        success: function(response) {
+                            console.log(response);
+                            
+                            response.data.forEach(function(bed) {
+                                $('#bedFilter').append(
+                                    `<option value="${bed.id}">${bed.bed_label}</option>`
+                                );
+                            });
+                            $('#bedFilter').val(null).trigger('change');
+                        },
+                        error: function() {
+                            toastr.error('Failed to fetch beds for the selected property.');
+                        }
+                    });
+                }
             });
 
             // Export functionality
@@ -263,6 +345,11 @@
             });
             initializeSelect2();
         });
+
+        function resetFilters() {
+            $('#propertyFilter, #bedFilter, #tenantFilter, #statusFilter').val(null).trigger('change');
+            $('#leasesTable').DataTable().ajax.reload();
+        }
 
         function initializeSelect2() {
             if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
@@ -278,6 +365,23 @@
 
 @push('styles')
     <style>
+        .select2-container {
+            width: 100% !important;
+        }
+        .filter-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .filter-card .form-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
         .icon-service {
             width: 60px;
             height: 60px;

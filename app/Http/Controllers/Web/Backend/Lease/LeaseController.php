@@ -39,7 +39,10 @@ class LeaseController extends Controller
             'expired' => Lease::whereIn('status', ['TERMINATED', 'COMPLETED'])->count()
         ];
 
-        return view('backend.layouts.leases.lease.index', compact('stats'));
+        $properties = Property::where('is_active', true)->get();
+        $tenants = Tenant::all();
+
+        return view('backend.layouts.leases.lease.index', compact('stats', 'properties', 'tenants'));
     }
 
     /**
@@ -87,9 +90,15 @@ class LeaseController extends Controller
                 $query->where('leases.property_id', $request->property_id);
             }
 
+            if($request->filled('bed_id')){
+                $query->whereHas('assignments', function($q) use ($request){
+                    $q->where('bed_id', $request->bed_id);
+                });
+            }
+
             // Date range filter
-            if ($request->filled('date_from')) {
-                $query->whereDate('leases.start_date', '>=', $request->date_from);
+            if ($request->filled('tenant_id')) {
+                $query->where('leases.tenant_id', $request->tenant_id);
             }
             if ($request->filled('date_to')) {
                 $query->whereDate('leases.end_date', '<=', $request->date_to);
@@ -205,9 +214,7 @@ class LeaseController extends Controller
     public function create()
     {
         $terms = Season::where('is_active', true)->get();
-
         $properties = Property::with(['units'])->get();
-
         $tenants = Tenant::with(['profile'])->where('status', 'active')->get();
 
         $leaseTemplates = LeaseTemplate::where('is_active', true)->get();
@@ -829,5 +836,16 @@ class LeaseController extends Controller
                 'message' => 'Failed to resend signature request: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getBedsByProperty($id)
+    {
+        $beds = Bed::whereHas('room', function ($query) use ($id) {
+            $query->whereHas('unit', function ($q) use ($id) {
+                $q->where('property_id', $id);
+            });
+        })->get();
+
+        return response()->json(['success' => true, 'data' => $beds]);
     }
 }
