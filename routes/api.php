@@ -15,6 +15,8 @@ use App\Http\Controllers\Api\Tenants\TenantPasswordController;
 use App\Http\Controllers\Api\Tenants\TenantDashboardController;
 use App\Http\Controllers\Api\Tenants\TenantLeaseSignController;
 
+use App\Http\Controllers\Api\FaqApiController;
+use App\Http\Controllers\Web\Backend\ItemController;
 //health-check
 Route::get('/health', function () {
     return response()->json([
@@ -97,6 +99,12 @@ Route::group(['middleware' => 'guest:api'], function () {
         //     Route::get('/document/{documentId}/download', [LeaseDocumentController::class, 'downloadDocument']);
         // });
     });
+
+
+////FAQ show in  frontend 
+
+    Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
+
 });
 
 
@@ -159,3 +167,9 @@ Route::group(['middleware' => 'auth:api'], function () {
         });
     });
 });
+
+
+//all FaQ showw
+Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
+//  Items show
+ Route::get('/items/active', [ItemController::class, 'activeItems']);

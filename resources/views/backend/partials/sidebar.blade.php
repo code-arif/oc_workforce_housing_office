@@ -116,6 +116,16 @@
                     </a>
                 </li>
 
+                {{-- FAQ   created by Rayhann --}}
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('faq.*') ? 'has-link' : '' }}"
+                    href="{{ route('faq.index') }}">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span class="side-menu__label">FAQ</span>
+                    </a>
+                </li>
+
+
                 {{-- Messaging --}}
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}"
@@ -126,13 +136,15 @@
                 </li>
 
                 {{-- Listing --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-clipboard-list"></i>
-                        <span class="side-menu__label">Listing</span>
-                    </a>
-                </li>
+{{-- Items Management --}}
+<li class="slide">
+    <a class="side-menu__item {{ request()->routeIs('items.*') ? 'has-link' : '' }}"
+       href="{{ route('items.index') }}">
+        <i class="fa-solid fa-box"></i>
+        <span class="side-menu__label">Listing</span>
+    </a>
+</li>
+
 
                 @can('cms.view')
                 {{-- Frontend --}}
@@ -143,6 +155,9 @@
                     </a>
                 </li>
                 @endcan
+
+
+                
 
                 @can('user-management.users.list' )
                 {{-- User Management --}}

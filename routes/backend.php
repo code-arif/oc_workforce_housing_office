@@ -37,6 +37,8 @@ use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as Section
 use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
 use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
+use App\Http\Controllers\Web\Backend\FaqController;
+use App\Http\Controllers\Web\Backend\ItemController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -435,10 +437,43 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
 Route::middleware(['auth', 'admin'])->group(function () {
     // Get units by property
     Route::get('/properties/{property}/units', [LeaseController::class, 'getUnits'])->name('backend.properties.units');
-
-    // Get rooms by unit
     Route::get('/units/{unit}/rooms', [LeaseController::class, 'getRooms'])->name('backend.units.rooms');
-
-    // Get beds by room
     Route::get('/rooms/{room}/beds', [LeaseController::class, 'getBeds'])->name('backend.rooms.beds');
+    
+    //faqq sectionn  rayyhannn
+    Route::prefix('faq')->name('faq.')->group(function () {
+
+        Route::get('/', [FaqController::class, 'index'])->name('index');
+        Route::post('/store', [FaqController::class, 'store'])->name('store');
+        Route::post('/update/{id}', [FaqController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [FaqController::class, 'destroy'])->name('delete');
+
+        // ✅ STATUS TOGGLE (POST)
+        Route::post('/status/{id}', [FaqController::class, 'status'])->name('status');
+
+    });
+
+    // item sectionn
+
+    Route::prefix('items')->name('items.')->group(function () {
+
+        // LIST
+        Route::get('/', [ItemController::class, 'index'])->name('index');
+
+        // CREATE
+        Route::post('/store', [ItemController::class, 'store'])->name('store');
+
+        // UPDATE
+        Route::post('/update/{id}', [ItemController::class, 'update'])->name('update');
+
+        // DELETE
+        Route::delete('/delete/{id}', [ItemController::class, 'destroy'])->name('delete');
+
+        // STATUS TOGGLE (ACTIVE / INACTIVE)
+        Route::post('/status/{id}', [ItemController::class, 'status'])->name('status');
+        //active data show
+    Route::get('/items/active', [ItemController::class, 'activeItems']);
+
+    });
+
 });

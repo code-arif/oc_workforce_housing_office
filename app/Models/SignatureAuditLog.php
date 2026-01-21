@@ -53,7 +53,7 @@ class SignatureAuditLog extends Model
             'metadata' => $metadata,
             'notes' => $notes,
         ]);
-    }
+    }     
 
     /**
      * Scope to get logs for a specific action
