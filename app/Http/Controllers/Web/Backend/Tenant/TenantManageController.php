@@ -14,10 +14,32 @@ use Yajra\DataTables\Facades\DataTables;
 
 class TenantManageController extends Controller
 {
+
+    /**
+     * Tenant lsit page
+     */
+    public function index(Request $request)
+    {
+        // Get statistics for cards
+        $totalTenants = Tenant::count();
+        $activeTenants = Tenant::whereHas('leases', function ($q) {
+            $q->where('status', 'ACTIVE');
+        })->count();
+        $pendingTenants = Tenant::where('status', 'pending')->count();
+        $inactiveTenants = $totalTenants - $activeTenants;
+
+        return view('backend.layouts.tenants.tenant-list', compact(
+            'totalTenants',
+            'activeTenants',
+            'pendingTenants',
+            'inactiveTenants'
+        ));
+    }
+
     /**
      * All tenant list
      */
-    public function index(Request $request)
+    public function getData(Request $request)
     {
         // Fix browser back/forward button issue - only return JSON for AJAX requests
         if ($request->ajax() && $request->wantsJson()) {
@@ -223,22 +245,8 @@ class TenantManageController extends Controller
                 ->rawColumns(['name', 'property_unit', 'address', 'account_status', 'tenant_status', 'rent', 'action'])
                 ->make(true);
         }
-
-        // Get statistics for cards
-        $totalTenants = Tenant::count();
-        $activeTenants = Tenant::whereHas('leases', function ($q) {
-            $q->where('status', 'ACTIVE');
-        })->count();
-        $pendingTenants = Tenant::where('status', 'pending')->count();
-        $inactiveTenants = $totalTenants - $activeTenants;
-
-        return view('backend.layouts.tenants.tenant-list', compact(
-            'totalTenants',
-            'activeTenants',
-            'pendingTenants',
-            'inactiveTenants'
-        ));
     }
+
 
     /**
      * Store new tenant

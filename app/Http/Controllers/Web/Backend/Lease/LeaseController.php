@@ -23,7 +23,9 @@ use App\Mail\Tenant\LeaseSignatureRequestMail;
 
 class LeaseController extends Controller
 {
-
+    /**
+     * lease index page
+     */
     public function index(Request $request)
     {
         // Get statistics
@@ -40,6 +42,9 @@ class LeaseController extends Controller
         return view('backend.layouts.leases.lease.index', compact('stats'));
     }
 
+    /**
+     * Lease list
+     */
     public function getData(Request $request)
     {
         if ($request->ajax()) {
@@ -288,7 +293,7 @@ class LeaseController extends Controller
             if ($isCustomPayment) {
                 // Custom payment schedule
                 $this->generateCustomPaymentSchedule($lease, $request->custom_payments);
-                
+
                 // Generate custom invoices for each tenant
                 foreach ($request->tenant_ids as $tenantId) {
                     $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected);
@@ -314,7 +319,7 @@ class LeaseController extends Controller
                     $this->generateInvoices($lease, $tenantId, $request->due_day ?? 1, $request->first_invoice_date, $depositCollected);
                 }
             }
-            
+
             Log::info('Invoices generated for lease ID: ' . $lease->id);
             // Create lease document if template is selected and not a draft
            if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
@@ -477,7 +482,7 @@ class LeaseController extends Controller
                 'issue_date' => now(),
                 'is_first_invoice' => $isFirstInvoice,
             ]);
-               
+
 
             $isFirstInvoice = false;
             $invoiceNumber++;
@@ -524,10 +529,10 @@ class LeaseController extends Controller
 
             // Generate unique invoice number
             $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
-            
+
             // If first invoice and deposit not collected, add deposit to first invoice
             if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
-                
+
                 Invoice::create([
                     'lease_id' => $lease->id,
                     'tenant_id' => $tenantId,
@@ -541,7 +546,7 @@ class LeaseController extends Controller
                     'issue_date' => now(),
                     'includes_deposit' => $depositCollected,
                 ]);
-            }  
+            }
 
             Invoice::create([
                 'lease_id' => $lease->id,
@@ -652,7 +657,7 @@ class LeaseController extends Controller
     {
         try {
             $lease = Lease::findOrFail($id);
-            
+
             $lease->update([
                 'deposit_collected' => true
             ]);
@@ -663,7 +668,7 @@ class LeaseController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to collect deposit: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update deposit status.'
@@ -680,7 +685,7 @@ class LeaseController extends Controller
         return response()->json(['success' => true, 'data' => $property->units]);
     }
 
-    public function getRooms($unitId) 
+    public function getRooms($unitId)
     {
         $unit = \App\Models\Unit::with('rooms')->find($unitId);
         if (!$unit) {
@@ -689,7 +694,7 @@ class LeaseController extends Controller
         return response()->json(['success' => true, 'data' => $unit->rooms]);
     }
 
-    public function getBeds($roomId) 
+    public function getBeds($roomId)
     {
         $room = \App\Models\Room::with('beds')->find($roomId);
         if (!$room) {

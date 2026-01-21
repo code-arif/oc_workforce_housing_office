@@ -422,7 +422,7 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
-    
+
     // Preview document for a lease
     Route::get('/lease/{leaseId}/preview/{documentId?}', [LeaseDocumentController::class, 'previewForLease'])->name('preview-for-lease');
 });
