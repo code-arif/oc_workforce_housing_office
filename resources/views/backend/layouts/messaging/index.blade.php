@@ -3,6 +3,8 @@
 @section('title', 'Inbox')
 
 @push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         .email-row {
             cursor: pointer;
@@ -29,7 +31,7 @@
         }
 
         .compose-modal .modal-dialog {
-            max-width: 650px;
+            max-width: 700px;
             margin: 30px auto;
         }
 
@@ -71,6 +73,20 @@
 
         .star-icon:hover {
             color: #f9ab00;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+
+        .recipient-type-tabs .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .recipient-type-tabs .nav-link.active {
+            background-color: #1a73e8;
+            color: white;
         }
     </style>
 @endpush
@@ -277,31 +293,68 @@
 
     <!-- Compose Modal -->
     <div class="modal fade compose-modal" id="composeModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">New Message</h5>
+                    <h5 class="modal-title" id="composeModalTitle">New Message</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="composeForm">
                     <div class="modal-body">
-                        <div class="mb-3">
-                            <input type="text" class="form-control" id="toEmails" placeholder="To" required>
+                        <!-- Recipient Type Tabs -->
+                        <ul class="nav nav-tabs recipient-type-tabs mb-3" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" type="button" data-recipient-type="tenant"
+                                    onclick="switchRecipientType('tenant')">
+                                    <i class="fa fa-users me-1"></i>Select Tenant
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" type="button" data-recipient-type="manual"
+                                    onclick="switchRecipientType('manual')">
+                                    <i class="fa fa-keyboard-o me-1"></i>Enter Email
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Tenant Selection -->
+                        <div id="tenantSelection" class="mb-3">
+                            <label class="form-label fw-bold">To: Select Tenant(s)</label>
+                            <select class="form-select" id="tenantSelect" multiple="multiple" style="width: 100%;">
+                            </select>
+                            <small class="text-muted">Search and select tenants from the list</small>
+                        </div>
+
+                        <!-- Manual Email Entry -->
+                        <div id="manualEmailEntry" class="mb-3" style="display: none;">
+                            <label class="form-label fw-bold">To:</label>
+                            <input type="text" class="form-control" id="toEmails" placeholder="Enter email addresses">
                             <small class="text-muted">Separate multiple emails with commas</small>
                         </div>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" id="ccEmails" placeholder="Cc">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Cc:</label>
+                                <input type="text" class="form-control" id="ccEmails" placeholder="Cc emails (optional)">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Bcc:</label>
+                                <input type="text" class="form-control" id="bccEmails" placeholder="Bcc emails (optional)">
+                            </div>
                         </div>
+
                         <div class="mb-3">
-                            <input type="text" class="form-control" id="bccEmails" placeholder="Bcc">
+                            <label class="form-label fw-bold">Subject:</label>
+                            <input type="text" class="form-control" id="subject" placeholder="Email subject" required>
                         </div>
+
                         <div class="mb-3">
-                            <input type="text" class="form-control" id="subject" placeholder="Subject" required>
+                            <label class="form-label fw-bold">Message:</label>
+                            <textarea class="form-control" id="emailBody" rows="10" placeholder="Compose your message..." required></textarea>
                         </div>
+
                         <div class="mb-3">
-                            <textarea class="form-control" id="emailBody" rows="12" placeholder="Compose your message..." required></textarea>
-                        </div>
-                        <div class="mb-3">
+                            <label class="form-label">Attachments:</label>
                             <input type="file" class="form-control" id="attachments" multiple>
                             <small class="text-muted">Max 25MB per file</small>
                         </div>
@@ -321,10 +374,58 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        let currentRecipientType = 'tenant';
+
         $(document).ready(function() {
+            // Initialize Select2 for tenant selection
+            $('#tenantSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search for tenants...',
+                allowClear: true,
+                ajax: {
+                    url: '{{ route('messaging.tenants.search') }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.results.map(function(tenant) {
+                                return {
+                                    id: tenant.email,
+                                    text: tenant.text,
+                                    email: tenant.email,
+                                    name: tenant.name
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0,
+                dropdownParent: $('#composeModal')
+            });
+
+            // Load initial tenant list
+            $.ajax({
+                url: '{{ route('messaging.tenants.search') }}',
+                dataType: 'json',
+                success: function(data) {
+                    data.results.forEach(function(tenant) {
+                        const option = new Option(tenant.text, tenant.email, false, false);
+                        $('#tenantSelect').append(option);
+                    });
+                }
+            });
+
             // Compose Modal
             $('#composeBtn').click(function() {
+                resetComposeModal();
                 $('#composeModal').modal('show');
             });
 
@@ -332,18 +433,28 @@
             $('#composeForm').submit(function(e) {
                 e.preventDefault();
 
-                // Parse email addresses
-                const toEmails = $('#toEmails').val().split(',').map(e => e.trim()).filter(e => e);
+                let toEmails = [];
+
+                // Get emails based on recipient type
+                if (currentRecipientType === 'tenant') {
+                    const selectedTenants = $('#tenantSelect').val();
+                    if (!selectedTenants || selectedTenants.length === 0) {
+                        toastr.error('Please select at least one tenant');
+                        return;
+                    }
+                    toEmails = selectedTenants;
+                } else {
+                    toEmails = $('#toEmails').val().split(',').map(e => e.trim()).filter(e => e);
+                    if (toEmails.length === 0) {
+                        toastr.error('Please enter at least one recipient');
+                        return;
+                    }
+                }
+
                 const ccEmails = $('#ccEmails').val() ? $('#ccEmails').val().split(',').map(e => e.trim())
                     .filter(e => e) : [];
                 const bccEmails = $('#bccEmails').val() ? $('#bccEmails').val().split(',').map(e => e
-                .trim()).filter(e => e) : [];
-
-                // Validate at least one recipient
-                if (toEmails.length === 0) {
-                    toastr.error('Please enter at least one recipient');
-                    return;
-                }
+                    .trim()).filter(e => e) : [];
 
                 const formData = new FormData();
 
@@ -384,7 +495,7 @@
                     success: function(response) {
                         if (response.success) {
                             $('#composeModal').modal('hide');
-                            $('#composeForm')[0].reset();
+                            resetComposeModal();
                             toastr.success('Email sent successfully');
                             setTimeout(() => location.reload(), 1000);
                         } else {
@@ -405,18 +516,19 @@
 
             // Save Draft
             $('#saveDraftBtn').click(function() {
-                const toEmails = $('#toEmails').val() ? $('#toEmails').val().split(',').map(e => e.trim())
-                    .filter(e => e).map(email => ({
-                        email
-                    })) : [];
+                let toEmails = [];
+                if (currentRecipientType === 'tenant') {
+                    const selectedTenants = $('#tenantSelect').val() || [];
+                    toEmails = selectedTenants.map(email => ({ email }));
+                } else {
+                    toEmails = $('#toEmails').val() ? $('#toEmails').val().split(',').map(e => e.trim())
+                        .filter(e => e).map(email => ({ email })) : [];
+                }
+
                 const ccEmails = $('#ccEmails').val() ? $('#ccEmails').val().split(',').map(e => e.trim())
-                    .filter(e => e).map(email => ({
-                        email
-                    })) : [];
+                    .filter(e => e).map(email => ({ email })) : [];
                 const bccEmails = $('#bccEmails').val() ? $('#bccEmails').val().split(',').map(e => e
-                .trim()).filter(e => e).map(email => ({
-                    email
-                })) : [];
+                    .trim()).filter(e => e).map(email => ({ email })) : [];
 
                 $.ajax({
                     url: '{{ route('messaging.draft.save') }}',
@@ -538,6 +650,31 @@
                 });
             }, 120000);
         });
+
+        function switchRecipientType(type) {
+            currentRecipientType = type;
+            
+            // Update tab states
+            $('.recipient-type-tabs .nav-link').removeClass('active');
+            $(`.recipient-type-tabs .nav-link[data-recipient-type="${type}"]`).addClass('active');
+            
+            if (type === 'tenant') {
+                $('#tenantSelection').show();
+                $('#manualEmailEntry').hide();
+                $('#toEmails').removeAttr('required');
+            } else {
+                $('#tenantSelection').hide();
+                $('#manualEmailEntry').show();
+                $('#toEmails').attr('required', 'required');
+            }
+        }
+
+        function resetComposeModal() {
+            $('#composeForm')[0].reset();
+            $('#tenantSelect').val(null).trigger('change');
+            $('#composeModalTitle').text('New Message');
+            switchRecipientType('tenant');
+        }
 
         function viewEmail(id) {
             window.location.href = '{{ url('messaging/read') }}/' + id;

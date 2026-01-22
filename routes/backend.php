@@ -327,6 +327,7 @@ Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(fun
     Route::delete('/{id}', [MessagingController::class, 'delete'])->name('delete');
     Route::post('/bulk-action', [MessagingController::class, 'bulkAction'])->name('bulk.action');
     Route::get('/attachment/{id}', [MessagingController::class, 'downloadAttachment'])->name('attachment.download');
+    Route::get('/tenants/search', [MessagingController::class, 'searchTenants'])->name('tenants.search');
 });
 
 

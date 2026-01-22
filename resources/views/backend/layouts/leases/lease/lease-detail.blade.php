@@ -146,7 +146,11 @@
                                                 id="resendSignatureMail">
                                                 <i class="fe fe-mail me-1"></i> Resend Signature Request
                                             </a>
-                                            @else
+                                        @elseif($lease->status == 'COMPLETED')
+                                            <a href="#" class="btn btn-sm btn-outline-secondary me-2 disabled" title="Lease is already completed">
+                                                <i class="fe fe-check-circle me-1"></i> Lease Closed
+                                            </a>
+                                        @else
                                             <a href="#" class="btn btn-sm btn-outline-primary me-2" id="manuallyCloseLease" data-lease-id="{{ $lease->id }}"
                                                 title="Manually closed the lease" >
                                                 <i class="fe fe-mail me-1"></i> Manually Close Lease
