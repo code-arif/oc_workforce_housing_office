@@ -27,12 +27,12 @@ class TenantFormController extends Controller
     /**
      * Submit application form
      */
-    public function submit(TenentApplicationRequest $request)
+    public function submit(TenentApplicationRequest $request, $approvalToken)
     {
         try {
             $tenantId = Tenant::select('id')
                 ->whereNotNull('approval_token')
-                ->where('approval_token',  $request->approval_token)
+                ->where('approval_token',  $approvalToken)
                 ->value('id');
 
             if (!$tenantId) {

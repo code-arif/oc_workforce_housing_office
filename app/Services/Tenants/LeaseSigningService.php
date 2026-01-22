@@ -208,7 +208,7 @@ class LeaseSigningService
             $document->rendered_content,
             'public'
         );
-        
+
         return $rendered_content;
     }
 }

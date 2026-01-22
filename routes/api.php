@@ -62,7 +62,7 @@ Route::group(['middleware' => 'guest:api'], function () {
 
         // Tenant Form (Token-based)
         Route::prefix('tenant/form')->group(function () {
-            Route::post('/', [TenantFormController::class, 'submit']); // done
+            Route::post('/{approval_token}', [TenantFormController::class, 'submit']); // done
         });
 
         // Tenant Authentication
@@ -101,10 +101,9 @@ Route::group(['middleware' => 'guest:api'], function () {
     });
 
 
-////FAQ show in  frontend 
+    ////FAQ show in  frontend
 
     Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
-
 });
 
 
@@ -144,8 +143,9 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
             Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']); // done
             Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease']); // done
-            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']); // ISSUE
+            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']); // done
             Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']); // done
+            Route::get('/{leaseId}/download', [TenantLeaseSignController::class, 'downloadDocument'])->name('download'); // done
         });
 
         // Payment Routes (Stripe)
@@ -153,7 +153,7 @@ Route::group(['middleware' => 'auth:api'], function () {
             Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails']); // done
             Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession']); // ISSUE
             Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
-            Route::post('/calculate', [TenantPaymentController::class, 'calculatePayment']); 
+            Route::post('/calculate', [TenantPaymentController::class, 'calculatePayment']);
             Route::get('/history', [TenantPaymentController::class, 'paymentHistory']);
         });
 
@@ -172,4 +172,4 @@ Route::group(['middleware' => 'auth:api'], function () {
 //all FaQ showw
 Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
 //  Items show
- Route::get('/items/active', [ItemController::class, 'activeItems']);
+Route::get('/items/active', [ItemController::class, 'activeItems']);

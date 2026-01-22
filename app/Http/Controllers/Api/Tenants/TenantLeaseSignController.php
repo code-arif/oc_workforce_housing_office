@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use App\Services\Tenants\LeaseSigningService;
 use App\Http\Resources\Lease\LeaseDocumentResource;
+use setasign\Fpdi\Fpdi;
+use Illuminate\Support\Facades\Log;
 
 class TenantLeaseSignController extends Controller
 {
@@ -111,17 +113,292 @@ class TenantLeaseSignController extends Controller
         try {
             $tenant = $request->user();
 
-            $documentPath = $this->signingService->getDocumentPath($leaseId, $tenant->id);
+            $document = $this->signingService->getLeaseDocument($leaseId, $tenant->id);
 
-            if (!$documentPath) {
+            if (!$document) {
                 return $this->error([], 'Document not found', 404);
             }
 
+            $template = $document->leaseTemplate ?? $document->template;
+            $pdfPath = $template?->pdf_path ?? $template?->document_path ?? null;
+
+            // Get placeholders and signatures from template
+            $placeholders = [];
+            $signatures = [];
+
+            if ($template) {
+                $placeholders = is_array($template->placeholders)
+                    ? $template->placeholders
+                    : (json_decode($template->placeholders, true) ?? []);
+                $signatures = is_array($template->signatures)
+                    ? $template->signatures
+                    : (json_decode($template->signatures, true) ?? []);
+            }
+
+            // Get lease data for placeholders
+            $leaseData = $this->extractPlaceholderData($document->lease);
+
             return $this->success([
-                'document_url' => $documentPath
-            ], 'Document path retrieved successfully');
+                'document_id' => $document->id,
+                'pdf_url' => $pdfPath ? asset('storage/' . $pdfPath) : null,
+                'total_pages' => $template?->total_pages ?? 1,
+                'placeholders' => $placeholders,
+                'signatures' => $signatures,
+                'lease_data' => $leaseData,
+                'is_tenant_signed' => (bool) $document->tenant_signed_at,
+                'is_admin_signed' => (bool) $document->admin_signed_at,
+                'tenant_signature' => $document->tenant_signature,
+                'admin_signature' => $document->admin_signature,
+                'can_sign' => !$document->tenant_signed_at && $document->lease?->status === 'PENDING_TENANT_SIGN',
+            ], 'Document preview data retrieved successfully');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Download signed lease document as PDF
+     */
+    public function downloadDocument(Request $request, $leaseId)
+    {
+        try {
+            $tenant = $request->user();
+
+            $document = $this->signingService->getLeaseDocument($leaseId, $tenant->id);
+
+            if (!$document) {
+                return $this->error([], 'Document not found or unauthorized', 404);
+            }
+
+            $template = $document->leaseTemplate ?? $document->template;
+            $pdfPath = $template?->pdf_path ?? $template?->document_path ?? null;
+
+            if (!$pdfPath) {
+                return $this->error([], 'PDF template not available', 404);
+            }
+
+            $fullPdfPath = storage_path('app/public/' . $pdfPath);
+
+            if (!file_exists($fullPdfPath)) {
+                return $this->error([], 'PDF file not found', 404);
+            }
+
+            // Get placeholders and signatures from template
+            $placeholders = is_array($template->placeholders)
+                ? $template->placeholders
+                : (json_decode($template->placeholders, true) ?? []);
+            $signatures = is_array($template->signatures)
+                ? $template->signatures
+                : (json_decode($template->signatures, true) ?? []);
+
+            // Get lease data for placeholders
+            $leaseData = $this->extractPlaceholderData($document->lease);
+
+            // Generate PDF with overlays
+            $outputPath = $this->generatePdfWithOverlays(
+                $fullPdfPath,
+                $placeholders,
+                $signatures,
+                $leaseData,
+                $document
+            );
+
+            $filename = 'lease_document_' . $document->id . '_' . date('Y-m-d') . '.pdf';
+
+            return response()->download($outputPath, $filename)->deleteFileAfterSend(true);
+        } catch (Exception $e) {
+            Log::error('Failed to download lease document: ' . $e->getMessage());
+            return $this->error([], 'Failed to generate PDF: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Extract placeholder data from lease
+     */
+    private function extractPlaceholderData($lease)
+    {
+        if (!$lease) return [];
+
+        $lease->load(['tenant.profile', 'property', 'assignments.bed.room.unit']);
+
+        $tenant = $lease->tenant;
+        $profile = $tenant?->profile;
+        $property = $lease->property;
+        $assignment = $lease->assignments->where('is_current', true)->first();
+        $bed = $assignment?->bed;
+        $room = $bed?->room;
+        $unit = $room?->unit;
+
+        $tenantName = $profile ?
+            trim($profile->first_name . ' ' . ($profile->middle_name ? $profile->middle_name . ' ' : '') . ($profile->last_name ?? '')) :
+            'N/A';
+
+        return [
+            // Tenant Info
+            'tenant_name' => $tenantName,
+            'tenant_first_name' => $profile?->first_name ?? '',
+            'tenant_last_name' => $profile?->last_name ?? '',
+            'tenant_email' => $tenant?->email ?? '',
+            'tenant_phone' => $profile?->phone ?? '',
+            'tenant_address' => $profile?->address ?? '',
+            'tenant_city' => $profile?->city ?? '',
+            'tenant_state' => $profile?->state ?? '',
+            'tenant_zip' => $profile?->zip ?? '',
+
+            // Property Info
+            'property_name' => $property?->name ?? '',
+            'property_address' => $property?->address ?? '',
+            'property_city' => $property?->city ?? '',
+            'property_state' => $property?->state ?? '',
+            'property_zip' => $property?->zip ?? '',
+            'unit_number' => $unit?->unit_number ?? '',
+            'room_number' => $room?->room_number ?? '',
+            'bed_label' => $bed?->bed_label ?? '',
+
+            // Lease Info
+            'lease_start_date' => $lease->start_date ? date('M d, Y', strtotime($lease->start_date)) : '',
+            'lease_end_date' => $lease->end_date ? date('M d, Y', strtotime($lease->end_date)) : '',
+            'monthly_rent' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
+            'rent_amount' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
+            'security_deposit' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
+            'deposit_amount' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
+            'payment_frequency' => ucwords(strtolower(str_replace('_', ' ', $lease->payment_frequency ?? ''))),
+            'lease_term' => $this->calculateLeaseTerm($lease->start_date, $lease->end_date),
+
+            // Other
+            'current_date' => date('M d, Y'),
+        ];
+    }
+
+    /**
+     * Calculate lease term in months
+     */
+    private function calculateLeaseTerm($startDate, $endDate)
+    {
+        if (!$startDate || !$endDate) return 'Month-to-Month';
+
+        $start = \Carbon\Carbon::parse($startDate);
+        $end = \Carbon\Carbon::parse($endDate);
+        $months = $start->diffInMonths($end);
+
+        if ($months == 12) return '1 Year';
+        if ($months == 6) return '6 Months';
+        if ($months == 1) return '1 Month';
+
+        return $months . ' Months';
+    }
+
+    /**
+     * Generate PDF with placeholders and signatures overlayed using FPDI
+     */
+    private function generatePdfWithOverlays($pdfPath, $placeholders, $signatures, $leaseData, $document)
+    {
+        $pdf = new Fpdi();
+
+        // Ensure output directory exists
+        $outputDir = storage_path('app/public/generated-leases');
+        if (!is_dir($outputDir)) {
+            mkdir($outputDir, 0755, true);
+        }
+
+        $outputPath = $outputDir . '/lease_' . $document->id . '_' . time() . '.pdf';
+
+        // Get page count from source PDF
+        $pageCount = $pdf->setSourceFile($pdfPath);
+
+        // PDF.js at scale 1.0 renders 1 PDF point = 1 pixel
+        // PDF uses 72 points per inch, FPDI uses mm
+        // Conversion: 1 point = 25.4/72 mm = 0.352778 mm
+        $pointToMm = 25.4 / 72;
+
+        for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+            // Import the page from source PDF
+            $templateId = $pdf->importPage($pageNo);
+            $size = $pdf->getTemplateSize($templateId);
+
+            // Add page with same size as template
+            $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+            $pdf->useTemplate($templateId);
+
+            // Filter and add placeholders for this page
+            $pagePlaceholders = array_filter($placeholders, fn($p) => (int)($p['page'] ?? 1) === $pageNo);
+
+            foreach ($pagePlaceholders as $placeholder) {
+                $fieldName = $placeholder['field'] ?? '';
+                $value = $leaseData[$fieldName] ?? '';
+
+                if (empty($value)) continue;
+
+                // Convert PDF point coordinates to mm
+                $x = (float)($placeholder['x'] ?? 0) * $pointToMm;
+                $y = (float)($placeholder['y'] ?? 0) * $pointToMm;
+                $width = (float)($placeholder['width'] ?? 150) * $pointToMm;
+                $height = (float)($placeholder['height'] ?? 20) * $pointToMm;
+
+                // Set font
+                $fontSize = isset($placeholder['fontSize']) ? (float)$placeholder['fontSize'] : 10;
+                $pdf->SetFont('Helvetica', '', $fontSize);
+                $pdf->SetTextColor(0, 0, 0);
+
+                // Position and write text
+                $pdf->SetXY($x, $y);
+                $pdf->Cell($width, $height, $value, 0, 0, 'L');
+            }
+
+            // Filter and add signatures for this page
+            $pageSignatures = array_filter($signatures, fn($s) => (int)($s['page'] ?? 1) === $pageNo);
+
+            foreach ($pageSignatures as $signature) {
+                $label = $signature['label'] ?? 'Signature';
+                $isTenantSig = stripos($label, 'tenant') !== false;
+
+                // Check if signature exists
+                $signatureData = $isTenantSig ? $document->tenant_signature : $document->admin_signature;
+                $signedAt = $isTenantSig ? $document->tenant_signed_at : $document->admin_signed_at;
+
+                if (empty($signatureData)) continue;
+
+                // Convert PDF point coordinates to mm
+                $x = (float)($signature['x'] ?? 0) * $pointToMm;
+                $y = (float)($signature['y'] ?? 0) * $pointToMm;
+                $width = (float)($signature['width'] ?? 200) * $pointToMm;
+                $height = (float)($signature['height'] ?? 60) * $pointToMm;
+
+                // Handle base64 signature image
+                if (strpos($signatureData, 'data:image') === 0) {
+                    $imgData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $signatureData));
+                    $tempImgPath = $outputDir . '/sig_temp_' . uniqid() . '.png';
+                    file_put_contents($tempImgPath, $imgData);
+
+                    try {
+                        $pdf->Image($tempImgPath, $x, $y, $width, $height, 'PNG');
+                    } catch (Exception $e) {
+                        Log::warning("Failed to add signature image: " . $e->getMessage());
+                    }
+
+                    @unlink($tempImgPath);
+                } elseif (file_exists(storage_path('app/public/' . $signatureData))) {
+                    // Signature stored as file path
+                    try {
+                        $pdf->Image(storage_path('app/public/' . $signatureData), $x, $y, $width, $height);
+                    } catch (Exception $e) {
+                        Log::warning("Failed to add signature image from path: " . $e->getMessage());
+                    }
+                }
+
+                // Add signed date below signature
+                if ($signedAt) {
+                    $pdf->SetFont('Helvetica', '', 8);
+                    $pdf->SetTextColor(100, 100, 100);
+                    $pdf->SetXY($x, $y + $height + 1);
+                    $pdf->Cell($width, 5, 'Signed: ' . $signedAt->format('M d, Y'), 0, 0, 'C');
+                }
+            }
+        }
+
+        // Save the PDF to file
+        $pdf->Output($outputPath, 'F');
+
+        return $outputPath;
     }
 }
