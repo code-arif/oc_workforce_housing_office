@@ -354,18 +354,7 @@
                                                                 <label class="form-label">Active Tenants</label>
                                                                 <select class="form-select select3" id="existingTenantSelect">
                                                                     <option value="">Select a tenant...</option>
-                                                                    @forelse ($tenants as $tenant)
-                                                                        <option value="{{ $tenant->id }}"
-                                                                            data-firstname="{{ $tenant->profile->first_name }}"
-                                                                            data-lastname="{{ $tenant->profile->last_name }}"
-                                                                            data-email="{{ $tenant->email }}"
-                                                                            data-phone="{{ $tenant->profile->phone }}"
-                                                                            data-status="{{ $tenant->status }}">
-                                                                            {{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}
-                                                                        </option>
-                                                                    @empty
-                                                                        <option value="">No Active Tenants Found</option>
-                                                                    @endforelse
+                                                                   
                                                                 </select>
                                                                 <small class="text-muted">Select from existing active tenants</small>
                                                             </div>

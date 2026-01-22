@@ -455,7 +455,7 @@
 
     .tenant-card .badge {
         font-size: 11px;
-        padding: 4px 8px;
+        padding: 10px;
     }
 
     .selected-tenants-section {

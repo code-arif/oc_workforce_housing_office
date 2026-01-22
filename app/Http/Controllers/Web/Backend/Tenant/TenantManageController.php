@@ -306,6 +306,7 @@ class TenantManageController extends Controller
                 'status' => 'pending',
                 'application_source' => 'admin',
                 'password' => Hash::make('password123'), // Default password
+                'status' => 'approved',
             ]);
 
             // Create tenant profile
@@ -438,7 +439,7 @@ class TenantManageController extends Controller
         // Get all invoices for this tenant
         $invoices = \App\Models\Invoice::where('tenant_id', $id)
             ->with(['lease.property'])
-            ->orderBy('due_date', 'desc')
+            ->orderBy('due_date', 'asc')
             ->get();
 
         // Calculate invoice statistics
@@ -552,7 +553,7 @@ class TenantManageController extends Controller
     public function getActiveTenants(Request $request)
     {
         try {
-            $tenants = Tenant::where('status', 'active')
+            $tenants = Tenant::where('status', 'approved')
                 ->with('profile:id,tenant_id,first_name,last_name,phone')
                 ->orderBy('created_at', 'desc')
                 ->get()
@@ -597,7 +598,7 @@ class TenantManageController extends Controller
             // Create tenant
             $tenant = Tenant::create([
                 'email' => $validated['email'],
-                'status' => 'active',
+                'status' => 'approved',
                 'application_source' => 'admin'
             ]);
 

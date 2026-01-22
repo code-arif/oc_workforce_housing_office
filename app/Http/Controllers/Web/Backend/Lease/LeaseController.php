@@ -215,7 +215,7 @@ class LeaseController extends Controller
     {
         $terms = Season::where('is_active', true)->get();
         $properties = Property::with(['units'])->get();
-        $tenants = Tenant::with(['profile'])->where('status', 'active')->get();
+        $tenants = Tenant::with(['profile'])->where('status', 'approved')->get();
 
         $leaseTemplates = LeaseTemplate::where('is_active', true)->get();
 
@@ -290,7 +290,7 @@ class LeaseController extends Controller
 
             if($lease && $assignlease){
                 $bed = \App\Models\Bed::find($request->bed_id);
-                $bed->update(['status' => 'OCCUPIED']);
+                $bed->update(['is_occupied' => 1]);
             }
 
             // Handle payment schedule and invoices based on payment frequency
@@ -719,6 +719,7 @@ class LeaseController extends Controller
                           ->with('tenant:id,email');
                     }]);
             }])
+            // ->where('is_occupied', false)
             ->get();
  
         // Format the response with lease info for each bed
@@ -847,5 +848,193 @@ class LeaseController extends Controller
         })->get();
 
         return response()->json(['success' => true, 'data' => $beds]);
+    }
+
+    /**
+     * Get lease data for manual close modal
+     */
+    public function getCloseData($id)
+    {
+        try {
+            $lease = Lease::with([
+                'tenant.profile',
+                'property',
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed');
+                },
+                'invoices' => function ($q) {
+                    $q->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
+                }
+            ])->findOrFail($id);
+
+            $profile = $lease->tenant?->profile;
+            $tenantName = $profile 
+                ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
+                : 'No Tenant';
+
+            $assignment = $lease->assignments->first();
+            $bedLabel = $assignment?->bed?->bed_label ?? 'N/A';
+
+            // Get unpaid invoices
+            $unpaidInvoices = $lease->invoices->map(function ($invoice) {
+                return [
+                    'id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number ?? 'INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT),
+                    'due_date' => date('M d, Y', strtotime($invoice->due_date)),
+                    'amount' => $invoice->total_amount ?? $invoice->amount,
+                    'balance_due' => $invoice->balance_due ?? ($invoice->total_amount - ($invoice->paid_amount ?? 0)),
+                    'status' => $invoice->isOverdue() ? 'OVERDUE' : $invoice->status,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'lease' => [
+                    'id' => $lease->id,
+                    'tenant_name' => $tenantName,
+                    'property_name' => $lease->property?->name ?? 'N/A',
+                    'bed_label' => $bedLabel,
+                    'start_date' => date('M d, Y', strtotime($lease->start_date)),
+                    'end_date' => date('M d, Y', strtotime($lease->end_date)),
+                    'original_end_date' => $lease->end_date->format('Y-m-d'),
+                    'rent_amount' => $lease->rent_amount,
+                    'status' => $lease->status,
+                ],
+                'unpaid_invoices' => $unpaidInvoices,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get lease close data: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load lease data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Manually close a lease
+     */
+    public function closeLease(Request $request, $id)
+    {
+        $request->validate([
+            'end_date' => 'required|date',
+            'close_reason' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:1000',
+            'send_notifications' => 'boolean',
+        ]);
+
+        try {
+            $lease = Lease::with([
+                'tenant.profile',
+                'property',
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed');
+                },
+                'invoices' => function ($q) {
+                    $q->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
+                }
+            ])->findOrFail($id);
+
+            // Check for unpaid invoices
+            if ($lease->invoices->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot close lease with unpaid invoices. Please resolve all outstanding invoices first.'
+                ], 422);
+            }
+
+            // Check if lease is already completed
+            if ($lease->status === 'COMPLETED') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This lease is already closed.'
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // 1. Update lease status and end date
+            $oldEndDate = $lease->end_date;
+            $closeReason = $request->close_reason;
+            $notes = $request->notes;
+            
+            // Append close reason to notes
+            $updatedNotes = $lease->notes ?? '';
+            if ($closeReason || $notes) {
+                $updatedNotes .= "\n\n--- Manual Closure (" . now()->format('M d, Y H:i') . ") ---\n";
+                if ($closeReason) {
+                    $updatedNotes .= "Reason: " . ucwords(str_replace('_', ' ', $closeReason)) . "\n";
+                }
+                if ($notes) {
+                    $updatedNotes .= "Notes: " . $notes;
+                }
+            }
+
+            $lease->update([
+                'status' => 'COMPLETED',
+                'end_date' => $request->end_date,
+                'notes' => trim($updatedNotes),
+            ]);
+
+            Log::info("Lease #{$lease->id} manually closed. End date changed from {$oldEndDate} to {$request->end_date}");
+
+            // 2. Update all lease assignments
+            $lease->assignments()->where('is_current', true)->update([
+                'is_current' => false,
+                'actual_move_out' => $request->end_date,
+            ]);
+
+            // 3. Mark beds as unoccupied
+            $bedIds = $lease->assignments->pluck('bed_id')->filter()->toArray();
+            if (!empty($bedIds)) {
+                Bed::whereIn('id', $bedIds)->update([
+                    'is_occupied' => false,
+                ]);
+                Log::info("Beds marked as unoccupied: " . implode(', ', $bedIds));
+            }
+
+            DB::commit();
+
+            // 4. Send notification emails if enabled
+            if ($request->boolean('send_notifications')) {
+                try {
+                    // Reload lease with fresh data
+                    $lease->refresh();
+                    $lease->load(['tenant.profile', 'property', 'assignments.bed']);
+
+                    // Send to tenant
+                    if ($lease->tenant?->email) {
+                        Mail::to($lease->tenant->email)->send(new \App\Mail\Tenant\LeaseCompletedMail($lease));
+                        Log::info("Lease completion email sent to tenant: {$lease->tenant->email}");
+                    }
+
+                    // Send to admin
+                    $adminEmail = config('mail.admin_email');
+                    if ($adminEmail) {
+                        Mail::to($adminEmail)->send(new \App\Mail\Tenant\LeaseCompletedAdminMail($lease));
+                        Log::info("Lease completion email sent to admin: {$adminEmail}");
+                    }
+                } catch (\Exception $mailError) {
+                    Log::error("Failed to send lease completion emails: " . $mailError->getMessage());
+                    // Don't fail the request if emails fail
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lease has been closed successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to close lease: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to close lease: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

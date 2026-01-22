@@ -270,6 +270,10 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::post('/{id}/collect-deposit', [LeaseController::class, 'collectDeposit'])->name('collect.deposit');
     Route::post('/{id}/resend-for-signature', [LeaseController::class, 'resendForSignature'])->name('resend.signature');
 
+    // Manual lease close routes
+    Route::get('/{id}/close-data', [LeaseController::class, 'getCloseData'])->name('close.data');
+    Route::post('/{id}/close', [LeaseController::class, 'closeLease'])->name('close');
+
     Route::get('/property/{id}/beds', [LeaseController::class, 'getBedsByProperty'])->name('property.beds');
 });
 

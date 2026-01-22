@@ -45,8 +45,50 @@ Schedule::call(function () {
     Log::info('Cleaned up temporary attachments');
 })->daily()->at('03:00');
 
+// ============================================
+// EXPIRED LEASES CHECKER
+// ============================================
+
+// Check for expired leases daily at midnight
+// Updates lease status to COMPLETED, frees up beds, and notifies tenant/admin
+Schedule::command('leases:check-expired')
+    ->daily()
+    ->at('00:05')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        Log::info('Expired leases check completed successfully');
+    })
+    ->onFailure(function () {
+        Log::error('Expired leases check failed');
+    });
+
+Schedule::command('invoice:check-unpaid')
+    ->daily()
+    ->at('01:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        Log::info('Unpaid invoices check completed successfully');
+    })
+    ->onFailure(function () {
+        Log::error('Unpaid invoices check failed');
+    });
+
 // Optional: Database backup before cleanup
 Schedule::call(function () {
     Artisan::call('backup:run --only-db');
 })->weekly()->sundays()->at('01:00');
 
+Schedule::command('emails:cleanup-trash')
+    ->weekly()
+    ->sundays()
+    ->at('02:30')
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        Log::info('Weekly trash email cleanup completed successfully');
+    })
+    ->onFailure(function () {
+        Log::error('Weekly trash email cleanup failed');
+    });

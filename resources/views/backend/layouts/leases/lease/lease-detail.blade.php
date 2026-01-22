@@ -145,6 +145,11 @@
                                             <a href="{{ route('leases.resend.signature', $lease->id) }}" class="btn btn-sm btn-outline-primary me-2"
                                                 id="resendSignatureMail">
                                                 <i class="fe fe-mail me-1"></i> Resend Signature Request
+                                            </a>
+                                            @else
+                                            <a href="#" class="btn btn-sm btn-outline-primary me-2" id="manuallyCloseLease" data-lease-id="{{ $lease->id }}"
+                                                title="Manually closed the lease" >
+                                                <i class="fe fe-mail me-1"></i> Manually Close Lease
                                             </a>                                            
                                         @endif
                                     </div>
@@ -190,9 +195,9 @@
                                                     </div>
                                                 </div>
                                                 <div class="mt-3">
-                                                    <button class="btn btn-sm btn-outline-primary w-100">
+                                                    <a href="{{ route('tenants.show', $lease->tenant->id) }}" class="btn btn-sm btn-outline-primary w-100">
                                                         <i class="fe fe-user me-1"></i> View Profile
-                                                    </button>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -580,6 +585,129 @@
             </div>
         </div>
     </div>
+    <!-- Manual Close Lease Modal -->
+    <div class="modal fade" id="closeLeaseModal" tabindex="-1" aria-labelledby="closeLeaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="closeLeaseModalContent">
+                <form id="closeLeaseForm">
+                    @csrf
+                    <input type="hidden" name="lease_id" id="closeLeaseId">
+
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title" id="closeLeaseModalLabel">
+                            <i class="fe fe-alert-triangle me-2"></i> Manually Close Lease
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Loading State -->
+                        <div id="closeLeaseLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading lease details...</p>
+                        </div>
+
+                        <!-- Content -->
+                        <div id="closeLeaseContent" style="display: none;">
+                            <!-- Lease Summary -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <h6 class="mb-0"><i class="fe fe-file-text me-2"></i>Lease Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Tenant:</strong> <span id="closeLeaseTenant">-</span></p>
+                                            <p class="mb-1"><strong>Property:</strong> <span id="closeLeaseProperty">-</span></p>
+                                            <p class="mb-1"><strong>Unit/Bed:</strong> <span id="closeLeaseBed">-</span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Lease Start:</strong> <span id="closeLeaseStart">-</span></p>
+                                            <p class="mb-1"><strong>Original End:</strong> <span id="closeLeaseEnd">-</span></p>
+                                            <p class="mb-1"><strong>Monthly Rent:</strong> <span id="closeLeaseRent">-</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Unpaid Invoices Warning -->
+                            <div id="unpaidInvoicesSection" style="display: none;">
+                                <div class="alert alert-danger mb-3">
+                                    <h6 class="alert-heading"><i class="fe fe-alert-circle me-2"></i>Cannot Close Lease - Unpaid Invoices Found</h6>
+                                    <p class="mb-2">The following invoices must be paid or cancelled before closing this lease:</p>
+                                    <div id="unpaidInvoicesList"></div>
+                                    <hr>
+                                    <p class="mb-0 small">Please resolve these invoices before attempting to close the lease.</p>
+                                </div>
+                            </div>
+
+                            <!-- Close Form (shown when no unpaid invoices) -->
+                            <div id="closeLeaseFormSection" style="display: none;">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fe fe-info me-2"></i>
+                                    Closing this lease will:
+                                    <ul class="mb-0 mt-2">
+                                        <li>Mark the lease as <strong>COMPLETED</strong></li>
+                                        <li>Set the lease assignment as inactive</li>
+                                        <li>Mark the bed as <strong>unoccupied</strong> (available for new tenants)</li>
+                                        <li>Send notification emails to tenant and admin</li>
+                                    </ul>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="newEndDate" class="form-label">
+                                                <strong>New Lease End Date</strong> <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" class="form-control" id="newEndDate" name="end_date" required>
+                                            <small class="text-muted">This will update the lease end date and move-out date</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="closeReason" class="form-label"><strong>Reason for Early Closure</strong></label>
+                                            <select class="form-select" id="closeReason" name="close_reason">
+                                                <option value="">Select a reason (optional)</option>
+                                                <option value="tenant_request">Tenant Request</option>
+                                                <option value="mutual_agreement">Mutual Agreement</option>
+                                                <option value="property_sale">Property Sale</option>
+                                                <option value="renovation">Property Renovation</option>
+                                                <option value="relocation">Tenant Relocation</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="closeNotes" class="form-label"><strong>Additional Notes</strong></label>
+                                    <textarea class="form-control" id="closeNotes" name="notes" rows="3" placeholder="Enter any additional notes about the lease closure..."></textarea>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="sendNotifications" name="send_notifications" checked>
+                                    <label class="form-check-label" for="sendNotifications">
+                                        Send notification emails to tenant and admin
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning" id="closeLeaseSubmitBtn" style="display: none;">
+                            <span class="spinner-border spinner-border-sm d-none me-2" id="closeLeaseSpinner"></span>
+                            <i class="fe fe-check me-1"></i> Close Lease
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -589,6 +717,138 @@
             const value = $(this).val().toLowerCase();
             $('.lease-item').filter(function() {
                 $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        // Manual Close Lease Modal Handler
+        $(document).on('click', '#manuallyCloseLease', function(e) {
+            e.preventDefault();
+            let leaseId = $(this).data('lease-id');
+            
+            // Reset modal state
+            $('#closeLeaseId').val(leaseId);
+            $('#closeLeaseLoading').show();
+            $('#closeLeaseContent').hide();
+            $('#closeLeaseSubmitBtn').hide();
+            $('#unpaidInvoicesSection').hide();
+            $('#closeLeaseFormSection').hide();
+            $('#closeLeaseForm')[0].reset();
+            
+            $('#closeLeaseModal').modal('show');
+            
+            // Fetch lease close data
+            $.ajax({
+                url: `{{ url('admin/leases') }}/${leaseId}/close-data`,
+                type: 'GET',
+                success: function(response) {
+                    $('#closeLeaseLoading').hide();
+                    $('#closeLeaseContent').show();
+                    
+                    if (response.success) {
+                        const lease = response.lease;
+                        
+                        // Populate lease summary
+                        $('#closeLeaseTenant').text(lease.tenant_name);
+                        $('#closeLeaseProperty').text(lease.property_name);
+                        $('#closeLeaseBed').text(lease.bed_label);
+                        $('#closeLeaseStart').text(lease.start_date);
+                        $('#closeLeaseEnd').text(lease.end_date);
+                        $('#closeLeaseRent').text('$' + parseFloat(lease.rent_amount).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                        
+                        // Set default end date to today
+                        const today = new Date().toISOString().split('T')[0];
+                        $('#newEndDate').val(today);
+                        $('#newEndDate').attr('max', lease.original_end_date);
+                        
+                        // Check for unpaid invoices
+                        if (response.unpaid_invoices && response.unpaid_invoices.length > 0) {
+                            $('#unpaidInvoicesSection').show();
+                            $('#closeLeaseFormSection').hide();
+                            $('#closeLeaseSubmitBtn').hide();
+                            
+                            // Build unpaid invoices list
+                            let invoicesHtml = '<div class="table-responsive"><table class="table table-sm table-bordered mb-0">';
+                            invoicesHtml += '<thead><tr><th>Invoice #</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                            
+                            response.unpaid_invoices.forEach(function(invoice) {
+                                invoicesHtml += `<tr>
+                                    <td><strong>${invoice.invoice_number}</strong></td>
+                                    <td>${invoice.due_date}</td>
+                                    <td>$${parseFloat(invoice.balance_due).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                                    <td><span class="badge bg-${invoice.status === 'OVERDUE' ? 'danger' : 'warning'}">${invoice.status}</span></td>
+                                    <td><a href="{{ url('admin/invoices') }}/${invoice.id}" class="btn btn-xs btn-outline-primary" target="_blank">View</a></td>
+                                </tr>`;
+                            });
+                            
+                            invoicesHtml += '</tbody></table></div>';
+                            $('#unpaidInvoicesList').html(invoicesHtml);
+                        } else {
+                            $('#unpaidInvoicesSection').hide();
+                            $('#closeLeaseFormSection').show();
+                            $('#closeLeaseSubmitBtn').show();
+                        }
+                    } else {
+                        toastr.error(response.message || 'Failed to load lease data');
+                        $('#closeLeaseModal').modal('hide');
+                    }
+                },
+                error: function(xhr) {
+                    $('#closeLeaseLoading').hide();
+                    toastr.error('Failed to load lease data. Please try again.');
+                    $('#closeLeaseModal').modal('hide');
+                }
+            });
+        });
+
+        // Handle close lease form submission
+        $('#closeLeaseForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const leaseId = $('#closeLeaseId').val();
+            const endDate = $('#newEndDate').val();
+            
+            if (!endDate) {
+                toastr.error('Please select an end date');
+                return;
+            }
+            
+            // Show loading state
+            $('#closeLeaseSpinner').removeClass('d-none');
+            $('#closeLeaseSubmitBtn').prop('disabled', true);
+            
+            $.ajax({
+                url: `{{ url('admin/leases') }}/${leaseId}/close`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    end_date: endDate,
+                    close_reason: $('#closeReason').val(),
+                    notes: $('#closeNotes').val(),
+                    send_notifications: $('#sendNotifications').is(':checked') ? 1 : 0
+                },
+                success: function(response) {
+                    $('#closeLeaseSpinner').addClass('d-none');
+                    $('#closeLeaseSubmitBtn').prop('disabled', false);
+                    
+                    if (response.success) {
+                        toastr.success(response.message || 'Lease closed successfully');
+                        $('#closeLeaseModal').modal('hide');
+                        
+                        // Reload the page to reflect changes
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        toastr.error(response.message || 'Failed to close lease');
+                    }
+                },
+                error: function(xhr) {
+                    $('#closeLeaseSpinner').addClass('d-none');
+                    $('#closeLeaseSubmitBtn').prop('disabled', false);
+                    
+                    const response = xhr.responseJSON;
+                    toastr.error(response?.message || 'An error occurred while closing the lease');
+                }
             });
         });
 

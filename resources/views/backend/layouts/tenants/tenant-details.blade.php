@@ -209,9 +209,9 @@
                                             <div class="ms-3">
                                                 <h5 class="mb-1">{{ $activeLease->property->name ?? 'N/A' }}</h5>
                                                 <span class="text-muted">
-                                                    @if($unit) Unit {{ $unit->unit_number }} @endif
+                                                    @if($unit) Unit {{ $unit->name }} @endif
                                                     @if($room) / Room {{ $room->room_number }} @endif
-                                                    @if($bed) / {{ $bed->bed_number ?? $bed->bed_label }} @endif
+                                                    @if($bed) / {{ $bed->bed_label ?? $bed->bed_number }} @endif
                                                 </span>
                                             </div>
                                         </div>
@@ -241,11 +241,11 @@
                                     <div class="col-md-4">
                                         <div class="lease-date-box">
                                             <small class="text-muted">Days Remaining</small>
-                                            <div class="fw-bold text-{{ $daysRemaining < 30 ? 'warning' : 'success' }}">{{ $daysRemaining }} days</div>
+                                            <div class="fw-bold text-{{ $daysRemaining < 30 ? 'warning' : 'success' }}">{{ round($daysRemaining) }} days</div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-3">
+                                {{-- <div class="mt-3">
                                     <div class="d-flex justify-content-between mb-1">
                                         <small class="text-muted">Lease Progress</small>
                                         <small class="text-muted">{{ round($progress) }}%</small>
@@ -253,7 +253,7 @@
                                     <div class="progress" style="height: 8px;">
                                         <div class="progress-bar bg-primary" style="width: {{ $progress }}%"></div>
                                     </div>
-                                </div>
+                                </div> --}}
                                 <div class="mt-3 text-end">
                                     <a href="{{ route('leases.show', $activeLease->id) }}" class="btn btn-primary">
                                         <i class="fe fe-eye me-1"></i> View Lease Details
@@ -325,7 +325,7 @@
                         </div>
 
                         <!-- Invoices Table -->
-                        <div class="card">
+                        <div class="card" >
                             <div class="card-header d-flex justify-content-between align-items-center">
                                 <h5 class="card-title mb-0"><i class="fe fe-file-text text-primary me-2"></i>All Invoices</h5>
                                 <div class="btn-group btn-group-sm" role="group">
@@ -335,7 +335,7 @@
                                     <button type="button" class="btn btn-outline-danger" data-filter="overdue">Overdue</button>
                                 </div>
                             </div>
-                            <div class="card-body p-0">
+                            <div class="card-body p-0" style="height: 500px; overflow-y:scroll;">
                                 @if(isset($invoices) && $invoices->count() > 0)
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0" id="invoicesTable">
