@@ -33,7 +33,6 @@ Route::group(['middleware' => 'guest:api'], function () {
     | Cms Routes
     |--------------------------------------------------------------------------
     */
-    // cms route gorup
     Route::group(['prefix' => 'cms'], function () {
         Route::get('/home', [CmsController::class, 'home']); // cms home page data
         Route::get('/properties', [CmsController::class, 'properties']); // cms properties page data
@@ -41,7 +40,11 @@ Route::group(['middleware' => 'guest:api'], function () {
         Route::get('/amenities', [CmsController::class, 'amenities']); // cms amenities page data
         Route::get('/pricing', [CmsController::class, 'pricing']); // cms pricing page data
         Route::get('/reservation', [CmsController::class, 'reservation']); // cms reservation page data
+        Route::get('/top-navigation', [CmsController::class, 'topBar']); // cms topbar data
     });
+
+    //Get all faq
+    Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
 
 
     /*
@@ -81,29 +84,7 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
             Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
         });
-
-
-        // Maintance routes
-        Route::prefix('tenant/maintanance')->group(function () {
-            Route::get('/list', [MaintananceController::class, 'index']);
-            Route::post('/store', [MaintananceController::class, 'store']);
-            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
-            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
-            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
-        });
-
-        // Lease Document Signature Routes (Token-based, no auth required)
-        // Route::prefix('tenant/lease')->group(function () {
-        //     Route::get('/document/{documentId}', [LeaseDocumentController::class, 'getDocument']);
-        //     Route::post('/document/{documentId}/sign', [LeaseDocumentController::class, 'signDocument']);
-        //     Route::get('/document/{documentId}/download', [LeaseDocumentController::class, 'downloadDocument']);
-        // });
     });
-
-
-    ////FAQ show in  frontend
-
-    Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
 });
 
 
@@ -167,9 +148,3 @@ Route::group(['middleware' => 'auth:api'], function () {
         });
     });
 });
-
-
-//all FaQ showw
-Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
-//  Items show
-Route::get('/items/active', [ItemController::class, 'activeItems']);

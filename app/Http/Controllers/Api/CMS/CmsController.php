@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CMS\CMSResource;
 use App\Http\Resources\CMS\SliderResource;
+use App\Models\Setting;
 
 class CmsController extends Controller
 {
@@ -266,5 +267,13 @@ class CmsController extends Controller
                 'hero' => CMSResource::collection($hero),
             ]
         ], 'Reservation page data retrieved successfully');
+    }
+
+    /**
+     * Top bar data
+     */
+    public function topBar(){
+        $topbar = Setting::first();
+        return ($topbar);
     }
 }
