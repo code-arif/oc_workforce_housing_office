@@ -1,5 +1,5 @@
 @extends('backend.app', ['title' => 'Add Lease'])
-
+@section('title', 'Create New Leases')
 @section('content')
     <div class="app-content main-content mt-0">
         <div class="side-app">

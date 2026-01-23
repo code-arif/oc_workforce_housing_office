@@ -1,5 +1,5 @@
 @extends('backend.app')
-
+@section('title', 'Lease Templates')
 @section('content')
 <div class="app-content main-content mt-0">
     <div class="side-app">
@@ -173,9 +173,9 @@
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
                                 @endcan
-                                <button class="btn btn-sm btn-outline-success use-template" data-id="{{ $template->id }}">
+                                {{-- <button class="btn btn-sm btn-outline-success use-template" data-id="{{ $template->id }}">
                                     <i class="fas fa-file-contract"></i> Use Template
-                                </button>
+                                </button> --}}
                             </div>
                         </div>
                     </div>

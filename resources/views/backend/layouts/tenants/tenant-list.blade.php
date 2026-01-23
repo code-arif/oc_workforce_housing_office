@@ -240,7 +240,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+    <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
     <script>
         let dataTable;
 

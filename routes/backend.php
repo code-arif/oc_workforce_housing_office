@@ -39,6 +39,8 @@ use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 use App\Http\Controllers\Web\Backend\FaqController;
 use App\Http\Controllers\Web\Backend\ItemController;
+use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentReportController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -274,6 +276,10 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::get('/{id}/close-data', [LeaseController::class, 'getCloseData'])->name('close.data');
     Route::post('/{id}/close', [LeaseController::class, 'closeLease'])->name('close');
 
+    // Change bed assignment routes
+    Route::get('/{id}/change-bed-data', [LeaseController::class, 'getChangeBedData'])->name('change.bed.data');
+    Route::post('/{id}/change-bed', [LeaseController::class, 'changeBed'])->name('change.bed');
+
     Route::get('/property/{id}/beds', [LeaseController::class, 'getBedsByProperty'])->name('property.beds');
 });
 
@@ -481,4 +487,19 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     });
 
+});
+
+// Reports Routes
+Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin'])->group(function () {
+    // Property Report
+    Route::get('/property', [PropertyReportController::class, 'index'])->name('property.index');
+    Route::get('/property/data', [PropertyReportController::class, 'getData'])->name('property.data');
+    Route::get('/property/export-pdf', [PropertyReportController::class, 'exportPdf'])->name('property.export.pdf');
+    Route::get('/property/export-excel', [PropertyReportController::class, 'exportExcel'])->name('property.export.excel');
+
+    // Rent Report
+    Route::get('/rent', [RentReportController::class, 'index'])->name('rent.index');
+    Route::get('/rent/data', [RentReportController::class, 'getData'])->name('rent.data');
+    Route::get('/rent/export-pdf', [RentReportController::class, 'exportPdf'])->name('rent.export.pdf');
+    Route::get('/rent/export-excel', [RentReportController::class, 'exportExcel'])->name('rent.export.excel');
 });

@@ -6,6 +6,12 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
+        .nav-link:hover {
+            color: #3a3a3a !important;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
         .email-content {
             background: white;
             padding: 20px;
@@ -88,6 +94,15 @@
             margin-top: 10px;
             font-size: 0.9em;
             color: #555;
+        }
+        .badge-count {
+            background-color: #1a73e8;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 15px;
         }
     </style>
 @endpush
@@ -495,10 +510,10 @@
             $('#subject').val('Re: {{ addslashes($message->subject) }}');
 
             const originalMessage = `
-<strong>From:</strong> {{ $message->from_name }} &lt;{{ $message->from_email }}&gt;<br>
-<strong>Date:</strong> {{ $message->email_date ? $message->email_date->format('M d, Y h:i A') : '' }}<br>
-<strong>Subject:</strong> {{ addslashes($message->subject) }}<br><br>
-{!! addslashes(strip_tags($message->body_text ?: $message->body_html)) !!}`;
+            <strong>From:</strong> {{ $message->from_name }} &lt;{{ $message->from_email }}&gt;<br>
+            <strong>Date:</strong> {{ $message->email_date ? $message->email_date->format('M d, Y h:i A') : '' }}<br>
+            <strong>Subject:</strong> {{ addslashes($message->subject) }}<br><br>
+            {!! addslashes(strip_tags($message->body_text ?: $message->body_html)) !!}`;
 
             $('#originalMessageContent').html(originalMessage);
             $('#originalMessagePreview').show();
@@ -521,10 +536,10 @@
             $('#subject').val('Re: {{ addslashes($message->subject) }}');
 
             const originalMessage = `
-<strong>From:</strong> {{ $message->from_name }} &lt;{{ $message->from_email }}&gt;<br>
-<strong>Date:</strong> {{ $message->email_date ? $message->email_date->format('M d, Y h:i A') : '' }}<br>
-<strong>Subject:</strong> {{ addslashes($message->subject) }}<br><br>
-{!! addslashes(strip_tags($message->body_text ?: $message->body_html)) !!}`;
+                <strong>From:</strong> {{ $message->from_name }} &lt;{{ $message->from_email }}&gt;<br>
+                <strong>Date:</strong> {{ $message->email_date ? $message->email_date->format('M d, Y h:i A') : '' }}<br>
+                <strong>Subject:</strong> {{ addslashes($message->subject) }}<br><br>
+                {!! addslashes(strip_tags($message->body_text ?: $message->body_html)) !!}`;
 
             $('#originalMessageContent').html(originalMessage);
             $('#originalMessagePreview').show();
@@ -539,11 +554,11 @@
             $('#subject').val('Fwd: {{ addslashes($message->subject) }}');
 
             const originalMessage = `
-<strong>From:</strong> {{ $message->from_name }} &lt;{{ $message->from_email }}&gt;<br>
-<strong>Date:</strong> {{ $message->email_date ? $message->email_date->format('M d, Y h:i A') : '' }}<br>
-<strong>Subject:</strong> {{ addslashes($message->subject) }}<br>
-<strong>To:</strong> @foreach ($message->to as $recipient){{ $recipient['email'] }}{{ !$loop->last ? ', ' : '' }}@endforeach<br><br>
-{!! addslashes(strip_tags($message->body_text ?: $message->body_html)) !!}`;
+                    <strong>From:</strong> {{ $message->from_name }} &lt;{{ $message->from_email }}&gt;<br>
+                    <strong>Date:</strong> {{ $message->email_date ? $message->email_date->format('M d, Y h:i A') : '' }}<br>
+                    <strong>Subject:</strong> {{ addslashes($message->subject) }}<br>
+                    <strong>To:</strong> @foreach ($message->to as $recipient){{ $recipient['email'] }}{{ !$loop->last ? ', ' : '' }}@endforeach<br><br>
+                    {!! addslashes(strip_tags($message->body_text ?: $message->body_html)) !!}`;
 
             $('#originalMessageContent').html(originalMessage);
             $('#originalMessagePreview').show();

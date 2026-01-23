@@ -6,6 +6,12 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
+        .nav-link:hover {
+            color: #3a3a3a !important;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
         .email-row {
             cursor: pointer;
             transition: all 0.2s;
@@ -53,6 +59,7 @@
             border-radius: 10px;
             font-size: 11px;
             font-weight: 600;
+            margin-left: 15px;
         }
 
         .email-checkbox {
@@ -677,7 +684,7 @@
         }
 
         function viewEmail(id) {
-            window.location.href = '{{ url('messaging/read') }}/' + id;
+            window.location.href = '{{ url('admin/messaging/read') }}/' + id;
         }
 
         function toggleStar(id) {

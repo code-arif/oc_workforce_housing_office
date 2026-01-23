@@ -1,5 +1,5 @@
 @extends('backend.app')
-
+@section('title', 'Upload New Lease Template')
 @section('content')
 <div class="app-content main-content mt-0">
     <div class="side-app">
