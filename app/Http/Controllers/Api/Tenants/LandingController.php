@@ -149,13 +149,13 @@ class LandingController extends Controller
             // Support URL
             $contactUrl = config('app.frontend_url') . "/contact";
 
-            // if ($request->status == 'rejected') {
-            //     // Send rejection email logic can be added here
-            //     Mail::to($tenant->email)->send(new ApplicationRejectionMail($tenant, $contactUrl));
-            // } else {
-            //     // Send approval email logic can be added here
-            //     Mail::to($tenant->email)->send(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
-            // }
+            if ($request->status == 'rejected') {
+                // Send rejection email logic can be added here
+                Mail::to($tenant->email)->send(new ApplicationRejectionMail($tenant, $contactUrl));
+            } else {
+                // Send approval email logic can be added here
+                Mail::to($tenant->email)->send(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+            }
 
             DB::commit();
 
