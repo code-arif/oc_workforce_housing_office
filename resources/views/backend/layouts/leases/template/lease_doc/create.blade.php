@@ -1,5 +1,5 @@
 @extends('backend.app')
-
+@section('title', 'Create New Lease Document')
 @section('content')
 <div class="container">
     <div class="row">

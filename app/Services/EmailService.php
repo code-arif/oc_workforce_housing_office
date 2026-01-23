@@ -18,22 +18,34 @@ class EmailService
     /**
      * Sync emails from Gmail IMAP
      */
-    public function syncEmails(EmailAccount $account, $folder = 'INBOX', $limit = 50)
+    public function syncEmails(EmailAccount $account, $folder = 'INBOX', $limit = 10)
     {
         try {
             $client = Client::account('default');
             $client->connect();
 
-            $folder = $client->getFolder($folder);
-            $messages = $folder->messages()->limit($limit)->get();
-
-            foreach ($messages as $message) {
-                $this->storeMessage($account, $message, $this->mapFolderName($folder->name));
+            $imapFolder = $client->getFolder($folder);
+            
+            if (!$imapFolder) {
+                Log::error('Email sync failed: Folder not found - ' . $folder);
+                return false;
             }
 
+            // Use query()->all() for proper IMAP search command
+            $messages = $imapFolder->query()->all()->limit($limit)->get();
+
+            foreach ($messages as $message) {
+                $this->storeMessage($account, $message, $this->mapFolderName($imapFolder->name));
+            }
+
+            $client->disconnect();
             return true;
         } catch (Exception $e) {
-            Log::error('Email sync failed: ' . $e->getMessage());
+            Log::error('Email sync failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'folder' => $folder,
+                'account' => $account->email
+            ]);
             return false;
         }
     }
@@ -43,39 +55,104 @@ class EmailService
      */
     protected function storeMessage(EmailAccount $account, $message, $folderName)
     {
-        $messageId = $message->getMessageId();
+        try {
+            // Handle messageId - can be Attribute object
+            $messageIdAttr = $message->getMessageId();
+            $messageId = $this->attributeToString($messageIdAttr) ?? uniqid('msg_');
 
-        // Check if message already exists
-        $existing = EmailMessage::where('message_id', $messageId)->first();
-        if ($existing) {
-            return $existing;
+            // Check if message already exists
+            $existing = EmailMessage::where('message_id', $messageId)->first();
+            if ($existing) {
+                return $existing;
+            }
+
+            // Safely get from address - getFrom() returns Attribute
+            $fromAttr = $message->getFrom();
+            $fromEmail = '';
+            $fromName = '';
+            if ($fromAttr) {
+                $fromFirst = $fromAttr->first();
+                if ($fromFirst) {
+                    $fromEmail = $fromFirst->mail ?? '';
+                    $fromName = $fromFirst->personal ?? '';
+                }
+            }
+
+            // Safely get in-reply-to for thread
+            $inReplyToAttr = $message->getInReplyTo();
+            $threadId = $this->attributeToString($inReplyToAttr) ?? $messageId;
+
+            // Safely get subject
+            $subjectAttr = $message->getSubject();
+            $subject = $this->attributeToString($subjectAttr) ?? '(No Subject)';
+
+            // Safely get flags
+            $flags = $message->getFlags();
+            $isRead = false;
+            $isStarred = false;
+            if ($flags) {
+                $flagsArray = $flags->toArray();
+                $isRead = in_array('Seen', $flagsArray) || in_array('seen', $flagsArray) || in_array('\\Seen', $flagsArray);
+                $isStarred = in_array('Flagged', $flagsArray) || in_array('flagged', $flagsArray) || in_array('\\Flagged', $flagsArray);
+            }
+
+            $emailMessage = EmailMessage::create([
+                'email_account_id' => $account->id,
+                'message_id' => $messageId,
+                'thread_id' => (string) $threadId,
+                'from_email' => $fromEmail,
+                'from_name' => $fromName,
+                'to' => $this->extractRecipients($message->getTo()),
+                'cc' => $this->extractRecipients($message->getCc()),
+                'bcc' => $this->extractRecipients($message->getBcc()),
+                'subject' => $subject,
+                'body_text' => $message->getTextBody() ?? '',
+                'body_html' => $message->getHTMLBody() ?? '',
+                'has_attachments' => $message->hasAttachments(),
+                'folder' => $folderName,
+                'is_read' => $isRead,
+                'is_starred' => $isStarred,
+                'email_date' => $message->getDate() ?? now(),
+            ]);
+
+            // Store attachments
+            if ($message->hasAttachments()) {
+                $this->storeAttachments($emailMessage, $message->getAttachments());
+            }
+
+            return $emailMessage;
+        } catch (Exception $e) {
+            Log::error('Failed to store message: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
         }
+    }
 
-        $emailMessage = EmailMessage::create([
-            'email_account_id' => $account->id,
-            'message_id' => $messageId,
-            'thread_id' => $message->getInReplyTo() ?? $messageId,
-            'from_email' => $message->getFrom()[0]->mail ?? '',
-            'from_name' => $message->getFrom()[0]->personal ?? '',
-            'to' => $this->extractRecipients($message->getTo()),
-            'cc' => $this->extractRecipients($message->getCc()),
-            'bcc' => $this->extractRecipients($message->getBcc()),
-            'subject' => $message->getSubject(),
-            'body_text' => $message->getTextBody(),
-            'body_html' => $message->getHTMLBody(),
-            'has_attachments' => $message->hasAttachments(),
-            'folder' => $folderName,
-            'is_read' => $message->getFlags()->contains('seen'),
-            'is_starred' => $message->getFlags()->contains('flagged'),
-            'email_date' => $message->getDate(),
-        ]);
-
-        // Store attachments
-        if ($message->hasAttachments()) {
-            $this->storeAttachments($emailMessage, $message->getAttachments());
+    /**
+     * Convert Attribute object to string
+     */
+    protected function attributeToString($attr)
+    {
+        if ($attr === null) {
+            return null;
         }
-
-        return $emailMessage;
+        if (is_string($attr)) {
+            return $attr;
+        }
+        if (is_object($attr)) {
+            if (method_exists($attr, 'toString')) {
+                return $attr->toString();
+            }
+            if (method_exists($attr, 'first')) {
+                $first = $attr->first();
+                return is_string($first) ? $first : (string) $first;
+            }
+            if (method_exists($attr, '__toString')) {
+                return (string) $attr;
+            }
+        }
+        return (string) $attr;
     }
 
     /**
@@ -86,11 +163,23 @@ class EmailService
         if (!$recipients) return [];
 
         $result = [];
+        
+        // Handle Attribute object
+        if (is_object($recipients) && method_exists($recipients, 'toArray')) {
+            $recipients = $recipients->toArray();
+        }
+        
+        if (!is_array($recipients)) {
+            return [];
+        }
+        
         foreach ($recipients as $recipient) {
-            $result[] = [
-                'email' => $recipient->mail,
-                'name' => $recipient->personal ?? '',
-            ];
+            if (is_object($recipient)) {
+                $result[] = [
+                    'email' => $recipient->mail ?? '',
+                    'name' => $recipient->personal ?? '',
+                ];
+            }
         }
         return $result;
     }

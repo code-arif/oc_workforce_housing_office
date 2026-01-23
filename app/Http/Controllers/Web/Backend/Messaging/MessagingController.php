@@ -34,7 +34,7 @@ class MessagingController extends Controller
         $account = EmailAccount::firstOrCreate(
             ['user_id' => $user->id, 'is_default' => true],
             [
-                'email' => 'rufuzxyz@gmail.com', // Your email
+                'email' => config('mail.from.address', 'softvance.arif2025@gmail.com'),
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'provider' => 'gmail',
                 'is_active' => true,
@@ -89,7 +89,7 @@ class MessagingController extends Controller
         $limit = $request->get('limit', 50);
 
         $result = $this->emailService->syncEmails($account, $folder, $limit);
-
+        // dd($result);
         if ($result) {
             return response()->json([
                 'success' => true,
@@ -402,5 +402,47 @@ class MessagingController extends Controller
         }
 
         return Storage::download($attachment->path, $attachment->filename);
+    }
+
+    /**
+     * Search tenants for email compose
+     */
+    public function searchTenants(Request $request)
+    {
+        $search = $request->get('q', '');
+        
+        $query = \App\Models\Tenant::query()
+            ->whereNotNull('email')
+            ->where('email', '!=', '')
+            ->with('profile');
+        
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('email', 'like', "%{$search}%")
+                    ->orWhereHas('profile', function ($q) use ($search) {
+                        $q->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+        
+        $tenants = $query->limit(20)->get();
+        
+        $results = $tenants->map(function ($tenant) {
+            $name = '';
+            if ($tenant->profile) {
+                $name = trim(($tenant->profile->first_name ?? '') . ' ' . ($tenant->profile->last_name ?? ''));
+            }
+            return [
+                'id' => $tenant->id,
+                'email' => $tenant->email,
+                'name' => $name ?: $tenant->email,
+                'text' => $name ? "{$name} <{$tenant->email}>" : $tenant->email,
+            ];
+        });
+        
+        return response()->json([
+            'results' => $results,
+        ]);
     }
 }

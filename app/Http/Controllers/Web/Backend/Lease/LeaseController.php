@@ -1037,4 +1037,212 @@ class LeaseController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get lease data for change bed modal
+     */
+    public function getChangeBedData($id)
+    {
+        try {
+            $lease = Lease::with([
+                'tenant.profile',
+                'property',
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed.room.unit');
+                },
+            ])->findOrFail($id);
+
+            // Check if lease is active
+            if (!in_array($lease->status, ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bed can only be changed for active or pending leases.'
+                ], 422);
+            }
+
+            $profile = $lease->tenant?->profile;
+            $tenantName = $profile 
+                ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
+                : 'No Tenant';
+
+            $currentAssignment = $lease->assignments->first();
+            $currentBed = $currentAssignment?->bed;
+            $currentBedLabel = $currentBed?->bed_label ?? 'N/A';
+
+            // Get available beds for the same property (excluding current bed)
+            $availableBeds = Bed::with(['room.unit'])
+                ->whereHas('room.unit', function ($query) use ($lease) {
+                    $query->where('property_id', $lease->property_id);
+                })
+                ->where('is_occupied', false)
+                ->orWhere(function ($query) use ($currentBed) {
+                    // Include current bed in the list
+                    if ($currentBed) {
+                        $query->where('id', $currentBed->id);
+                    }
+                })
+                ->get()
+                ->map(function ($bed) use ($currentBed) {
+                    $roomName = $bed->room?->room_number ?? $bed->room?->name ?? '';
+                    $unitName = $bed->room?->unit?->name ?? $bed->room?->unit?->unit_number ?? '';
+                    $label = $bed->bed_label;
+                    if ($unitName) {
+                        $label = $unitName . ' - ' . $label;
+                    }
+                    if ($roomName) {
+                        $label .= ' (Room: ' . $roomName . ')';
+                    }
+                    
+                    return [
+                        'id' => $bed->id,
+                        'bed_label' => $label,
+                        'base_rent' => $bed->base_rent,
+                        'is_current' => $currentBed && $bed->id === $currentBed->id,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'lease' => [
+                    'id' => $lease->id,
+                    'tenant_name' => $tenantName,
+                    'property_name' => $lease->property?->name ?? 'N/A',
+                    'current_bed_id' => $currentBed?->id,
+                    'current_bed_label' => $currentBedLabel,
+                    'start_date' => date('M d, Y', strtotime($lease->start_date)),
+                    'end_date' => date('M d, Y', strtotime($lease->end_date)),
+                    'rent_amount' => $lease->rent_amount,
+                    'status' => $lease->status,
+                ],
+                'available_beds' => $availableBeds,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get change bed data: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load lease data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Change bed assignment for a lease
+     */
+    public function changeBed(Request $request, $id)
+    {
+        $request->validate([
+            'new_bed_id' => 'required|exists:beds,id',
+            'effective_date' => 'required|date',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $lease = Lease::with([
+                'tenant.profile',
+                'property',
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed');
+                },
+            ])->findOrFail($id);
+
+            // Check if lease is active
+            if (!in_array($lease->status, ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bed can only be changed for active or pending leases.'
+                ], 422);
+            }
+
+            $newBed = Bed::findOrFail($request->new_bed_id);
+            $currentAssignment = $lease->assignments->first();
+            $oldBed = $currentAssignment?->bed;
+
+            // Check if the new bed is the same as current
+            if ($oldBed && $oldBed->id === $newBed->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected bed is already assigned to this lease.'
+                ], 422);
+            }
+
+            // Check if new bed is available
+            if ($newBed->is_occupied) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected bed is not available. Please choose another bed.'
+                ], 422);
+            }
+
+            // Check if new bed belongs to the same property
+            $newBedPropertyId = $newBed->room?->unit?->property_id;
+            if ($newBedPropertyId !== $lease->property_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected bed does not belong to the same property.'
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // 1. Mark old assignment as not current
+            if ($currentAssignment) {
+                $currentAssignment->update([
+                    'is_current' => false,
+                    'actual_move_out' => $request->effective_date,
+                ]);
+            }
+
+            // 2. Mark old bed as unoccupied
+            if ($oldBed) {
+                $oldBed->update(['is_occupied' => false]);
+                Log::info("Bed #{$oldBed->id} ({$oldBed->bed_label}) marked as unoccupied for lease #{$lease->id}");
+            }
+
+            // 3. Create new assignment
+            $newAssignment = LeaseAssignment::create([
+                'lease_id' => $lease->id,
+                'bed_id' => $newBed->id,
+                'assigned_at' => $request->effective_date,
+                'actual_move_in' => $request->effective_date,
+                'is_current' => true,
+            ]);
+
+            // 4. Mark new bed as occupied
+            $newBed->update(['is_occupied' => true]);
+            Log::info("Bed #{$newBed->id} ({$newBed->bed_label}) marked as occupied for lease #{$lease->id}");
+
+            // 5. Add note to lease
+            $notes = $lease->notes ?? '';
+            $changeNote = "\n\n--- Bed Change (" . now()->format('M d, Y H:i') . ") ---\n";
+            $changeNote .= "From: " . ($oldBed?->bed_label ?? 'N/A') . "\n";
+            $changeNote .= "To: " . $newBed->bed_label . "\n";
+            $changeNote .= "Effective: " . date('M d, Y', strtotime($request->effective_date)) . "\n";
+            if ($request->notes) {
+                $changeNote .= "Notes: " . $request->notes;
+            }
+            
+            $lease->update([
+                'notes' => trim($notes . $changeNote),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bed assignment has been changed successfully.',
+                'new_bed_label' => $newBed->bed_label,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to change bed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change bed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

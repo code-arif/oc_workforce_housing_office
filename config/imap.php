@@ -47,14 +47,14 @@ return [
     'accounts' => [
 
         'default' => [// account identifier
-            'host'  => env('IMAP_HOST', 'localhost'),
+            'host'  => env('IMAP_HOST', 'imap.gmail.com'),
             'port'  => env('IMAP_PORT', 993),
             'protocol'  => env('IMAP_PROTOCOL', 'imap'), //might also use imap, [pop3 or nntp (untested)]
             'encryption'    => env('IMAP_ENCRYPTION', 'ssl'), // Supported: false, 'ssl', 'tls', 'notls', 'starttls'
             'validate_cert' => env('IMAP_VALIDATE_CERT', true),
             'username' => env('IMAP_USERNAME', 'root@example.com'),
             'password' => env('IMAP_PASSWORD', ''),
-            'authentication' => env('IMAP_AUTHENTICATION', null),
+            'authentication' => 'plain',
             'proxy' => [
                 'socket' => null,
                 'request_fulluri' => false,
@@ -151,17 +151,17 @@ return [
         // 'fallback_date' => "01.01.1970 00:00:00",
         'boundary' => '/boundary=(.*?(?=;)|(.*))/i',
         'message_key' => 'list',
-        'fetch_order' => 'asc',
+        'fetch_order' => 'desc',
         'dispositions' => ['attachment', 'inline'],
         'common_folders' => [
             "root" => "INBOX",
-            "junk" => "INBOX/Junk",
-            "draft" => "INBOX/Drafts",
-            "sent" => "INBOX/Sent",
-            "trash" => "INBOX/Trash",
+            "junk" => "[Gmail]/Spam",
+            "draft" => "[Gmail]/Drafts",
+            "sent" => "[Gmail]/Sent Mail",
+            "trash" => "[Gmail]/Trash",
         ],
         'open' => [
-            // 'DISABLE_AUTHENTICATOR' => 'GSSAPI'
+            'DISABLE_AUTHENTICATOR' => 'GSSAPI'
         ]
     ],
 

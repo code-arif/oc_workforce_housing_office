@@ -1,5 +1,5 @@
 @extends('backend.app')
-
+@section('title', 'Lease Document #' .{{ @$document->id }})
 @section('content')
 <div class="app-content main-content mt-0">
     <div class="side-app">

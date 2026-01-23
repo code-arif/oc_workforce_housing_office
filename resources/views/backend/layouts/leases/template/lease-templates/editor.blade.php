@@ -1,5 +1,5 @@
 @extends('backend.app')
-
+@section('title', 'Edit Lease Template: ' . $template->name)
 @section('content')
 <div class="app-content main-content mt-0">
     <div class="side-app">

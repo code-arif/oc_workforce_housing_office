@@ -98,14 +98,7 @@
                     </a>
                 </li>
 
-                {{-- Expence --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-explosion"></i>
-                        <span class="side-menu__label">Expence</span>
-                    </a>
-                </li>
+                
 
                 {{-- Maintanence --}}
                 <li class="slide">
@@ -135,15 +128,14 @@
                     </a>
                 </li>
 
-                {{-- Listing --}}
-{{-- Items Management --}}
-<li class="slide">
-    <a class="side-menu__item {{ request()->routeIs('items.*') ? 'has-link' : '' }}"
-       href="{{ route('items.index') }}">
-        <i class="fa-solid fa-box"></i>
-        <span class="side-menu__label">Listing</span>
-    </a>
-</li>
+                {{-- Items Management --}}
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('items.*') ? 'has-link' : '' }}"
+                    href="{{ route('items.index') }}">
+                        <i class="fa-solid fa-box"></i>
+                        <span class="side-menu__label">Listing</span>
+                    </a>
+                </li>
 
 
                 @can('cms.view')
@@ -157,7 +149,21 @@
                 @endcan
 
 
-                
+                {{-- Reports --}}
+                <li class="slide">
+                    
+                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                        <i class="fa-solid fa-explosion"></i>
+                        <span class="side-menu__label">Reports</span>
+                        <i class="angle fa fa-angle-right ms-auto"></i>
+                    </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('reports.property.index') }}" class="slide-item {{ request()->routeIs('reports.property.*') ? 'active' : '' }}">Property Reports</a></li>
+                        <li><a href="{{ route('reports.rent.index') }}" class="slide-item {{ request()->routeIs('reports.rent.*') ? 'active' : '' }}">Rent Reports</a></li>
+                        <li><a href="#" class="slide-item">Tenant Reports</a></li>
+                        <li><a href="#" class="slide-item">Lease Reports</a></li>
+                    </ul>
+                </li>
 
                 @can('user-management.users.list' )
                 {{-- User Management --}}

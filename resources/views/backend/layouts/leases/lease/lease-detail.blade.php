@@ -142,15 +142,23 @@
                                     </div>
                                     <div class="text-end mb-3">
                                         @if ($lease->status == 'PENDING_TENANT_SIGN' || $lease->status == 'DRAFT')
-                                            <a href="{{ route('leases.resend.signature', $lease->id) }}" class="btn btn-sm btn-outline-primary me-2"
+                                            <a href="{{ route('leases.resend.signature', $lease->id) }}" class="btn btn-outline-primary me-2"
                                                 id="resendSignatureMail">
                                                 <i class="fe fe-mail me-1"></i> Resend Signature Request
                                             </a>
-                                            @else
-                                            <a href="#" class="btn btn-sm btn-outline-primary me-2" id="manuallyCloseLease" data-lease-id="{{ $lease->id }}"
+                                        @elseif($lease->status == 'COMPLETED')
+                                            <a href="#" class="btn btn-outline-secondary me-2 disabled" title="Lease is already completed">
+                                                <i class="fe fe-check-circle me-1"></i> Lease Closed
+                                            </a>
+                                        @else
+                                            <a href="#" class="btn btn-outline-primary me-2" id="manuallyCloseLease" data-lease-id="{{ $lease->id }}"
                                                 title="Manually closed the lease" >
                                                 <i class="fe fe-mail me-1"></i> Manually Close Lease
-                                            </a>                                            
+                                            </a> 
+                                            <a href="#" class="btn btn-outline-info me-2" title="Change bed for the lease" id="changeBedBtn"
+                                                    data-lease-id="{{ $lease->id }}">
+                                                <i class="fe fe-edit-3 me-1"></i> Change Bed
+                                            </a>                                           
                                         @endif
                                     </div>
                                 </div>
@@ -708,15 +716,243 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="changeBedModal" tabindex="-1" aria-labelledby="changeBedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="changeBedModalContent">
+                <form id="changeBedForm">
+                    @csrf
+                    <input type="hidden" name="lease_id" id="changeBedId">
+
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title" id="changeBedModalLabel">
+                            <i class="fe fe-alert-triangle me-2"></i> Change Bed Assignment
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Loading State -->
+                        <div id="changeBedLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading current lease details...</p>
+                        </div>
+
+                        <!-- Content -->
+                        <div id="changeBedContent" style="display: none;">
+                            <!-- Lease Summary -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <strong><i class="fe fe-info me-2"></i> Lease Information</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Tenant:</strong> <span id="changeBedTenant"></span></p>
+                                            <p class="mb-1"><strong>Property:</strong> <span id="changeBedProperty"></span></p>
+                                            <p class="mb-0"><strong>Current Bed:</strong> <span id="changeBedCurrent" class="badge bg-primary"></span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Lease Period:</strong> <span id="changeBedPeriod"></span></p>
+                                            <p class="mb-0"><strong>Monthly Rent:</strong> <span id="changeBedRent" class="text-success fw-bold"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Change Bed Form -->
+                            <div id="changeBedFormSection">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fe fe-info me-2"></i>
+                                    Select a new bed from the available beds below. The change will be recorded in the lease history.
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="newBedId" class="form-label"><strong>Select New Bed</strong> <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="newBedId" name="new_bed_id" required>
+                                                <option value="">-- Select Available Bed --</option>
+                                            </select>
+                                            <div id="noBedAvailable" class="text-danger mt-2" style="display: none;">
+                                                <i class="fe fe-alert-circle me-1"></i> No other beds available in this property.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="effectiveDate" class="form-label"><strong>Effective Date</strong> <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control datepicker2" id="effectiveDate" name="effective_date" placeholder=" Select a effective date" required>
+                                            <small class="text-muted">Date when the bed change takes effect</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="changeBedNotes" class="form-label"><strong>Notes</strong></label>
+                                    <textarea class="form-control" id="changeBedNotes" name="notes" rows="3" placeholder="Enter reason or notes for the bed change..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning" id="changeBedSubmitBtn" style="display: none;">
+                            <span class="spinner-border spinner-border-sm d-none me-2" id="changeBedSpinner"></span>
+                            <i class="fe fe-check me-1"></i> Change Bed
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
+<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
     <script>
+        $('.datepicker2').each(function () {
+            const value = $(this).val();
+
+            $(this).datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+
+            });
+
+            if (value) {
+                $(this).datepicker('setDate', value);
+            }
+        });
         // Search functionality
         $('#leaseSearch').on('keyup', function() {
             const value = $(this).val().toLowerCase();
             $('.lease-item').filter(function() {
                 $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+        $(document).on('click', '#changeBedBtn', function(e) {
+            e.preventDefault();
+            let leaseId = $(this).data('lease-id');
+            
+            // Reset modal state
+            $('#changeBedId').val(leaseId);
+            $('#changeBedLoading').show();
+            $('#changeBedContent').hide();
+            $('#changeBedSubmitBtn').hide();
+            $('#noBedAvailable').hide();
+            $('#changeBedForm')[0].reset();
+            $('#newBedId').empty().append('<option value="">-- Select Available Bed --</option>');
+
+            $('#changeBedModal').modal('show');
+
+            // Fetch lease change bed data
+            $.ajax({
+                url: `{{ url('admin/leases') }}/${leaseId}/change-bed-data`,
+                type: 'GET',
+                success: function(response) {
+                    $('#changeBedLoading').hide();
+                    $('#changeBedContent').show();
+                    
+                    if (response.success) {
+                        const lease = response.lease;
+                        
+                        // Populate lease summary
+                        $('#changeBedTenant').text(lease.tenant_name);
+                        $('#changeBedProperty').text(lease.property_name);
+                        $('#changeBedCurrent').text(lease.current_bed_label);
+                        $('#changeBedPeriod').text(lease.start_date + ' - ' + lease.end_date);
+                        $('#changeBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                        
+                        // Set default effective date to today
+                        const today = new Date().toISOString().split('T')[0];
+                        $('#effectiveDate').val(today);
+                        
+                        // Populate available beds dropdown
+                        const availableBeds = response.available_beds.filter(bed => !bed.is_current);
+                        if (availableBeds.length > 0) {
+                            availableBeds.forEach(function(bed) {
+                                const rentInfo = bed.base_rent ? ` - $${parseFloat(bed.base_rent).toLocaleString('en-US', {minimumFractionDigits: 2})}/month` : '';
+                                $('#newBedId').append(`<option value="${bed.id}">${bed.bed_label}</option>`);
+                            });
+                            $('#changeBedSubmitBtn').show();
+                            $('#noBedAvailable').hide();
+                        } else {
+                            $('#noBedAvailable').show();
+                            $('#changeBedSubmitBtn').hide();
+                        }
+                    } else {
+                        toastr.error(response.message || 'Failed to load lease data');
+                        $('#changeBedModal').modal('hide');
+                    }
+                },
+                error: function(xhr) {
+                    $('#changeBedLoading').hide();
+                    const response = xhr.responseJSON;
+                    toastr.error(response?.message || 'Failed to load lease data. Please try again.');
+                    $('#changeBedModal').modal('hide');
+                }
+            });
+        });
+
+        // Handle change bed form submission
+        $('#changeBedForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const leaseId = $('#changeBedId').val();
+            const newBedId = $('#newBedId').val();
+            const effectiveDate = $('#effectiveDate').val();
+            
+            if (!newBedId) {
+                toastr.error('Please select a new bed');
+                return;
+            }
+            
+            if (!effectiveDate) {
+                toastr.error('Please select an effective date');
+                return;
+            }
+            
+            // Show loading state
+            $('#changeBedSpinner').removeClass('d-none');
+            $('#changeBedSubmitBtn').prop('disabled', true);
+            
+            $.ajax({
+                url: `{{ url('admin/leases') }}/${leaseId}/change-bed`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    new_bed_id: newBedId,
+                    effective_date: effectiveDate,
+                    notes: $('#changeBedNotes').val()
+                },
+                success: function(response) {
+                    $('#changeBedSpinner').addClass('d-none');
+                    $('#changeBedSubmitBtn').prop('disabled', false);
+                    
+                    if (response.success) {
+                        toastr.success(response.message || 'Bed changed successfully');
+                        $('#changeBedModal').modal('hide');
+                        
+                        // Reload the page to reflect changes
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        toastr.error(response.message || 'Failed to change bed');
+                    }
+                },
+                error: function(xhr) {
+                    $('#changeBedSpinner').addClass('d-none');
+                    $('#changeBedSubmitBtn').prop('disabled', false);
+                    
+                    const response = xhr.responseJSON;
+                    toastr.error(response?.message || 'An error occurred while changing the bed');
+                }
             });
         });
 
