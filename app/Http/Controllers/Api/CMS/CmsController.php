@@ -270,10 +270,10 @@ class CmsController extends Controller
     }
 
     /**
-     * Top bar data
+     * Navigation data
      */
-    public function topBar(){
-        $topbar = Setting::first();
-        return ($topbar);
+    public function navigation(){
+        $navigation = Setting::first();
+        return $this->success($navigation, 'Topbar data retrieved successfully');
     }
 }

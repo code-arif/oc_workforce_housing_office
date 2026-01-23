@@ -1,22 +1,23 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\FaqApiController;
 use App\Http\Controllers\Api\CMS\CmsController;
+use App\Http\Controllers\Api\ContactFormController;
+use App\Http\Controllers\Web\Backend\ItemController;
 use App\Http\Controllers\Api\Tenants\LandingController;
 use App\Http\Controllers\Api\Tenants\TenantAuthController;
 use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Auth\AuthenticationController;
 use App\Http\Controllers\Api\Tenants\MaintananceController;
+use App\Http\Controllers\Api\Tenants\LeaseDocumentController;
 use App\Http\Controllers\Api\Tenants\PasswordResetController;
 use App\Http\Controllers\Api\Tenants\TenantPaymentController;
 use App\Http\Controllers\Api\Tenants\TenantProfileController;
-use App\Http\Controllers\Api\Tenants\LeaseDocumentController;
+
 use App\Http\Controllers\Api\Tenants\TenantPasswordController;
 use App\Http\Controllers\Api\Tenants\TenantDashboardController;
 use App\Http\Controllers\Api\Tenants\TenantLeaseSignController;
-
-use App\Http\Controllers\Api\FaqApiController;
-use App\Http\Controllers\Web\Backend\ItemController;
 //health-check
 Route::get('/health', function () {
     return response()->json([
@@ -40,11 +41,14 @@ Route::group(['middleware' => 'guest:api'], function () {
         Route::get('/amenities', [CmsController::class, 'amenities']); // cms amenities page data
         Route::get('/pricing', [CmsController::class, 'pricing']); // cms pricing page data
         Route::get('/reservation', [CmsController::class, 'reservation']); // cms reservation page data
-        Route::get('/top-navigation', [CmsController::class, 'topBar']); // cms topbar data
+        Route::get('/navigation', [CmsController::class, 'navigation']); // cms navigation data
     });
 
     //Get all faq
     Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
+
+    // Contact Form submission
+    Route::post('/submit-contact', [ContactFormController::class, 'submitContact']);
 
 
     /*
