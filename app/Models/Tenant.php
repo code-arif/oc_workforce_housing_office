@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+use App\Models\Lease\LeaseDocument;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Tenant extends Authenticatable implements JWTSubject
@@ -225,5 +226,10 @@ class Tenant extends Authenticatable implements JWTSubject
     public function leases()
     {
         return $this->hasMany(Lease::class);
+    }
+
+    public function leaseDocuments()
+    {
+        return $this->hasManyThrough(LeaseDocument::class, Lease::class);
     }
 }

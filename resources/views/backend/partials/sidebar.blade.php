@@ -38,14 +38,11 @@
                 @can('property.list')
                 {{-- Properties --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('property.index') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
+                    <a class="side-menu__item {{ request()->routeIs('property.index') ? 'has-link' : '' }}"
+                        href="{{ route('property.index') }}">
                         <i class="fa-solid fa-bed-pulse"></i>
                         <span class="side-menu__label">Manage Property</span>
-                        <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('property.index') }}" class="slide-item">Properties</a></li>
-                    </ul>
                 </li>
                 @endcan
 
@@ -109,49 +106,27 @@
                     </a>
                 </li>
 
-                {{-- FAQ   created by Rayhann --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('faq.*') ? 'has-link' : '' }}"
-                    href="{{ route('faq.index') }}">
-                        <i class="fa-solid fa-circle-question"></i>
-                        <span class="side-menu__label">FAQ</span>
-                    </a>
-                </li>
-
-
-                {{-- Messaging --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}"
-                        href="{{ route('messaging.index') }}">
-                        <i class="fa-solid fa-message"></i>
-                        <span class="side-menu__label">Messaging</span>
-                    </a>
-                </li>
-
-                {{-- Items Management --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('items.*') ? 'has-link' : '' }}"
-                    href="{{ route('items.index') }}">
-                        <i class="fa-solid fa-box"></i>
-                        <span class="side-menu__label">Listing</span>
-                    </a>
-                </li>
-
-
                 @can('cms.view')
                 {{-- Frontend --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('cms.index') ? 'has-link' : '' }}" href="{{ route('cms.index') }}">
+
+                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
                         <i class="fa-solid fa-layer-group"></i>
-                        <span class="side-menu__label">Platform</span>
+                        <span class="side-menu__label">Platforms</span>
+                        <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
+                    <ul class="slide-menu">
+                        <li><a href="{{ route('cms.index') }}" class="slide-item {{ request()->routeIs('cms.index') ? 'has-link' : '' }}">CMS</a></li>
+                        <li><a href="{{ route('messaging.index') }}" class="slide-item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}">Messaging</a></li>
+                        <li><a href="{{ route('items.index') }}" class="slide-item {{ request()->routeIs('items.*') ? 'has-link' : '' }}">Item Lists</a></li>
+                        <li><a href="{{ route('faq.index') }}" class="slide-item {{ request()->routeIs('faq.*') ? 'has-link' : '' }}">FAQ</a></li>
+                    </ul>
                 </li>
                 @endcan
 
 
                 {{-- Reports --}}
                 <li class="slide">
-                    
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">
                         <i class="fa-solid fa-explosion"></i>
                         <span class="side-menu__label">Reports</span>
