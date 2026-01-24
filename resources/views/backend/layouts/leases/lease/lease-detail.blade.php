@@ -305,8 +305,8 @@
                                 </div>
 
                                 <div class="collapse show" id="openDocsSection">
-                                    @if ($lease->documents->where('tenant_signed_at', null)->count() > 0)
-                                        @foreach ($lease->documents as $doc)
+                                    @if ($lease->tenant->leaseDocuments->where('tenant_signed_at', null)->count() > 0)
+                                        @foreach ($lease->tenant->leaseDocuments as $doc)
                                             @if (!$doc->tenant_signed_at || !$doc->admin_signed_at)
                                                 <div class="document-card">
                                                     <div class="d-flex align-items-center">
