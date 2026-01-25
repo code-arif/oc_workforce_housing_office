@@ -642,11 +642,18 @@
             const endDate = leaseData.lease_type === 'month_to_month' ? 'No End Date' : (leaseData.end_date ? formatDate(leaseData.end_date) : 'N/A');
             $('#finalLeasePeriod').text(`${startDate} - ${endDate}`);
 
-            // Tenant Summary
-            $('#finalTenantCount').text(selectedTenants.length);
+            // Tenant Summary (single tenant)
             const tenantListHtml = selectedTenants.length > 0 
-                ? selectedTenants.map(t => `<span class="tenant-chip"><i class="fe fe-user"></i>${t.first_name} ${t.last_name}</span>`).join('')
-                : '<span class="text-muted">No tenants added</span>';
+                ? `<div class="d-flex align-items-center">
+                    <div class="avatar avatar-md bg-primary-transparent text-primary rounded-circle me-2">
+                        <i class="fe fe-user"></i>
+                    </div>
+                    <div>
+                        <strong>${selectedTenants[0].first_name} ${selectedTenants[0].last_name}</strong>
+                        <br><small class="text-muted">${selectedTenants[0].email}</small>
+                    </div>
+                </div>`
+                : '<span class="text-muted">No tenant selected</span>';
             $('#finalTenantsList').html(tenantListHtml);
 
             // Rent Summary
@@ -678,6 +685,7 @@
         }
 
         // Tenant Management Functions
+        // Single tenant per lease - array kept for compatibility but will only contain 0 or 1 tenant
         let selectedTenants = [];
 
         function setupTenantManagement() {
@@ -687,17 +695,7 @@
                 if (!tenantId) {
                     Swal.fire({
                         title: "Tenant Not Selected",
-                        text: "Please select a tenant before adding.",
-                        icon: "warning"
-                    });
-                    return;
-                }
-
-                // Check if already added
-                if (selectedTenants.find(t => t.id == tenantId)) {
-                    Swal.fire({
-                        title: "Already Added",
-                        text: "This tenant has already been added to this lease.",
+                        text: "Please select a tenant.",
                         icon: "warning"
                     });
                     return;
@@ -714,7 +712,8 @@
                     status: selectedOption.data('status')
                 };
 
-                addTenantToList(tenantData);
+                // Replace any existing tenant (single tenant per lease)
+                setTenantForLease(tenantData);
             });
 
             // Create new tenant button
@@ -761,8 +760,8 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            // Add to selected tenants
-                            addTenantToList(response.data);
+                            // Set as selected tenant (replaces any existing)
+                            setTenantForLease(response.data);
 
                             // Clear form
                             $('#newTenantFirstName, #newTenantLastName, #newTenantEmail, #newTenantPhone').val('');
@@ -771,7 +770,7 @@
                             loadActiveTenants();
                             Swal.fire({
                                 title: "Tenant Created",
-                                text: "The tenant has been successfully created.",
+                                text: "The tenant has been successfully created and selected for this lease.",
                                 icon: "success"
                             });
                         } else {
@@ -827,38 +826,48 @@
             });
         }
 
-        function addTenantToList(tenantData) {
-            // Add to array
+        /**
+         * Set single tenant for the lease (replaces any existing tenant)
+         * Each lease is for one tenant and one bed
+         */
+        function setTenantForLease(tenantData) {
+            // Clear existing tenant(s) if any
+            selectedTenants = [];
+            $('#selectedTenantsList').empty();
+
+            // Add the new tenant
             selectedTenants.push(tenantData);
 
             // Update count
-            $('#tenantCount').text(selectedTenants.length);
+            $('#tenantCount').text('1');
 
             // Hide no tenants alert, show list
             $('#noTenantsAlert').hide();
             $('#selectedTenantsList').show();
 
-            // Create tenant card
+            // Create tenant card (full width since it's single)
             const card = `
-                <div class="col-md-6 mb-3" data-tenant-id="${tenantData.id}">
-                    <div class="card tenant-card">
+                <div class="col-12 mb-3" data-tenant-id="${tenantData.id}">
+                    <div class="card tenant-card border-success">
                         <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1">
-                                        <i class="fe fe-user me-2 text-primary"></i>
-                                        ${tenantData.first_name} ${tenantData.last_name}
-                                    </h6>
-                                    <p class="mb-1 small text-muted">
-                                        <i class="fe fe-mail me-1"></i> ${tenantData.email}
-                                    </p>
-                                    <p class="mb-1 small text-muted">
-                                        <i class="fe fe-phone me-1"></i> ${tenantData.phone || 'N/A'}
-                                    </p>
-                                    <span class="badge bg-success">${tenantData.status || 'Active'}</span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-lg bg-success-transparent text-success rounded-circle me-3">
+                                        <i class="fe fe-user fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="mb-1">
+                                            ${tenantData.first_name} ${tenantData.last_name}
+                                        </h5>
+                                        <p class="mb-0 text-muted">
+                                            <i class="fe fe-mail me-1"></i> ${tenantData.email}
+                                            <span class="mx-2">|</span>
+                                            <i class="fe fe-phone me-1"></i> ${tenantData.phone || 'N/A'}
+                                        </p>
+                                    </div>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="removeTenantFromList(${tenantData.id})">
-                                    <i class="fe fe-trash-2"></i>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearTenantSelection()">
+                                    <i class="fe fe-x me-1"></i> Change Tenant
                                 </button>
                             </div>
                         </div>
@@ -869,21 +878,24 @@
             $('#selectedTenantsList').append(card);
         }
 
+        /**
+         * Clear the selected tenant
+         */
+        function clearTenantSelection() {
+            selectedTenants = [];
+            $('#selectedTenantsList').empty().hide();
+            $('#noTenantsAlert').show();
+            $('#tenantCount').text('0');
+            $('#existingTenantSelect').val('').trigger('change');
+        }
+
+        // Legacy function - kept for compatibility but redirects to setTenantForLease
+        function addTenantToList(tenantData) {
+            setTenantForLease(tenantData);
+        }
+
         function removeTenantFromList(tenantId) {
-            // Remove from array
-            selectedTenants = selectedTenants.filter(t => t.id != tenantId);
-
-            // Remove card
-            $(`[data-tenant-id="${tenantId}"]`).remove();
-
-            // Update count
-            $('#tenantCount').text(selectedTenants.length);
-
-            // Show/hide alerts
-            if (selectedTenants.length === 0) {
-                $('#noTenantsAlert').show();
-                $('#selectedTenantsList').hide();
-            }
+            clearTenantSelection();
         }
 
         function previousStep(step) {
@@ -1039,7 +1051,7 @@
             if (!data.start_date) errors.push('Please select a start date');
             if (data.lease_type === 'fixed' && !data.end_date) errors.push('Please select an end date for fixed term lease');
             if (!data.rent_amount || data.rent_amount <= 0) errors.push('Please enter a valid rent amount');
-            if (data.tenant_ids.length === 0) errors.push('Please add at least one tenant');
+            if (data.tenant_ids.length === 0) errors.push('Please select a tenant for this lease');
             
             // Custom payment validation
             if (data.payment_frequency === 'CUSTOM') {

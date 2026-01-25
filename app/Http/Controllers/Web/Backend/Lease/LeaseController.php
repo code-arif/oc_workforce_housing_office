@@ -234,7 +234,8 @@ class LeaseController extends Controller
             'rent_amount' => 'required|numeric|min:0',
             'deposit_amount' => 'required|numeric|min:0',
             'payment_frequency' => 'required|in:WEEKLY,BIWEEKLY,MONTHLY,BIMONTHLY,SEMIANNUAL,CUSTOM',
-            'tenant_ids' => 'required|array|min:1',
+            // Single tenant per lease - one bed = one tenant
+            'tenant_ids' => 'required|array|size:1',
             'tenant_ids.*' => 'exists:tenants,id',
             'lease_template_id' => 'nullable|exists:lease_templates,id',
         ];
@@ -253,6 +254,9 @@ class LeaseController extends Controller
         DB::beginTransaction();
 
         try {
+            // Get the single tenant ID
+            $tenantId = $request->tenant_ids[0];
+            
             // Determine status based on whether it's a draft or ready for signing
             $isDraft = $request->boolean('save_as_draft');
 
@@ -261,9 +265,9 @@ class LeaseController extends Controller
                 : 'PENDING_TENANT_SIGN';
 
 
-            // Create the lease
+            // Create the lease with single tenant
             $lease = Lease::create([
-                'tenant_id' => $request->tenant_ids[0], // Primary tenant
+                'tenant_id' => $tenantId,
                 'property_id' => $request->property_id,
                 'season_id' => $request->season_id,
                 'status' => $status,
@@ -300,11 +304,8 @@ class LeaseController extends Controller
             if ($isCustomPayment) {
                 // Custom payment schedule
                 $this->generateCustomPaymentSchedule($lease, $request->custom_payments);
-
-                // Generate custom invoices for each tenant
-                foreach ($request->tenant_ids as $tenantId) {
-                    $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected);
-                }
+                // Generate custom invoices for the tenant
+                $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected);
             } else {
                 // Standard payment schedule
                 if ($request->end_date) {
@@ -321,27 +322,25 @@ class LeaseController extends Controller
                     ]);
                 }
 
-                // Generate standard invoices for each tenant
-                foreach ($request->tenant_ids as $tenantId) {
-                    $this->generateInvoices($lease, $tenantId, $request->due_day ?? 1, $request->first_invoice_date, $depositCollected);
-                }
+                // Generate standard invoices for the tenant
+                $this->generateInvoices($lease, $tenantId, $request->due_day ?? 1, $request->first_invoice_date, $depositCollected);
             }
 
             Log::info('Invoices generated for lease ID: ' . $lease->id);
+            
             // Create lease document if template is selected and not a draft
-           if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
+            if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
                 $template = LeaseTemplate::find($request->lease_template_id);
                 Log::info('Creating lease document using template ID: ' . $request->lease_template_id);
-                // Create document for each tenant
-                foreach ($request->tenant_ids as $tenantId) {
-                    LeaseDocument::create([
-                        'lease_id' => $lease->id,
-                        'lease_template_id' => $request->lease_template_id,
-                        'tenant_id' => $tenantId,
-                        'rendered_content' => $template->pdf_path ?? '', // Will be rendered later by service
-                        'status' => 'pending_signatures',
-                    ]);
-                }
+                
+                // Create single document for the tenant
+                LeaseDocument::create([
+                    'lease_id' => $lease->id,
+                    'lease_template_id' => $request->lease_template_id,
+                    'tenant_id' => $tenantId,
+                    'rendered_content' => $template->pdf_path ?? '', // Will be rendered later by service
+                    'status' => 'pending_signatures',
+                ]);
             }
 
             // Send welcome email if enabled
@@ -612,7 +611,7 @@ class LeaseController extends Controller
         $daysRemaining = max(0, now()->diffInDays($lease->end_date, false));
 
         // Get document status
-        $document = $lease->documents->first();
+        $document = $lease->tenant->leaseDocuments->first();
         $documentStatus = [
             'has_document' => $document ? true : false,
             'tenant_signed' => $document && $document->tenant_signed_at ? true : false,

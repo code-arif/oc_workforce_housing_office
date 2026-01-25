@@ -326,8 +326,8 @@
                                         <div class="step-sidebar">
                                             <div class="step-number">3</div>
                                             <div class="step-info">
-                                                <h6>Add Tenants</h6>
-                                                <p>Select Tenants from the list or add a new tenant</p>
+                                                <h6>Select Tenant</h6>
+                                                <p>Select the tenant for this lease (one tenant per bed)</p>
                                             </div>
                                         </div>
 
@@ -336,9 +336,15 @@
                                                 <h6 class="mb-0" id="unitNameInfo">Select property first</h6>
                                                 <div class="text-end" id="unitPriceInfo">
                                                     <span class="me-3"><i class="fe fe-dollar-sign text-success"></i> <span id="rentDepositDisplay">$0.00 Rent/$0.00 Deposit</span></span>
-                                                    <span><i class="fe fe-users text-primary"></i> <span id="tenantCount">0</span> Tenant(s)</span>
+                                                    <span><i class="fe fe-user text-primary"></i> <span id="tenantCount">0</span> Tenant</span>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <!-- Info about roommates -->
+                                        <div class="alert alert-info-transparent border-info mb-4">
+                                            <i class="fe fe-info me-2"></i>
+                                            <strong>Note:</strong> Each lease is for one tenant and one bed. For roommates sharing a room, create separate leases for each tenant with different beds in the same room.
                                         </div>
 
                                         <!-- Add Tenant Section -->
@@ -394,14 +400,14 @@
                                             </div>
                                         </div>
 
-                                        <!-- Selected Tenants List -->
+                                        <!-- Selected Tenant -->
                                         <div class="selected-tenants-section">
-                                            <h6 class="mb-3">Selected Tenants for this Lease</h6>
+                                            <h6 class="mb-3">Selected Tenant for this Lease</h6>
                                             <div class="alert alert-info" id="noTenantsAlert">
-                                                <i class="fe fe-info me-2"></i>No tenants added yet. Please select an existing tenant or create a new one above.
+                                                <i class="fe fe-info me-2"></i>No tenant selected yet. Please select an existing tenant or create a new one above.
                                             </div>
                                             <div id="selectedTenantsList" class="row" style="display: none;">
-                                                <!-- Tenant cards will be dynamically added here -->
+                                                <!-- Tenant card will be dynamically added here -->
                                             </div>
                                         </div>
 
@@ -615,12 +621,12 @@
                                             <!-- Tenant Summary -->
                                             <div class="finalize-section mb-4">
                                                 <div class="section-header">
-                                                    <h6><i class="fe fe-users me-2"></i>Tenants (<span id="finalTenantCount">0</span>)</h6>
+                                                    <h6><i class="fe fe-user me-2"></i>Tenant</h6>
                                                     <button type="button" class="btn btn-sm btn-link" onclick="previousStep(3)">Edit</button>
                                                 </div>
                                                 <div class="section-content">
                                                     <div id="finalTenantsList" class="tenant-list">
-                                                        <p class="text-muted mb-0">No tenants added</p>
+                                                        <p class="text-muted mb-0">No tenant selected</p>
                                                     </div>
                                                 </div>
                                             </div>
