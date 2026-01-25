@@ -10,10 +10,24 @@ class Invoice extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'lease_id', 'tenant_id', 'invoice_number', 'amount',
-        'total_amount', 'paid_amount', 'balance_due', 'issue_date',
-        'due_date', 'type', 'status', 'is_first_invoice',
-        'includes_deposit', 'paid_at', 'notes', 'metadata'
+        'lease_id',
+        'tenant_id',
+        'invoice_number',
+        'amount',
+        'total_amount',
+        'paid_amount',
+        'balance_due',
+        'issue_date',
+        'due_date',
+        'type',
+        'status',
+        'is_first_invoice',
+        'includes_deposit',
+        'is_recurring',
+        'recurring_frequency',
+        'paid_at',
+        'notes',
+        'metadata'
     ];
 
     protected $casts = [
@@ -22,6 +36,7 @@ class Invoice extends Model
         'paid_at' => 'datetime',
         'metadata' => 'array',
         'is_first_invoice' => 'boolean',
+        'is_recurring' => 'boolean',
         'includes_deposit' => 'boolean',
     ];
 
@@ -48,8 +63,8 @@ class Invoice extends Model
     public function isOverdue()
     {
         return $this->status !== 'PAID' &&
-               $this->status !== 'CANCELLED' &&
-               $this->due_date < now();
+            $this->status !== 'CANCELLED' &&
+            $this->due_date < now();
     }
 
     public function isPaid()
@@ -83,5 +98,23 @@ class Invoice extends Model
         }
 
         $this->save();
+    }
+
+    // Relaiton with item table
+    public function items()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+
+    // Scope
+    public function scopeOverdue($query)
+    {
+        return $query->where('status', '!=', 'PAID')
+            ->where('due_date', '<', now());
+    }
+
+    public function scopeUnpaid($query)
+    {
+        return $query->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
     }
 }

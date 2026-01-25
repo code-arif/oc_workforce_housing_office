@@ -6,7 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Item extends Model
 {
-    
-protected $table = 'items';
-      protected $guarded = [];
+
+    protected $table = 'items';
+    protected $guarded = [];
+
+    public function invoiceItems()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
 }

@@ -144,7 +144,7 @@ class LandingController extends Controller
             }
 
             // Generate frontend form URL
-            $passResetUrl = config('app.frontend_url') . "/reset-password/{$tenant->approval_token}";
+            $passResetUrl = config('app.frontend_url') . "/password-setup/{$tenant->approval_token}";
 
             // Support URL
             $contactUrl = config('app.frontend_url') . "/contact";

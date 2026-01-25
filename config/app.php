@@ -53,7 +53,7 @@ return [
     */
 
     'url' => env('APP_URL', 'https://oc_workforce_laravel.test'),
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
     /*
     |--------------------------------------------------------------------------

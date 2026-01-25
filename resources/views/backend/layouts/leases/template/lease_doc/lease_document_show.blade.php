@@ -109,7 +109,7 @@
                             <a href="{{ route('lease-documents.download-pdf', $document->id) }}" class="btn btn-primary w-100 mb-2" target="_blank">
                                 <i class="fas fa-download"></i> Download PDF
                             </a>
-                            
+
                             @if($document->status !== 'signed')
                                 <a href="{{ route('lease-documents.edit', $document->id) }}" class="btn btn-warning w-100 mb-2">
                                     <i class="fas fa-edit"></i> Edit Document
@@ -193,7 +193,7 @@
         background: #e0e0e0;
         padding: 30px;
     }
-    
+
     .document-preview {
         background: white;
         padding: 60px 80px;
@@ -205,7 +205,7 @@
         line-height: 1.6;
         min-height: 800px;
     }
-    
+
     .signature-area {
         padding: 20px;
         border: 1px solid #ddd;
@@ -213,24 +213,24 @@
         background: #f8f9fa;
         margin-bottom: 20px;
     }
-    
+
     .signature-canvas-container {
         border: 2px solid #333;
         border-radius: 4px;
         background: white;
     }
-    
+
     #signatureCanvas {
         width: 100%;
         height: 200px;
         cursor: crosshair;
     }
-    
+
     .filled-placeholder {
         font-weight: 600;
         color: #000;
     }
-    
+
     @media print {
         .btn, .card-header, .col-md-3 {
             display: none !important;

@@ -21,9 +21,12 @@
                                 </ol>
                             </nav>
                         </div>
-                        
+
                     </div>
                     <div class="d-flex gap-2">
+                        <a href="{{ route('invoices.index') }}" class="btn btn-outline-success">
+                            <i class="fe fe-arrow-left me-2"></i>Back to invoices
+                        </a>
                         <a href="{{ route('leases.show', $invoice->lease_id) }}" class="btn btn-outline-secondary">
                             <i class="fe fe-arrow-left me-2"></i>Back to Lease
                         </a>
@@ -46,7 +49,7 @@
                 <div class="row">
                     <div class="col-lg-7 invoice-container">
                         <div class="invoice-paper">
-                        
+
                             <!-- Invoice Header -->
                             <div class="invoice-header">
                                 <div class="invoice-brand">
@@ -188,7 +191,7 @@
                                         <span>Rent Amount</span>
                                         <span>${{ number_format($invoice->amount, 2) }}</span>
                                     </div>
-                                    
+
                                     @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
                                     <div class="summary-row deposit">
                                         <span>
@@ -199,7 +202,7 @@
                                     </div>
                                     @php
                                         $totalDue +=$lease->deposit_amount;
-                                        $balanceDue +=$lease->deposit_amount; 
+                                        $balanceDue +=$lease->deposit_amount;
                                     @endphp
                                     @elseif($isFirstInvoice && $invoice->includes_deposit && $lease->deposit_collected && $lease->deposit_amount > 0)
                                     <div class="summary-row deposit collected">
@@ -264,7 +267,7 @@
                             <div class="payment-info">
                                 <h6><i class="fe fe-info me-2"></i>Payment Information</h6>
                                 <p class="text-muted mb-0">
-                                    Please ensure payment is made by the due date to avoid late fees. 
+                                    Please ensure payment is made by the due date to avoid late fees.
                                     For questions regarding this invoice, please contact our office.
                                 </p>
                             </div>
@@ -296,7 +299,7 @@
                             <div class="card-body">
                                 <form id="paymentForm" onsubmit="submitPayment(event)">
                                     @csrf
-                                    
+
                                     <!-- Payment Summary -->
                                     <div class="alert alert-info mb-4">
                                         <div class="d-flex justify-content-between mb-2">
@@ -324,13 +327,13 @@
                                         <label for="paymentAmount" class="form-label">Payment Amount <span class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" 
-                                                   class="form-control" 
-                                                   id="paymentAmount" 
-                                                   name="amount" 
-                                                   min="0" 
-                                                   max="{{ $balanceDue }}" 
-                                                   value="{{ $balanceDue }}" 
+                                            <input type="number"
+                                                   class="form-control"
+                                                   id="paymentAmount"
+                                                   name="amount"
+                                                   min="0"
+                                                   max="{{ $balanceDue }}"
+                                                   value="{{ $balanceDue }}"
                                                    required
                                                    oninput="updateRemainingBalance()">
                                         </div>
@@ -375,11 +378,11 @@
                                     <!-- Payment Date -->
                                     <div class="mb-3">
                                         <label for="paymentDate" class="form-label">Payment Date <span class="text-danger">*</span></label>
-                                        <input type="text" 
-                                               class="form-control datepicker2" 
-                                               id="paymentDate" 
-                                               name="payment_date" 
-                                               value="{{ date('Y-m-d') }}" 
+                                        <input type="text"
+                                               class="form-control datepicker2"
+                                               id="paymentDate"
+                                               name="payment_date"
+                                               value="{{ date('Y-m-d') }}"
                                                max="{{ date('Y-m-d') }}"
                                                required>
                                     </div>
@@ -398,20 +401,20 @@
                                     <!-- Reference Number -->
                                     <div class="mb-3">
                                         <label for="referenceNumber" class="form-label">Reference/Transaction Number</label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="referenceNumber" 
-                                               name="reference_number" 
+                                        <input type="text"
+                                               class="form-control"
+                                               id="referenceNumber"
+                                               name="reference_number"
                                                placeholder="Optional">
                                     </div>
 
                                     <!-- Payment Note -->
                                     <div class="mb-4">
                                         <label for="paymentNote" class="form-label">Note</label>
-                                        <textarea class="form-control" 
-                                                  id="paymentNote" 
-                                                  name="note" 
-                                                  rows="3" 
+                                        <textarea class="form-control"
+                                                  id="paymentNote"
+                                                  name="note"
+                                                  rows="3"
                                                   placeholder="Add any additional notes (optional)"></textarea>
                                     </div>
 
@@ -469,7 +472,7 @@
         const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
         const remaining = balanceDue - paymentAmount;
         document.getElementById('remainingBalance').textContent = '$' + remaining.toFixed(2);
-        
+
         if (remaining === 0) {
             document.getElementById('remainingBalance').classList.remove('text-primary');
             document.getElementById('remainingBalance').classList.add('text-success');
@@ -481,15 +484,15 @@
 
     function submitPayment(event) {
         event.preventDefault();
-        
+
         const formData = new FormData(event.target);
         const paymentAmount = parseFloat(formData.get('amount'));
-        
+
         if (paymentAmount <= 0 || paymentAmount > balanceDue) {
             toastr.error('Invalid payment amount');
             return;
         }
-        
+
         if (!confirm('Confirm payment of $' + paymentAmount.toFixed(2) + '?')) {
             return;
         }

@@ -38,6 +38,7 @@ use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
 use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 use App\Http\Controllers\Web\Backend\FaqController;
+use App\Http\Controllers\Web\Backend\Income\IncomeController;
 use App\Http\Controllers\Web\Backend\ItemController;
 use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
 use App\Http\Controllers\Web\Backend\Reports\RentReportController;
@@ -296,6 +297,22 @@ Route::prefix('invoices')->name('invoices.')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
+| Income Routes
+|--------------------------------------------------------------------------
+*/
+// Invoice Routes
+Route::prefix('incomes')->name('invoices.')->group(function () {
+    Route::get('/', [IncomeController::class, 'index'])->name('index');
+    Route::get('/get-data', [IncomeController::class, 'getData'])->name('get.data');
+    Route::get('/create', [IncomeController::class, 'create'])->name('create');
+    Route::post('/store', [IncomeController::class, 'store'])->name('store');
+    // Route::get('/{id}', [IncomeController::class, 'show'])->name('show');
+    Route::get('/tenant/{tenantId}/info', [IncomeController::class, 'getTenantInfo'])->name('tenant.info');
+});
+
+
+/*
+|--------------------------------------------------------------------------
 | Maintanance Management Routes
 |--------------------------------------------------------------------------
 */
@@ -450,7 +467,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/properties/{property}/units', [LeaseController::class, 'getUnits'])->name('backend.properties.units');
     Route::get('/units/{unit}/rooms', [LeaseController::class, 'getRooms'])->name('backend.units.rooms');
     Route::get('/rooms/{room}/beds', [LeaseController::class, 'getBeds'])->name('backend.rooms.beds');
-    
+
     //faqq sectionn  rayyhannn
     Route::prefix('faq')->name('faq.')->group(function () {
 
@@ -461,7 +478,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
         // ✅ STATUS TOGGLE (POST)
         Route::post('/status/{id}', [FaqController::class, 'status'])->name('status');
-
     });
 
     // item sectionn
@@ -483,10 +499,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
         // STATUS TOGGLE (ACTIVE / INACTIVE)
         Route::post('/status/{id}', [ItemController::class, 'status'])->name('status');
         //active data show
-    Route::get('/items/active', [ItemController::class, 'activeItems']);
-
+        Route::get('/items/active', [ItemController::class, 'activeItems']);
     });
-
 });
 
 // Reports Routes
