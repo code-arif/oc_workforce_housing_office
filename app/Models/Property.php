@@ -80,4 +80,9 @@ class Property extends Model
         )->count();
     }
 
+    public function leases()
+    {
+        return $this->hasMany(Lease::class, 'property_id', 'id');
+    }
+
 }

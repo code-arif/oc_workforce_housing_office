@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Web\Backend;
 
+use App\Models\Bed;
+use App\Models\Room;
 use App\Models\Unit;
 use App\Models\Property;
 use Illuminate\Support\Str;
@@ -26,13 +28,14 @@ class PropertyController extends Controller
      */
     public function index( Request $request)
     {
+        
         return view('backend.layouts.properties.layout.property-layout');
     }
 
     public function getData(Request $request) 
     {
         if ($request->ajax()) {
-            $properties = Property::latest('id')->get();
+            $properties = Property::with('leases')->latest('id')->get();
 
             return DataTables::of($properties)
                 ->addIndexColumn()
@@ -47,10 +50,31 @@ class PropertyController extends Controller
                     return $item->address;
                 })
                 ->addColumn('rent', function ($item) {
+                    // Get active leases for this property
+                    $activeLeases = $item->leases()->where('status', 'active')->get();
+                    
+                    // Calculate totals
+                    $totalRent = 0;
+                    $totalPaid = 0;
+                    $totalDue = 0;
+                    
+                    foreach ($activeLeases as $lease) {
+                        // Get all invoices for this lease (including soft deleted if needed)
+                        $invoices = $lease->invoices()
+                            ->whereNull('deleted_at') // Only non-deleted invoices
+                            ->get();
+                        
+                        foreach ($invoices as $invoice) {
+                            $totalRent += $invoice->total_amount;
+                            $totalPaid += $invoice->paid_amount ?? 0;
+                            $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
+                        }
+                    }
+                    
                     $rent = '
-                        Total Rent: <span class="fw-bold"> $20000.00</span> <br>
-                        Deposit: <span class="fw-bold">$15500.00</span> <br>
-                        Due: <span class="fw-bold">$4500.00</span>
+                        Total Rent: <span class="fw-bold">$' . number_format($totalRent, 2) . '</span> <br>
+                        Paid: <span class="fw-bold">$' . number_format($totalPaid, 2) . '</span> <br>
+                        Due: <span class="fw-bold">$' . number_format($totalDue, 2) . '</span>
                     ';
                     return $rent;
                 })
@@ -152,12 +176,36 @@ class PropertyController extends Controller
     {
         $property = Property::with([
             'propertyType',
-            'units' ,
+            'units',
             'units.rooms',
             'units.rooms.beds',
+            'units.rooms.beds.leaseAssignments.lease.tenant',
+            'leases.tenant',
+            'leases.season',
+            'leases.assignments.bed.room.unit',
         ])->findOrFail($id);
 
-        return view('backend.layouts.properties.show', compact('property'));
+        // Calculate summary stats
+        $totalBeds = $property->totalBeds();
+        $occupiedBeds = Bed::whereIn('room_id', 
+            Room::whereIn('unit_id', $property->units->pluck('id'))->pluck('id')
+        )->where('is_occupied', true)->count();
+        $availableBeds = $totalBeds - $occupiedBeds;
+        
+        // Calculate rental stats
+        $activeLeases = $property->leases->where('status', 'ACTIVE');
+        $totalMonthlyRent = $activeLeases->sum('rent_amount');
+
+        $stats = [
+            'total_beds' => $totalBeds,
+            'occupied_beds' => $occupiedBeds,
+            'available_beds' => $availableBeds,
+            'occupancy_rate' => $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0,
+            'active_leases' => $activeLeases->count(),
+            'total_monthly_rent' => $totalMonthlyRent,
+        ];
+
+        return view('backend.layouts.properties.show', compact('property', 'stats'));
     }
 
     /**
