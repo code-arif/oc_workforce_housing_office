@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Backend\CMS\Section;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\HomeVideo;
 use App\Models\PricingPlan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -144,6 +145,11 @@ class CmsSectionController extends Controller
                 case 'gallery':
                     $galleries = Gallery::latest()->get();
                     return view('backend.layouts.cms.home.gallery', compact('galleries'))->render();
+
+                    // home page - video section
+                case 'video-section':
+                    $videos = HomeVideo::orderBy('order')->get();
+                    return view('backend.layouts.cms.home.video-section', compact('videos'))->render();
 
                     // Property page - propert banner section
                 case 'property-banner':

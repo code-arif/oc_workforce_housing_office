@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api\CMS;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\Setting;
+use App\Models\HomeVideo;
 use App\Models\PricingPlan;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CMS\CMSResource;
 use App\Http\Resources\CMS\SliderResource;
-use App\Models\Setting;
 
 class CmsController extends Controller
 {
@@ -62,6 +63,8 @@ class CmsController extends Controller
 
         $gallery = Gallery::get();
 
+        $videos = HomeVideo::orderBy('order')->get();
+
         $gallery = $gallery->map(function ($item) {
             return [
                 'id' => $item->id,
@@ -80,7 +83,8 @@ class CmsController extends Controller
                 'employee_and_sponsor' => CMSResource::collection($employeeAndSponsor),
                 'prime_location' => CMSResource::collection($primeLocation),
                 'appartment' => CMSResource::collection($appartment),
-                'gallery' => $gallery
+                'gallery' => $gallery,
+                'videos' => $videos
             ]
         ], 'Home page data retrieved successfully');
     }

@@ -82,6 +82,12 @@
                                         <i class="fa-solid fa-images me-2"></i> Gallery
                                     </a>
 
+                                    <a class="nav-link" id="video-section-tab" href="javascript:void(0);" data-section="video-section"
+                                        data-title="Video Section" data-breadcrumb="Video Section">
+                                        <i class="fa-solid fa-video me-2"></i> Video Section
+                                    </a>
+                                    
+
                                     {{-- Properties Page --}}
                                     <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
                                         style="font-size: 0.75rem;">
@@ -290,6 +296,13 @@
 
                 // gallery image delete route
                 'cms.gallery.item.delete': BASE_URL + '/gallery/item/delete/' + (params.id || params),
+
+                // video section routes
+                'cms.video.store': BASE_URL + '/home/video/store',
+                'cms.video.update': BASE_URL + '/home/video/update/' + (params.id || params),
+                'cms.video.status': BASE_URL + '/home/video/' + (params.id || params) + '/status',
+                'cms.video.destroy': BASE_URL + '/home/video/' + (params.id || params),
+                'cms.video.updateOrder': BASE_URL + '/home/video/update-order',
 
             };
             return routes[name] || BASE_URL;

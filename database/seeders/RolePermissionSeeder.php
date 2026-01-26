@@ -48,6 +48,12 @@ class RolePermissionSeeder extends Seeder
             'user-management.permissions' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete'],
             'lease' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
             'lease.template' => ['list', 'create', 'store', 'edit', 'update', 'delete', 'toggle.status'],
+            'tenant' => ['list', 'create', 'store', 'show', 'edit', 'update', 'delete', 'toggle.status'],
+            'applications' => ['list', 'show', 'delete', 'toggle.status'],
+            'payments' => ['list', 'show', 'create', 'store', 'edit', 'update', 'delete'],
+            'reports' => ['list', 'show', 'create', 'store', 'edit', 'update', 'delete'],
+            'income' => ['list', 'create', 'store', 'edit', 'update', 'delete'],
+            'settings' => ['view', 'edit', 'update'],
 
         ];
 

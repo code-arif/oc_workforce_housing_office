@@ -48,6 +48,7 @@
 
 
                 {{-- Tenants --}}
+                @can('tenant.list')
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
                         href="{{ route('tenants.index') }}">
@@ -55,8 +56,10 @@
                         <span class="side-menu__label">Tenants</span>
                     </a>
                 </li>
+                @endcan
 
                 {{-- Applications --}}
+                @can('applications.list')
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
                         href="{{ route('tenants.applications.index') }}">
@@ -64,30 +67,43 @@
                         <span class="side-menu__label">Applications</span>
                     </a>
                 </li>
+                @endcan
 
                 {{-- Leases and files --}}
+                @canany(['lease.list', 'lease.template.list', 'seasons.list'])
                 <li class="slide">
-
-                    <a class="side-menu__item {{ request()->routeIs('seasons.list') ? 'has-link' : '' }}"
-                        data-bs-toggle="slide" href="#">
+                    <a class="side-menu__item {{ request()->routeIs('seasons.*','leases.*','lease-templates.*') ? 'has-link' : '' }}"
+                    data-bs-toggle="slide" href="#">
                         <i class="fa-solid fa-file"></i>
                         <span class="side-menu__label">Manage Leases & Files</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
+
                     <ul class="slide-menu">
                         @can('seasons.list')
-                            <li><a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a></li>
+                            <li>
+                                <a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a>
+                            </li>
                         @endcan
+
                         @can('lease.template.list')
-                            <li><a href="{{ route('lease-templates.index') }}" class="slide-item">Lease Templates</a></li>
+                            <li>
+                                <a href="{{ route('lease-templates.index') }}" class="slide-item">Lease Templates</a>
+                            </li>
                         @endcan
+
                         @can('lease.list')
-                            <li><a href="{{ route('leases.index') }}" class="slide-item">Leases</a></li>
+                            <li>
+                                <a href="{{ route('leases.index') }}" class="slide-item">Leases</a>
+                            </li>
                         @endcan
                     </ul>
                 </li>
+                @endcanany
+
 
                 {{-- Income --}}
+                @can('income')
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('invoices.index') ? 'has-link' : '' }}"
                         href="{{ route('invoices.index') }}">
@@ -95,16 +111,9 @@
                         <span class="side-menu__label">Income</span>
                     </a>
                 </li>
+                @endcan
 
-
-                {{-- Maintanence --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"
-                        href="{{ route('maintanance.index') }}">
-                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                        <span class="side-menu__label">Maintanence</span>
-                    </a>
-                </li>
+                
 
                 @can('cms.view')
                     {{-- Frontend --}}
@@ -121,6 +130,13 @@
                             <li><a href="{{ route('messaging.index') }}"
                                     class="slide-item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}">Messaging</a>
                             </li>
+                            {{-- Maintanence --}}
+                            <li>
+                                <a class="slide-item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"href="{{ route('maintanance.index') }}">
+                                Maintanence
+                                </a>
+                            </li>
+                            {{-- Items & FAQ --}}
                             <li><a href="{{ route('items.index') }}"
                                     class="slide-item {{ request()->routeIs('items.*') ? 'has-link' : '' }}">Item Lists</a>
                             </li>
@@ -132,6 +148,7 @@
 
 
                 {{-- Reports --}}
+                @can('reports.list')
                 <li class="slide">
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">
                         <i class="fa-solid fa-explosion"></i>
@@ -149,8 +166,8 @@
                         <li><a href="#" class="slide-item">Lease Reports</a></li>
                     </ul>
                 </li>
-
-                @can('user-management.users.list')
+                @endcan
+                @canany(['user-management.users.list', 'user-management.roles.list', 'user-management.permissions.list'])
                     {{-- User Management --}}
                     <li class="slide">
                         <a class="side-menu__item" data-bs-toggle="slide" href="#">
@@ -173,6 +190,8 @@
                     </li>
                 @endcan
                 {{-- Settings --}}
+                @can('settings')
+                    
                 <li class="slide">
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">
                         <i class="fa fa-cog"></i>
@@ -187,6 +206,7 @@
                         <li><a href="{{ route('social.profile.index') }}" class="slide-item">Social Profile</a></li>
                     </ul>
                 </li>
+                @endcan
             </ul>
 
 

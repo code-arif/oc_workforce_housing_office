@@ -27,6 +27,7 @@ use App\Http\Controllers\Web\Backend\UserManagement\UserController;
 use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomeVideoController;
 use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
 use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
@@ -167,6 +168,15 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::post('/{id}/status', [HomePageSliderController::class, 'updateStatus'])->name('status');
         Route::delete('/{id}', [HomePageSliderController::class, 'destroy'])->name('destroy');
         Route::post('/update-order', [HomePageSliderController::class, 'updateOrder'])->name('updateOrder');
+    });
+
+    // Video Section Routes
+    Route::prefix('home/video')->name('video.')->group(function () {
+        Route::post('/store', [HomeVideoController::class, 'store'])->name('store');
+        Route::post('/update/{id}', [HomeVideoController::class, 'update'])->name('update');
+        Route::post('/{id}/status', [HomeVideoController::class, 'updateStatus'])->name('status');
+        Route::delete('/{id}', [HomeVideoController::class, 'destroy'])->name('destroy');
+        Route::post('/update-order', [HomeVideoController::class, 'updateOrder'])->name('updateOrder');
     });
 
     // How it works
