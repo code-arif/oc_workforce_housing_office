@@ -457,32 +457,48 @@
                 </tr>
             </thead>
             <tbody>
+                @if ($invoice->type !== 'ITEM_SALE')
                 <!-- Rent Item -->
                 <tr>
-                    <td>
-                        <div class="item-title">{{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }} Rent</div>
-                        <div class="item-desc">Rent payment for {{ date('F Y', strtotime($invoice->due_date)) }}</div>
+                    <td class="item-desc">
+                        <strong>{{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }} Rent</strong>
+                        <p class="text-muted small mb-0">Rent payment for {{ date('F Y', strtotime($invoice->due_date)) }}</p>
                     </td>
                     <td class="text-center">1</td>
                     <td class="text-center">${{ number_format($invoice->amount, 2) }}</td>
                     <td class="text-right">${{ number_format($invoice->amount, 2) }}</td>
                 </tr>
 
-                <!-- Security Deposit -->
+                <!-- Security Deposit (only for first invoice if includes deposit and not collected) -->
                 @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
                 <tr class="deposit-row">
-                    <td>
-                        <div class="item-title">Security Deposit</div>
-                        <div class="item-desc">
-                            <span class="deposit-badge">One-time</span>
+                    <td class="item-desc">
+                        <strong>Security Deposit</strong>
+                        <p class="text-muted small mb-0">
+                            <span class="badge bg-warning-light text-warning">One-time payment</span>
                             Refundable security deposit
-                        </div>
+                        </p>
                     </td>
                     <td class="text-center">1</td>
                     <td class="text-center">${{ number_format($lease->deposit_amount, 2) }}</td>
-                    <td class="text-right">${{ number_format($lease->deposit_amount, 2) }}</td>
+                    <td class="text-center">${{ number_format($lease->deposit_amount, 2) }}</td>
                 </tr>
                 @endif
+            @else
+                @foreach ($invoice->items as $item)
+                    <tr>
+                        <td class="item-desc">
+                            <strong>{{ $item->item->name }}</strong>
+                            @if($item->description)
+                            <p class="text-muted small mb-0">{{ $item->description }}</p>
+                            @endif
+                        </td>
+                        <td class="text-center">{{ $item->quantity }}</td>
+                        <td class="text-center">${{ number_format($item->item->price, 2) }}</td>
+                        <td class="text-right">${{ number_format($item->amount, 2) }}</td>
+                    </tr>
+                @endforeach
+            @endif
             </tbody>
         </table>
 

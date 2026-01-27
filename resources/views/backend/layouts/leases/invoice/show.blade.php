@@ -154,32 +154,49 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- Rent Item -->
-                                        <tr>
-                                            <td class="item-desc">
-                                                <strong>{{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }} Rent</strong>
-                                                <p class="text-muted small mb-0">Rent payment for {{ date('F Y', strtotime($invoice->due_date)) }}</p>
-                                            </td>
-                                            <td class="item-qty">1</td>
-                                            <td class="item-rate">${{ number_format($invoice->amount, 2) }}</td>
-                                            <td class="item-amount">${{ number_format($invoice->amount, 2) }}</td>
-                                        </tr>
+                                        @if ($invoice->type !== 'ITEM_SALE')
+                                            <!-- Rent Item -->
+                                            <tr>
+                                                <td class="item-desc">
+                                                    <strong>{{ str_replace('_', ' ', ucwords(strtolower($lease->payment_frequency))) }} Rent</strong>
+                                                    <p class="text-muted small mb-0">Rent payment for {{ date('F Y', strtotime($invoice->due_date)) }}</p>
+                                                </td>
+                                                <td class="item-qty">1</td>
+                                                <td class="item-rate">${{ number_format($invoice->amount, 2) }}</td>
+                                                <td class="item-amount">${{ number_format($invoice->amount, 2) }}</td>
+                                            </tr>
 
-                                        <!-- Security Deposit (only for first invoice if includes deposit and not collected) -->
-                                        @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
-                                        <tr class="deposit-row">
-                                            <td class="item-desc">
-                                                <strong>Security Deposit</strong>
-                                                <p class="text-muted small mb-0">
-                                                    <span class="badge bg-warning-light text-warning">One-time payment</span>
-                                                    Refundable security deposit
-                                                </p>
-                                            </td>
-                                            <td class="item-qty">1</td>
-                                            <td class="item-rate">${{ number_format($lease->deposit_amount, 2) }}</td>
-                                            <td class="item-amount">${{ number_format($lease->deposit_amount, 2) }}</td>
-                                        </tr>
+                                            <!-- Security Deposit (only for first invoice if includes deposit and not collected) -->
+                                            @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
+                                            <tr class="deposit-row">
+                                                <td class="item-desc">
+                                                    <strong>Security Deposit</strong>
+                                                    <p class="text-muted small mb-0">
+                                                        <span class="badge bg-warning-light text-warning">One-time payment</span>
+                                                        Refundable security deposit
+                                                    </p>
+                                                </td>
+                                                <td class="item-qty">1</td>
+                                                <td class="item-rate">${{ number_format($lease->deposit_amount, 2) }}</td>
+                                                <td class="item-amount">${{ number_format($lease->deposit_amount, 2) }}</td>
+                                            </tr>
+                                            @endif
+                                        @else
+                                            @foreach ($invoice->items as $item)
+                                                <tr>
+                                                    <td class="item-desc">
+                                                        <strong>{{ $item->item->name }}</strong>
+                                                        @if($item->description)
+                                                        <p class="text-muted small mb-0">{{ $item->description }}</p>
+                                                        @endif
+                                                    </td>
+                                                    <td class="item-qty">{{ $item->quantity }}</td>
+                                                    <td class="item-rate">${{ number_format($item->item->price, 2) }}</td>
+                                                    <td class="item-amount">${{ number_format($item->amount, 2) }}</td>
+                                                </tr>
+                                            @endforeach
                                         @endif
+                                        
                                     </tbody>
                                 </table>
                             </div>
