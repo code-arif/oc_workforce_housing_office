@@ -165,7 +165,7 @@
                                             <input type="text" class="form-control datepicker2" id="due_date"
                                                 name="due_date" required placeholder="yyyy-mm-dd">
                                         </div>
-                                        {{-- <div class="col-md-6">
+                                        <div class="col-md-6">
                                             <label class="form-label">Invoice Type <span
                                                     class="text-danger">*</span></label>
                                             <select class="form-select" id="type" name="type" required>
@@ -177,7 +177,7 @@
                                                 <option value="FEE">Fee</option>
                                                 <option value="OTHER">Other</option>
                                             </select>
-                                        </div> --}}
+                                        </div>
                                     </div>
 
                                     <!-- Recurring Section -->

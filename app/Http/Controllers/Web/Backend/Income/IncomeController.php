@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Backend\Income;
 
 use Exception;
 use App\Models\Item;
+use App\Models\Lease;
 use App\Models\Tenant;
 use App\Models\Invoice;
 use App\Models\Property;
@@ -194,7 +195,11 @@ class IncomeController extends Controller
      */
     public function create()
     {
-        $tenants = Tenant::with('profile')->get();
+        $tenants = Tenant::with('profile')
+            ->whereHas('leases', function ($q) {
+                $q->where('status', 'ACTIVE');
+            })
+            ->get();
         $items = Item::where('status', true)->get();
 
         return view('backend.layouts.income.create-invoice', compact('tenants', 'items'));
@@ -229,7 +234,11 @@ class IncomeController extends Controller
 
         try {
             $tenant = Tenant::with('leases.property')->find($request->tenant_id);
-            $leaseId = $tenant->leases->first()->id ?? null;
+            $activeLease = Lease::where('tenant_id', $request->tenant_id)
+                        ->where('status', 'ACTIVE')
+                        ->first();
+
+            $leaseId = $activeLease?->id;
             $propertyId = $tenant->leases->first()->property_id ?? null;
 
             // Calculate total amount
@@ -238,7 +247,10 @@ class IncomeController extends Controller
                 $totalAmount += $item['quantity'] * $item['rate'];
             }
 
-            $invoiceNumber = $this->generateInvoiceNumber();
+            // Generate invoice number
+            $invoiceNumber = Invoice::where('lease_id', $leaseId)->where('tenant_id', $request->tenant_id)->count() + 1;
+            // $invoiceNumber = $this->generateInvoiceNumber();
+            $invoiceNumber = 'INV-' . $leaseId . '-' . $request->tenant_id . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
 
             // Create main invoice
             $invoice = Invoice::create([
@@ -300,7 +312,11 @@ class IncomeController extends Controller
     private function createCustomRecurringInvoices($request, $mainInvoice, $tenant, $leaseId)
     {
         foreach ($request->custom_recurring as $customPayment) {
-            $customInvoiceNumber = $this->generateInvoiceNumber();
+            // Generate invoice number
+            $invoiceNumber = Invoice::where('lease_id', $leaseId)->where('tenant_id', $request->tenant_id)->count() + 1;
+            // $invoiceNumber = $this->generateInvoiceNumber();
+            $customInvoiceNumber = 'INV-' . $leaseId . '-' . $request->tenant_id . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+            // $customInvoiceNumber = $invoiceNumber;
             $customAmount = $customPayment['amount'];
 
             $customInvoice = Invoice::create([

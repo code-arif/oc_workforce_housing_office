@@ -51,7 +51,7 @@ class InvoiceController extends Controller
                 ->first();
             
             // Can make payment if there's no previous invoice or previous is paid
-            $canMakePayment = !$previousInvoice || $previousInvoice->status === 'PAID';
+            $canMakePayment = !$previousInvoice || $previousInvoice->status === 'PAID' || $invoice->type == 'ITEM_SALE';
         }
 
         // Calculate totals - use stored values if available
@@ -368,7 +368,7 @@ class InvoiceController extends Controller
             
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to record payment. Please try again.'
+                'message' => 'Failed to record payment. Please try again.' . $e->getMessage(),
             ], 500);
         }
     }
