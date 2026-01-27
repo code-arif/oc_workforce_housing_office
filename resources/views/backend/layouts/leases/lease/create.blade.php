@@ -88,22 +88,37 @@
 
                                             <div class="row mb-4">
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Room <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="room_id" name="room_id" required disabled>
+                                                    <label class="form-label">Room <span class="text-danger bed-required-marker">*</span></label>
+                                                    <select class="form-select" id="room_id" name="room_id" disabled>
                                                         <option value="">Select Unit First</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Bed <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="bed_id" name="bed_id" required disabled>
+                                                    <label class="form-label">Bed <span class="text-danger bed-required-marker">*</span></label>
+                                                    <select class="form-select" id="bed_id" name="bed_id" disabled>
                                                         <option value="">Select Room First</option>
                                                     </select>
                                                 </div>
                                             </div>
 
+                                            <!-- Assign Bed Later Option -->
+                                            <div class="form-check mb-3" id="assignBedLaterSection">
+                                                <input class="form-check-input" type="checkbox" id="assign_bed_later" name="assign_bed_later">
+                                                <label class="form-check-label" for="assign_bed_later">
+                                                    <strong>Assign bed later</strong> - Create and sign lease without specifying a bed now. 
+                                                    <small class="text-muted d-block">Bed can be assigned from tenant profile when tenant arrives.</small>
+                                                </label>
+                                            </div>
+
                                             <!-- Selected Property Info -->
                                             <div class="alert alert-info" id="selectedPropertyInfo" style="display: none;">
                                                 <strong>Selected:</strong> <span id="fullPropertyPath"></span>
+                                            </div>
+
+                                            <!-- Pending Bed Assignment Alert -->
+                                            <div class="alert alert-warning" id="pendingBedAssignmentInfo" style="display: none;">
+                                                <i class="fe fe-alert-triangle me-2"></i>
+                                                <strong>Note:</strong> Bed will be assigned later from the tenant's profile. The lease can still be signed and the tenant can move in once a bed is assigned.
                                             </div>
 
                                             <hr class="my-4">

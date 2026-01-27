@@ -227,7 +227,7 @@ class LeaseController extends Controller
         // dd($request->all());
         $rules = [
             'property_id' => 'required|exists:properties,id',
-            'bed_id' => 'required|exists:beds,id',
+            'bed_id' => 'nullable|exists:beds,id', // Made optional for signing without bed assignment
             'season_id' => 'required|exists:seasons,id',
             'start_date' => 'required|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -238,6 +238,7 @@ class LeaseController extends Controller
             'tenant_ids' => 'required|array|size:1',
             'tenant_ids.*' => 'exists:tenants,id',
             'lease_template_id' => 'nullable|exists:lease_templates,id',
+            'assign_bed_later' => 'nullable|boolean', // Flag to indicate bed will be assigned later
         ];
 
         // Conditional validation based on payment frequency
@@ -264,6 +265,8 @@ class LeaseController extends Controller
                 ? 'DRAFT'
                 : 'PENDING_TENANT_SIGN';
 
+            // Check if bed assignment is deferred (assign later)
+            $assignBedLater = $request->boolean('assign_bed_later') || empty($request->bed_id);
 
             // Create the lease with single tenant
             $lease = Lease::create([
@@ -271,6 +274,7 @@ class LeaseController extends Controller
                 'property_id' => $request->property_id,
                 'season_id' => $request->season_id,
                 'status' => $status,
+                'bed_assignment_pending' => $assignBedLater,
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date ?? $request->start_date, // For month-to-month, use start_date
                 'rent_amount' => $request->rent_amount,
@@ -283,18 +287,30 @@ class LeaseController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
-            // Create lease assignment for the bed
-            $assignlease = LeaseAssignment::create([
-                'lease_id' => $lease->id,
-                'bed_id' => $request->bed_id,
-                'assigned_at' => now(),
-                'actual_move_in' => $request->start_date,
-                'is_current' => true,
-            ]);
+            // Create lease assignment - bed_id can be null if assigning later
+            if ($assignBedLater) {
+                // Create assignment without bed - will be assigned later from tenant profile
+                LeaseAssignment::create([
+                    'lease_id' => $lease->id,
+                    'bed_id' => null,
+                    'assigned_at' => now(),
+                    'actual_move_in' => null, // Will be set when bed is assigned
+                    'is_current' => true,
+                ]);
+            } else {
+                // Create lease assignment for the bed
+                $assignlease = LeaseAssignment::create([
+                    'lease_id' => $lease->id,
+                    'bed_id' => $request->bed_id,
+                    'assigned_at' => now(),
+                    'actual_move_in' => $request->start_date,
+                    'is_current' => true,
+                ]);
 
-            if($lease && $assignlease){
-                $bed = \App\Models\Bed::find($request->bed_id);
-                $bed->update(['is_occupied' => 1]);
+                if($lease && $assignlease){
+                    $bed = \App\Models\Bed::find($request->bed_id);
+                    $bed->update(['is_occupied' => 1]);
+                }
             }
 
             // Handle payment schedule and invoices based on payment frequency
@@ -354,12 +370,20 @@ class LeaseController extends Controller
 
             DB::commit();
 
+            // Build success message based on options
+            $message = $request->input('save_as_draft')
+                ? 'Lease saved as draft successfully!'
+                : 'Lease created successfully and sent for signing!';
+            
+            if ($assignBedLater && !$request->input('save_as_draft')) {
+                $message .= ' Bed assignment is pending and can be done from the tenant profile.';
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => $request->input('save_as_draft')
-                    ? 'Lease saved as draft successfully!'
-                    : 'Lease created successfully and sent for signing!',
+                'message' => $message,
                 'lease_id' => $lease->id,
+                'bed_assignment_pending' => $assignBedLater,
                 'redirect_url' => route('leases.show', $lease->id),
             ]);
 
@@ -1241,6 +1265,240 @@ class LeaseController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to change bed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get data for initial bed assignment (for leases created without bed)
+     */
+    public function getAssignBedData($id)
+    {
+        try {
+            $lease = Lease::with([
+                'tenant.profile',
+                'property',
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed.room.unit');
+                },
+            ])->findOrFail($id);
+
+            // Check if lease needs bed assignment
+            if (!$lease->bed_assignment_pending && $lease->assignments->first()?->bed_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This lease already has a bed assigned. Use "Change Bed" to modify.'
+                ], 422);
+            }
+
+            $profile = $lease->tenant?->profile;
+            $tenantName = $profile 
+                ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
+                : 'No Tenant';
+
+            // Get available beds for this property
+            $availableBeds = Bed::whereHas('room.unit', function ($q) use ($lease) {
+                    $q->where('property_id', $lease->property_id);
+                })
+                ->where('is_occupied', false)
+                ->with('room.unit')
+                ->get()
+                ->map(function ($bed) {
+                    $roomName = $bed->room?->room_number;
+                    $unitName = $bed->room?->unit?->unit_number;
+                    
+                    $label = $bed->bed_label ?? $bed->bed_number;
+                    if ($unitName) {
+                        $label .= ' (Unit: ' . $unitName;
+                        if ($roomName) {
+                            $label .= ', Room: ' . $roomName;
+                        }
+                        $label .= ')';
+                    } elseif ($roomName) {
+                        $label .= ' (Room: ' . $roomName . ')';
+                    }
+                    
+                    return [
+                        'id' => $bed->id,
+                        'bed_label' => $label,
+                        'base_rent' => $bed->base_rent,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'lease' => [
+                    'id' => $lease->id,
+                    'tenant_name' => $tenantName,
+                    'tenant_email' => $lease->tenant?->email ?? 'N/A',
+                    'property_name' => $lease->property?->name ?? 'N/A',
+                    'start_date' => date('M d, Y', strtotime($lease->start_date)),
+                    'end_date' => date('M d, Y', strtotime($lease->end_date)),
+                    'rent_amount' => $lease->rent_amount,
+                    'status' => $lease->status,
+                ],
+                'available_beds' => $availableBeds,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get assign bed data: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load lease data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Assign bed to a lease (initial assignment for leases created without bed)
+     */
+    public function assignBed(Request $request, $id)
+    {
+        $request->validate([
+            'bed_id' => 'required|exists:beds,id',
+            'move_in_date' => 'required|date',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $lease = Lease::with([
+                'tenant.profile',
+                'property',
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed');
+                },
+            ])->findOrFail($id);
+
+            // Check if lease needs bed assignment
+            $currentAssignment = $lease->assignments->first();
+            if (!$lease->bed_assignment_pending && $currentAssignment?->bed_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This lease already has a bed assigned. Use "Change Bed" to modify.'
+                ], 422);
+            }
+
+            $bed = Bed::findOrFail($request->bed_id);
+
+            // Check if bed is available
+            if ($bed->is_occupied) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected bed is not available. Please choose another bed.'
+                ], 422);
+            }
+
+            // Check if bed belongs to the same property
+            $bedPropertyId = $bed->room?->unit?->property_id;
+            if ($bedPropertyId !== $lease->property_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The selected bed does not belong to the lease property.'
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // Update existing assignment or create new one
+            if ($currentAssignment) {
+                $currentAssignment->update([
+                    'bed_id' => $bed->id,
+                    'assigned_at' => now(),
+                    'actual_move_in' => $request->move_in_date,
+                ]);
+            } else {
+                LeaseAssignment::create([
+                    'lease_id' => $lease->id,
+                    'bed_id' => $bed->id,
+                    'assigned_at' => now(),
+                    'actual_move_in' => $request->move_in_date,
+                    'is_current' => true,
+                ]);
+            }
+
+            // Mark bed as occupied
+            $bed->update(['is_occupied' => true]);
+            Log::info("Bed #{$bed->id} ({$bed->bed_label}) assigned to lease #{$lease->id}");
+
+            // Update lease to mark bed assignment as complete
+            $notes = $lease->notes ?? '';
+            $assignNote = "\n\n--- Bed Assigned (" . now()->format('M d, Y H:i') . ") ---\n";
+            $assignNote .= "Bed: " . $bed->bed_label . "\n";
+            $assignNote .= "Move-in Date: " . date('M d, Y', strtotime($request->move_in_date)) . "\n";
+            if ($request->notes) {
+                $assignNote .= "Notes: " . $request->notes;
+            }
+
+            $lease->update([
+                'bed_assignment_pending' => false,
+                'notes' => trim($notes . $assignNote),
+            ]);
+
+            // If lease is in a signing status, it can now proceed to active on signing
+            // Optionally activate the lease if it's fully signed
+            if ($lease->status === 'PENDING_ADMIN_SIGN') {
+                // Check if all signatures are complete
+                $document = $lease->documents()->first();
+                if ($document && $document->tenant_signed_at && $document->admin_signed_at) {
+                    $lease->update(['status' => 'ACTIVE']);
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Bed has been assigned successfully. Tenant can now move in.',
+                'bed_label' => $bed->bed_label,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to assign bed: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign bed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get leases pending bed assignment for a tenant
+     */
+    public function getPendingBedAssignments($tenantId)
+    {
+        try {
+            $leases = Lease::with(['property', 'season'])
+                ->where('tenant_id', $tenantId)
+                ->where('bed_assignment_pending', true)
+                ->whereIn('status', ['PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN', 'ACTIVE', 'DRAFT'])
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($lease) {
+                    return [
+                        'id' => $lease->id,
+                        'property_name' => $lease->property?->name ?? 'N/A',
+                        'start_date' => $lease->start_date->format('M d, Y'),
+                        'end_date' => $lease->end_date->format('M d, Y'),
+                        'rent_amount' => $lease->rent_amount,
+                        'status' => $lease->status,
+                        'created_at' => $lease->created_at->format('M d, Y'),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'leases' => $leases,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get pending bed assignments: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load data: ' . $e->getMessage()
             ], 500);
         }
     }

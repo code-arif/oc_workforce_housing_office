@@ -31,6 +31,7 @@
             setupPropertyHierarchy();
             setupLeaseTermHandler();
             setupCustomPaymentHandler();
+            setupAssignBedLaterHandler();
 
             // Form field changes
             $('#start_date, #end_date').on('change', function() {
@@ -42,6 +43,39 @@
             $('#rent_amount').on('input', updateRentalSummary);
             $('#deposit_amount').on('input', updateRentalSummary);
         });
+
+        // Handler for "Assign Bed Later" checkbox
+        function setupAssignBedLaterHandler() {
+            $('#assign_bed_later').on('change', function() {
+                const assignLater = $(this).is(':checked');
+                
+                if (assignLater) {
+                    // Disable and clear bed selection fields
+                    $('#unit_id, #room_id, #bed_id').prop('disabled', true).val('');
+                    $('#selectedPropertyInfo').hide();
+                    $('#pendingBedAssignmentInfo').show();
+                    $('.bed-required-marker').hide();
+                    
+                    // Clear lease data for bed selection
+                    leaseData.unit_id = null;
+                    leaseData.room_id = null;
+                    leaseData.bed_id = null;
+                    
+                    // Update summary
+                    $('#summaryUnit').text('Pending Assignment');
+                } else {
+                    // Re-enable unit selection (others depend on cascading)
+                    if (leaseData.property_id) {
+                        $('#unit_id').prop('disabled', false);
+                    }
+                    $('#pendingBedAssignmentInfo').hide();
+                    $('.bed-required-marker').show();
+                    $('#summaryUnit').text('Not Selected');
+                }
+                
+                validateStep1();
+            });
+        }
 
         function initializeSelect2() {
             if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
@@ -425,10 +459,17 @@
         }
 
         function validateStep1() {
+            const assignBedLater = $('#assign_bed_later').is(':checked');
+            
+            // Bed selection is optional if "Assign Bed Later" is checked
+            const bedValid = assignBedLater || leaseData.bed_id;
+            const roomValid = assignBedLater || leaseData.room_id;
+            const unitValid = assignBedLater || leaseData.unit_id;
+            
             const isValid = leaseData.property_id && 
-                          leaseData.unit_id && 
-                          leaseData.room_id && 
-                          leaseData.bed_id && 
+                          unitValid && 
+                          roomValid && 
+                          bedValid && 
                           leaseData.lease_term_id && 
                           leaseData.start_date && 
                           (leaseData.lease_type === 'month_to_month' || leaseData.end_date);
@@ -998,11 +1039,13 @@
         function collectLeaseData() {
             const paymentFrequency = $('#payment_frequency').val() || 'MONTHLY';
             const isCustomPayment = paymentFrequency === 'CUSTOM';
+            const assignBedLater = $('#assign_bed_later').is(':checked');
             
             return {
                 // Property & Bed
                 property_id: leaseData.property_id,
-                bed_id: leaseData.bed_id,
+                bed_id: assignBedLater ? null : leaseData.bed_id,
+                assign_bed_later: assignBedLater,
                 
                 // Season/Term
                 season_id: leaseData.lease_term_id,
@@ -1046,7 +1089,8 @@
             const errors = [];
 
             if (!data.property_id) errors.push('Please select a property');
-            if (!data.bed_id) errors.push('Please select a bed');
+            // Bed is only required if not assigning later
+            if (!data.assign_bed_later && !data.bed_id) errors.push('Please select a bed or check "Assign bed later"');
             if (!data.season_id) errors.push('Please select a lease term');
             if (!data.start_date) errors.push('Please select a start date');
             if (data.lease_type === 'fixed' && !data.end_date) errors.push('Please select an end date for fixed term lease');
