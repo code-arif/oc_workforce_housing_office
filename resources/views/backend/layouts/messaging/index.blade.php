@@ -121,9 +121,9 @@
                     <div class="col-md-12 col-lg-4 col-xl-3">
                         <div class="card">
                             <div class="card-header border-bottom">
-                                <button class="btn btn-primary btn-block py-2 w-100" id="composeBtn">
+                                <a href="{{ route('messaging.compose') }}" class="btn btn-primary btn-block py-2 w-100">
                                     <i class="fa fa-plus me-2"></i>Compose
-                                </button>
+                                </a>
                             </div>
                             <div class="card-body">
                                 <ul class="nav1 nav-column flex-column br-7">

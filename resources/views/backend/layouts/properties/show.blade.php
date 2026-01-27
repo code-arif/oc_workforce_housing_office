@@ -21,18 +21,18 @@
 
                 <!-- Back Button & Actions -->
                 <div class="row mb-3">
-                    <div class="col-12 d-flex justify-content-between align-items-center">
-                        <a href="{{ route('property.list') }}" class="btn btn-secondary btn-sm">
+                    <div class="col-12 d-flex justify-content-end align-items-center">
+                        <a href="{{ route('property.list') }}" class="btn btn-danger btn-sm">
                             <i class="bi bi-arrow-left"></i> Back to Properties
                         </a>
-                        <div>
+                        {{-- <div>
                             <button class="btn btn-warning btn-sm" onclick="editProperty({{ $property->id }})">
                                 <i class="bi bi-pencil"></i> Edit
                             </button>
                             <button class="btn btn-danger btn-sm" onclick="deleteProperty({{ $property->id }})">
                                 <i class="bi bi-trash"></i> Delete
                             </button>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
 
@@ -121,16 +121,35 @@
                                             <small class="text-muted">Active Leases</small>
                                         </div>
                                     </div>
-                                    <div class="col-6">
+                                    <div class="col-6 mb-2">
                                         <div class="border  p-2 text-center">
                                             <h4 class="fw-bold text-warning mb-0">{{ $property->totalUnits() }}</h4>
                                             <small class="text-muted">Total Units</small>
                                         </div>
                                     </div>
-                                    <div class="col-6">
+                                    <div class="col-6 mb-2">
                                         <div class="border  p-2 text-center">
                                             <h4 class="fw-bold text-secondary mb-0">{{ $property->totalRooms() }}</h4>
                                             <small class="text-muted">Total Rooms</small>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-6 mb-2">
+                                        <div class="border  p-2 text-center">
+                                            <h4 class="fw-bold text-success mb-0">${{ number_format($stats['total_rent'], 2) }}</h4>
+                                            <small class="text-muted">Total Rent</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="border  p-2 text-center">
+                                            <h4 class="fw-bold text-danger mb-0">${{ number_format($stats['total_due'], 2) }}</h4>
+                                            <small class="text-muted">Due Rent</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-2">
+                                        <div class="border  p-2 text-center">
+                                            <h4 class="fw-bold text-success mb-0">${{ number_format($stats['total_paid'], 2) }}</h4>
+                                            <small class="text-muted">Total Paid</small>
                                         </div>
                                     </div>
                                 </div>
@@ -194,11 +213,11 @@
                                                                 $tenant = $currentAssignment?->lease?->tenant;
                                                             @endphp
                                                             <div class="col-md-4 col-sm-6">
-                                                                <div class="bed-card p-2  border {{ $bed->is_occupied ? 'border-danger bg-danger-subtle' : 'border-success bg-success-subtle' }}">
+                                                                <div class="bed-card p-2  border {{ $bed->is_occupied ? 'border-danger bg-danger-subtle occupied-bed mouse-pointer' : 'border-success bg-success-subtle' }}" data-tenant-id="{{ $tenant ? $tenant->id : null }}">
                                                                     <div class="d-flex justify-content-between align-items-start">
                                                                         <div>
                                                                             <strong class="d-block">{{ $bed->bed_label }}</strong>
-                                                                            {{-- <small class="text-muted">${{ number_format($bed->base_rent ?? 0, 2) }}/mo</small> --}}
+                                                                            <small class="text-muted">{{ $currentAssignment ? 'Move In: '. date('d-M-Y', strtotime($currentAssignment->actual_move_in)) : '' }}</small>
                                                                         </div>
                                                                         @if($bed->is_occupied)
                                                                             <span class="badge bg-danger">Occupied</span>
@@ -541,6 +560,10 @@
         .badge {
             font-weight: 500;
         }
+
+        .mouse-pointer {
+            cursor: pointer;
+        }
     </style>
 @endpush
 
@@ -549,6 +572,24 @@
         function editProperty(id) {
             window.location.href = '{{ url("admin/property") }}/' + id + '/edit';
         }
+
+        $(document).on('click', '.occupied-bed', function() {
+            let tenantId = $(this).data('tenant-id');
+            if (!tenantId) {
+                return;
+            }
+            Swal.fire({
+                title: 'Redirecting to Tenant Details',
+                text: 'You will be redirected to the tenant details page.',
+                icon: 'info',
+                timer: 1500,
+                showConfirmButton: false,
+                willClose: () => {
+                    window.location.href = "{{ route('tenants.show', ':id') }}".replace(':id', tenantId); // Replace '#' with the actual tenant details URL if available
+                }
+            })
+            // window.location.href = "{{ route('tenants.show', ':id') }}".replace(':id', tenantId); // Replace '#' with the actual tenant details URL if available
+        });
 
         function deleteProperty(id) {
             if (confirm('Are you sure you want to delete this property? This action cannot be undone.')) {
