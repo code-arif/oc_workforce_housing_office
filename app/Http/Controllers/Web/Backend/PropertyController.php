@@ -195,6 +195,25 @@ class PropertyController extends Controller
         // Calculate rental stats
         $activeLeases = $property->leases->where('status', 'ACTIVE');
         $totalMonthlyRent = $activeLeases->sum('rent_amount');
+                   
+        // Calculate totals
+        $totalRent = 0;
+        $totalPaid = 0;
+        $totalDue = 0;
+        
+        foreach ($activeLeases as $lease) {
+            // Get all invoices for this lease (including soft deleted if needed)
+            $invoices = $lease->invoices()
+                ->whereNull('deleted_at') // Only non-deleted invoices
+                ->get();
+            
+            foreach ($invoices as $invoice) {
+                $totalRent += $invoice->total_amount;
+                $totalPaid += $invoice->paid_amount ?? 0;
+                $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
+                
+            }
+        }
 
         $stats = [
             'total_beds' => $totalBeds,
@@ -203,6 +222,9 @@ class PropertyController extends Controller
             'occupancy_rate' => $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0,
             'active_leases' => $activeLeases->count(),
             'total_monthly_rent' => $totalMonthlyRent,
+            'total_rent' => $totalRent,
+            'total_paid' => $totalPaid,
+            'total_due' => $totalDue,
         ];
 
         return view('backend.layouts.properties.show', compact('property', 'stats'));

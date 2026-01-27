@@ -16,6 +16,7 @@ class Lease extends Model
         'property_id',
         'season_id',
         'status',
+        'bed_assignment_pending',
         'start_date',
         'end_date',
         'rent_amount',
@@ -34,6 +35,7 @@ class Lease extends Model
         'deposit_collected' => 'boolean',
         'send_for_signature' => 'boolean',
         'send_welcome_email' => 'boolean',
+        'bed_assignment_pending' => 'boolean',
     ];    
     
     public function property()

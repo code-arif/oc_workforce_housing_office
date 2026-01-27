@@ -99,7 +99,10 @@
                                                     <i class="fe fe-{{ $assigned->is_current ? 'home' : 'clock' }}"></i>
                                                 </div>
                                                 <div class="bed-details">
-                                                    <div class="bed-label">{{ $assigned->bed->bed_label ?? 'N/A' }}</div>
+                                                    <div class="bed-label">{{ $assigned->bed->bed_label ?? 'N/A' }} <br>
+                                                            <small>{{ $assigned->is_current ? 'In: '. date('d-M-Y', strtotime($assigned->actual_move_in)) : 'Out: '. date('d-M-Y', strtotime($assigned->actual_move_out)) }}</small>
+                                                        </div>
+                                                        
                                                     @if($assigned->is_current)
                                                         <span class="bed-status-badge current">Current</span>
                                                     @else
