@@ -78,15 +78,15 @@
                                                         @endforelse
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Unit <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="unit_id" name="unit_id" required disabled>
+                                                <div class="col-md-6" id="unitFieldContainer">
+                                                    <label class="form-label">Unit <span class="text-danger bed-required-marker">*</span></label>
+                                                    <select class="form-select" id="unit_id" name="unit_id" disabled>
                                                         <option value="">Select Property First</option>
                                                     </select>
                                                 </div>
                                             </div>
 
-                                            <div class="row mb-4">
+                                            <div class="row mb-4" id="roomBedFieldContainer">
                                                 <div class="col-md-6">
                                                     <label class="form-label">Room <span class="text-danger bed-required-marker">*</span></label>
                                                     <select class="form-select" id="room_id" name="room_id" disabled>

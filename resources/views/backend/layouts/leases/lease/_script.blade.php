@@ -50,11 +50,15 @@
                 const assignLater = $(this).is(':checked');
                 
                 if (assignLater) {
-                    // Disable and clear bed selection fields
-                    $('#unit_id, #room_id, #bed_id').prop('disabled', true).val('');
+                    // Disable and clear bed selection fields, remove required attribute
+                    $('#unit_id, #room_id, #bed_id').prop('disabled', true).val('').prop('required', false);
                     $('#selectedPropertyInfo').hide();
                     $('#pendingBedAssignmentInfo').show();
                     $('.bed-required-marker').hide();
+                    
+                    // Hide the unit/room/bed containers to make it clearer
+                    $('#unitFieldContainer').addClass('opacity-50');
+                    $('#roomBedFieldContainer').addClass('opacity-50');
                     
                     // Clear lease data for bed selection
                     leaseData.unit_id = null;
@@ -70,6 +74,11 @@
                     }
                     $('#pendingBedAssignmentInfo').hide();
                     $('.bed-required-marker').show();
+                    
+                    // Show the containers again
+                    $('#unitFieldContainer').removeClass('opacity-50');
+                    $('#roomBedFieldContainer').removeClass('opacity-50');
+                    
                     $('#summaryUnit').text('Not Selected');
                 }
                 
@@ -1040,7 +1049,7 @@
             const paymentFrequency = $('#payment_frequency').val() || 'MONTHLY';
             const isCustomPayment = paymentFrequency === 'CUSTOM';
             const assignBedLater = $('#assign_bed_later').is(':checked');
-            
+                
             return {
                 // Property & Bed
                 property_id: leaseData.property_id,

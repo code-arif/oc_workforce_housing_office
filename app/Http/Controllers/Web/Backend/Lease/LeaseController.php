@@ -238,7 +238,7 @@ class LeaseController extends Controller
             'tenant_ids' => 'required|array|size:1',
             'tenant_ids.*' => 'exists:tenants,id',
             'lease_template_id' => 'nullable|exists:lease_templates,id',
-            'assign_bed_later' => 'nullable|boolean', // Flag to indicate bed will be assigned later
+            'assign_bed_later' => 'nullable|string', // Flag to indicate bed will be assigned later
         ];
 
         // Conditional validation based on payment frequency

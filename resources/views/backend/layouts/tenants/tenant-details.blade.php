@@ -142,7 +142,7 @@
                             <div class="card-body">
                                 <p class="text-muted mb-3">The following leases require bed assignment before the tenant can move in:</p>
                                 @foreach($pendingBedLeases as $pendingLease)
-                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light ">
                                     <div>
                                         <strong>{{ $pendingLease->property->name ?? 'Unknown Property' }}</strong>
                                         <br>
@@ -953,7 +953,7 @@
                     if (availableBeds.length > 0) {
                         availableBeds.forEach(function(bed) {
                             const rentInfo = bed.base_rent ? ` - $${parseFloat(bed.base_rent).toLocaleString('en-US', {minimumFractionDigits: 2})}/month` : '';
-                            $('#assignBedSelect').append(`<option value="${bed.id}">${bed.bed_label}${rentInfo}</option>`);
+                            $('#assignBedSelect').append(`<option value="${bed.id}">${bed.bed_label}</option>`);
                         });
                         $('#assignBedSubmitBtn').show();
                         $('#noAssignBedAvailable').hide();
