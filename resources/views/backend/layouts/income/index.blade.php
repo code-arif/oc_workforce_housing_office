@@ -1,4 +1,3 @@
-{{-- resources/views/backend/layouts/invoices/index.blade.php --}}
 @extends('backend.app')
 
 @section('title', 'Invoices')
@@ -20,7 +19,7 @@
                 </div>
 
                 <!-- Statistics Cards -->
-                <div class="row mb-4 g-1">
+                <div class="row mb-4 g-3">
                     <div class="col-md-2">
                         <div class="card text-center h-100">
                             <div class="card-body">
@@ -86,49 +85,35 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-md-3">
-                                        <input type="text" class="form-control" id="searchFilter"
+                                        <input type="text" class="form-control form-control-sm" id="searchFilter"
                                             placeholder="Search...">
                                     </div>
-                                    <div class="col-md-2">
-                                        <select class="form-select form-select-sm select1" id="propertyFilter">
-                                            <option value="" selected disabled>-- Select Property --</option>
-
+                                    <div class="col-md-3">
+                                        <select class="form-select select5" id="propertyFilter">
+                                            <option value="">All Properties</option>
                                             @foreach ($properties as $property)
                                                 <option value="{{ $property->id }}">{{ $property->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
-
-                                    <div class="col-md-2">
-                                        <select class="form-select select2" id="tenantFilter">
+                                    <div class="col-md-3">
+                                        <select class="form-select select3" id="tenantFilter">
                                             <option value="">All Tenants</option>
                                             @foreach ($tenants as $tenant)
                                                 <option value="{{ $tenant->id }}">
-                                                    {{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}
+                                                    {{ $tenant->profile?->first_name }} {{ $tenant->profile?->last_name }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-2">
-                                        <select class="form-select select3" id="statusFilter">
+                                        <select class="form-select form-control" id="statusFilter">
                                             <option value="">All Statuses</option>
                                             <option value="UNPAID">Unpaid</option>
                                             <option value="PARTIAL">Partial</option>
                                             <option value="PAID">Paid</option>
                                             <option value="OVERDUE">Overdue</option>
                                             <option value="CANCELLED">Cancelled</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <select class="form-select select4" id="typeFilter">
-                                            <option value="">All Types</option>
-                                            <option value="RENT">Rent</option>
-                                            <option value="DEPOSIT">Deposit</option>
-                                            <option value="ITEM_SALE">Item Sale</option>
-                                            <option value="CLEANING_FEE">Cleaning Fee</option>
-                                            <option value="LATE_FEE">Late Fee</option>
-                                            <option value="FEE">Fee</option>
-                                            <option value="OTHER">Other</option>
                                         </select>
                                     </div>
                                     <div class="col-md-1">
@@ -147,10 +132,10 @@
                                     <span class="text-muted" id="showingInfo">Showing invoices</span>
                                 </div>
                                 <div>
-                                    <button class="btn btn-light btn-sm me-2">
+                                    <button class="btn btn-light btn-sm me-2 d-inline-flex align-items-center">
                                         <i class="fe fe-download me-1"></i> Export
                                     </button>
-                                    <a href="{{ route('invoices.create') }}" class="btn btn-primary btn-sm">
+                                    <a href="{{ route('invoices.create') }}" class="btn btn-primary btn-sm d-inline-flex align-items-center">
                                         <i class="fe fe-plus me-1"></i> New Invoice
                                     </a>
                                 </div>
@@ -186,8 +171,7 @@
                             <div class="card-body">
                                 <!-- Total Amount -->
                                 <div class="text-center mb-4">
-                                    <h2 class="mb-1" id="chartTotalAmount">${{ number_format($stats['total'], 2) }}
-                                    </h2>
+                                    <h2 class="mb-1" id="chartTotalAmount">${{ number_format($stats['total'], 2) }}</h2>
                                     <p class="text-muted small mb-0">TOTAL INVOICE AMOUNT</p>
                                 </div>
 
@@ -369,59 +353,30 @@
                 }
             });
 
-            // Initialize Select1
-            initializeSelect1();
-
             // Initialize Select2
             initializeSelect2();
 
-            // Initialize Select3
-            initializeSelect3();
-
-            // Initialize Select4
-            initializeSelect4();
+            // Initialize Select5
+            initializeSelect5();
 
             // Initialize Chart
             initializeChart();
         });
 
-         // Select property funciton
-        function initializeSelect1() {
-            if ($('.select1').length && typeof $.fn.select2 !== 'undefined') {
-                $('.select1').select2({
-                    placeholder: 'Select Property',
-                    allowClear: true,
-                    width: '100%'
-                });
-            }
-        }
-
-         // Select tenant funciton
         function initializeSelect2() {
-            if ($('.select2').length && typeof $.fn.select2 !== 'undefined') {
-                $('.select2').select2({
-                    placeholder: 'Select Tenant',
-                    allowClear: true,
-                    width: '100%'
-                });
-            }
-        }
-
-         // Select invoice status
-        function initializeSelect3() {
             if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
                 $('.select3').select2({
-                    placeholder: 'Select Inv Status',
+                    placeholder: 'Select an option',
                     allowClear: true,
                     width: '100%'
                 });
             }
         }
-         // Select select invoice type
-        function initializeSelect4() {
-            if ($('.select4').length && typeof $.fn.select2 !== 'undefined') {
-                $('.select4').select2({
-                    placeholder: 'Select Inv Type',
+
+        function initializeSelect5() {
+            if ($('.select5').length && typeof $.fn.select2 !== 'undefined') {
+                $('.select5').select2({
+                    placeholder: 'Select a tenant',
                     allowClear: true,
                     width: '100%'
                 });

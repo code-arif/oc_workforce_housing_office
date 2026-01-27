@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Web\Backend\Income;
 
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\Tenant;
-use App\Models\Property;
+use Exception;
 use App\Models\Item;
+use App\Models\Tenant;
+use App\Models\Invoice;
+use App\Models\Property;
+use App\Models\InvoiceItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
 
 class IncomeController extends Controller
@@ -20,30 +21,6 @@ class IncomeController extends Controller
      */
     public function index(Request $request)
     {
-        // $query = Invoice::query()
-        //     ->select([
-        //         'invoices.id',
-        //         'invoices.invoice_number',
-        //         'invoices.tenant_id',
-        //         'invoices.lease_id',
-        //         'invoices.type',
-        //         'invoices.status',
-        //         'invoices.due_date',
-        //         'invoices.total_amount',
-        //         'invoices.paid_amount',
-        //         'invoices.balance_due',
-        //         'invoices.is_recurring',
-        //         'invoices.recurring_frequency',
-        //         'invoices.created_at'
-        //     ])
-        //     ->with([
-        //         'tenant:id,email' => ['profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'],
-        //         'items:id,invoice_id,item_name,quantity,rate,amount',
-        //         'lease.property'
-        //     ])
-        //     ->orderBy('invoices.id', 'desc')->get();
-        //     return $query;exit();
-        // Get statistics
         $stats = [
             'total' => Invoice::count(),
             'unpaid' => Invoice::where('status', 'UNPAID')->sum('balance_due'),
@@ -83,7 +60,7 @@ class IncomeController extends Controller
                 ->with([
                     'tenant:id,email' => ['profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar'],
                     'items:id,invoice_id,item_name,quantity,rate,amount',
-                    'lease.property:id,name'   // ← this should fix it
+                    'lease.property:id,name'
                 ])
                 ->orderBy('invoices.id', 'desc');
 
@@ -197,7 +174,6 @@ class IncomeController extends Controller
                         'CANCELLED' => 'secondary'
                     ];
 
-                    // Auto-update overdue status
                     $status = $data->status;
                     if ($data->isOverdue() && $status !== 'PAID') {
                         $status = 'OVERDUE';
@@ -232,15 +208,19 @@ class IncomeController extends Controller
         $rules = [
             'tenant_id' => 'required|exists:tenants,id',
             'due_date' => 'required|date',
-            'type' => 'required|in:DEPOSIT,RENT,FEE,ITEM_SALE,CLEANING_FEE,LATE_FEE,OTHER',
+            'type' => 'required|in:DEPOSIT,RENT,FEE,ITEM_SALE,OTHER',
             'is_recurring' => 'boolean',
-            'recurring_frequency' => 'nullable|required_if:is_recurring,true|in:WEEKLY,MONTHLY,YEARLY',
+            'recurring_frequency' => 'nullable|required_if:is_recurring,true|in:WEEKLY,MONTHLY,YEARLY,CUSTOM',
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'nullable|exists:items,id',
             'items.*.item_name' => 'required|string',
             'items.*.description' => 'nullable|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.rate' => 'required|numeric|min:0',
+            'custom_recurring' => 'nullable|array',
+            'custom_recurring.*.due_date' => 'required_with:custom_recurring|date',
+            'custom_recurring.*.amount' => 'required_with:custom_recurring|numeric|min:0.01',
+            'custom_recurring.*.description' => 'nullable|string',
         ];
 
         $request->validate($rules);
@@ -248,8 +228,8 @@ class IncomeController extends Controller
         DB::beginTransaction();
 
         try {
-            // Get tenant's property if available
             $tenant = Tenant::with('leases.property')->find($request->tenant_id);
+            $leaseId = $tenant->leases->first()->id ?? null;
             $propertyId = $tenant->leases->first()->property_id ?? null;
 
             // Calculate total amount
@@ -258,20 +238,19 @@ class IncomeController extends Controller
                 $totalAmount += $item['quantity'] * $item['rate'];
             }
 
-            // Generate invoice number
             $invoiceNumber = $this->generateInvoiceNumber();
 
-            // Create invoice
+            // Create main invoice
             $invoice = Invoice::create([
                 'tenant_id' => $request->tenant_id,
-                'property_id' => $propertyId,
+                'lease_id' => $leaseId,
                 'invoice_number' => $invoiceNumber,
                 'amount' => $totalAmount,
                 'total_amount' => $totalAmount,
                 'balance_due' => $totalAmount,
                 'issue_date' => now(),
                 'due_date' => $request->due_date,
-                'type' => $request->type,
+                'type' => 'ITEM_SALE',
                 'status' => 'UNPAID',
                 'is_recurring' => $request->boolean('is_recurring'),
                 'recurring_frequency' => $request->is_recurring ? $request->recurring_frequency : null,
@@ -291,6 +270,11 @@ class IncomeController extends Controller
                 ]);
             }
 
+            // Handle custom recurring invoices
+            if ($request->boolean('is_recurring') && $request->recurring_frequency === 'CUSTOM' && $request->filled('custom_recurring')) {
+                $this->createCustomRecurringInvoices($request, $invoice, $tenant, $leaseId);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -299,7 +283,7 @@ class IncomeController extends Controller
                 'invoice_id' => $invoice->id,
                 'redirect_url' => route('invoices.show', $invoice->id),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to create invoice: ' . $e->getMessage());
 
@@ -307,6 +291,47 @@ class IncomeController extends Controller
                 'success' => false,
                 'message' => 'Failed to create invoice: ' . $e->getMessage(),
             ], 500);
+        }
+    }
+
+    /**
+     * Create custom recurring invoices
+     */
+    private function createCustomRecurringInvoices($request, $mainInvoice, $tenant, $leaseId)
+    {
+        foreach ($request->custom_recurring as $customPayment) {
+            $customInvoiceNumber = $this->generateInvoiceNumber();
+            $customAmount = $customPayment['amount'];
+
+            $customInvoice = Invoice::create([
+                'tenant_id' => $tenant->id,
+                'lease_id' => $leaseId,
+                'invoice_number' => $customInvoiceNumber,
+                'amount' => $customAmount,
+                'total_amount' => $customAmount,
+                'balance_due' => $customAmount,
+                'issue_date' => now(),
+                'due_date' => $customPayment['due_date'],
+                'type' => $request->type,
+                'status' => 'UNPAID',
+                'is_recurring' => true,
+                'recurring_frequency' => 'CUSTOM',
+                'notes' => $customPayment['description'] ?? 'Custom recurring payment',
+                'metadata' => json_encode(['parent_invoice_id' => $mainInvoice->id]),
+            ]);
+
+            // Create invoice items for custom recurring
+            foreach ($request->items as $itemData) {
+                InvoiceItem::create([
+                    'invoice_id' => $customInvoice->id,
+                    'item_id' => $itemData['item_id'] ?? null,
+                    'item_name' => $itemData['item_name'],
+                    'description' => $itemData['description'] ?? null,
+                    'quantity' => $itemData['quantity'],
+                    'rate' => $customAmount / $itemData['quantity'], // Adjust rate based on custom amount
+                    'amount' => $customAmount,
+                ]);
+            }
         }
     }
 
