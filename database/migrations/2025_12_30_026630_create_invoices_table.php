@@ -24,7 +24,7 @@ return new class extends Migration
             $table->decimal('balance_due', 10, 2); // Remaining balance
             $table->date('issue_date')->nullable();
             $table->date('due_date');
-            $table->enum('type', ['DEPOSIT', 'RENT', 'FEE', 'OTHER'])->default('RENT');
+            $table->enum('type', ['DEPOSIT', 'RENT', 'FEE', 'ITEM_SALE', 'OTHER'])->default('RENT');
             $table->enum('status', ['UNPAID', 'PARTIAL', 'PAID', 'OVERDUE', 'CANCELLED'])->default('UNPAID');
             $table->boolean('is_first_invoice')->default(false); // Track first invoice for deposit
             $table->boolean('includes_deposit')->default(false); // Whether this invoice includes deposit
