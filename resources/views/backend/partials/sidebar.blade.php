@@ -193,17 +193,18 @@
                 @can('settings')
                     
                 <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                    <a class="side-menu__item {{ request()->routeIs('setting.*', 'social.profile.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                         <i class="fa fa-cog"></i>
                         <span class="side-menu__label">Settings</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
-                        <li><a href="{{ route('setting.general.index') }}" class="slide-item">General Settings</a>
+                        <li><a href="{{ route('setting.general.index') }}" class="slide-item {{ request()->routeIs('setting.general.*') ? 'active' : '' }}">General Settings</a>
                         </li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Profile Settings</a>
+                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item {{ request()->routeIs('setting.profile.*') ? 'active' : '' }}">Profile Settings</a>
                         </li>
-                        <li><a href="{{ route('social.profile.index') }}" class="slide-item">Social Profile</a></li>
+                        <li><a href="{{ route('social.profile.index') }}" class="slide-item {{ request()->routeIs('social.profile.*') ? 'active' : '' }}">Social Profile</a></li>
+                        <li><a href="{{ route('setting.mail-templates.index') }}" class="slide-item {{ request()->routeIs('setting.mail-templates.*') ? 'active' : '' }}">Mail Templates</a></li>
                     </ul>
                 </li>
                 @endcan

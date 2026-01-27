@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
 use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
+use App\Http\Controllers\Web\Backend\Settings\MailTemplateController;
 use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
 use App\Http\Controllers\Web\Backend\UserManagement\UserController;
@@ -347,6 +348,7 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
 
 Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(function () {
     Route::get('/', [MessagingController::class, 'index'])->name('index');
+    Route::get('/compose', [MessagingController::class, 'compose'])->name('compose');
     Route::get('/read/{id}', [MessagingController::class, 'read'])->name('read');
 
     // AJAX Routes
@@ -361,6 +363,12 @@ Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(fun
     Route::post('/bulk-action', [MessagingController::class, 'bulkAction'])->name('bulk.action');
     Route::get('/attachment/{id}', [MessagingController::class, 'downloadAttachment'])->name('attachment.download');
     Route::get('/tenants/search', [MessagingController::class, 'searchTenants'])->name('tenants.search');
+    
+    // Location-based tenant fetching
+    Route::get('/units', [MessagingController::class, 'getUnits'])->name('units');
+    Route::get('/rooms', [MessagingController::class, 'getRooms'])->name('rooms');
+    Route::get('/tenants-by-location', [MessagingController::class, 'getTenantsByLocation'])->name('tenants.by-location');
+    Route::get('/mail-template', [MessagingController::class, 'getMailTemplate'])->name('mail-template');
 });
 
 
@@ -388,6 +396,19 @@ Route::prefix('social')->name('social.profile.')->group(function () {
     Route::post('/update/{id}', [SocialLinkController::class, 'update'])->name('update');
     Route::delete('/delete/{id}', [SocialLinkController::class, 'destroy'])->name('destroy');
     Route::get('/status/{id}', [SocialLinkController::class, 'status'])->name('status');
+});
+
+/**
+ * Mail Templates routes
+ */
+Route::prefix('setting/mail-templates')->name('setting.mail-templates.')->group(function () {
+    Route::get('/', [MailTemplateController::class, 'index'])->name('index');
+    Route::get('/create', [MailTemplateController::class, 'create'])->name('create');
+    Route::post('/', [MailTemplateController::class, 'store'])->name('store');
+    Route::get('/{mailTemplate}/edit', [MailTemplateController::class, 'edit'])->name('edit');
+    Route::put('/{mailTemplate}', [MailTemplateController::class, 'update'])->name('update');
+    Route::delete('/{mailTemplate}', [MailTemplateController::class, 'destroy'])->name('destroy');
+    Route::patch('/{mailTemplate}/toggle-status', [MailTemplateController::class, 'toggleStatus'])->name('toggle-status');
 });
 
 /**

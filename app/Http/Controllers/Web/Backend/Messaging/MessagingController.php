@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers\Web\Backend\Messaging;
 
+use App\Models\Bed;
+use App\Models\Room;
+use App\Models\Unit;
+use App\Models\Lease;
+use App\Models\Property;
 use App\Models\EmailDraft;
 use App\Models\EmailLabel;
+use App\Models\MailTemplate;
 use App\Models\EmailAccount;
 use App\Models\EmailMessage;
 use Illuminate\Http\Request;
@@ -225,7 +231,7 @@ class MessagingController extends Controller
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('temp_attachments');
-                $attachmentPaths[] = storage_path('app/' . $path);
+                $attachmentPaths[] = storage_path('app/private/' . $path);
             }
         }
 
@@ -405,7 +411,182 @@ class MessagingController extends Controller
     }
 
     /**
+     * Show compose email page
+     */
+    public function compose()
+    {
+        $user = Auth::user();
+        
+        // Get email account
+        $account = EmailAccount::firstOrCreate(
+            ['user_id' => $user->id, 'is_default' => true],
+            [
+                'email' => config('mail.from.address', 'noreply@example.com'),
+                'name' => $user->first_name . ' ' . $user->last_name,
+                'provider' => 'gmail',
+                'is_active' => true,
+            ]
+        );
+
+        // Get folder counts for sidebar
+        $counts = $this->emailService->getFolderCounts($account);
+        $labels = EmailLabel::where('user_id', $user->id)->get();
+        
+        // Get properties for selection
+        $properties = Property::where('is_active', true)->orderBy('name')->get();
+        
+        // Get mail templates
+        $mailTemplates = MailTemplate::active()->orderBy('name')->get();
+
+        return view('backend.layouts.messaging.compose', compact(
+            'counts',
+            'labels',
+            'account',
+            'properties',
+            'mailTemplates'
+        ));
+    }
+
+    /**
+     * Get units by property
+     */
+    public function getUnits(Request $request)
+    {
+        $propertyId = $request->get('property_id');
+        
+        $units = Unit::where('property_id', $propertyId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'success' => true,
+            'units' => $units,
+        ]);
+    }
+
+    /**
+     * Get rooms by unit
+     */
+    public function getRooms(Request $request)
+    {
+        $unitId = $request->get('unit_id');
+        
+        $rooms = Room::where('unit_id', $unitId)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'success' => true,
+            'rooms' => $rooms,
+        ]);
+    }
+
+    /**
+     * Get tenants with active leases by property/unit/room
+     */
+    public function getTenantsByLocation(Request $request)
+    {
+        $propertyId = $request->get('property_id');
+        $unitId = $request->get('unit_id');
+        $roomId = $request->get('room_id');
+
+        // Build query for active leases
+        $query = Lease::where('status', 'ACTIVE')
+            ->whereNotNull('tenant_id')
+            ->with(['tenant.profile', 'property', 'assignments.bed.room.unit']);
+
+        if ($propertyId) {
+            $query->where('property_id', $propertyId);
+        }
+
+        $leases = $query->get();
+
+        // Filter by unit or room if specified
+        $tenants = collect();
+        
+        foreach ($leases as $lease) {
+            // If unit or room specified, filter by assignment bed location
+            if ($unitId || $roomId) {
+                $hasMatchingAssignment = $lease->assignments->filter(function ($assignment) use ($unitId, $roomId) {
+                    if (!$assignment->bed || !$assignment->bed->room) {
+                        return false;
+                    }
+                    
+                    $room = $assignment->bed->room;
+                    
+                    if ($roomId && $room->id != $roomId) {
+                        return false;
+                    }
+                    
+                    if ($unitId && $room->unit_id != $unitId) {
+                        return false;
+                    }
+                    
+                    return true;
+                })->isNotEmpty();
+
+                if (!$hasMatchingAssignment) {
+                    continue;
+                }
+            }
+
+            if ($lease->tenant && $lease->tenant->email) {
+                $name = '';
+                if ($lease->tenant->profile) {
+                    $name = trim(($lease->tenant->profile->first_name ?? '') . ' ' . ($lease->tenant->profile->last_name ?? ''));
+                }
+                
+                $tenants->push([
+                    'id' => $lease->tenant->id,
+                    'email' => $lease->tenant->email,
+                    'name' => $name ?: $lease->tenant->email,
+                    'text' => $name ? "{$name} <{$lease->tenant->email}>" : $lease->tenant->email,
+                    'property' => $lease->property->name ?? '',
+                ]);
+            }
+        }
+
+        // Remove duplicates by email
+        $tenants = $tenants->unique('email')->values();
+
+        return response()->json([
+            'success' => true,
+            'tenants' => $tenants,
+            'count' => $tenants->count(),
+        ]);
+    }
+
+    /**
+     * Get mail template content
+     */
+    public function getMailTemplate(Request $request)
+    {
+        $templateId = $request->get('template_id');
+        
+        $template = MailTemplate::find($templateId);
+        
+        if (!$template) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Template not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'template' => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'subject' => $template->subject,
+                'body' => $template->body,
+                'variables' => $template->variables ?? [],
+            ],
+        ]);
+    }
+
+    /**
      * Search tenants for email compose
+     * Supports searching by email, name, or bed name (e.g., "201-A-1")
      */
     public function searchTenants(Request $request)
     {
@@ -414,7 +595,7 @@ class MessagingController extends Controller
         $query = \App\Models\Tenant::query()
             ->whereNotNull('email')
             ->where('email', '!=', '')
-            ->with('profile');
+            ->with(['profile', 'leases.assignments.bed']);
         
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -422,6 +603,15 @@ class MessagingController extends Controller
                     ->orWhereHas('profile', function ($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
+                    })
+                    // Search by bed name (e.g., "201-A-1")
+                    ->orWhereHas('leases', function ($q) use ($search) {
+                        $q->where('status', 'ACTIVE')
+                            ->whereHas('assignments', function ($q) use ($search) {
+                                $q->whereHas('bed', function ($q) use ($search) {
+                                    $q->where('bed_label', 'like', "%{$search}%");
+                                });
+                            });
                     });
             });
         }
@@ -433,11 +623,28 @@ class MessagingController extends Controller
             if ($tenant->profile) {
                 $name = trim(($tenant->profile->first_name ?? '') . ' ' . ($tenant->profile->last_name ?? ''));
             }
+            
+            // Get bed name from active lease if available
+            $bedName = '';
+            $activeLease = $tenant->leases->where('status', 'ACTIVE')->first();
+            if ($activeLease && $activeLease->assignments->isNotEmpty()) {
+                $assignment = $activeLease->assignments->first();
+                if ($assignment->bed) {
+                    $bedName = $assignment->bed->bed_label;
+                }
+            }
+            
+            $displayText = $name ?: $tenant->email;
+            if ($bedName) {
+                $displayText .= " [{$bedName}]";
+            }
+            
             return [
                 'id' => $tenant->id,
                 'email' => $tenant->email,
                 'name' => $name ?: $tenant->email,
-                'text' => $name ? "{$name} <{$tenant->email}>" : $tenant->email,
+                'bed' => $bedName,
+                'text' => $displayText . " <{$tenant->email}>",
             ];
         });
         

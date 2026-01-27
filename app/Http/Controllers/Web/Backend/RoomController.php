@@ -56,7 +56,7 @@ class RoomController extends Controller
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        <a href="' . route('rooms.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
+                        
                         <button class="btn btn-sm btn-warning me-1" onclick="editRoom(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
