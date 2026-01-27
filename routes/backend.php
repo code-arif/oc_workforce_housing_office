@@ -292,6 +292,11 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::get('/{id}/change-bed-data', [LeaseController::class, 'getChangeBedData'])->name('change.bed.data');
     Route::post('/{id}/change-bed', [LeaseController::class, 'changeBed'])->name('change.bed');
 
+    // Initial bed assignment routes (for leases created without bed)
+    Route::get('/{id}/assign-bed-data', [LeaseController::class, 'getAssignBedData'])->name('assign.bed.data');
+    Route::post('/{id}/assign-bed', [LeaseController::class, 'assignBed'])->name('assign.bed');
+    Route::get('/tenant/{tenantId}/pending-bed-assignments', [LeaseController::class, 'getPendingBedAssignments'])->name('pending.bed.assignments');
+
     Route::get('/property/{id}/beds', [LeaseController::class, 'getBedsByProperty'])->name('property.beds');
 });
 

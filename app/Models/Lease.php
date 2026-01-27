@@ -141,4 +141,29 @@ class Lease extends Model
         return $query->where('status', 'ACTIVE')
             ->whereBetween('end_date', [now(), now()->addDays($days)]);
     }
+
+    /**
+     * Check if lease needs bed assignment
+     */
+    public function needsBedAssignment()
+    {
+        return $this->bed_assignment_pending || 
+               !$this->assignments()->whereNotNull('bed_id')->where('is_current', true)->exists();
+    }
+
+    /**
+     * Scope for leases pending bed assignment
+     */
+    public function scopePendingBedAssignment($query)
+    {
+        return $query->where('bed_assignment_pending', true);
+    }
+
+    /**
+     * Get current bed assignment
+     */
+    public function currentAssignment()
+    {
+        return $this->assignments()->where('is_current', true)->first();
+    }
 }

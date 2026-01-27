@@ -96,17 +96,23 @@
                                         @forelse ($lease->assignments as $assigned)
                                             <div class="bed-assignment-item {{ $assigned->is_current ? 'current-bed' : 'past-bed' }}">
                                                 <div class="bed-icon">
-                                                    <i class="fe fe-{{ $assigned->is_current ? 'home' : 'clock' }}"></i>
+                                                    @if($assigned->bed_id)
+                                                        <i class="fe fe-{{ $assigned->is_current ? 'home' : 'clock' }}"></i>
+                                                    @else
+                                                        <i class="fe fe-alert-circle text-warning"></i>
+                                                    @endif
                                                 </div>
                                                 <div class="bed-details">
-                                                    <div class="bed-label">{{ $assigned->bed->bed_label ?? 'N/A' }} <br>
-                                                            <small>{{ $assigned->is_current ? 'In: '. date('d-M-Y', strtotime($assigned->actual_move_in)) : 'Out: '. date('d-M-Y', strtotime($assigned->actual_move_out)) }}</small>
-                                                        </div>
-                                                        
-                                                    @if($assigned->is_current)
-                                                        <span class="bed-status-badge current">Current</span>
+                                                    @if($assigned->bed_id)
+                                                        <div class="bed-label">{{ $assigned->bed->bed_label ?? 'N/A' }}</div>
+                                                        @if($assigned->is_current)
+                                                            <span class="bed-status-badge current">Current</span>
+                                                        @else
+                                                            <span class="bed-status-badge past">Past</span>
+                                                        @endif
                                                     @else
-                                                        <span class="bed-status-badge past">Past</span>
+                                                        <div class="bed-label text-warning">Pending Assignment</div>
+                                                        <span class="bed-status-badge bg-warning text-dark">Awaiting Bed</span>
                                                     @endif
                                                 </div>
                                             </div>
@@ -117,6 +123,46 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Pending Bed Assignments Alert -->
+                        @php
+                            $pendingBedLeases = $tenant->leases->filter(function($lease) {
+                                return $lease->bed_assignment_pending || 
+                                       ($lease->assignments->where('is_current', true)->first() && 
+                                        !$lease->assignments->where('is_current', true)->first()->bed_id);
+                            });
+                        @endphp
+                        @if($pendingBedLeases->count() > 0)
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="card-title mb-0">
+                                    <i class="fe fe-alert-triangle me-2"></i>Pending Bed Assignments
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted mb-3">The following leases require bed assignment before the tenant can move in:</p>
+                                @foreach($pendingBedLeases as $pendingLease)
+                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-light ">
+                                    <div>
+                                        <strong>{{ $pendingLease->property->name ?? 'Unknown Property' }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ $pendingLease->start_date->format('M d, Y') }} - {{ $pendingLease->end_date->format('M d, Y') }}
+                                            | ${{ number_format($pendingLease->rent_amount, 2) }}/mo
+                                        </small>
+                                        <br>
+                                        <span class="badge bg-{{ $pendingLease->status === 'ACTIVE' ? 'success' : 'info' }}">{{ $pendingLease->status }}</span>
+                                    </div>
+                                    <button type="button" class="btn btn-success btn-sm assignBedBtn" 
+                                            data-lease-id="{{ $pendingLease->id }}"
+                                            data-property-name="{{ $pendingLease->property->name ?? 'N/A' }}">
+                                        <i class="fe fe-plus-circle me-1"></i> Assign Bed
+                                    </button>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
                         @endif
                         
                         <!-- Contact Information -->
@@ -609,6 +655,101 @@
             </div>
         </div>
     </div>
+
+    <!-- Assign Bed Modal (for leases created without bed assignment) -->
+    <div class="modal fade" id="assignBedModal" tabindex="-1" aria-labelledby="assignBedModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="assignBedModalContent">
+                <form id="assignBedForm">
+                    @csrf
+                    <input type="hidden" name="lease_id" id="assignBedLeaseId">
+
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="assignBedModalLabel">
+                            <i class="fe fe-plus-circle me-2"></i> Assign Bed to Lease
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Loading State -->
+                        <div id="assignBedLoading" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Loading lease details...</p>
+                        </div>
+
+                        <!-- Content -->
+                        <div id="assignBedContent" style="display: none;">
+                            <!-- Lease Summary -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light py-2">
+                                    <strong><i class="fe fe-info me-2"></i> Lease Information</strong>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Tenant:</strong> <span id="assignBedTenant"></span></p>
+                                            <p class="mb-1"><strong>Email:</strong> <span id="assignBedEmail"></span></p>
+                                            <p class="mb-0"><strong>Property:</strong> <span id="assignBedProperty"></span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Lease Period:</strong> <span id="assignBedPeriod"></span></p>
+                                            <p class="mb-1"><strong>Monthly Rent:</strong> <span id="assignBedRent" class="text-success fw-bold"></span></p>
+                                            <p class="mb-0"><strong>Status:</strong> <span id="assignBedStatus" class="badge"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Assign Bed Form -->
+                            <div id="assignBedFormSection">
+                                <div class="alert alert-success mb-3">
+                                    <i class="fe fe-check-circle me-2"></i>
+                                    Select a bed to assign to this lease. Once assigned, the tenant can move in on the specified date.
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="assignBedSelect" class="form-label"><strong>Select Bed</strong> <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="assignBedSelect" name="bed_id" required>
+                                                <option value="">-- Select Available Bed --</option>
+                                            </select>
+                                            <div id="noAssignBedAvailable" class="text-danger mt-2" style="display: none;">
+                                                <i class="fe fe-alert-circle me-1"></i> No beds available in this property.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="moveInDate" class="form-label"><strong>Move-in Date</strong> <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control datepicker2" id="moveInDate" name="move_in_date" placeholder="Select move-in date" required>
+                                            <small class="text-muted">Date when the tenant will move in</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="assignBedNotes" class="form-label"><strong>Notes</strong></label>
+                                    <textarea class="form-control" id="assignBedNotes" name="notes" rows="3" placeholder="Enter any notes about the bed assignment..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success" id="assignBedSubmitBtn" style="display: none;">
+                            <span class="spinner-border spinner-border-sm d-none me-2" id="assignBedSpinner"></span>
+                            <i class="fe fe-check me-1"></i> Assign Bed
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -760,6 +901,133 @@
                 
                 const response = xhr.responseJSON;
                 toastr.error(response?.message || 'An error occurred while changing the bed');
+            }
+        });
+    });
+
+    // Assign Bed Modal Handler
+    $(document).on('click', '.assignBedBtn', function(e) {
+        e.preventDefault();
+        let leaseId = $(this).data('lease-id');
+        let propertyName = $(this).data('property-name');
+        
+        // Reset modal state
+        $('#assignBedLeaseId').val(leaseId);
+        $('#assignBedLoading').show();
+        $('#assignBedContent').hide();
+        $('#assignBedSubmitBtn').hide();
+        $('#noAssignBedAvailable').hide();
+        $('#assignBedForm')[0].reset();
+        $('#assignBedSelect').empty().append('<option value="">-- Select Available Bed --</option>');
+
+        $('#assignBedModal').modal('show');
+
+        // Fetch lease assign bed data
+        $.ajax({
+            url: `{{ url('admin/leases') }}/${leaseId}/assign-bed-data`,
+            type: 'GET',
+            success: function(response) {
+                $('#assignBedLoading').hide();
+                $('#assignBedContent').show();
+                
+                if (response.success) {
+                    const lease = response.lease;
+                    
+                    // Populate lease summary
+                    $('#assignBedTenant').text(lease.tenant_name);
+                    $('#assignBedEmail').text(lease.tenant_email);
+                    $('#assignBedProperty').text(lease.property_name);
+                    $('#assignBedPeriod').text(lease.start_date + ' - ' + lease.end_date);
+                    $('#assignBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString('en-US', {minimumFractionDigits: 2}));
+                    
+                    // Set status badge
+                    const statusClass = lease.status === 'ACTIVE' ? 'bg-success' : 'bg-info';
+                    $('#assignBedStatus').text(lease.status).removeClass().addClass('badge ' + statusClass);
+                    
+                    // Set default move-in date to today
+                    const today = new Date().toISOString().split('T')[0];
+                    $('#moveInDate').val(today);
+                    
+                    // Populate available beds dropdown
+                    const availableBeds = response.available_beds;
+                    if (availableBeds.length > 0) {
+                        availableBeds.forEach(function(bed) {
+                            const rentInfo = bed.base_rent ? ` - $${parseFloat(bed.base_rent).toLocaleString('en-US', {minimumFractionDigits: 2})}/month` : '';
+                            $('#assignBedSelect').append(`<option value="${bed.id}">${bed.bed_label}</option>`);
+                        });
+                        $('#assignBedSubmitBtn').show();
+                        $('#noAssignBedAvailable').hide();
+                    } else {
+                        $('#noAssignBedAvailable').show();
+                        $('#assignBedSubmitBtn').hide();
+                    }
+                } else {
+                    toastr.error(response.message || 'Failed to load lease data');
+                    $('#assignBedModal').modal('hide');
+                }
+            },
+            error: function(xhr) {
+                $('#assignBedLoading').hide();
+                const response = xhr.responseJSON;
+                toastr.error(response?.message || 'Failed to load lease data. Please try again.');
+                $('#assignBedModal').modal('hide');
+            }
+        });
+    });
+
+    // Handle assign bed form submission
+    $('#assignBedForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const leaseId = $('#assignBedLeaseId').val();
+        const bedId = $('#assignBedSelect').val();
+        const moveInDate = $('#moveInDate').val();
+        
+        if (!bedId) {
+            toastr.error('Please select a bed');
+            return;
+        }
+        
+        if (!moveInDate) {
+            toastr.error('Please select a move-in date');
+            return;
+        }
+        
+        // Show loading state
+        $('#assignBedSpinner').removeClass('d-none');
+        $('#assignBedSubmitBtn').prop('disabled', true);
+        
+        $.ajax({
+            url: `{{ url('admin/leases') }}/${leaseId}/assign-bed`,
+            type: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                bed_id: bedId,
+                move_in_date: moveInDate,
+                notes: $('#assignBedNotes').val()
+            },
+            success: function(response) {
+                $('#assignBedSpinner').addClass('d-none');
+                $('#assignBedSubmitBtn').prop('disabled', false);
+                
+                if (response.success) {
+                    toastr.success(response.message || 'Bed assigned successfully');
+                    $('#assignBedModal').modal('hide');
+                    
+                    // Reload the page to reflect changes
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    toastr.error(response.message || 'Failed to assign bed');
+                }
+            },
+            error: function(xhr) {
+                $('#assignBedSpinner').addClass('d-none');
+                $('#assignBedSubmitBtn').prop('disabled', false);
+                
+                const response = xhr.responseJSON;
+                toastr.error(response?.message || 'An error occurred while assigning the bed');
             }
         });
     });
