@@ -44,6 +44,7 @@ use App\Http\Controllers\Web\Backend\Income\IncomeController;
 use App\Http\Controllers\Web\Backend\ItemController;
 use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
 use App\Http\Controllers\Web\Backend\Reports\RentReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentCollectionReportController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -552,4 +553,13 @@ Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin'])->group
     Route::get('/rent/data', [RentReportController::class, 'getData'])->name('rent.data');
     Route::get('/rent/export-pdf', [RentReportController::class, 'exportPdf'])->name('rent.export.pdf');
     Route::get('/rent/export-excel', [RentReportController::class, 'exportExcel'])->name('rent.export.excel');
+
+    // Rent Collection Report (with Review/Confirmation)
+    Route::get('/rent-collection', [RentCollectionReportController::class, 'index'])->name('rent-collection.index');
+    Route::get('/rent-collection/data', [RentCollectionReportController::class, 'getData'])->name('rent-collection.data');
+    Route::get('/rent-collection/summary', [RentCollectionReportController::class, 'getSummary'])->name('rent-collection.summary');
+    Route::post('/rent-collection/{id}/review', [RentCollectionReportController::class, 'updateReviewStatus'])->name('rent-collection.review');
+    Route::post('/rent-collection/bulk-update', [RentCollectionReportController::class, 'bulkUpdateStatus'])->name('rent-collection.bulk-update');
+    Route::get('/rent-collection/export-pdf', [RentCollectionReportController::class, 'exportPdf'])->name('rent-collection.export.pdf');
+    Route::get('/rent-collection/export-excel', [RentCollectionReportController::class, 'exportExcel'])->name('rent-collection.export.excel');
 });

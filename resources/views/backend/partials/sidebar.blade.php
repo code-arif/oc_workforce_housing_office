@@ -162,6 +162,9 @@
                         <li><a href="{{ route('reports.rent.index') }}"
                                 class="slide-item {{ request()->routeIs('reports.rent.*') ? 'active' : '' }}">Rent
                                 Reports</a></li>
+                        <li><a href="{{ route('reports.rent-collection.index') }}"
+                                class="slide-item {{ request()->routeIs('reports.rent-collection.*') ? 'active' : '' }}">Rent
+                                Collection</a></li>
                         <li><a href="#" class="slide-item">Tenant Reports</a></li>
                         <li><a href="#" class="slide-item">Lease Reports</a></li>
                     </ul>

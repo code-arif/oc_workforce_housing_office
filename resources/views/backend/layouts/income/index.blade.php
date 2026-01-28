@@ -101,7 +101,7 @@
                                             <option value="">All Tenants</option>
                                             @foreach ($tenants as $tenant)
                                                 <option value="{{ $tenant->id }}">
-                                                    {{ $tenant->profile?->first_name }} {{ $tenant->profile?->last_name }}
+                                                    {{ $tenant?->profile?->first_name }} {{ $tenant?->profile?->last_name }}
                                                 </option>
                                             @endforeach
                                         </select>
