@@ -101,4 +101,13 @@ class Application extends Model
     {
         return $query->where('status', $status);
     }
+
+    public function getReservationItemAttribute($value)
+    {
+        if (is_string($value)) {
+            return json_decode($value, true) ?? [];
+        }
+
+        return $value ?? [];
+    }
 }

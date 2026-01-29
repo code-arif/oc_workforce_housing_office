@@ -64,7 +64,7 @@
             </table>
         </div>
 
-        @if ($application->reservation_item && count($application->reservation_item) > 0)
+        {{-- @if (!empty($application->reservation_item) && count($application->reservation_item) > 0)
             <div class="highlight-box" style="margin-top: 25px; border-left-color: #000000;">
                 <h3 style="color: #000000; margin-bottom: 15px;">Reservation Details:</h3>
                 @foreach ($application->reservation_item as $item)
@@ -94,7 +94,7 @@
                     </div>
                 @endforeach
             </div>
-        @endif
+        @endif --}}
 
         @if ($application->notes)
             <div class="highlight-box" style="margin-top: 25px; background-color: #fffbf0;">

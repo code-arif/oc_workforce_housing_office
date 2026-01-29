@@ -57,7 +57,7 @@ Route::group(['middleware' => 'guest:api'], function () {
     Route::prefix('v1')->group(function () {
 
         // Landing - Tenant Email Submission
-        // Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
+        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
 
         // Application Routes - New workflow
         Route::prefix('tenant/applications')->group(function () {
