@@ -431,10 +431,12 @@
         function editTenant(id) {
             NProgress.start();
             $.ajax({
-                url: "{{ route('tenants.details', ':id') }}".replace(':id', id),
+                url: "{{ route('tenants.edit', ':id') }}".replace(':id', id),
                 type: 'GET',
                 success: function(response) {
                     NProgress.done();
+                    console.log(response);
+                    
                     if (response.success) {
                         $('#tenantModalLabel').text('Edit Tenant');
                         $('#tenant_id').val(response.tenant.id);

@@ -247,6 +247,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
 Route::group([], function () {
     Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
     Route::get('/tenants/data', [TenantManageController::class, 'getData'])->name('tenants.get.data');
+    Route::get('/tenants/edit/{id}', [TenantManageController::class, 'edit'])->name('tenants.edit');
     Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');

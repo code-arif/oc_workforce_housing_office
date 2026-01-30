@@ -146,7 +146,7 @@ class LeaseDocumentController extends Controller
             'unit_assigned_at_checkin' => 'Unit will be assigned at check-in',
             'unit_number' => $unit?->unit_number ?? '',
             'room_number' => $room?->room_number ?? '',
-            'bed_label' => $bed?->bed_label ?? '',
+            'bed_label' => $bed?->bed_label ?? 'Unit will be assigned at check-in',
             
             // Lease Info
             'lease_start_date' => $lease->start_date ? date(' d M, Y', strtotime($lease->start_date)) : '',
