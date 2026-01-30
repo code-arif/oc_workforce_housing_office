@@ -281,8 +281,8 @@
                                                                     <span class="text-primary fw-bold">{{ strtoupper(substr($lease->tenant->first_name ?? 'T', 0, 1)) }}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <strong>{{ $lease->tenant->first_name }} {{ $lease->tenant->last_name }}</strong>
-                                                                    <br><small class="text-muted">{{ $lease->tenant->email }}</small>
+                                                                    <strong>{{ $lease->tenant?->profile?->first_name }} {{ $lease->tenant?->profile?->last_name }}</strong>
+                                                                    <br><small class="text-muted">{{ $lease->tenant?->email }}</small>
                                                                 </div>
                                                             </div>
                                                         @else

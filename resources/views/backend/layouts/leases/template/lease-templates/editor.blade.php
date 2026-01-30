@@ -69,8 +69,11 @@
                                         <div class="draggable-field" draggable="true" data-field="property_type" data-label="Property Type" data-type="text">
                                             <i class="fas fa-grip-vertical"></i> Property Type
                                         </div>
+                                        <div class="draggable-field" draggable="true" data-field="unit_assigned_at_checkin" data-label="Unit to Be Assigned at Check-in" data-type="text">
+                                            <i class="fas fa-grip-vertical"></i> Unit to Be Assigned at Check-in
+                                        </div>
                                         <div class="draggable-field" draggable="true" data-field="bed_label" data-label="Bed #" data-type="text">
-                                            <i class="fas fa-grip-vertical"></i> Bed #
+                                            <i class="fas fa-grip-vertical"></i> Apartment / Unit Number
                                         </div>
                                     </div>
                                 </div>
@@ -93,6 +96,9 @@
                                         </div>
                                         <div class="draggable-field" draggable="true" data-field="monthly_rent" data-label="Monthly Rent" data-type="currency">
                                             <i class="fas fa-grip-vertical"></i> Monthly Rent
+                                        </div>
+                                        <div class="draggable-field" draggable="true" data-field="total_rent" data-label="Total Rent" data-type="currency">
+                                            <i class="fas fa-grip-vertical"></i> Total Rent
                                         </div>
                                         <div class="draggable-field" draggable="true" data-field="security_deposit" data-label="Security Deposit" data-type="currency">
                                             <i class="fas fa-grip-vertical"></i> Security Deposit
@@ -144,6 +150,19 @@
                                     <div class="collapse show" id="otherFields">
                                         <div class="draggable-field" draggable="true" data-field="current_date" data-label="Current Date" data-type="date">
                                             <i class="fas fa-grip-vertical"></i> Current Date
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Fields -->
+                                <div class="field-group">
+                                    <div class="field-group-header" data-bs-toggle="collapse" data-bs-target="#customFields">
+                                        <i class="fas fa-pen"></i> Custom Fields
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </div>
+                                    <div class="collapse show" id="customFields">
+                                        <div class="draggable-field custom-text-field" draggable="true" data-field="custom_text" data-label="Custom Text Input" data-type="text_input">
+                                            <i class="fas fa-grip-vertical"></i> Custom Text Input
                                         </div>
                                     </div>
                                 </div>
@@ -235,6 +254,11 @@
                     <label class="form-label">Field Label</label>
                     <input type="text" class="form-control form-control-sm" id="fieldLabel" readonly>
                 </div>
+                <div class="mb-3" id="customLabelGroup" style="display: none;">
+                    <label class="form-label">Custom Label (for Text Input)</label>
+                    <input type="text" class="form-control form-control-sm" id="customLabel" placeholder="Enter custom label">
+                    <small class="text-muted">This label will be shown when filling out the lease</small>
+                </div>
                 <div class="mb-3">
                     <label class="form-label">Width (px)</label>
                     <input type="number" class="form-control form-control-sm" id="fieldWidth" min="50" max="500">
@@ -323,6 +347,14 @@
         background: #fde68a;
     }
 
+    .draggable-field.custom-text-field {
+        background: #dbeafe;
+    }
+
+    .draggable-field.custom-text-field:hover {
+        background: #bfdbfe;
+    }
+
     /* Document Container */
     .document-container {
         position: relative;
@@ -396,6 +428,15 @@
         color: #f59e0b;
         min-width: 150px;
         min-height: 50px;
+    }
+
+    .placed-placeholder.text-input {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+        color: #1e40af;
+        min-width: 150px;
+        min-height: 30px;
+        font-style: italic;
     }
 
     .placed-placeholder.active {
@@ -598,19 +639,32 @@ $(document).ready(function() {
         fieldIdCounter++;
         const fieldId = `field_${fieldIdCounter}`;
         const isSignature = data.type === 'signature';
+        const isTextInput = data.type === 'text_input';
         
-        const width = isSignature ? 180 : 120;
-        const height = isSignature ? 60 : 26;
+        let width, height;
+        if (isSignature) {
+            width = 180;
+            height = 60;
+        } else if (isTextInput) {
+            width = 200;
+            height = 35;
+        } else {
+            width = 120;
+            height = 26;
+        }
+
+        const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
+        const displayLabel = isTextInput ? '[Text Input Area]' : data.label;
 
         const placeholder = $(`
-            <div class="placed-placeholder ${isSignature ? 'signature' : ''}" 
+            <div class="placed-placeholder ${extraClass}" 
                  id="${fieldId}"
                  data-field="${data.field}"
                  data-label="${data.label}"
                  data-type="${data.type}"
                  data-page="${pageNum}"
                  style="left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;">
-                <span class="field-label">${data.label}</span>
+                <span class="field-label">${displayLabel}</span>
                 <button class="delete-btn" title="Remove"><i class="fas fa-times"></i></button>
                 <div class="resize-handle"></div>
             </div>
@@ -760,6 +814,15 @@ $(document).ready(function() {
             $('#fieldWidth').val(field.width);
             $('#fieldHeight').val(field.height);
             $('#fieldFontSize').val(field.fontSize || 12);
+            
+            // Show custom label input for text_input fields
+            if (field.type === 'text_input') {
+                $('#customLabelGroup').show();
+                $('#customLabel').val(field.customLabel || '');
+            } else {
+                $('#customLabelGroup').hide();
+            }
+            
             $('#fieldPropertiesModal').modal('show');
         }
     }
@@ -780,9 +843,17 @@ $(document).ready(function() {
             field.width = width;
             field.height = height;
             field.fontSize = fontSize;
+            
+            // Save custom label for text input fields
+            if (field.type === 'text_input') {
+                const customLabel = $('#customLabel').val();
+                field.customLabel = customLabel;
+                field.label = customLabel || 'Custom Text Input';
+            }
         }
 
         $('#fieldPropertiesModal').modal('hide');
+        updatePlacedFieldsList();
     });
 
     // Delete field from modal
@@ -833,16 +904,19 @@ $(document).ready(function() {
             if (!pageWrapper.length) return;
 
             const isSignature = field.type === 'signature';
+            const isTextInput = field.type === 'text_input';
+            const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
+            const displayLabel = isTextInput ? '[Text Input Area]' : field.label;
             
             const placeholder = $(`
-                <div class="placed-placeholder ${isSignature ? 'signature' : ''}" 
+                <div class="placed-placeholder ${extraClass}" 
                      id="${field.id}"
                      data-field="${field.field}"
                      data-label="${field.label}"
                      data-type="${field.type}"
                      data-page="${field.page}"
                      style="left: ${field.x}px; top: ${field.y}px; width: ${field.width}px; height: ${field.height}px;">
-                    <span class="field-label">${field.label}</span>
+                    <span class="field-label">${displayLabel}</span>
                     <button class="delete-btn" title="Remove"><i class="fas fa-times"></i></button>
                     <div class="resize-handle"></div>
                 </div>

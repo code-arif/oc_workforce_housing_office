@@ -491,6 +491,7 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::put('/0/{id}', [LeaseDocumentController::class, 'update'])->name('update');
     Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
+    Route::post('/0/{id}/update-custom-fields', [LeaseDocumentController::class, 'updateCustomFields'])->name('update-custom-fields');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
 
     // Preview document for a lease

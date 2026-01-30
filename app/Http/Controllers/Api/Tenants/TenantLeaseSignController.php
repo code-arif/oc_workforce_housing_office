@@ -145,6 +145,7 @@ class TenantLeaseSignController extends Controller
                 'placeholders' => $placeholders,
                 'signatures' => $signatures,
                 'lease_data' => $leaseData,
+                'custom_fields' => $document->custom_fields ?? [],
                 'is_tenant_signed' => (bool) $document->tenant_signed_at,
                 'is_admin_signed' => (bool) $document->admin_signed_at,
                 'tenant_signature' => $document->tenant_signature,
@@ -251,6 +252,9 @@ class TenantLeaseSignController extends Controller
             'property_city' => $property?->city ?? '',
             'property_state' => $property?->state ?? '',
             'property_zip' => $property?->zip ?? '',
+            'property_type' => $property?->property_type ?? '',
+            'apartment_unit_number' => $unit?->unit_number ?? '',
+            'unit_assigned_at_checkin' => 'Unit will be assigned at check-in',
             'unit_number' => $unit?->unit_number ?? '',
             'room_number' => $room?->room_number ?? '',
             'bed_label' => $bed?->bed_label ?? '',
@@ -260,6 +264,7 @@ class TenantLeaseSignController extends Controller
             'lease_end_date' => $lease->end_date ? date('M d, Y', strtotime($lease->end_date)) : '',
             'monthly_rent' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
             'rent_amount' => $lease->rent_amount ? '$' . number_format($lease->rent_amount, 2) : '',
+            'total_rent' => $this->calculateTotalRent($lease),
             'security_deposit' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
             'deposit_amount' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
             'payment_frequency' => ucwords(strtolower(str_replace('_', ' ', $lease->payment_frequency ?? ''))),
@@ -289,6 +294,27 @@ class TenantLeaseSignController extends Controller
     }
 
     /**
+     * Calculate total rent for the lease period
+     */
+    private function calculateTotalRent($lease)
+    {
+        if (!$lease->rent_amount) return '';
+
+        if (!$lease->start_date || !$lease->end_date) {
+            return '$' . number_format($lease->rent_amount, 2);
+        }
+
+        $start = \Carbon\Carbon::parse($lease->start_date);
+        $end = \Carbon\Carbon::parse($lease->end_date);
+        $months = $start->diffInMonths($end);
+
+        if ($months < 1) $months = 1;
+
+        $totalRent = $lease->rent_amount * $months;
+        return '$' . number_format($totalRent, 2);
+    }
+
+    /**
      * Generate PDF with placeholders and signatures overlayed using FPDI
      */
     private function generatePdfWithOverlays($pdfPath, $placeholders, $signatures, $leaseData, $document)
@@ -305,6 +331,9 @@ class TenantLeaseSignController extends Controller
 
         // Get page count from source PDF
         $pageCount = $pdf->setSourceFile($pdfPath);
+
+        // Get custom fields data from document
+        $customFields = $document->custom_fields ?? [];
 
         // PDF.js at scale 1.0 renders 1 PDF point = 1 pixel
         // PDF uses 72 points per inch, FPDI uses mm
@@ -325,7 +354,17 @@ class TenantLeaseSignController extends Controller
 
             foreach ($pagePlaceholders as $placeholder) {
                 $fieldName = $placeholder['field'] ?? '';
-                $value = $leaseData[$fieldName] ?? '';
+                $fieldType = $placeholder['type'] ?? 'text';
+                $fieldId = $placeholder['id'] ?? '';
+
+                // Determine value based on field type
+                if ($fieldType === 'text_input') {
+                    // For custom text input fields, get value from custom_fields
+                    $value = $customFields[$fieldId] ?? '';
+                } else {
+                    // For standard placeholders, get value from lease data
+                    $value = $leaseData[$fieldName] ?? '';
+                }
 
                 if (empty($value)) continue;
 
@@ -342,7 +381,13 @@ class TenantLeaseSignController extends Controller
 
                 // Position and write text
                 $pdf->SetXY($x, $y);
-                $pdf->Cell($width, $height, $value, 0, 0, 'L');
+                
+                // Use MultiCell for long text to enable wrapping
+                if (strlen($value) > 50) {
+                    $pdf->MultiCell($width, 5, $value, 0, 'L');
+                } else {
+                    $pdf->Cell($width, $height, $value, 0, 0, 'L');
+                }
             }
 
             // Filter and add signatures for this page
