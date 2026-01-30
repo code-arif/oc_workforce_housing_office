@@ -56,7 +56,7 @@ class TenentApplicationRequest extends FormRequest
 
             // Employment (Multiple - Array support)
             'employment_histories' => 'nullable|array',
-            'employment_histories.*.employment_status' => 'required|string|in:employed,student,unemployed,self-employed',
+            'employment_histories.*.employment_status' => 'nullable|string|in:employed,student,unemployed,self-employed',
             'employment_histories.*.employer' => 'nullable|string|max:255',
             'employment_histories.*.title' => 'nullable|string|max:255',
             'employment_histories.*.contact_person_name' => 'nullable|string|max:255',
@@ -75,8 +75,8 @@ class TenentApplicationRequest extends FormRequest
 
             // Emergency Contacts (Multiple - Array support)
             'emergency_contacts' => 'nullable|array',
-            'emergency_contacts.*.name' => 'required|string|max:255',
-            'emergency_contacts.*.phone' => 'required|string|max:20',
+            'emergency_contacts.*.name' => 'nullable|string|max:255',
+            'emergency_contacts.*.phone' => 'nullable|string|max:20',
             'emergency_contacts.*.email' => 'nullable|email',
             'emergency_contacts.*.relationship' => 'nullable|string|max:100',
 

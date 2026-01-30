@@ -201,6 +201,7 @@ class IncomeController extends Controller
             })
             ->get();
         $items = Item::where('status', true)->get();
+        // return $tenants;exit();
 
         return view('backend.layouts.income.create-invoice', compact('tenants', 'items'));
     }
