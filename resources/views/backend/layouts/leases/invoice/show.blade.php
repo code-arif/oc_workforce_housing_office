@@ -167,7 +167,7 @@
                                             </tr>
 
                                             <!-- Security Deposit (only for first invoice if includes deposit and not collected) -->
-                                            @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
+                                            @if($isFirstInvoice && $depositInvoice !== null)
                                             <tr class="deposit-row">
                                                 <td class="item-desc">
                                                     <strong>Security Deposit</strong>
@@ -177,8 +177,8 @@
                                                     </p>
                                                 </td>
                                                 <td class="item-qty">1</td>
-                                                <td class="item-rate">${{ number_format($lease->deposit_amount, 2) }}</td>
-                                                <td class="item-amount">${{ number_format($lease->deposit_amount, 2) }}</td>
+                                                <td class="item-rate">${{ number_format($depositInvoice->amount, 2) }}</td>
+                                                <td class="item-amount">${{ number_format($depositInvoice->amount, 2) }}</td>
                                             </tr>
                                             @endif
                                         @else
@@ -209,19 +209,19 @@
                                         <span>${{ number_format($invoice->amount, 2) }}</span>
                                     </div>
 
-                                    @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
+                                    @if($isFirstInvoice && $depositInvoice !== null)
                                     <div class="summary-row deposit">
                                         <span>
                                             Security Deposit
                                             <span class="badge bg-warning-light text-warning ms-2">Not Collected</span>
                                         </span>
-                                        <span>${{ number_format($lease->deposit_amount, 2) }}</span>
+                                        <span>${{ number_format($depositInvoice->amount, 2) }}</span>
                                     </div>
                                     @php
-                                        $totalDue +=$lease->deposit_amount;
-                                        $balanceDue +=$lease->deposit_amount;
+                                        $totalDue +=$depositInvoice->amount;
+                                        $balanceDue +=$depositInvoice->amount;
                                     @endphp
-                                    @elseif($isFirstInvoice && $invoice->includes_deposit && $lease->deposit_collected && $lease->deposit_amount > 0)
+                                    @elseif($isFirstInvoice && $depositInvoice === null )
                                     <div class="summary-row deposit collected">
                                         <span>
                                             Security Deposit

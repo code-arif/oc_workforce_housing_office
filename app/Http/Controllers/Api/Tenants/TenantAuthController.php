@@ -39,7 +39,7 @@ class TenantAuthController extends Controller
             return $this->error([], 'Invalid credentials', 401);
         }
 
-        if ($tenant->status !== 'active') {
+        if ($tenant->status !== 'approved') {
             return $this->error(
                 ['status' => $tenant->status],
                 'Your account is not active. Please contact administrator.',

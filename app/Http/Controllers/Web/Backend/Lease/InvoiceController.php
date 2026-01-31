@@ -38,6 +38,11 @@ class InvoiceController extends Controller
 
         $isFirstInvoice = $firstInvoice && $firstInvoice->id === $invoice->id;
 
+        $depositInvoice = Invoice::where('invoice_number', $invoice->invoice_number)
+            ->where('type', 'DEPOSIT')
+            ->where('status', '!=', 'PAID')
+            ->first();
+
         // Check if previous invoice is paid (for non-first invoices)
         $canMakePayment = false;
         if ($isFirstInvoice) {
@@ -67,7 +72,7 @@ class InvoiceController extends Controller
 
         $totalPaid = $invoice->paid_amount ?? $invoice->payments->sum('amount');
         $balanceDue = $invoice->balance_due ?? ($totalDue - $totalPaid);
-        // dd($invoice, $totalDue, $totalPaid, $balanceDue);
+        // dd($depositInvoice);
         return view('backend.layouts.leases.invoice.show', compact(
             'invoice', 
             'lease', 
@@ -75,7 +80,8 @@ class InvoiceController extends Controller
             'canMakePayment',
             'totalDue',
             'totalPaid',
-            'balanceDue'
+            'balanceDue',
+            'depositInvoice'
         ));
     }
 
@@ -244,7 +250,7 @@ class InvoiceController extends Controller
 
                 // Mark deposit as collected if fully paid
                 if ($depositStatus === 'PAID') {
-                    $lease->update(['deposit_collected' => true]);
+                    $lease->update(['deposit_collected' => 1]);
                 }
 
                 // Create Transaction for Deposit Payment

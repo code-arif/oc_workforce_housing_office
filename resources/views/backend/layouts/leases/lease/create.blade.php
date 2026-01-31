@@ -152,6 +152,11 @@
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
+                                                        <label class="form-label">Expected Move in Date <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control datepicker2" id="actual_move_in" name="actual_move_in" required>
+                                                        <small class="text-muted"></small>
+                                                    </div>
+                                                    {{-- <div class="col-md-6">
                                                         <div class="lease-type-card" id="monthToMonthCard" data-type="month">
                                                             <div class="lease-type-header">
                                                                 <i class="fe fe-calendar"></i>
@@ -160,7 +165,7 @@
                                                             <h6>MONTH-TO-MONTH LEASE</h6>
                                                             <p class="text-muted">This lease has a start date but no fixed end date. It automatically renews each month.</p>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
                                                 </div>
                                             </div>
 

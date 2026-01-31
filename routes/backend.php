@@ -45,6 +45,7 @@ use App\Http\Controllers\Web\Backend\ItemController;
 use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
 use App\Http\Controllers\Web\Backend\Reports\RentReportController;
 use App\Http\Controllers\Web\Backend\Reports\RentCollectionReportController;
+use App\Http\Controllers\Web\Backend\Reports\TenantReportController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -564,4 +565,10 @@ Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin'])->group
     Route::post('/rent-collection/bulk-update', [RentCollectionReportController::class, 'bulkUpdateStatus'])->name('rent-collection.bulk-update');
     Route::get('/rent-collection/export-pdf', [RentCollectionReportController::class, 'exportPdf'])->name('rent-collection.export.pdf');
     Route::get('/rent-collection/export-excel', [RentCollectionReportController::class, 'exportExcel'])->name('rent-collection.export.excel');
+
+    // Tenant Report
+    Route::get('/tenant', [TenantReportController::class, 'index'])->name('tenant.index');
+    Route::get('/tenant/data', [TenantReportController::class, 'getData'])->name('tenant.data');
+    Route::get('/tenant/export-pdf', [TenantReportController::class, 'exportPdf'])->name('tenant.export.pdf');
+    Route::get('/tenant/export-excel', [TenantReportController::class, 'exportExcel'])->name('tenant.export.excel');
 });

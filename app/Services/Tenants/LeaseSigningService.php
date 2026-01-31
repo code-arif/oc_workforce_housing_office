@@ -91,29 +91,37 @@ class LeaseSigningService
             }
 
             // Store signature (if it's base64, save to storage)
-            $signaturePath = null;
-            if ($signatureType === 'digital' && strpos($signature, 'data:image') === 0) {
-                // Extract base64 data
-                $image = str_replace('data:image/png;base64,', '', $signature);
-                $image = str_replace(' ', '+', $image);
-                $imageName = 'signatures/tenant_' . $tenantId . '_lease_' . $leaseId . '_' . time() . '.png';
+            // $signaturePath = null;
+            // if ($signatureType === 'digital' && strpos($signature, 'data:image') === 0) {
+            //     // Extract base64 data
+            //     $image = str_replace('data:image/png;base64,', '', $signature);
+            //     $image = str_replace(' ', '+', $image);
+            //     $imageName = 'signatures/tenant_' . $tenantId . '_lease_' . $leaseId . '_' . time() . '.png';
 
-                Storage::disk('public')->put($imageName, base64_decode($image));
-                $signaturePath = $imageName;
-            }
+            //     Storage::disk('public')->put($imageName, base64_decode($image));
+            //     $signaturePath = $imageName;
+            // }
 
             // Update document with signature
             $document->update([
                 'tenant_signed_at' => now(),
-                'tenant_signature' => $signaturePath ?? $signature,
+                'tenant_signature' => $signature,
                 'tenant_signature_type' => $signatureType,
                 // 'tenant_signature_ip' => $ipAddress,
                 // 'status' => 'pending_admin_signature',
             ]);
 
             // Update lease status
+            if ($lease->status === 'PENDING_TENANT_SIGN') {
+                $lease->status = 'PENDING_ADMIN_SIGN';
+            }
+            if ($lease->status == "PENDING_ADMIN_SIGN") {
+                $lease->status = "ACTIVE";
+                $document->status = "signed";
+                $document->save();
+            }
             $lease->update([
-                'status' => 'PENDING_ADMIN_SIGN'
+                'status' => $lease->status
             ]);
 
             DB::commit();

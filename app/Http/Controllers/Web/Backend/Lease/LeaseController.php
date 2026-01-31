@@ -294,7 +294,7 @@ class LeaseController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => null,
                     'assigned_at' => now(),
-                    'actual_move_in' => null, // Will be set when bed is assigned
+                    'actual_move_in' => $request->actual_move_in ?? null, // Will be set when bed is assigned
                     'is_current' => true,
                 ]);
             } else {
@@ -303,7 +303,7 @@ class LeaseController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $request->bed_id,
                     'assigned_at' => now(),
-                    'actual_move_in' => $request->start_date,
+                    'actual_move_in' => $request->actual_move_in ?? $request->start_date,
                     'is_current' => true,
                 ]);
 

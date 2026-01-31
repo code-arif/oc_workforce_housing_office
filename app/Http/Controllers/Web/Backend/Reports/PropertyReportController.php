@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PropertyReportExport;
+use App\Models\Season;
 use Yajra\DataTables\Facades\DataTables;
 
 class PropertyReportController extends Controller
@@ -22,7 +23,8 @@ class PropertyReportController extends Controller
     {
         $properties = Property::where('is_active', true)->orderBy('name')->get();
         $tenants = Tenant::where('status', 'Approved')->orderBy('email')->get();
-        return view('backend.layouts.reports.property-report', compact('properties', 'tenants'));
+        $seasons = Season::where('is_active', true)->orderBy('name')->get();
+        return view('backend.layouts.reports.property-report', compact('properties', 'tenants', 'seasons'));
     }
 
     /**
@@ -71,6 +73,13 @@ class PropertyReportController extends Controller
             // Status filter
             if ($request->filled('status')) {
                 $query->where('leases.status', $request->status);
+            }
+
+            if($request->filled('season')) {
+                $seasonId = $request->season;
+                $query->whereHas('property', function ($q) use ($seasonId) {
+                    $q->where('season_id', $seasonId);
+                });
             }
 
             // Date range filter

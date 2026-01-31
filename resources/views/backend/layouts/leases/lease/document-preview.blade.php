@@ -112,7 +112,7 @@
                         </div>
                     </div>
 
-                    <!-- Placeholders Card -->
+                    {{-- <!-- Placeholders Card -->
                     <div class="card mt-3">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -184,9 +184,9 @@
                                 <p class="text-muted mb-0 small">No signatures defined</p>
                             @endif
                         </div>
-                    </div>
+                    </div> --}}
 
-                    <!-- Actions -->
+                    {{-- <!-- Actions -->
                     <div class="card mt-3">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
@@ -208,7 +208,7 @@
                                 <i class="fas fa-print me-1"></i> Print
                             </button>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
 
                 <!-- PDF Preview with Overlays -->

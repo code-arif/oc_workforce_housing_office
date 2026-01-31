@@ -104,7 +104,12 @@
                                                 </div>
                                                 <div class="bed-details">
                                                     @if($assigned->bed_id)
-                                                        <div class="bed-label">{{ $assigned->bed->bed_label ?? 'N/A' }}</div>
+                                                        <div class="bed-label">
+                                                            {{ $assigned->bed->bed_label ?? 'N/A' }} 
+                                                            @if($assigned->is_current && $assigned->actual_move_in)
+                                                               <br> <small class="bed-subtext">Move In: {{ $assigned?->actual_move_in }}</small>
+                                                            @endif
+                                                        </div>
                                                         @if($assigned->is_current)
                                                             <span class="bed-status-badge current">Current</span>
                                                         @else

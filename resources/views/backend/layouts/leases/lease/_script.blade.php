@@ -10,7 +10,8 @@
             lease_term_id: null,
             lease_type: 'fixed',
             start_date: null,
-            end_date: null
+            end_date: null,
+            actual_move_in: null
         };
 
         $(document).ready(function() {
@@ -387,6 +388,13 @@
                     validateStep1();
                     return;
                 }
+
+                $('#actual_move_in').on('keyup change', function() {
+                    const actual_move_in_date = $(this).val();
+                    leaseData.actual_move_in = actual_move_in_date ?? null;
+                    updateRentalSummary();
+                    validateStep1();
+                });
 
                 // Show lease type card
                 $('#leaseTypeDisplay').show();
@@ -1058,6 +1066,7 @@
                 
                 // Season/Term
                 season_id: leaseData.lease_term_id,
+                actual_move_in : leaseData.actual_move_in || leaseData.start_date,
                 lease_type: leaseData.lease_type,
                 
                 // Dates
