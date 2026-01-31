@@ -114,34 +114,23 @@ class ApplicationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             // Company information
-            'company_name' => 'required|string|max:255',
-            'industry' => 'required|string|max:255',
-            'company_address' => 'required|string',
+            'company_name' => 'nullable|string|max:255',
+            'industry' => 'nullable|string|max:255',
+            'company_address' => 'nullable|string',
 
             // Contact person information
             'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
+            'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'job_title' => 'nullable|string|max:255',
 
             // Reservation details
-            'reservation_item' => 'required|array',
-            'reservation_item.*.property_name' => 'required|string',
-            'reservation_item.*.is_interested_whole_bedroom' => 'required|boolean',
-            'reservation_item.*.is_interested_by_bed' => 'required|boolean',
-            'reservation_item.*.house_people_per_room' => 'nullable|integer|min:1',
+            'reservation_item' => 'nullable|array',
+            'reservation_item.*.property_name' => 'nullable|string',
+            'reservation_item.*.interested1' => 'nullable|string',
+            'reservation_item.*.interested2' => 'nullable|string',
             'notes' => 'nullable|string',
-        ], [
-            'company_name.required' => 'Company name is required.',
-            'industry.required' => 'Industry is required.',
-            'company_address.required' => 'Company address is required.',
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please provide a valid email address.',
-            'first_name.required' => 'Contact person first name is required.',
-            'last_name.required' => 'Contact person last name is required.',
-            'phone.required' => 'Phone number is required.',
-            'reservation_item.required' => 'Please select at least one property.',
         ]);
 
         if ($validator->fails()) {
@@ -157,7 +146,6 @@ class ApplicationController extends Controller
 
             // Create corporate application with pending status
             $application = Application::create([
-                'type' => 'corporate',
                 'status' => 'pending',
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
@@ -198,10 +186,10 @@ class ApplicationController extends Controller
                 'company_name' => $application->company_name,
                 'email' => $application->email,
                 'status' => $application->status,
-            ], 'Your corporate reservation request has been submitted successfully. We will contact you within 24 business hours.', 201);
+            ], 'Your reservation request has been submitted successfully. We will contact you within 24 business hours.', 201);
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error('Corporate application submission failed: ' . $e->getMessage(), [
+            Log::error('Application submission failed: ' . $e->getMessage(), [
                 'email' => $request->email,
                 'company' => $request->company_name,
                 'trace' => $e->getTraceAsString()

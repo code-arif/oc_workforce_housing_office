@@ -236,4 +236,19 @@ class TenantDashboardController extends Controller
             return $this->error([], $e->getMessage(), 500);
         }
     }
+
+    /**
+     * Check if tenant has active lease
+     */    public function hasActiveLease(Request $request)
+    {
+        try {
+            $tenant = $request->user();
+            $hasActiveLease = $this->leaseService->tenantHasActiveLease($tenant->id);
+            return $this->success([
+                'has_active_lease' => $hasActiveLease
+            ], 'Active lease status retrieved successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
 }

@@ -510,4 +510,14 @@ class TenantLeaseService
                 ];
             });
     }
+
+    /**
+     * Check if tenant has active lease
+     */
+    public function tenantHasActiveLease($tenantId)
+    {
+        return Lease::where('tenant_id', $tenantId)
+            ->where('status', 'ACTIVE')
+            ->exists();
+    }
 }

@@ -57,15 +57,15 @@ Route::group(['middleware' => 'guest:api'], function () {
     Route::prefix('v1')->group(function () {
 
         // Landing - Tenant Email Submission
-        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
+        // Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
 
         // Application Routes - New workflow
-        Route::prefix('tenant/applications')->group(function () {
+        Route::prefix('tenant')->group(function () {
             // Individual tenant application submission
-            Route::post('/individual', [ApplicationController::class, 'submitIndividualApplication']);
+            // Route::post('/individual', [ApplicationController::class, 'submitIndividualApplication']);
 
             // Corporate application submission
-            Route::post('/corporate', [ApplicationController::class, 'submitCorporateApplication']);
+            Route::post('/application', [ApplicationController::class, 'submitCorporateApplication']);
 
             // Admin action (approve/reject) - requires authentication
             Route::post('/admin/action', [ApplicationController::class, 'adminApplicationAction'])
@@ -110,6 +110,9 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::post('/update-avatar', [TenantProfileController::class, 'updateAvatar']); // done
 
         Route::post('/logout', [TenantAuthController::class, 'logout']); // done
+
+        // Active lease check
+        Route::get('/has-active-lease', [TenantDashboardController::class, 'hasActiveLease']); // done
 
 
         // Tenant dashbaord routes

@@ -10,7 +10,6 @@ class Application extends Model
     use HasFactory;
 
     protected $fillable = [
-        'type',
         'status',
         'first_name',
         'middle_name',

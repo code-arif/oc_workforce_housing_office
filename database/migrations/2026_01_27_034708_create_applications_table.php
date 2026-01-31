@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
 
-            $table->enum('type', ['individual', 'corporate']);
             $table->enum('status', [
                 'pending',
                 'under_review',
@@ -25,9 +24,10 @@ return new class extends Migration
             // Applicant info (for individual OR company contact person)
             $table->string('first_name');
             $table->string('middle_name')->nullable();
-            $table->string('last_name');
+            $table->string('last_name')->nullable();
             $table->string('email');
-            $table->string('phone');
+            $table->string('phone')->nullable();
+            $table->string('job_title')->nullable();
 
             // Corporate only fields
             $table->string('company_name')->nullable();
@@ -44,7 +44,6 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes for better query performance
-            $table->index('type');
             $table->index('status');
             $table->index('email');
             $table->index('created_at');
