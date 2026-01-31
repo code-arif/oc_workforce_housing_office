@@ -24,7 +24,7 @@ class SeasonSeeder extends Seeder
                 'name' => 'Winter',
                 'year' => now()->year,
                 'blanket_start_date' => now()->year . '-03-01',
-                'blanket_end_date' => now()->year . '-10-31',
+                'blanket_end_date' => now()->year+1 . '-10-31',
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),

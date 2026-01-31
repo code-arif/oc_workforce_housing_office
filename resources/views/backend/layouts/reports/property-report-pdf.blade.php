@@ -185,7 +185,7 @@
         <thead>
             <tr>
                 <th>Property Name</th>
-                <th>Bed Label</th>
+                <th>Unit</th>
                 <th>Tenant Name</th>
                 <th class="text-right">Total Due</th>
                 <th class="text-right">Total Paid</th>

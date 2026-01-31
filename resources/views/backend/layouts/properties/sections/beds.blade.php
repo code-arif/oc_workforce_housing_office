@@ -476,3 +476,9 @@
 
     })();
 </script>
+<style>
+    .form-check{
+       margin-right: 12px;
+       display: inline-block !important;
+    }
+</style>

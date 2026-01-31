@@ -60,7 +60,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
     {
         return [
             'Property Name',
-            'Bed Label',
+            'Unit',
             'Tenant Name',
             'Total Due',
             'Total Paid',

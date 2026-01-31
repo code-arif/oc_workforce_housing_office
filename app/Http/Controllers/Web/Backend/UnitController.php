@@ -16,7 +16,7 @@ class UnitController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $units = Unit::latest('id')->get();
+            $units = Unit::orderBy('name')->get();
 
             return DataTables::of($units)
                 ->addIndexColumn()
@@ -65,7 +65,7 @@ class UnitController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active') ? true : false;
+        $validated['is_active'] = true ;
 
         $exisingUnit = Unit::where('property_id', $validated['property_id'])->where('name', $validated['name'])->first();
 

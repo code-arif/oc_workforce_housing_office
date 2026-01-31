@@ -439,6 +439,9 @@ class TenantManageController extends Controller
         // Get all invoices for this tenant
         $invoices = \App\Models\Invoice::where('tenant_id', $id)
             ->with(['lease.property'])
+            ->whereHas('lease', function ($q) {
+                $q->where('status', 'ACTIVE');
+            })
             ->orderBy('due_date', 'asc')
             ->get();
 

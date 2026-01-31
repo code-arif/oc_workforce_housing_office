@@ -10,12 +10,14 @@ class Payment extends Model
         'invoice_id', 'tenant_id', 'lease_id', 'bed_id',
         'payment_number', 'amount', 'payment_date', 'payment_method',
         'reference_number', 'gateway_transaction_id', 'payment_type',
-        'paid_by', 'recorded_by', 'note', 'metadata'
+        'paid_by', 'recorded_by', 'note', 'metadata',
+        'review_status', 'reviewed_at', 'reviewed_by', 'review_note'
     ];
 
     protected $casts = [
         'payment_date' => 'date',
         'metadata' => 'array',
+        'reviewed_at' => 'datetime',
     ];
 
     public function invoice()
@@ -41,6 +43,46 @@ class Payment extends Model
     public function recordedBy()
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function reviewedBy()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Scope for pending review payments
+     */
+    public function scopePendingReview($query)
+    {
+        return $query->where(function($q) {
+            $q->where('review_status', 'pending')
+              ->orWhereNull('review_status');
+        });
+    }
+
+    /**
+     * Scope for confirmed payments
+     */
+    public function scopeConfirmed($query)
+    {
+        return $query->where('review_status', 'confirmed');
+    }
+
+    /**
+     * Check if payment is confirmed
+     */
+    public function isConfirmed(): bool
+    {
+        return $this->review_status === 'confirmed';
+    }
+
+    /**
+     * Check if payment needs review
+     */
+    public function needsReview(): bool
+    {
+        return in_array($this->review_status, ['pending', null]);
     }
 
     protected static function boot()

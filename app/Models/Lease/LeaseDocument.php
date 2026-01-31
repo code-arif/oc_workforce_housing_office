@@ -20,12 +20,14 @@ class LeaseDocument extends Model
         'tenant_signature',
         'admin_signed_at',
         'tenant_signed_at',
+        'custom_fields',
         'status'
     ];
 
     protected $casts = [
         'admin_signed_at' => 'datetime',
-        'tenant_signed_at' => 'datetime'
+        'tenant_signed_at' => 'datetime',
+        'custom_fields' => 'array'
     ];
 
     public static $statuses = [

@@ -54,9 +54,9 @@
                                             <select class="form-select select3" id="tenant_id" name="tenant_id" required>
                                                 <option value="">Select Tenant</option>
                                                 @foreach ($tenants as $tenant)
-                                                    <option value="{{ $tenant->id }}">
-                                                        {{ $tenant->profile?->first_name }}
-                                                        {{ $tenant->profile?->last_name }}
+                                                    <option value="{{ $tenant?->id }}">
+                                                        {{ $tenant?->profile?->first_name }}
+                                                        {{ $tenant?->profile?->last_name }}
                                                         ({{ $tenant?->email }})
                                                     </option>
                                                 @endforeach

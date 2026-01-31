@@ -44,6 +44,7 @@ use App\Http\Controllers\Web\Backend\Income\IncomeController;
 use App\Http\Controllers\Web\Backend\ItemController;
 use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
 use App\Http\Controllers\Web\Backend\Reports\RentReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentCollectionReportController;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -246,6 +247,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
 Route::group([], function () {
     Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
     Route::get('/tenants/data', [TenantManageController::class, 'getData'])->name('tenants.get.data');
+    Route::get('/tenants/edit/{id}', [TenantManageController::class, 'edit'])->name('tenants.edit');
     Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
@@ -490,6 +492,7 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::put('/0/{id}', [LeaseDocumentController::class, 'update'])->name('update');
     Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
+    Route::post('/0/{id}/update-custom-fields', [LeaseDocumentController::class, 'updateCustomFields'])->name('update-custom-fields');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
 
     // Preview document for a lease
@@ -552,4 +555,13 @@ Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin'])->group
     Route::get('/rent/data', [RentReportController::class, 'getData'])->name('rent.data');
     Route::get('/rent/export-pdf', [RentReportController::class, 'exportPdf'])->name('rent.export.pdf');
     Route::get('/rent/export-excel', [RentReportController::class, 'exportExcel'])->name('rent.export.excel');
+
+    // Rent Collection Report (with Review/Confirmation)
+    Route::get('/rent-collection', [RentCollectionReportController::class, 'index'])->name('rent-collection.index');
+    Route::get('/rent-collection/data', [RentCollectionReportController::class, 'getData'])->name('rent-collection.data');
+    Route::get('/rent-collection/summary', [RentCollectionReportController::class, 'getSummary'])->name('rent-collection.summary');
+    Route::post('/rent-collection/{id}/review', [RentCollectionReportController::class, 'updateReviewStatus'])->name('rent-collection.review');
+    Route::post('/rent-collection/bulk-update', [RentCollectionReportController::class, 'bulkUpdateStatus'])->name('rent-collection.bulk-update');
+    Route::get('/rent-collection/export-pdf', [RentCollectionReportController::class, 'exportPdf'])->name('rent-collection.export.pdf');
+    Route::get('/rent-collection/export-excel', [RentCollectionReportController::class, 'exportExcel'])->name('rent-collection.export.excel');
 });

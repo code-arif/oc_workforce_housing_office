@@ -53,7 +53,7 @@ class UnitSeeder extends Seeder
 
         // Units for Business Plaza (Property ID: 3)
         Unit::create([
-            'property_id' => 3,
+            'property_id' => 1,
             'name' => '301',
             'gender_designation' => 'female',
             'is_active' => true,
@@ -62,7 +62,7 @@ class UnitSeeder extends Seeder
         ]);
 
         Unit::create([
-            'property_id' => 3,
+            'property_id' => 1,
             'name' => '302',
             'gender_designation' => 'female',
             'is_active' => true,
@@ -72,7 +72,7 @@ class UnitSeeder extends Seeder
 
         // Units for City Hostel (Property ID: 4)
         Unit::create([
-            'property_id' => 4,
+            'property_id' => 2,
             'name' => '401',
             'gender_designation' => 'male',
             'is_active' => true,
@@ -81,7 +81,7 @@ class UnitSeeder extends Seeder
         ]);
 
         Unit::create([
-            'property_id' => 4,
+            'property_id' => 2,
             'name' => '402',
             'gender_designation' => 'female',
             'is_active' => true,
@@ -90,7 +90,7 @@ class UnitSeeder extends Seeder
         ]);
 
         Unit::create([
-            'property_id' => 4,
+            'property_id' => 2,
             'name' => '403',
             'gender_designation' => 'male',
             'is_active' => true,
@@ -100,7 +100,7 @@ class UnitSeeder extends Seeder
 
         // Units for Student Housing Complex (Property ID: 5)
         Unit::create([
-            'property_id' => 5,
+            'property_id' => 1,
             'name' => '501',
             'gender_designation' => 'male',
             'is_active' => true,
@@ -109,7 +109,7 @@ class UnitSeeder extends Seeder
         ]);
 
         Unit::create([
-            'property_id' => 5,
+            'property_id' => 1,
             'name' => '502',
             'gender_designation' => 'female',
             'is_active' => true,
@@ -118,7 +118,7 @@ class UnitSeeder extends Seeder
         ]);
 
         Unit::create([
-            'property_id' => 5,
+            'property_id' => 1,
             'name' => '503',
             'gender_designation' => 'male',
             'is_active' => true,
@@ -128,7 +128,7 @@ class UnitSeeder extends Seeder
 
         // Units for Industrial Warehouse (Property ID: 6)
         Unit::create([
-            'property_id' => 6,
+            'property_id' => 2,
             'name' => '601',
             'gender_designation' => 'female',
             'is_active' => true,
@@ -137,7 +137,7 @@ class UnitSeeder extends Seeder
         ]);
 
         Unit::create([
-            'property_id' => 6,
+            'property_id' => 2,
             'name' => '602',
             'gender_designation' => 'female',
             'is_active' => true,

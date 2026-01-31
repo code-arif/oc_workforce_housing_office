@@ -47,7 +47,7 @@
                                 </select>
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label">Bed</label>
+                                <label class="form-label">Unit</label>
                                 <select class="form-select select3" id="bedFilter">
                                     <option value="">All Beds</option>
                                 </select>
@@ -174,7 +174,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Property Name</th>
-                                        <th>Bed Label</th>
+                                        <th>Unit</th>
                                         <th>Tenant Name</th>
                                         <th class="text-end">Total Due ($)</th>
                                         <th class="text-end">Total Paid ($)</th>
@@ -207,7 +207,7 @@
     $(document).ready(function() {
         // Initialize Select2
         $('.select3').select2({
-            placeholder: 'Select Property',
+            placeholder: 'Select an option',
             allowClear: true
         });
 
@@ -326,7 +326,7 @@
 
         $('#filterProperty').change(function() {
             const propertyId = $(this).val();
-            $('#bedFilter').empty().append('<option value="">All Beds</option>');
+            $('#bedFilter').empty().append('<option value="">Select Units</option>');
             if (propertyId) {
                 $.ajax({
                     url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',

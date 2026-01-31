@@ -118,7 +118,7 @@
                                     <select class="form-select select3" id="tenantFilter">
                                         <option value="">Select Tenant</option>
                                         @foreach ($tenants as $tenant)
-                                            <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}</option>
+                                            <option value="{{ $tenant->id }}">{{ $tenant?->profile?->first_name }} {{ $tenant?->profile?->last_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
