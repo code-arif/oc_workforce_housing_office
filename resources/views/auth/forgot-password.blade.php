@@ -9,7 +9,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #eac066 0%, #a27c4b 100%);
         padding: 2rem 1rem;
     }
     
@@ -76,19 +76,19 @@
     }
     
     .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #eac066 0%, #a27c4b 100%);
         border: none;
         padding: 0.875rem 1.5rem;
         font-weight: 600;
         font-size: 1rem;
         border-radius: 0.5rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 4px 15px rgba(234, 192, 102, 0.4);
     }
     
     .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        box-shadow: 0 6px 20px rgba(234, 192, 102, 0.5);
     }
     
     .btn-back {
