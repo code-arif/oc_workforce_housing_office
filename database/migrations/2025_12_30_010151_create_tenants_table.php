@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('tenants', function (Blueprint $table) {
             $table->id();
             $table->enum('application_source', ['admin', 'self'])->default('self');
-            $table->enum('status', ['pending', 'processing', 'under_review', 'approved', 'rejected', 'active', 'inactive'])->default('pending');
+            $table->enum('status', ['pending', 'processing', 'under_review', 'approved', 'rejected'])->default('pending');
 
             $table->date('move_in_date')->nullable();
             $table->date('arrival_date')->nullable();

@@ -151,7 +151,6 @@ class TenantPasswordController extends Controller
 
             // 🔹 Set password & activate account
             $tenant->password = Hash::make($request->password);
-            $tenant->status = 'active';
 
             // 🔹 Invalidate token (one-time use)
             $tenant->approval_token = null;
@@ -222,10 +221,10 @@ class TenantPasswordController extends Controller
             }
 
             // Check if account is active
-            if (!in_array($tenant->status, ['approved', 'active'])) {
+            if (!in_array($tenant->status, ['approved'])) {
                 return $this->error([
                     'status' => $tenant->status
-                ], 'Your account is not active. Current status: ' . $tenant->status, 400);
+                ], 'Your account is not approved. Current status: ' . $tenant->status, 400);
             }
 
             // Generate OTP

@@ -42,7 +42,7 @@ class TenantAuthController extends Controller
         if ($tenant->status !== 'approved') {
             return $this->error(
                 ['status' => $tenant->status],
-                'Your account is not active. Please contact administrator.',
+                'Your account is not approved. Please contact administrator.',
                 403
             );
         }

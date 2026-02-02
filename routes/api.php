@@ -65,7 +65,7 @@ Route::group(['middleware' => 'guest:api'], function () {
             // Route::post('/individual', [ApplicationController::class, 'submitIndividualApplication']);
 
             // Corporate application submission
-            Route::post('/application', [ApplicationController::class, 'submitCorporateApplication']);
+            Route::post('/application', [ApplicationController::class, 'submitApplication']);
 
             // Admin action (approve/reject) - requires authentication
             Route::post('/admin/action', [ApplicationController::class, 'adminApplicationAction'])

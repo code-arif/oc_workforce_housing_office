@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use App\Mail\Application\ApplicationRejectionMail;
 use App\Mail\TenantApplication\ReservationReceivedAdminMail;
 use App\Mail\TenantApplication\ReservationSubmittedConfirmationMail;
 
@@ -24,93 +25,93 @@ class ApplicationController extends Controller
     /**
      * Submit individual tenant application
      */
-    public function submitIndividualApplication(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:255',
-            'middle_name' => 'nullable|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|max:100|unique:applications,email',
-            'phone' => 'required|string|max:20',
-            'reservation_item' => 'required|array',
-            'reservation_item.*.property_name' => 'required|string',
-            'reservation_item.*.is_interested' => 'required|boolean',
-            'notes' => 'nullable|string',
-        ], [
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please provide a valid email address.',
-            'email.unique' => 'An application with this email already exists.',
-            'first_name.required' => 'First name is required.',
-            'last_name.required' => 'Last name is required.',
-            'phone.required' => 'Phone number is required.',
-            'reservation_item.required' => 'Please select at least one property.',
-        ]);
+    // public function submitIndividualApplication(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'first_name' => 'required|string|max:255',
+    //         'middle_name' => 'nullable|string|max:255',
+    //         'last_name' => 'required|string|max:255',
+    //         'email' => 'required|email|max:100|unique:applications,email',
+    //         'phone' => 'required|string|max:20',
+    //         'reservation_item' => 'required|array',
+    //         'reservation_item.*.property_name' => 'required|string',
+    //         'reservation_item.*.is_interested' => 'required|boolean',
+    //         'notes' => 'nullable|string',
+    //     ], [
+    //         'email.required' => 'Email address is required.',
+    //         'email.email' => 'Please provide a valid email address.',
+    //         'email.unique' => 'An application with this email already exists.',
+    //         'first_name.required' => 'First name is required.',
+    //         'last_name.required' => 'Last name is required.',
+    //         'phone.required' => 'Phone number is required.',
+    //         'reservation_item.required' => 'Please select at least one property.',
+    //     ]);
 
-        if ($validator->fails()) {
-            return $this->validationError(
-                $validator->errors()->toArray(),
-                'Validation failed',
-                422
-            );
-        }
+    //     if ($validator->fails()) {
+    //         return $this->validationError(
+    //             $validator->errors()->toArray(),
+    //             'Validation failed',
+    //             422
+    //         );
+    //     }
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            // Create application with pending status
-            $application = Application::create([
-                'type' => 'individual',
-                'status' => 'pending',
-                'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
-                'last_name' => $request->last_name,
-                'email' => $request->email,
-                'phone' => $request->phone,
-                'reservation_item' => json_encode($request->reservation_item),
-                'notes' => $request->notes,
-            ]);
+    //         // Create application with pending status
+    //         $application = Application::create([
+    //             'type' => 'individual',
+    //             'status' => 'pending',
+    //             'first_name' => $request->first_name,
+    //             'middle_name' => $request->middle_name,
+    //             'last_name' => $request->last_name,
+    //             'email' => $request->email,
+    //             'phone' => $request->phone,
+    //             'reservation_item' => json_encode($request->reservation_item),
+    //             'notes' => $request->notes,
+    //         ]);
 
-            // Send mail to admin for review
-            try {
-                Mail::to(config('mail.admin_email'))
-                    ->queue(new ReservationReceivedAdminMail($application));
-            } catch (Exception $mailError) {
-                Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
-            }
+    //         // Send mail to admin for review
+    //         try {
+    //             Mail::to(config('mail.admin_email'))
+    //                 ->queue(new ReservationReceivedAdminMail($application));
+    //         } catch (Exception $mailError) {
+    //             Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
+    //         }
 
-            // Short delay to avoid rate limiting
-            sleep(1);
+    //         // Short delay to avoid rate limiting
+    //         sleep(1);
 
-            // Send confirmation mail to applicant
-            try {
-                Mail::to($application->email)
-                    ->queue(new ReservationSubmittedConfirmationMail($application));
-            } catch (Exception $mailError) {
-                Log::error('Failed to send confirmation email to applicant: ' . $mailError->getMessage());
-            }
+    //         // Send confirmation mail to applicant
+    //         try {
+    //             Mail::to($application->email)
+    //                 ->queue(new ReservationSubmittedConfirmationMail($application));
+    //         } catch (Exception $mailError) {
+    //             Log::error('Failed to send confirmation email to applicant: ' . $mailError->getMessage());
+    //         }
 
-            DB::commit();
+    //         DB::commit();
 
-            return $this->success([
-                'application_id' => $application->id,
-                'type' => $application->type,
-                'email' => $application->email,
-                'status' => $application->status,
-            ], 'Your reservation request has been submitted successfully. We will contact you within 24 hours.', 201);
-        } catch (Exception $e) {
-            DB::rollBack();
-            Log::error('Individual application submission failed: ' . $e->getMessage(), [
-                'email' => $request->email,
-                'trace' => $e->getTraceAsString()
-            ]);
-            return $this->error([], 'Failed to submit application. Please try again later.', 500);
-        }
-    }
+    //         return $this->success([
+    //             'application_id' => $application->id,
+    //             'type' => $application->type,
+    //             'email' => $application->email,
+    //             'status' => $application->status,
+    //         ], 'Your reservation request has been submitted successfully. We will contact you within 24 hours.', 201);
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Individual application submission failed: ' . $e->getMessage(), [
+    //             'email' => $request->email,
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
+    //         return $this->error([], 'Failed to submit application. Please try again later.', 500);
+    //     }
+    // }
 
     /**
      * Submit corporate/office application
      */
-    public function submitCorporateApplication(Request $request)
+    public function submitApplication(Request $request)
     {
         $validator = Validator::make($request->all(), [
             // Company information
@@ -238,12 +239,12 @@ class ApplicationController extends Controller
 
             if ($request->status == 'rejected') {
                 // Send rejection email
-                try {
-                    Mail::to($application->email)
-                        ->send(new \App\Mail\Application\ApplicationRejectionMail($application, $contactUrl));
-                } catch (Exception $mailError) {
-                    Log::error('Failed to send rejection email: ' . $mailError->getMessage());
-                }
+                // try {
+                //     Mail::to($application->email)
+                //         ->send(new ApplicationRejectionMail($application, $contactUrl));
+                // } catch (Exception $mailError) {
+                //     Log::error('Failed to send rejection email: ' . $mailError->getMessage());
+                // }
             } else {
                 // Status is approved - create tenant and send form link
                 $tenant = $this->createTenantFromApplication($application);
