@@ -4,20 +4,18 @@ namespace App\Http\Controllers\Api\Tenants;
 
 use Exception;
 use App\Models\Tenant;
+use App\Models\Application;
 use App\Traits\ApiResponse;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use App\Mail\Tenant\Application\ApplicationRejectionMail;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use App\Mail\Tenant\TenantPasswordRestLinkMail;
 use App\Mail\TenantApplication\TenantWelcomeMail;
 use App\Mail\TenantApplication\TenantFormLinkMail;
+use App\Mail\Tenant\Application\ApplicationRejectionMail;
 use App\Mail\TenantApplication\TenantEmailReceivedAdminMail;
 
 class LandingController extends Controller
@@ -49,11 +47,9 @@ class LandingController extends Controller
             DB::beginTransaction();
 
             // Create tenant with pending status
-            $tenant = Tenant::create([
+            $tenant = Application::create([
                 'email' => $request->email,
-                'application_source' => 'self',
                 'status' => 'pending',
-                'password' => Hash::make(Str::random(16)),
             ]);
 
             // Generate approval token (for admin to proceed)

@@ -56,20 +56,13 @@ Route::group(['middleware' => 'guest:api'], function () {
     // Public Routes
     Route::prefix('v1')->group(function () {
 
-        // Landing - Tenant Email Submission
-        // Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
-
         // Application Routes - New workflow
-        Route::prefix('tenant')->group(function () {
-            // Individual tenant application submission
-            // Route::post('/individual', [ApplicationController::class, 'submitIndividualApplication']);
+        Route::prefix('tenant/applications')->group(function () {
+            // Single email submission (from landing page)
+            Route::post('/submit-email', [ApplicationController::class, 'submitSingleEmail']);
 
-            // Corporate application submission
-            Route::post('/application', [ApplicationController::class, 'submitApplication']);
-
-            // Admin action (approve/reject) - requires authentication
-            Route::post('/admin/action', [ApplicationController::class, 'adminApplicationAction'])
-                ->middleware('auth:sanctum');
+            // Full reservation submission (corporate/office form)
+            Route::post('/submit-reservation', [ApplicationController::class, 'submitReservation']);
         });
 
         // Admin Actions
@@ -108,6 +101,7 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/profile', [TenantProfileController::class, 'profile']); // done
         Route::put('/update-profile', [TenantProfileController::class, 'updateProfile']); // done
         Route::post('/update-avatar', [TenantProfileController::class, 'updateAvatar']); // done
+          Route::post('/change-password', [TenantProfileController::class, 'changePassword']); // done
 
         Route::post('/logout', [TenantAuthController::class, 'logout']); // done
 

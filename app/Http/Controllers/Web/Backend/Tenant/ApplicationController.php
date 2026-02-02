@@ -2,251 +2,306 @@
 
 namespace App\Http\Controllers\Web\Backend\Tenant;
 
+use Exception;
 use App\Models\Tenant;
+use App\Models\Application;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
+use App\Mail\TenantApplication\TenantFormLinkMail;
 
 class ApplicationController extends Controller
 {
+
+    /**
+     * Application list
+     */
     public function index()
     {
-        // dd('ApplicationController index method called');
-        // Get statistics for cards
-        $totalTenants = Tenant::where('status', 'rejected')->orWhere('status', 'pending')->count();
-        $totalRjected = Tenant::where('status', 'rejected')->count();
-        $pendingTenants = Tenant::where('status', 'pending')->count();
+        // Get statistics for both types
+        $singleEmailTotal = Application::whereNotNull('email')
+            ->whereNull('company_name')
+            ->whereNull('reservation_item')
+            ->count();
+
+        $singleEmailPending = Application::whereNotNull('email')
+            ->whereNull('company_name')
+            ->whereNull('reservation_item')
+            ->where('status', 'pending')
+            ->count();
+
+        $singleEmailApproved = Application::whereNotNull('email')
+            ->whereNull('company_name')
+            ->whereNull('reservation_item')
+            ->where('status', 'approved')
+            ->count();
+
+        $reservationTotal = Application::whereNotNull('company_name')
+            ->orWhereNotNull('reservation_item')
+            ->count();
+
+        $reservationPending = Application::where(function ($q) {
+            $q->whereNotNull('company_name')
+                ->orWhereNotNull('reservation_item');
+        })
+            ->where('status', 'pending')
+            ->count();
+
+        $reservationApproved = Application::where(function ($q) {
+            $q->whereNotNull('company_name')
+                ->orWhereNotNull('reservation_item');
+        })
+            ->where('status', 'approved')
+            ->count();
 
         return view('backend.layouts.tenants.applications.index', compact(
-            'totalTenants',
-            'totalRjected',
-            'pendingTenants',
+            'singleEmailTotal',
+            'singleEmailPending',
+            'singleEmailApproved',
+            'reservationTotal',
+            'reservationPending',
+            'reservationApproved'
         ));
     }
 
+    /**
+     * Application list data
+     */
     public function getData(Request $request)
     {
-        // Fix browser back/forward button issue - only return JSON for AJAX requests
         if ($request->ajax() && $request->wantsJson()) {
-            // Optimized query with eager loading and selective columns
-            $query = Tenant::query()
+            $type = $request->get('type', 'single'); // 'single' or 'reservation'
+
+            $query = Application::query()
                 ->select([
-                    'tenants.id',
-                    'tenants.email',
-                    'tenants.status',
-                    'tenants.application_source',
-                    'tenants.move_in_date',
-                    'tenants.created_at'
+                    'applications.id',
+                    'applications.email',
+                    'applications.first_name',
+                    'applications.last_name',
+                    'applications.phone',
+                    'applications.company_name',
+                    'applications.industry',
+                    'applications.status',
+                    'applications.reservation_item',
+                    'applications.notes',
+                    'applications.created_at'
                 ])
-                ->with([
-                    'profile:id,tenant_id,first_name,middle_name,last_name,phone,avatar',
-                    'leases' => function ($query) {
-                        $query->select('id', 'tenant_id', 'status', 'start_date', 'end_date', 'rent_amount')
-                            ->whereNull('deleted_at')
-                            ->with([
-                                'property:id,name',
-                                'assignments' => function ($q) {
-                                    $q->select('id', 'lease_id', 'bed_id', 'is_current')
-                                        ->where('is_current', true)
-                                        ->whereNull('deleted_at')
-                                        ->with('bed:id,bed_number,bed_label,room_id')
-                                        ->limit(1);
-                                }
-                            ]);
-                    }
-                ])
-                ->where('status', '!=','approved') // Only applications that are not yet approved
-                ->where('status', '!=','active') // or active tenants
-                ->orderBy('tenants.id', 'desc');
+                ->orderBy('applications.id', 'desc');
 
-            // Status filter
-            if ($request->filled('status')) {
-                $query->where('tenants.status', $request->status);
-            }
-
-            // Application source filter
-            if ($request->filled('tenant')) {
-                $query->where(function ($q) use ($request) {
-                    $keyword = $request->tenant;
-                    $q->whereHas('profile', function ($q2) use ($keyword) {
-                        $q2->where(DB::raw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', COALESCE(last_name, ''))"), 'like', "%{$keyword}%")
-                           ->orWhere('phone', 'like', "%{$keyword}%");
-                    })
-                    ->orWhere('email', 'like', "%{$keyword}%");
+            // Filter by type
+            if ($type === 'single') {
+                $query->whereNotNull('email')
+                    ->whereNull('company_name')
+                    ->whereNull('reservation_item');
+            } else {
+                $query->where(function ($q) {
+                    $q->whereNotNull('company_name')
+                        ->orWhereNotNull('reservation_item');
                 });
             }
 
-            // Account status filter (active leases)
-            if ($request->filled('account_status')) {
-                if ($request->account_status === 'active') {
-                    $query->whereHas('leases', function ($q) {
-                        $q->where('status', 'ACTIVE')
-                            ->whereNull('deleted_at');
-                    });
-                } elseif ($request->account_status === 'inactive') {
-                    $query->whereDoesntHave('leases', function ($q) {
-                        $q->where('status', 'ACTIVE')
-                            ->whereNull('deleted_at');
-                    });
-                }
+            // Status filter
+            if ($request->filled('status')) {
+                $query->where('applications.status', $request->status);
+            }
+
+            // Search filter
+            if ($request->filled('search')) {
+                $keyword = $request->search;
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('email', 'like', "%{$keyword}%")
+                        ->orWhere('first_name', 'like', "%{$keyword}%")
+                        ->orWhere('last_name', 'like', "%{$keyword}%")
+                        ->orWhere('company_name', 'like', "%{$keyword}%")
+                        ->orWhere('phone', 'like', "%{$keyword}%");
+                });
             }
 
             // Date range filter
             if ($request->filled('date_from')) {
-                $query->whereDate('tenants.created_at', '>=', $request->date_from);
+                $query->whereDate('applications.created_at', '>=', $request->date_from);
             }
             if ($request->filled('date_to')) {
-                $query->whereDate('tenants.created_at', '<=', $request->date_to);
+                $query->whereDate('applications.created_at', '<=', $request->date_to);
             }
 
             return DataTables::eloquent($query)
                 ->addIndexColumn()
-                ->filterColumn('name', function ($query, $keyword) {
-                    $query->whereHas('profile', function ($q) use ($keyword) {
-                        $q->where(DB::raw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', COALESCE(last_name, ''))"), 'like', "%{$keyword}%");
-                    });
-                })
-                ->filterColumn('email', function ($query, $keyword) {
-                    $query->where('tenants.email', 'like', "%{$keyword}%");
-                })
-                ->addColumn('name', function ($data) {
-                    $profile = $data->profile;
-                    if (!$profile) {
-                        return '<div class="d-flex align-items-center">
-                                    <div class="avatar avatar-md rounded-circle bg-secondary flex-shrink-0">
-                                        <span class="text-white">N/A</span>
-                                    </div>
-                                    <div class="ms-3 text-truncate">
-                                        <div class="fw-semibold text-truncate">No Profile</div>
-                                        <small class="text-muted">Not Available</small>
-                                    </div>
+                ->addColumn('applicant', function ($data) use ($type) {
+                    if ($type === 'single') {
+                        return '<div class="text-truncate">
+                                    <div class="fw-semibold">' . e($data->email) . '</div>
+                                    <small class="text-muted">' . ($data->first_name ? e($data->first_name . ' ' . $data->last_name) : 'Name not provided') . '</small>
+                                </div>';
+                    } else {
+                        $name = trim(($data->first_name ?? '') . ' ' . ($data->last_name ?? ''));
+                        return '<div class="text-truncate">
+                                    <div class="fw-semibold">' . e($data->company_name ?? 'N/A') . '</div>
+                                    <small class="text-muted">' . e($name ?: $data->email) . '</small>
                                 </div>';
                     }
-
-                    $fullName = trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''));
-                    $avatar = $profile->avatar
-                        ? asset($profile->avatar)
-                        : 'https://ui-avatars.com/api/?name=' . urlencode($fullName) . '&background=random';
-
-                    return '<div class="d-flex align-items-center">
-                                <img src="' . $avatar . '" alt="avatar" class="rounded-circle me-3 flex-shrink-0" width="40" height="40" style="object-fit: cover;">
-                                <div class="text-truncate">
-                                    <div class="fw-semibold text-truncate" title="' . e($fullName) . '">' . e($fullName) . '</div>
-                                    <small class="text-muted text-truncate d-block" title="' . e($profile->phone ?? 'No phone') . '">' . e($profile->phone ?? 'No phone') . '</small>
-                                </div>
-                            </div>';
                 })
-                ->addColumn('property_unit', function ($data) {
-                    $activeLease = $data->leases->where('status', 'ACTIVE')->first();
-
-                    if (!$activeLease) {
-                        return '<span class="text-muted">No Active Lease</span>';
-                    }
-
-                    $property = $activeLease->property;
-                    $assignment = $activeLease->assignments->first();
-
-                    $propertyName = $property ? e($property->name) : 'N/A';
-                    $unitInfo = $assignment && $assignment->bed
-                        ? 'Unit-> ' . e($assignment->bed->bed_label)
-                        : 'N/A';
-
+                ->addColumn('contact', function ($data) {
                     return '<div class="text-truncate">
-                                <div class="fw-semibold text-truncate" title="' . $propertyName . '">' . $propertyName . '</div>
-                                <small class="text-muted text-truncate d-block" title="' . $unitInfo . '">' . $unitInfo . '</small>
+                                <div>' . e($data->email) . '</div>
+                                <small class="text-muted">' . e($data->phone ?? 'No phone') . '</small>
                             </div>';
                 })
-                ->addColumn('address', function ($data) {
-                    $activeLease = $data->leases->where('status', 'ACTIVE')->first();
-
-                    if (!$activeLease || !$activeLease->property) {
-                        return '<span class="text-muted">N/A</span>';
+                ->addColumn('details', function ($data) use ($type) {
+                    if ($type === 'single') {
+                        return '<span class="text-muted">Email-only application</span>';
+                    } else {
+                        $items = json_decode($data->reservation_item, true);
+                        $count = is_array($items) ? count($items) : 0;
+                        return '<div class="text-truncate">
+                                    <div class="fw-semibold">' . e($data->industry ?? 'N/A') . '</div>
+                                    <small class="text-muted">' . $count . ' reservation item(s)</small>
+                                </div>';
                     }
-
-                    return '<small class="text-muted">Property Address</small>';
                 })
-                ->addColumn('account_status', function ($data) {
-                    $hasActiveLease = $data->leases->where('status', 'ACTIVE')->isNotEmpty();
-
-                    if ($hasActiveLease) {
-                        return '<span class="badge p-3 bg-success">Active</span>';
-                    }
-
-                    return '<span class="badge p-3 bg-secondary">Inactive</span>';
-                })
-                ->addColumn('tenant_status', function ($data) {
+                ->addColumn('status_badge', function ($data) {
                     $statusColors = [
                         'pending' => 'warning',
-                        'processing' => 'info',
-                        'under_review' => 'primary',
+                        'under_review' => 'info',
                         'approved' => 'success',
-                        'rejected' => 'danger',
-                        'active' => 'success',
-                        'inactive' => 'secondary'
+                        'rejected' => 'danger'
                     ];
 
                     $color = $statusColors[$data->status] ?? 'secondary';
-                    return '<span class="badge p-3 bg-' . $color . '">' . e(ucfirst($data->status)) . '</span>';
+                    return '<span class="badge p-3 bg-' . $color . '">' . e(ucfirst(str_replace('_', ' ', $data->status))) . '</span>';
                 })
-                ->addColumn('rent', function ($data) {
-                    $activeLease = $data->leases->where('status', 'ACTIVE')->first();
-
-                    if (!$activeLease) {
-                        return '<span class="text-muted">$0.00</span>';
-                    }
-
-                    return '<span class="fw-semibold">$' . number_format($activeLease->rent_amount, 2) . '</span>';
+                ->addColumn('submitted_at', function ($data) {
+                    return '<div class="text-truncate">
+                                <div>' . $data->created_at->format('M d, Y') . '</div>
+                                <small class="text-muted">' . $data->created_at->format('h:i A') . '</small>
+                            </div>';
                 })
-                ->addColumn('action', function ($data) {
-                    $btn = '';
+                ->addColumn('action', function ($data) use ($type) {
+                    $btn = '<div class="btn-group" role="group">';
 
                     if ($data->status === 'pending') {
-                        $btn .= '<div class="btn-group" role="group">
-                                
-                                <button type="button" onclick="approveTenant(' . $data->id . ')" class="btn btn-info" title="Approve Tenant">
-                                    <i class="fe fe-like"></i> Approve
-                                </button>
-                                <button type="button" onclick="rejectTenant(' . $data->id . ')" class="btn btn-danger" title="Reject Tenant">
-                                    <i class="fe fe-dislike"></i> Reject
-                                </button>
-                            </div>';
+                        if ($type === 'single') {
+                            // Single email - only approve button
+                            $btn .= '<button type="button" onclick="approveSingleEmail(' . $data->id . ')" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Approve & Send Form">
+                                        <i class="fe fe-check"></i>
+                                    </button>';
+
+
+                            $btn .= '<button type="button" onclick="rejectApplication(' . $data->id . ')" class="btn btn-sm btn-danger d-inline-flex align-items-center" title="Reject">
+                                    <i class="fe fe-x"></i>
+                                </button>';
+                        } else {
+                            // Reservation - approve and reject
+                            $btn .= '<button type="button" onclick="seeReservation(' . $data->id . ')" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Approve">
+                                        <i class="fe fe-eye"></i>
+                                    </button>';
+                        }
+                    } else {
+                        $btn .= '<span class="badge p-3 bg-secondary">Already processed</span>';
                     }
 
+                    $btn .= '</div>';
                     return $btn;
                 })
-                ->rawColumns(['name', 'property_unit', 'address', 'account_status', 'tenant_status', 'rent', 'action'])
+                ->rawColumns(['applicant', 'contact', 'details', 'status_badge', 'submitted_at', 'action'])
                 ->make(true);
         }
 
         return abort(404);
     }
 
-    public function approve($id)
+    /**
+     * Approve single email application
+     * Creates dummy tenant and sends form link
+     */
+    public function approveSingleEmail($id)
     {
-        $tenant = Tenant::findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        if ($tenant->status !== 'pending') {
-            return response()->json(['message' => 'Only pending applications can be approved.'], 400);
+            $application = Application::findOrFail($id);
+
+            // Validate it's a single email application
+            if ($application->company_name || $application->reservation_item) {
+                return response()->json(['message' => 'This is not a single email application.'], 400);
+            }
+
+            if ($application->status !== 'pending') {
+                return response()->json(['message' => 'This application has already been processed.'], 400);
+            }
+
+            // Check if tenant already exists
+            $existingTenant = Tenant::where('email', $application->email)->first();
+            if ($existingTenant) {
+                return response()->json(['message' => 'A tenant with this email already exists.'], 400);
+            }
+
+            // Create dummy tenant
+            $tenant = Tenant::create([
+                'email' => $application->email,
+                'status' => 'approved',
+                'password' => Hash::make(Str::random(16)), // temporary password
+            ]);
+
+            // Update application status
+            $application->status = 'approved';
+            $application->save();
+
+            // Send email with form link
+            try {
+                $formLink = config('app.frontend_url') . "/apply-lease/{$tenant->approval_token}";
+                Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
+            } catch (Exception $e) {
+                Log::error('Failed to send tenant form link email: ' . $e->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Application approved successfully. Tenant form link has been sent to ' . $tenant->email,
+                'tenant_id' => $tenant->id
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Single email approval failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to approve application.'], 500);
         }
-
-        $tenant->status = 'approved';
-        $tenant->save();
-
-        return response()->json(['message' => 'Tenant approved successfully.']);
     }
 
+    /**
+     * Reject application
+     */
     public function reject($id)
     {
-        $tenant = Tenant::findOrFail($id);
+        try {
+            $application = Application::findOrFail($id);
 
-        if ($tenant->status !== 'pending') {
-            return response()->json(['message' => 'Only pending applications can be rejected.'], 400);
+            if ($application->status !== 'pending') {
+                return response()->json(['message' => 'This application has already been processed.'], 400);
+            }
+
+            $application->status = 'rejected';
+            $application->save();
+
+            return response()->json(['message' => 'Application rejected successfully.']);
+        } catch (Exception $e) {
+            Log::error('Application rejection failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to reject application.'], 500);
         }
+    }
 
-        $tenant->status = 'rejected';
-        $tenant->save();
+    /**
+     * Show application details
+     */
+    public function show($id)
+    {
+        $application = Application::findOrFail($id);
 
-        return response()->json(['message' => 'Tenant rejected successfully.']);
+        return view('backend.layouts.tenants.applications.show', compact('application'));
     }
 }

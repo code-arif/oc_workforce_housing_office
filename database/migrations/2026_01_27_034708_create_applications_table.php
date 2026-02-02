@@ -22,10 +22,10 @@ return new class extends Migration
             ])->default('pending');
 
             // Applicant info (for individual OR company contact person)
-            $table->string('first_name');
+            $table->string('first_name')->nullable();
             $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->string('email');
+            $table->string('email')->nullable();
             $table->string('phone')->nullable();
             $table->string('job_title')->nullable();
 
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->integer('employee_count')->nullable();
 
             // Reservation details (stored as JSON)
-            $table->json('reservation_item');
+            $table->json('reservation_item')->nullable();
 
             // Additional notes
             $table->text('notes')->nullable();

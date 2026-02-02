@@ -261,13 +261,27 @@ Route::group([], function () {
     Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
 });
 
-Route::controller(ApplicationController::class)->group(function () {
-    Route::get('/applications', 'index')->name('tenants.applications.index');
-    Route::get('/applications/data', 'getData')->name('tenants.applications.get.data');
-    Route::get('/applications/{id}', 'show')->name('tenants.applications.show');
-    Route::post('/applications/{id}/approve', 'approve')->name('tenants.applications.approve');
-    Route::post('/applications/{id}/reject', 'reject')->name('tenants.applications.reject');
+
+Route::group([], function () {
+    // View applications page with tabs
+    Route::get('/applications', [ApplicationController::class, 'index'])->name('tenants.applications.index');
+
+    // Get DataTables data (supports type: single | reservation)
+    Route::get('/applications/data', [ApplicationController::class, 'getData'])->name('tenants.applications.get.data');
+
+    // View specific application details
+    Route::get('/applications/{id}', [ApplicationController::class, 'show'])->name('tenants.applications.show');
+
+    // Approve single email application
+    Route::post('/applications/{id}/approve-single', [ApplicationController::class, 'approveSingleEmail'])->name('tenants.applications.approve.single');
+
+    // Approve reservation application
+    // Route::post('/applications/{id}/approve-reservation', [ApplicationController::class, 'approveReservation'])->name('tenants.applications.approve.reservation');
+
+    // Reject any application
+    Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('tenants.applications.reject');
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -371,7 +385,7 @@ Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(fun
     Route::post('/bulk-action', [MessagingController::class, 'bulkAction'])->name('bulk.action');
     Route::get('/attachment/{id}', [MessagingController::class, 'downloadAttachment'])->name('attachment.download');
     Route::get('/tenants/search', [MessagingController::class, 'searchTenants'])->name('tenants.search');
-    
+
     // Location-based tenant fetching
     Route::get('/units', [MessagingController::class, 'getUnits'])->name('units');
     Route::get('/rooms', [MessagingController::class, 'getRooms'])->name('rooms');

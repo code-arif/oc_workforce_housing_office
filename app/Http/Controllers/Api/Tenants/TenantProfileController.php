@@ -8,6 +8,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Models\TenantDocument;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\Tenant\TenantResource;
 
@@ -46,7 +47,6 @@ class TenantProfileController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'sometimes|string|max:255',
             'phone' => 'sometimes|string|max:20',
-            'country_code' => 'nullable|string|max:10',
         ]);
 
         if ($validator->fails()) {
@@ -101,5 +101,39 @@ class TenantProfileController extends Controller
             'created_at' => $tenant->created_at,
             'updated_at' => $tenant->updated_at,
         ], 'Avatar updated successfully', 200);
+    }
+
+    /**
+     * Change User Password
+     */
+    public function changePassword(Request $request)
+    {
+        $user = auth()->guard('api')->user();
+
+        if (!$user) {
+            return $this->error([], 'User not found', 404);
+        }
+
+        // Validate input
+        $validator = Validator::make($request->all(), [
+            'old_password'      => 'required',
+            'new_password'      => 'required|min:6',
+            'confirm_password'  => 'required|same:new_password',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors(), 'Validation failed', 422);
+        }
+
+        // Check if old password is correct
+        if (!Hash::check($request->old_password, $user->password)) {
+            return $this->error([], 'Old password does not match', 400);
+        }
+
+        // Update with new password
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return $this->success('Password changed successfully', [], 200);
     }
 }
