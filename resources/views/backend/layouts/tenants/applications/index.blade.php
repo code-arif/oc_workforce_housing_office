@@ -288,7 +288,7 @@
     <!-- Reservation Details Modal -->
     <div class="modal fade" id="reservationModal" tabindex="-1" aria-labelledby="reservationModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="reservationModalLabel">
@@ -585,6 +585,8 @@
         // Display Reservation Details in Modal
         function displayReservationDetails(application) {
             const reservationItems = application.reservation_item ? JSON.parse(application.reservation_item) : [];
+            // const reservationItems = application.reservation_item ?? [];
+
 
             let reservationItemsHtml = '';
             if (reservationItems.length > 0) {
@@ -675,15 +677,15 @@
 
                     <!-- Additional Notes -->
                     ${application.notes ? `
-                            <div class="mb-3">
-                                <h6 class="border-bottom pb-2 mb-3">
-                                    <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
-                                </h6>
-                                <div class="alert alert-info">
-                                    ${application.notes}
-                                </div>
-                            </div>
-                        ` : ''}
+                                                <div class="mb-3">
+                                                    <h6 class="border-bottom pb-2 mb-3">
+                                                        <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
+                                                    </h6>
+                                                    <div class="alert alert-info">
+                                                        ${application.notes}
+                                                    </div>
+                                                </div>
+                                            ` : ''}
 
                     <!-- Application Info -->
                     <div class="mb-3">
@@ -843,16 +845,36 @@
 
         #reservationModal .modal-body::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 10px;
         }
 
         #reservationModal .modal-body::-webkit-scrollbar-thumb {
             background: #D9A600;
-            border-radius: 10px;
         }
 
         #reservationModal .modal-body::-webkit-scrollbar-thumb:hover {
             background: #b88d00;
+        }
+
+        /* Reservation Modal Scroll Fix */
+        #reservationModal .modal-dialog {
+            max-height: 90vh;
+        }
+
+        #reservationModal .modal-content {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #reservationModal .modal-body {
+            overflow-y: auto;
+            max-height: calc(90vh - 140px);
+            /* header + footer height */
+        }
+
+        .reservation-items-wrapper {
+            max-height: 300px;
+            overflow-y: auto;
         }
     </style>
 @endpush

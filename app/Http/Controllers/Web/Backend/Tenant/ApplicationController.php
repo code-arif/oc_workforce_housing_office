@@ -79,17 +79,7 @@ class ApplicationController extends Controller
 
             $query = Application::query()
                 ->select([
-                    'applications.id',
-                    'applications.email',
-                    'applications.first_name',
-                    'applications.last_name',
-                    'applications.phone',
-                    'applications.company_name',
-                    'applications.industry',
-                    'applications.status',
-                    'applications.reservation_item',
-                    'applications.notes',
-                    'applications.created_at'
+                    'applications.*'
                 ])
                 ->orderBy('applications.id', 'desc');
 
@@ -156,7 +146,7 @@ class ApplicationController extends Controller
                     if ($type === 'single') {
                         return '<span class="text-muted">Email-only application</span>';
                     } else {
-                        $items = json_decode($data->reservation_item, true);
+                        $items = $data->reservation_item ?? [];
                         $count = is_array($items) ? count($items) : 0;
                         return '<div class="text-truncate">
                                     <div class="fw-semibold">' . e($data->industry ?? 'N/A') . '</div>
@@ -298,10 +288,17 @@ class ApplicationController extends Controller
     /**
      * Show application details
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $application = Application::findOrFail($id);
 
+        // If AJAX request, return JSON
+        if ($request->ajax()) {
+            return response()->json($application);
+        }
+
+        // Otherwise return view
         return view('backend.layouts.tenants.applications.show', compact('application'));
+        // return false;
     }
 }
