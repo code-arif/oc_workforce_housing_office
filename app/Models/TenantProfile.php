@@ -23,4 +23,16 @@ class TenantProfile extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function getAvatarAttribute($value)
+    {
+        if (!$value) {
+            return null;
+        }
+
+        // If you store in "public" disk
+        return asset($value);
+        // OR if using Storage disk 'public'
+        // return Storage::url($value);
+    }
 }

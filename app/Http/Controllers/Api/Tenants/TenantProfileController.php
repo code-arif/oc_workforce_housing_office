@@ -68,12 +68,6 @@ class TenantProfileController extends Controller
                 ]));
             }
 
-            // Make avatar a full URL
-            $profile = $tenant->profile->toArray();
-            if ($profile['avatar']) {
-                $profile['avatar'] = url($profile['avatar']);
-            }
-
             return $this->success([
                 'profile' => $tenant->profile
             ], 'Profile updated successfully', 200);
