@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Maintanace;
 
+use App\Helper\FileUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,7 +29,8 @@ class MaintenanceRequestResource extends JsonResource
                 return $this->attachments->map(function ($attachment) {
                     return [
                         'id'                     => $attachment->id,
-                        'attachment_path'        => $attachment->attachment_path,
+                        // 'attachment_path'        => $attachment->attachment_path,
+                        'attachment_path' => FileUrl::resolve($attachment->attachment_path, 'public') ?? asset('default/placeholder-image.avif'),
                         'created_at'             => $attachment->created_at->toDateTimeString(),
                         'updated_at'             => $attachment->updated_at->toDateTimeString(),
                     ];
