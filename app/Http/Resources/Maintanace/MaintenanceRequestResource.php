@@ -30,7 +30,7 @@ class MaintenanceRequestResource extends JsonResource
                     return [
                         'id'                     => $attachment->id,
                         // 'attachment_path'        => $attachment->attachment_path,
-                        'attachment_path' => FileUrl::resolve($attachment->attachment_path, 'public') ?? asset('default/placeholder-image.avif'),
+                        'attachment_path' => FileUrl::resolve($this->attachment_path, 'public') ?? asset('default/placeholder-image.avif'),
                         'created_at'             => $attachment->created_at->toDateTimeString(),
                         'updated_at'             => $attachment->updated_at->toDateTimeString(),
                     ];
