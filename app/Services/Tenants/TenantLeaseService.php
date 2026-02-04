@@ -144,6 +144,107 @@ class TenantLeaseService
     /**
      * Get invoices with payment blocking logic
      */
+    // private function getInvoicesWithPaymentStatus($tenantId)
+    // {
+    //     $invoices = Invoice::with([
+    //         'lease' => function ($q) {
+    //             $q->with('property:id,name');
+    //         },
+    //         'payments' => function ($q) {
+    //             $q->orderBy('payment_date', 'desc');
+    //         }
+    //     ])
+    //         ->where('tenant_id', $tenantId)
+    //         ->orderBy('due_date', 'asc')
+    //         ->get();
+
+    //     return $invoices->map(function ($invoice, $index) use ($invoices, $tenantId) {
+    //         // Check if lease is signed
+    //         $leaseDocument = LeaseDocument::where('lease_id', $invoice->lease_id)
+    //             ->where('tenant_id', $tenantId)
+    //             ->first();
+
+    //         $leaseSigned = $leaseDocument && $leaseDocument->tenant_signed_at;
+
+    //         // Determine if this is the first invoice
+    //         $firstInvoice = Invoice::where('tenant_id', $tenantId)
+    //             ->where('lease_id', $invoice->lease_id)
+    //             ->where('type', 'RENT')
+    //             ->orderBy('created_at', 'asc')
+    //             ->first();
+
+    //         $isFirstInvoice = $firstInvoice && $firstInvoice->id === $invoice->id;
+
+    //         // Check if previous invoice is paid (for sequential payment)
+    //         $canPayment = false;
+    //         $blockReason = null;
+
+    //         if (!$leaseSigned) {
+    //             $blockReason = 'Lease must be signed before making payments';
+    //         } elseif ($isFirstInvoice) {
+    //             $canPayment = true;
+    //         } else {
+    //             // Get previous invoice
+    //             $previousInvoice = Invoice::where('tenant_id', $tenantId)
+    //                 ->where('lease_id', $invoice->lease_id)
+    //                 ->where('type', 'RENT')
+    //                 ->where('invoice_number', '<', $invoice->invoice_number)
+    //                 ->orderBy('invoice_number', 'desc')
+    //                 ->first();
+
+    //             if (!$previousInvoice) {
+    //                 $canPayment = true;
+    //             } elseif ($previousInvoice->status === 'PAID') {
+    //                 $canPayment = true;
+    //             } else {
+    //                 $blockReason = 'Previous invoice must be paid first';
+    //             }
+    //         }
+
+    //         // Override: Can always pay if status is UNPAID, PARTIAL, or OVERDUE and lease is signed
+    //         if ($leaseSigned && in_array($invoice->status, ['UNPAID', 'PARTIAL', 'OVERDUE'])) {
+    //             if (!$blockReason || $blockReason === 'Previous invoice must be paid first') {
+    //                 // Only block if explicitly told by previous invoice logic
+    //                 if ($blockReason === 'Previous invoice must be paid first') {
+    //                     $canPayment = false;
+    //                 } else {
+    //                     $canPayment = true;
+    //                 }
+    //             }
+    //         }
+
+    //         return [
+    //             'id' => $invoice->id,
+    //             'invoice_number' => $invoice->invoice_number,
+    //             'type' => $invoice->type,
+    //             'amount' => $invoice->amount,
+    //             'total_amount' => $invoice->total_amount,
+    //             'paid_amount' => $invoice->paid_amount,
+    //             'balance_due' => $invoice->balance_due,
+    //             'due_date' => $invoice->due_date,
+    //             'status' => $invoice->status,
+    //             'is_overdue' => $invoice->status === 'OVERDUE' || ($invoice->due_date < now() && $invoice->status !== 'PAID'),
+    //             'lease' => [
+    //                 'id' => $invoice->lease->id,
+    //                 'property_name' => $invoice->lease->property->name ?? 'N/A',
+    //                 'is_signed' => $leaseSigned,
+    //             ],
+    //             'can_make_payment' => $canPayment,
+    //             'payment_blocked_reason' => $blockReason,
+    //             'is_first_invoice' => $isFirstInvoice,
+    //             'includes_deposit' => $invoice->includes_deposit,
+    //             'recent_payment' => $invoice->payments->first() ? [
+    //                 'amount' => $invoice->payments->first()->amount,
+    //                 'payment_date' => $invoice->payments->first()->payment_date,
+    //                 'payment_method' => $invoice->payments->first()->payment_method,
+    //             ] : null,
+    //         ];
+    //     });
+    // }
+
+    /**
+     * Get invoices with payment blocking logic
+     */
     private function getInvoicesWithPaymentStatus($tenantId)
     {
         $invoices = Invoice::with([
@@ -156,9 +257,20 @@ class TenantLeaseService
         ])
             ->where('tenant_id', $tenantId)
             ->orderBy('due_date', 'asc')
+            ->orderBy('created_at', 'asc') // Ensure consistent ordering
             ->get();
 
-        return $invoices->map(function ($invoice, $index) use ($invoices, $tenantId) {
+        // Find the first unpaid invoice (the one that should be payable)
+        $firstUnpaidInvoiceId = null;
+
+        foreach ($invoices as $invoice) {
+            if (in_array($invoice->status, ['UNPAID', 'PARTIAL', 'OVERDUE'])) {
+                $firstUnpaidInvoiceId = $invoice->id;
+                break; // Stop at first unpaid
+            }
+        }
+
+        return $invoices->map(function ($invoice) use ($tenantId, $firstUnpaidInvoiceId) {
             // Check if lease is signed
             $leaseDocument = LeaseDocument::where('lease_id', $invoice->lease_id)
                 ->where('tenant_id', $tenantId)
@@ -175,42 +287,19 @@ class TenantLeaseService
 
             $isFirstInvoice = $firstInvoice && $firstInvoice->id === $invoice->id;
 
-            // Check if previous invoice is paid (for sequential payment)
+            // Payment logic
             $canPayment = false;
             $blockReason = null;
 
             if (!$leaseSigned) {
                 $blockReason = 'Lease must be signed before making payments';
-            } elseif ($isFirstInvoice) {
+            } elseif ($invoice->status === 'PAID') {
+                $blockReason = 'Invoice already paid';
+            } elseif ($invoice->id === $firstUnpaidInvoiceId) {
+                // Only the first unpaid invoice can be paid
                 $canPayment = true;
             } else {
-                // Get previous invoice
-                $previousInvoice = Invoice::where('tenant_id', $tenantId)
-                    ->where('lease_id', $invoice->lease_id)
-                    ->where('type', 'RENT')
-                    ->where('invoice_number', '<', $invoice->invoice_number)
-                    ->orderBy('invoice_number', 'desc')
-                    ->first();
-
-                if (!$previousInvoice) {
-                    $canPayment = true;
-                } elseif ($previousInvoice->status === 'PAID') {
-                    $canPayment = true;
-                } else {
-                    $blockReason = 'Previous invoice must be paid first';
-                }
-            }
-
-            // Override: Can always pay if status is UNPAID, PARTIAL, or OVERDUE and lease is signed
-            if ($leaseSigned && in_array($invoice->status, ['UNPAID', 'PARTIAL', 'OVERDUE'])) {
-                if (!$blockReason || $blockReason === 'Previous invoice must be paid first') {
-                    // Only block if explicitly told by previous invoice logic
-                    if ($blockReason === 'Previous invoice must be paid first') {
-                        $canPayment = false;
-                    } else {
-                        $canPayment = true;
-                    }
-                }
+                $blockReason = 'Previous invoice must be paid first';
             }
 
             return [
