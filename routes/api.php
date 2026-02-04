@@ -41,9 +41,6 @@ Route::group(['middleware' => 'guest:api'], function () {
         Route::get('/navigation', [CmsController::class, 'navigation']); // cms navigation data
     });
 
-    //Get all faq
-    Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
-
     // Contact Form submission
     Route::post('/submit-contact', [ContactFormController::class, 'submitContact']);
 
@@ -159,4 +156,7 @@ Route::group(['middleware' => 'auth:api'], function () {
             Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
         });
     });
+
+    //Get all faq
+    Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
 });
