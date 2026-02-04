@@ -7,6 +7,7 @@ use App\Helper\Helper;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Models\TenantDocument;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -135,5 +136,52 @@ class TenantProfileController extends Controller
         $user->save();
 
         return $this->success([], 'Password changed successfully', 200);
+    }
+
+
+    /**
+     * Delete User Profile
+     * @method DELETE
+     * @route /api/v1/delete-profile
+     * @middleware auth:api
+     */
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string'
+        ]);
+
+        try {
+            $tenant = auth('api')->user();
+
+            if (!$tenant) {
+                return $this->error(null, 'Teant not found', 404);
+            }
+
+            // Confirm password
+            if (!Hash::check($request->password, $tenant->password)) {
+                return $this->error(null, 'Invalid password', 403);
+            }
+
+            // Delete avatar from storage
+            if ($tenant->profile?->avatar) {
+                Helper::deleteImage($tenant->profile->avatar);
+            }
+
+            // Logout user
+            auth('api')->logout();
+
+            // Permanently delete user (profile auto deleted)
+            $tenant->forceDelete();
+
+            return $this->success([], 'Account deleted successfully');
+        } catch (Exception $e) {
+            Log::error('Delete profile error: ' . $e->getMessage());
+            return $this->error(
+                ['exception' => $e->getMessage()],
+                'Failed to delete account',
+                500
+            );
+        }
     }
 }

@@ -101,7 +101,8 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/profile', [TenantProfileController::class, 'profile']); // done
         Route::put('/update-profile', [TenantProfileController::class, 'updateProfile']); // done
         Route::post('/update-avatar', [TenantProfileController::class, 'updateAvatar']); // done
-          Route::post('/change-password', [TenantProfileController::class, 'changePassword']); // done
+        Route::post('/change-password', [TenantProfileController::class, 'changePassword']); // done
+        Route::delete('/delete-profile', [TenantProfileController::class, 'destroy']); // done
 
         Route::post('/logout', [TenantAuthController::class, 'logout']); // done
 
