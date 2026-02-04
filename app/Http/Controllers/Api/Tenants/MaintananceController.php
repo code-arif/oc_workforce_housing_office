@@ -29,10 +29,24 @@ class MaintananceController extends Controller
 
             $perPage = $request->get('per_page', 10);
 
+            // $requests = MaintenanceRequest::where('tenant_id', $tenant->id)
+            //     ->with('attachments')
+            //     ->latest()
+            //     ->paginate($perPage);
+
+            // return $this->success($requests, 'Maintenance requests fetched successfully', 200);
             $requests = MaintenanceRequest::where('tenant_id', $tenant->id)
                 ->with('attachments')
                 ->latest()
                 ->paginate($perPage);
+
+            $requests->getCollection()->transform(function ($request) {
+                $request->attachments->map(function ($attachment) {
+                    $attachment->attachment_path = asset($attachment->attachment_path);
+                    return $attachment;
+                });
+                return $request;
+            });
 
             return $this->success($requests, 'Maintenance requests fetched successfully', 200);
         } catch (Exception $e) {
