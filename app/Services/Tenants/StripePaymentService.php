@@ -2,9 +2,9 @@
 
 namespace App\Services\Tenants;
 
+use Exception;
 use Stripe\Stripe;
 use Stripe\Webhook;
-use App\Models\Lease;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Transaction;
@@ -12,6 +12,9 @@ use Stripe\Checkout\Session;
 use Illuminate\Support\Facades\DB;
 use App\Models\Lease\LeaseDocument;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Tenant\Payment\PaymentSuccessAdminMail;
+use App\Mail\Tenant\Payment\PaymentSuccessTenantMail;
 
 class StripePaymentService
 {
@@ -75,12 +78,12 @@ class StripePaymentService
                 'invoice' => [
                     'id' => $invoice->id,
                     'invoice_number' => $invoice->invoice_number,
+                    'type' => $invoice->type,
                     'amount' => $invoice->amount,
                     'total_amount' => $invoice->total_amount,
                     'balance_due' => $invoice->balance_due,
                     'due_date' => $invoice->due_date,
                     'status' => $invoice->status,
-                    'type' => $invoice->type,
                 ],
                 'lease' => [
                     'id' => $lease->id,
@@ -89,13 +92,6 @@ class StripePaymentService
                     'deposit_collected' => $lease->deposit_collected,
                     'property' => $lease->property->name ?? 'N/A',
                     'unit' => $assignment ? $assignment->bed->bed_label : 'N/A',
-                ],
-                'payment_options' => [
-                    'can_adjust_rent' => true,
-                    'min_rent_amount' => 0,
-                    'max_rent_amount' => $invoice->balance_due,
-                    'requires_deposit' => !$lease->deposit_collected && $invoice->is_first_invoice,
-                    'deposit_amount' => !$lease->deposit_collected ? $lease->deposit_amount : 0,
                 ],
             ]
         ];
@@ -114,91 +110,40 @@ class StripePaymentService
             ];
         }
 
-        // Check if previous invoice is paid (sequential payment)
-        $lease = $invoice->lease;
-        $firstInvoice = Invoice::where('tenant_id', $tenantId)
-            ->where('lease_id', $lease->id)
-            ->where('type', 'RENT')
+        // Check if lease is signed
+        $leaseDocument = LeaseDocument::where('lease_id', $invoice->lease_id)
+            ->where('tenant_id', $tenantId)
+            ->first();
+
+        if (!$leaseDocument || !$leaseDocument->tenant_signed_at) {
+            return [
+                'eligible' => false,
+                'reason' => 'Lease must be signed before making payments'
+            ];
+        }
+
+        // Find first unpaid invoice for this tenant
+        $firstUnpaidInvoice = Invoice::where('tenant_id', $tenantId)
+            ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
+            ->orderBy('due_date', 'asc')
             ->orderBy('created_at', 'asc')
             ->first();
 
-        $isFirstInvoice = $firstInvoice && $firstInvoice->id === $invoice->id;
-
-        if (!$isFirstInvoice) {
-            $previousInvoice = Invoice::where('tenant_id', $tenantId)
-                ->where('lease_id', $lease->id)
-                ->where('type', 'RENT')
-                ->where('invoice_number', '<', $invoice->invoice_number)
-                ->orderBy('invoice_number', 'desc')
-                ->first();
-
-            if ($previousInvoice && $previousInvoice->status !== 'PAID') {
-                return [
-                    'eligible' => false,
-                    'reason' => 'Previous invoice must be paid first'
-                ];
-            }
+        // Only the first unpaid invoice can be paid
+        if ($firstUnpaidInvoice && $firstUnpaidInvoice->id !== $invoice->id) {
+            return [
+                'eligible' => false,
+                'reason' => 'Previous invoice must be paid first (Invoice #' . $firstUnpaidInvoice->invoice_number . ')'
+            ];
         }
 
         return ['eligible' => true];
     }
 
     /**
-     * Calculate payment amount
-     */
-    public function calculatePaymentAmount($invoiceId, $tenantId, $rentAmount = null, $includeDeposit = true)
-    {
-        $invoice = Invoice::with('lease')
-            ->where('id', $invoiceId)
-            ->where('tenant_id', $tenantId)
-            ->first();
-
-        if (!$invoice) {
-            return [
-                'success' => false,
-                'message' => 'Invoice not found'
-            ];
-        }
-
-        $lease = $invoice->lease;
-
-        // Calculate rent amount
-        $finalRentAmount = $rentAmount ?? $invoice->balance_due;
-
-        // Validate rent amount
-        if ($finalRentAmount < 0 || $finalRentAmount > $invoice->balance_due) {
-            return [
-                'success' => false,
-                'message' => 'Invalid rent amount'
-            ];
-        }
-
-        // Calculate deposit amount
-        $depositAmount = 0;
-        if ($includeDeposit && !$lease->deposit_collected && $invoice->is_first_invoice) {
-            $depositAmount = $lease->deposit_amount;
-        }
-
-        $totalAmount = $finalRentAmount + $depositAmount;
-
-        return [
-            'success' => true,
-            'data' => [
-                'rent_amount' => $finalRentAmount,
-                'deposit_amount' => $depositAmount,
-                'total_amount' => $totalAmount,
-                'breakdown' => [
-                    'rent' => $finalRentAmount,
-                    'deposit' => $depositAmount,
-                ],
-            ]
-        ];
-    }
-
-    /**
      * Create Stripe checkout session
      */
-    public function createCheckoutSession($invoiceId, $tenantId, $rentAmount = null, $includeDeposit = true, $successUrl, $cancelUrl)
+    public function createCheckoutSession($invoiceId, $tenantId)
     {
         DB::beginTransaction();
 
@@ -207,7 +152,9 @@ class StripePaymentService
                 'lease' => function ($q) {
                     $q->with(['property', 'season', 'assignments.bed.room']);
                 },
-                'tenant.profile'
+                'tenant' => function ($q) {
+                    $q->with(['profile', 'address']);
+                }
             ])
                 ->where('id', $invoiceId)
                 ->where('tenant_id', $tenantId)
@@ -215,6 +162,7 @@ class StripePaymentService
                 ->first();
 
             if (!$invoice) {
+                DB::rollBack();
                 return [
                     'success' => false,
                     'message' => 'Invoice not found'
@@ -224,74 +172,87 @@ class StripePaymentService
             // Check eligibility
             $eligibility = $this->checkPaymentEligibility($invoice, $tenantId);
             if (!$eligibility['eligible']) {
+                DB::rollBack();
                 return [
                     'success' => false,
                     'message' => $eligibility['reason']
                 ];
             }
 
-            // Calculate amounts
-            $calculation = $this->calculatePaymentAmount($invoiceId, $tenantId, $rentAmount, $includeDeposit);
-
-            if (!$calculation['success']) {
-                return $calculation;
-            }
-
-            $totalAmount = $calculation['data']['total_amount'];
-            $rentAmountFinal = $calculation['data']['rent_amount'];
-            $depositAmountFinal = $calculation['data']['deposit_amount'];
-
             $lease = $invoice->lease;
             $tenant = $invoice->tenant;
             $assignment = $lease->assignments->where('is_current', true)->first();
 
+            // Calculate payment amount from invoice balance_due
+            $paymentAmount = floatval($invoice->balance_due);
+
+            if ($paymentAmount <= 0) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Invoice has no balance due'
+                ];
+            }
+
             // Prepare line items for Stripe
-            $lineItems = [];
-
-            // Rent line item
-            if ($rentAmountFinal > 0) {
-                $lineItems[] = [
+            $lineItems = [
+                [
                     'price_data' => [
                         'currency' => 'usd',
-                        'unit_amount' => $rentAmountFinal * 100, // Stripe uses cents
+                        'unit_amount' => $paymentAmount * 100, // Stripe uses cents
                         'product_data' => [
-                            'name' => 'Rent Payment',
-                            'description' => 'Invoice ' . $invoice->invoice_number . ' - ' . ($lease->property->name ?? 'Property'),
+                            'name' => $invoice->type === 'DEPOSIT' ? 'Security Deposit' : 'Rent Payment',
+                            'description' => sprintf(
+                                'Invoice %s - %s (%s)',
+                                $invoice->invoice_number,
+                                $lease->property->name ?? 'Property',
+                                $assignment ? $assignment->bed->bed_label : 'Unit'
+                            ),
                         ],
                     ],
                     'quantity' => 1,
-                ];
-            }
+                ]
+            ];
 
-            // Deposit line item
-            if ($depositAmountFinal > 0) {
-                $lineItems[] = [
-                    'price_data' => [
-                        'currency' => 'usd',
-                        'unit_amount' => $depositAmountFinal * 100,
-                        'product_data' => [
-                            'name' => 'Security Deposit',
-                            'description' => 'One-time security deposit',
-                        ],
-                    ],
-                    'quantity' => 1,
-                ];
-            }
+            // Prepare tenant metadata
+            $tenantProfile = $tenant->profile;
+            $tenantAddress = $tenant->address;
 
             // Prepare metadata for session
             $metadata = [
                 'invoice_id' => $invoice->id,
                 'tenant_id' => $tenantId,
                 'lease_id' => $lease->id,
-                'rent_amount' => $rentAmountFinal,
-                'deposit_amount' => $depositAmountFinal,
-                'total_amount' => $totalAmount,
+                'payment_amount' => $paymentAmount,
                 'invoice_number' => $invoice->invoice_number,
+                'invoice_type' => $invoice->type,
+
+                // Tenant Information
+                'tenant_email' => $tenant->email,
+                'tenant_name' => ($tenantProfile ? trim($tenantProfile->first_name . ' ' . ($tenantProfile->middle_name ?? '') . ' ' . ($tenantProfile->last_name ?? '')) : 'N/A'),
+                'tenant_phone' => $tenantProfile->phone ?? 'N/A',
+
+                // Tenant Address
+                'tenant_address' => $tenantAddress->address ?? 'N/A',
+                'tenant_city' => $tenantAddress->city ?? 'N/A',
+                'tenant_state' => $tenantAddress->state ?? 'N/A',
+                'tenant_zip' => $tenantAddress->zip ?? 'N/A',
+                'tenant_country' => $tenantAddress->country ?? 'USA',
+
+                // Lease Information
                 'property_name' => $lease->property->name ?? 'N/A',
+                'property_address' => $lease->property->address ?? 'N/A',
                 'unit' => $assignment ? $assignment->bed->bed_label : 'N/A',
-                'lease_start_date' => $lease->start_date,
-                'lease_end_date' => $lease->end_date,
+                'lease_start_date' => $lease->start_date->format('Y-m-d'),
+                'lease_end_date' => $lease->end_date->format('Y-m-d'),
+                'rent_amount' => $lease->rent_amount,
+                'deposit_amount' => $lease->deposit_amount,
+                'payment_frequency' => $lease->payment_frequency,
             ];
+
+            // Get success and cancel URLs from env
+            $successUrl = config('services.stripe.success_url', env('STRIPE_SUCCESS_URL'));
+            $cancelUrl = config('services.stripe.cancel_url', env('STRIPE_CANCEL_URL'));
 
             // Create Stripe checkout session
             $session = Session::create([
@@ -311,9 +272,23 @@ class StripePaymentService
                 'success' => true,
                 'session_id' => $session->id,
                 'checkout_url' => $session->url,
-                'total_amount' => $totalAmount,
+                'invoice' => [
+                    'id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'type' => $invoice->type,
+                    'amount' => $paymentAmount,
+                ],
+                'tenant' => [
+                    'name' => $metadata['tenant_name'],
+                    'email' => $tenant->email,
+                    'phone' => $metadata['tenant_phone'],
+                ],
+                'lease' => [
+                    'property' => $metadata['property_name'],
+                    'unit' => $metadata['unit'],
+                ],
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Stripe checkout session creation failed: ' . $e->getMessage());
 
@@ -325,9 +300,9 @@ class StripePaymentService
     }
 
     /**
-     * Verify payment after Stripe redirect
+     * Verify payment after Stripe redirect (for localhost testing)
      */
-    public function verifyPayment($sessionId, $tenantId)
+    public function verifyPayment($sessionId)
     {
         try {
             $session = Session::retrieve($sessionId);
@@ -341,17 +316,18 @@ class StripePaymentService
 
             $metadata = $session->metadata;
             $invoiceId = $metadata['invoice_id'];
+            $tenantId = $metadata['tenant_id'];
 
-            // Process the payment
-            $result = $this->processPayment($invoiceId, $tenantId, $metadata, $session);
+            // Process the payment (same as webhook)
+            $result = $this->processPayment($metadata, $session);
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Payment verification failed: ' . $e->getMessage());
 
             return [
                 'success' => false,
-                'message' => 'Payment verification failed'
+                'message' => 'Payment verification failed: ' . $e->getMessage()
             ];
         }
     }
@@ -359,174 +335,188 @@ class StripePaymentService
     /**
      * Process payment after successful Stripe payment
      */
-    private function processPayment($invoiceId, $tenantId, $metadata, $session)
+    private function processPayment($metadata, $session)
     {
         DB::beginTransaction();
 
         try {
-            $invoice = Invoice::with('lease')->findOrFail($invoiceId);
-            $lease = $invoice->lease;
+            $invoiceId = $metadata['invoice_id'];
+            $tenantId = $metadata['tenant_id'];
+            $paymentAmount = floatval($metadata['payment_amount']);
 
-            if ($invoice->tenant_id !== $tenantId) {
+            $invoice = Invoice::with(['lease', 'tenant.profile'])->findOrFail($invoiceId);
+            $lease = $invoice->lease;
+            $tenant = $invoice->tenant;
+
+            if ($invoice->tenant_id != $tenantId) {
+                throw new Exception('Unauthorized payment attempt');
+            }
+
+            // Check if payment already processed
+            $existingPayment = Payment::where('gateway_transaction_id', $session->id)->first();
+            if ($existingPayment) {
+                DB::rollBack();
                 return [
                     'success' => false,
-                    'message' => 'Unauthorized'
+                    'message' => 'Payment already processed'
                 ];
             }
 
-            $rentAmount = floatval($metadata['rent_amount']);
-            $depositAmount = floatval($metadata['deposit_amount']);
-            $totalAmount = floatval($metadata['total_amount']);
-
             $bedId = $lease->assignments()->where('is_current', true)->first()->bed_id ?? null;
 
-            // Create deposit payment if applicable
-            if ($depositAmount > 0) {
-                $depositInvoice = Invoice::where('lease_id', $lease->id)
-                    ->where('tenant_id', $tenantId)
-                    ->where('type', 'DEPOSIT')
-                    ->where('status', '!=', 'PAID')
-                    ->first();
+            // Create payment record
+            $payment = Payment::create([
+                'invoice_id' => $invoice->id,
+                'tenant_id' => $tenantId,
+                'lease_id' => $lease->id,
+                'bed_id' => $bedId,
+                'payment_number' => 'PAY-' . strtoupper(uniqid()),
+                'amount' => $paymentAmount,
+                'payment_date' => now()->toDateString(),
+                'payment_method' => 'stripe',
+                'reference_number' => $session->payment_intent,
+                'gateway_transaction_id' => $session->id,
+                'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
+                'paid_by' => 'tenant',
+                'note' => sprintf(
+                    '%s payment via Stripe - Invoice %s',
+                    $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
+                    $invoice->invoice_number
+                ),
+                'metadata' => [
+                    'stripe_session_id' => $session->id,
+                    'stripe_payment_intent' => $session->payment_intent,
+                    'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
+                    'property_name' => $metadata['property_name'] ?? 'N/A',
+                ]
+            ]);
 
-                if ($depositInvoice) {
-                    $depositPayment = Payment::create([
-                        'invoice_id' => $depositInvoice->id,
-                        'tenant_id' => $tenantId,
-                        'lease_id' => $lease->id,
-                        'bed_id' => $bedId,
-                        'payment_number' => 'PAY-' . uniqid(),
-                        'amount' => $depositAmount,
-                        'payment_date' => now()->toDateString(),
-                        'payment_method' => 'stripe',
-                        'reference_number' => $session->payment_intent,
-                        'gateway_transaction_id' => $session->id,
-                        'payment_type' => 'deposit',
-                        'paid_by' => 'tenant',
-                        'note' => 'Security deposit payment via Stripe',
-                        'metadata' => [
-                            'stripe_session_id' => $session->id,
-                            'stripe_payment_intent' => $session->payment_intent,
-                        ]
-                    ]);
+            // Update invoice
+            $newPaidAmount = floatval($invoice->paid_amount) + $paymentAmount;
+            $newBalance = floatval($invoice->total_amount) - $newPaidAmount;
 
-                    // Update deposit invoice
-                    $depositInvoice->update([
-                        'paid_amount' => $depositAmount,
-                        'balance_due' => 0,
-                        'status' => 'PAID',
-                        'paid_at' => now(),
-                    ]);
+            $status = 'PARTIAL';
+            $paidAt = null;
 
-                    // Mark deposit as collected
-                    $lease->update(['deposit_collected' => true]);
-
-                    // Create transaction
-                    Transaction::create([
-                        'tenant_id' => $tenantId,
-                        'bed_id' => $bedId,
-                        'lease_id' => $lease->id,
-                        'invoice_id' => $depositInvoice->id,
-                        'payment_id' => $depositPayment->id,
-                        'transaction_number' => 'TXN-' . uniqid(),
-                        'type' => 'payment',
-                        'entry_type' => 'credit',
-                        'amount' => $depositAmount,
-                        'transaction_date' => now()->toDateString(),
-                        'description' => 'Security deposit payment for Invoice ' . $invoice->invoice_number,
-                        'metadata' => [
-                            'payment_method' => 'stripe',
-                            'stripe_session_id' => $session->id,
-                        ]
-                    ]);
-                }
+            if ($newBalance <= 0.01) { // Allow small rounding differences
+                $status = 'PAID';
+                $paidAt = now();
+                $newBalance = 0;
             }
 
-            // Create rent payment
-            if ($rentAmount > 0) {
-                $rentPayment = Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'tenant_id' => $tenantId,
-                    'lease_id' => $lease->id,
-                    'bed_id' => $bedId,
-                    'payment_number' => 'PAY-' . uniqid(),
-                    'amount' => $rentAmount,
-                    'payment_date' => now()->toDateString(),
+            $invoice->update([
+                'paid_amount' => $newPaidAmount,
+                'balance_due' => max(0, $newBalance),
+                'status' => $status,
+                'paid_at' => $paidAt,
+            ]);
+
+            // Mark deposit as collected if this was a deposit payment
+            if ($invoice->type === 'DEPOSIT' && $status === 'PAID') {
+                $lease->update(['deposit_collected' => true]);
+            }
+
+            // Create transaction
+            Transaction::create([
+                'tenant_id' => $tenantId,
+                'bed_id' => $bedId,
+                'lease_id' => $lease->id,
+                'invoice_id' => $invoice->id,
+                'payment_id' => $payment->id,
+                'transaction_number' => 'TXN-' . strtoupper(uniqid()),
+                'type' => 'payment',
+                'entry_type' => 'credit',
+                'amount' => $paymentAmount,
+                'transaction_date' => now()->toDateString(),
+                'description' => sprintf(
+                    '%s payment for Invoice %s - %s',
+                    $invoice->type === 'DEPOSIT' ? 'Deposit' : 'Rent',
+                    $invoice->invoice_number,
+                    $metadata['property_name'] ?? 'Property'
+                ),
+                'metadata' => [
                     'payment_method' => 'stripe',
-                    'reference_number' => $session->payment_intent,
-                    'gateway_transaction_id' => $session->id,
-                    'payment_type' => ($rentAmount >= $invoice->balance_due) ? 'full' : 'partial',
-                    'paid_by' => 'tenant',
-                    'note' => 'Rent payment via Stripe',
-                    'metadata' => [
-                        'stripe_session_id' => $session->id,
-                        'stripe_payment_intent' => $session->payment_intent,
-                    ]
-                ]);
-
-                // Update rent invoice
-                $newPaidAmount = ($invoice->paid_amount ?? 0) + $rentAmount;
-                $newBalance = $invoice->total_amount - $newPaidAmount;
-
-                $status = 'PARTIAL';
-                $paidAt = null;
-
-                if ($newBalance <= 0) {
-                    $status = 'PAID';
-                    $paidAt = now();
-                    $newBalance = 0;
-                }
-
-                $invoice->update([
-                    'paid_amount' => $newPaidAmount,
-                    'balance_due' => $newBalance,
-                    'status' => $status,
-                    'paid_at' => $paidAt,
-                ]);
-
-                // Create transaction
-                Transaction::create([
-                    'tenant_id' => $tenantId,
-                    'bed_id' => $bedId,
-                    'lease_id' => $lease->id,
-                    'invoice_id' => $invoice->id,
-                    'payment_id' => $rentPayment->id,
-                    'transaction_number' => 'TXN-' . uniqid(),
-                    'type' => 'payment',
-                    'entry_type' => 'credit',
-                    'amount' => $rentAmount,
-                    'transaction_date' => now()->toDateString(),
-                    'description' => 'Rent payment for Invoice ' . $invoice->invoice_number,
-                    'metadata' => [
-                        'payment_method' => 'stripe',
-                        'stripe_session_id' => $session->id,
-                    ]
-                ]);
-            }
+                    'stripe_session_id' => $session->id,
+                    'stripe_payment_intent' => $session->payment_intent,
+                ]
+            ]);
 
             DB::commit();
+
+            // Send emails to both tenant and admin
+            $this->sendPaymentEmails($payment, $invoice, $tenant, $metadata);
 
             return [
                 'success' => true,
                 'payment' => [
-                    'total_amount' => $totalAmount,
-                    'rent_amount' => $rentAmount,
-                    'deposit_amount' => $depositAmount,
-                    'payment_date' => now()->toDateString(),
+                    'id' => $payment->id,
+                    'payment_number' => $payment->payment_number,
+                    'amount' => $paymentAmount,
+                    'payment_date' => $payment->payment_date,
+                    'payment_method' => 'stripe',
+                    'invoice_type' => $invoice->type,
                 ],
                 'invoice' => [
                     'id' => $invoice->id,
-                    'status' => $invoice->fresh()->status,
-                    'balance_due' => $invoice->fresh()->balance_due,
+                    'invoice_number' => $invoice->invoice_number,
+                    'status' => $invoice->status,
+                    'paid_amount' => $invoice->paid_amount,
+                    'balance_due' => $invoice->balance_due,
                 ]
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
-            Log::error('Payment processing failed: ' . $e->getMessage());
+            Log::error('Payment processing failed: ' . $e->getMessage(), [
+                'session_id' => $session->id ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
 
             return [
                 'success' => false,
-                'message' => 'Payment processing failed'
+                'message' => 'Payment processing failed: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Send payment success emails
+     */
+    private function sendPaymentEmails($payment, $invoice, $tenant, $metadata)
+    {
+        try {
+            $emailData = [
+                'payment' => $payment,
+                'invoice' => $invoice,
+                'tenant' => $tenant,
+                'tenant_name' => $metadata['tenant_name'] ?? 'Tenant',
+                'property_name' => $metadata['property_name'] ?? 'Property',
+                'unit' => $metadata['unit'] ?? 'N/A',
+                'payment_amount' => $payment->amount,
+                'invoice_number' => $invoice->invoice_number,
+                'payment_date' => $payment->payment_date,
+            ];
+
+            // Send email to tenant
+            Mail::to($tenant->email)->queue(new PaymentSuccessTenantMail($emailData));
+
+
+
+            // Send email to admin (get from config)
+            $adminEmail = config('mail.admin_email', env('ADMIN_EMAIL'));
+            if ($adminEmail) {
+                Mail::to($adminEmail)->queue(new PaymentSuccessAdminMail($emailData));
+            }
+
+            Log::info('Payment success emails sent', [
+                'payment_id' => $payment->id,
+                'tenant_email' => $tenant->email,
+                'admin_email' => $adminEmail ?? 'not configured'
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to send payment emails: ' . $e->getMessage(), [
+                'payment_id' => $payment->id ?? 'unknown'
+            ]);
+            // Don't throw exception - email failure shouldn't break payment processing
         }
     }
 
@@ -542,7 +532,8 @@ class StripePaymentService
 
         try {
             $event = Webhook::constructEvent($payload, $sig_header, $endpoint_secret);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            Log::error('Webhook signature verification failed: ' . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Webhook signature verification failed'
@@ -554,14 +545,22 @@ class StripePaymentService
             case 'checkout.session.completed':
                 $session = $event->data->object;
 
-                // Process the payment
-                $metadata = $session->metadata;
-                $this->processPayment(
-                    $metadata['invoice_id'],
-                    $metadata['tenant_id'],
-                    $metadata,
-                    $session
-                );
+                Log::info('Checkout session completed', [
+                    'session_id' => $session->id,
+                    'payment_status' => $session->payment_status
+                ]);
+
+                if ($session->payment_status === 'paid') {
+                    $metadata = $session->metadata;
+                    $result = $this->processPayment($metadata, $session);
+
+                    if (!$result['success']) {
+                        Log::error('Webhook payment processing failed', [
+                            'session_id' => $session->id,
+                            'error' => $result['message']
+                        ]);
+                    }
+                }
                 break;
 
             default:
@@ -578,7 +577,6 @@ class StripePaymentService
     {
         return Payment::with(['invoice', 'lease.property'])
             ->where('tenant_id', $tenantId)
-            ->where('payment_method', 'stripe')
             ->orderBy('payment_date', 'desc')
             ->get()
             ->map(function ($payment) {
@@ -589,9 +587,10 @@ class StripePaymentService
                     'payment_date' => $payment->payment_date,
                     'payment_method' => $payment->payment_method,
                     'payment_type' => $payment->payment_type,
-                    'invoice_number' => $payment->invoice->invoice_number,
+                    'invoice_number' => $payment->invoice->invoice_number ?? 'N/A',
                     'property_name' => $payment->lease->property->name ?? 'N/A',
                     'reference_number' => $payment->reference_number,
+                    'status' => $payment->review_status ?? 'confirmed',
                 ];
             });
     }

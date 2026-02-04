@@ -110,7 +110,7 @@ Route::group(['middleware' => 'auth:api'], function () {
         // Tenant dashbaord routes
         Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
         Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
-        Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+        // Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
 
         // Lease Routes
         Route::prefix('leases')->name('leases.')->group(function () {
@@ -143,8 +143,6 @@ Route::group(['middleware' => 'auth:api'], function () {
             Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails']); // done
             Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession']); // ISSUE
             Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
-            Route::post('/calculate', [TenantPaymentController::class, 'calculatePayment']);
-            Route::get('/history', [TenantPaymentController::class, 'paymentHistory']);
         });
 
         // Maintance routes

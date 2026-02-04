@@ -47,10 +47,6 @@ class TenantPaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'invoice_id' => 'required|exists:invoices,id',
-            'rent_amount' => 'nullable|numeric|min:0',
-            'include_deposit' => 'nullable|boolean',
-            'success_url' => 'required|url',
-            'cancel_url' => 'required|url',
         ]);
 
         if ($validator->fails()) {
@@ -62,11 +58,7 @@ class TenantPaymentController extends Controller
 
             $result = $this->stripeService->createCheckoutSession(
                 $request->invoice_id,
-                $tenant->id,
-                $request->rent_amount,
-                $request->boolean('include_deposit', true),
-                $request->success_url,
-                $request->cancel_url
+                $tenant->id
             );
 
             if (!$result['success']) {
@@ -76,7 +68,9 @@ class TenantPaymentController extends Controller
             return $this->success([
                 'session_id' => $result['session_id'],
                 'checkout_url' => $result['checkout_url'],
-                'total_amount' => $result['total_amount'],
+                'invoice' => $result['invoice'],
+                'tenant' => $result['tenant'],
+                'lease' => $result['lease'],
             ], 'Checkout session created successfully');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
@@ -84,7 +78,7 @@ class TenantPaymentController extends Controller
     }
 
     /**
-     * Verify payment after Stripe redirect
+     * Verify payment after Stripe redirect (for localhost testing)
      */
     public function verifyPayment(Request $request)
     {
@@ -97,12 +91,7 @@ class TenantPaymentController extends Controller
         }
 
         try {
-            $tenant = $request->user();
-
-            $result = $this->stripeService->verifyPayment(
-                $request->session_id,
-                $tenant->id
-            );
+            $result = $this->stripeService->verifyPayment($request->session_id);
 
             if (!$result['success']) {
                 return $this->error([], $result['message'], 400);
@@ -111,7 +100,7 @@ class TenantPaymentController extends Controller
             return $this->success([
                 'payment' => $result['payment'],
                 'invoice' => $result['invoice'],
-            ], 'Payment verified successfully');
+            ], 'Payment verified and processed successfully');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
@@ -138,51 +127,13 @@ class TenantPaymentController extends Controller
     /**
      * Get payment history
      */
-    public function paymentHistory(Request $request)
+    public function getPaymentHistory(Request $request)
     {
         try {
             $tenant = $request->user();
-
             $payments = $this->stripeService->getPaymentHistory($tenant->id);
 
-            return $this->success([
-                'payments' => $payments
-            ], 'Payment history retrieved successfully');
-        } catch (Exception $e) {
-            return $this->error([], $e->getMessage(), 500);
-        }
-    }
-
-    /**
-     * Calculate payment amount (with optional adjustments)
-     */
-    public function calculatePayment(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'invoice_id' => 'required|exists:invoices,id',
-            'rent_amount' => 'nullable|numeric|min:0',
-            'include_deposit' => 'nullable|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->validationError($validator->errors());
-        }
-
-        try {
-            $tenant = $request->user();
-
-            $calculation = $this->stripeService->calculatePaymentAmount(
-                $request->invoice_id,
-                $tenant->id,
-                $request->rent_amount,
-                $request->boolean('include_deposit', true)
-            );
-
-            if (!$calculation['success']) {
-                return $this->error([], $calculation['message'], 400);
-            }
-
-            return $this->success($calculation['data'], 'Payment calculated successfully');
+            return $this->success($payments, 'Payment history retrieved successfully');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
