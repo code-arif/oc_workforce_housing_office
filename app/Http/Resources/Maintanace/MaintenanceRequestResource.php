@@ -29,11 +29,11 @@ class MaintenanceRequestResource extends JsonResource
                 return $this->attachments->map(function ($attachment) {
                     return [
                         'id'                     => $attachment->id,
-                        // 'attachment_path'        => $attachment->attachment_path,
-                        // 'attachment_path' => FileUrl::resolve($this->attachment_path, 'public') ?? asset('default/placeholder-image.avif'),
-                        'attachment_path' => $this->attachment_path ? asset($this->attachment_path) : asset('default/placeholder-image.avif'),
+                        'attachment_path' => $attachment->attachment_path,
+                        'attachment_url'  => $attachment->attachment_path
+                            ? asset($attachment->attachment_path)
+                            : null,
                         'created_at'             => $attachment->created_at->toDateTimeString(),
-
                         'updated_at'             => $attachment->updated_at->toDateTimeString(),
                     ];
                 });
