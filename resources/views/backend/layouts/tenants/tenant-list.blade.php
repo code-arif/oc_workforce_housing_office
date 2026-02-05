@@ -99,7 +99,7 @@
                                     <input type="text" name="tenantFilter" id="tenantFilter" class="form-control"
                                         placeholder="Search by name, email...">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">Property</label>
                                     <select class="form-select select3" id="propertyFilter">
                                         <option value="">Select Property</option>
@@ -120,10 +120,8 @@
                                     <label class="form-label">Date To</label>
                                     <input type="text" class="form-control datepicker2" id="dateTo" placeholder="Search by tenant created to...">
                                 </div>
-                            </div>
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-secondary" id="resetFilter">
+                                 <div class="col-md-1 mb-1">
+                                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center" id="resetFilter">
                                         <i class="fe fe-refresh-cw me-1"></i> Reset
                                     </button>
                                 </div>
@@ -256,7 +254,7 @@
                 format: 'yyyy-mm-dd',
                 autoclose: true
             });
-            
+
             initializeDataTable();
             initializeSelect2();
         });
@@ -380,7 +378,7 @@
                         type: 'GET',
                         success: function(response) {
                             console.log(response);
-                            
+
                             response.data.forEach(function(bed) {
                                 $('#bedsFilter').append(
                                     `<option value="${bed.id}">${bed.bed_label}</option>`
@@ -436,7 +434,7 @@
                 success: function(response) {
                     NProgress.done();
                     console.log(response);
-                    
+
                     if (response.success) {
                         $('#tenantModalLabel').text('Edit Tenant');
                         $('#tenant_id').val(response.tenant.id);

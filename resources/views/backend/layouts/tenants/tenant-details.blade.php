@@ -20,7 +20,7 @@
                         </nav>
                     </div>
                     <div class="ms-auto pageheader-btn">
-                        <a href="{{ route('tenants.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('tenants.index') }}" class="btn btn-outline-secondary d-inline-flex align-items-center">
                             <i class="fe fe-arrow-left me-1"></i> Back to List
                         </a>
                     </div>
@@ -105,7 +105,7 @@
                                                 <div class="bed-details">
                                                     @if($assigned->bed_id)
                                                         <div class="bed-label">
-                                                            {{ $assigned->bed->bed_label ?? 'N/A' }} 
+                                                            {{ $assigned->bed->bed_label ?? 'N/A' }}
                                                             @if($assigned->is_current && $assigned->actual_move_in)
                                                                <br> <small class="bed-subtext">Move In: {{ $assigned?->actual_move_in }}</small>
                                                             @endif
@@ -132,8 +132,8 @@
                         <!-- Pending Bed Assignments Alert -->
                         @php
                             $pendingBedLeases = $tenant->leases->filter(function($lease) {
-                                return $lease->bed_assignment_pending || 
-                                       ($lease->assignments->where('is_current', true)->first() && 
+                                return $lease->bed_assignment_pending ||
+                                       ($lease->assignments->where('is_current', true)->first() &&
                                         !$lease->assignments->where('is_current', true)->first()->bed_id);
                             });
                         @endphp
@@ -158,7 +158,7 @@
                                         <br>
                                         <span class="badge bg-{{ $pendingLease->status === 'ACTIVE' ? 'success' : 'info' }}">{{ $pendingLease->status }}</span>
                                     </div>
-                                    <button type="button" class="btn btn-success btn-sm assignBedBtn" 
+                                    <button type="button" class="btn btn-success btn-sm assignBedBtn"
                                             data-lease-id="{{ $pendingLease->id }}"
                                             data-property-name="{{ $pendingLease->property->name ?? 'N/A' }}">
                                         <i class="fe fe-plus-circle me-1"></i> Assign Bed
@@ -169,7 +169,7 @@
                         </div>
                         @endif
                         @endif
-                        
+
                         <!-- Contact Information -->
                         <div class="card">
                             <div class="card-header">
@@ -263,8 +263,6 @@
                             </div>
                         </div>
                         @endif
-
-                        
                     </div>
 
                     <!-- Right Column - Lease & Invoices -->
@@ -342,10 +340,10 @@
                                     </div>
                                 </div> --}}
                                 <div class="mt-3 d-flex justify-content-between">
-                                    <a href="{{ route('leases.show', $activeLease->id) }}" class="btn btn-primary me-2" title="View lease details">
+                                    <a href="{{ route('leases.show', $activeLease->id) }}" class="btn btn-primary d-inline-flex align-items-center" title="View lease details">
                                         <i class="fe fe-eye me-1"></i> View Lease Details
                                     </a>
-                                    <a href="#" class="btn btn-outline-info me-2" title="Change bed for the lease" id="changeBedBtn"
+                                    <a href="#" class="btn btn-outline-info me-2 d-inline-flex align-items-center" title="Change bed for the lease" id="changeBedBtn"
                                             data-lease-id="{{ $activeLease->id }}">
                                         <i class="fe fe-edit-3 me-1"></i> Change Bed
                                     </a>
@@ -426,7 +424,7 @@
                                     <button type="button" class="btn btn-outline-danger" data-filter="overdue">Overdue</button>
                                 </div>
                             </div>
-                            <div class="card-body p-0" style="height: 500px; overflow-y:scroll;">
+                            <div class="card-body p-0" style="height: 200px; overflow-y:scroll;">
                                 @if(isset($invoices) && $invoices->count() > 0)
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0" id="invoicesTable">
@@ -470,19 +468,19 @@
                                                 </td>
                                                 <td>
                                                     @if($isPaid)
-                                                        <span class="badge bg-success-light text-success px-3 py-2">
+                                                        <span class="badge bg-success-light text-success px-2 py-1 d-inline-flex align-items-center">
                                                             <i class="fe fe-check me-1"></i>Paid
                                                         </span>
                                                     @elseif($isOverdue)
-                                                        <span class="badge bg-danger-light text-danger px-3 py-2">
+                                                        <span class="badge bg-danger-light text-danger px-2 py-1 d-inline-flex align-items-center">
                                                             <i class="fe fe-alert-circle me-1"></i>Overdue
                                                         </span>
                                                     @elseif($invoice->status === 'PARTIAL')
-                                                        <span class="badge bg-info-light text-info px-3 py-2">
+                                                        <span class="badge bg-info-light text-info px-2 py-1 d-inline-flex align-items-center">
                                                             <i class="fe fe-percent me-1"></i>Partial
                                                         </span>
                                                     @else
-                                                        <span class="badge bg-warning-light text-warning px-3 py-2">
+                                                        <span class="badge bg-warning-light text-warning px-2 py-1 d-inline-flex align-items-center">
                                                             <i class="fe fe-clock me-1"></i>Due
                                                         </span>
                                                     @endif
@@ -563,6 +561,8 @@
                     </div>
                 </div>
 
+                <!-- Payment & Transaction History Section -->
+                @include('backend.layouts.tenants.tenant-payment-transaction-view')
             </div>
         </div>
     </div>
@@ -764,11 +764,11 @@
     document.querySelectorAll('[data-filter]').forEach(btn => {
         btn.addEventListener('click', function() {
             const filter = this.dataset.filter;
-            
+
             // Update active button
             document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
+
             // Filter rows
             document.querySelectorAll('.invoice-row').forEach(row => {
                 if (filter === 'all' || row.dataset.status === filter) {
@@ -792,7 +792,7 @@
     $(document).on('click', '#changeBedBtn', function(e) {
         e.preventDefault();
         let leaseId = $(this).data('lease-id');
-        
+
         // Reset modal state
         $('#changeBedId').val(leaseId);
         $('#changeBedLoading').show();
@@ -811,21 +811,21 @@
             success: function(response) {
                 $('#changeBedLoading').hide();
                 $('#changeBedContent').show();
-                
+
                 if (response.success) {
                     const lease = response.lease;
-                    
+
                     // Populate lease summary
                     $('#changeBedTenant').text(lease.tenant_name);
                     $('#changeBedProperty').text(lease.property_name);
                     $('#changeBedCurrent').text(lease.current_bed_label);
                     $('#changeBedPeriod').text(lease.start_date + ' - ' + lease.end_date);
                     $('#changeBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString('en-US', {minimumFractionDigits: 2}));
-                    
+
                     // Set default effective date to today
                     const today = new Date().toISOString().split('T')[0];
                     $('#effectiveDate').val(today);
-                    
+
                     // Populate available beds dropdown
                     const availableBeds = response.available_beds.filter(bed => !bed.is_current);
                     if (availableBeds.length > 0) {
@@ -856,25 +856,25 @@
     // Handle change bed form submission
     $('#changeBedForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         const leaseId = $('#changeBedId').val();
         const newBedId = $('#newBedId').val();
         const effectiveDate = $('#effectiveDate').val();
-        
+
         if (!newBedId) {
             toastr.error('Please select a new bed');
             return;
         }
-        
+
         if (!effectiveDate) {
             toastr.error('Please select an effective date');
             return;
         }
-        
+
         // Show loading state
         $('#changeBedSpinner').removeClass('d-none');
         $('#changeBedSubmitBtn').prop('disabled', true);
-        
+
         $.ajax({
             url: `{{ url('admin/leases') }}/${leaseId}/change-bed`,
             type: 'POST',
@@ -887,11 +887,11 @@
             success: function(response) {
                 $('#changeBedSpinner').addClass('d-none');
                 $('#changeBedSubmitBtn').prop('disabled', false);
-                
+
                 if (response.success) {
                     toastr.success(response.message || 'Bed changed successfully');
                     $('#changeBedModal').modal('hide');
-                    
+
                     // Reload the page to reflect changes
                     setTimeout(function() {
                         window.location.reload();
@@ -903,7 +903,7 @@
             error: function(xhr) {
                 $('#changeBedSpinner').addClass('d-none');
                 $('#changeBedSubmitBtn').prop('disabled', false);
-                
+
                 const response = xhr.responseJSON;
                 toastr.error(response?.message || 'An error occurred while changing the bed');
             }
@@ -915,7 +915,7 @@
         e.preventDefault();
         let leaseId = $(this).data('lease-id');
         let propertyName = $(this).data('property-name');
-        
+
         // Reset modal state
         $('#assignBedLeaseId').val(leaseId);
         $('#assignBedLoading').show();
@@ -934,25 +934,25 @@
             success: function(response) {
                 $('#assignBedLoading').hide();
                 $('#assignBedContent').show();
-                
+
                 if (response.success) {
                     const lease = response.lease;
-                    
+
                     // Populate lease summary
                     $('#assignBedTenant').text(lease.tenant_name);
                     $('#assignBedEmail').text(lease.tenant_email);
                     $('#assignBedProperty').text(lease.property_name);
                     $('#assignBedPeriod').text(lease.start_date + ' - ' + lease.end_date);
                     $('#assignBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString('en-US', {minimumFractionDigits: 2}));
-                    
+
                     // Set status badge
                     const statusClass = lease.status === 'ACTIVE' ? 'bg-success' : 'bg-info';
                     $('#assignBedStatus').text(lease.status).removeClass().addClass('badge ' + statusClass);
-                    
+
                     // Set default move-in date to today
                     const today = new Date().toISOString().split('T')[0];
                     $('#moveInDate').val(today);
-                    
+
                     // Populate available beds dropdown
                     const availableBeds = response.available_beds;
                     if (availableBeds.length > 0) {
@@ -983,25 +983,25 @@
     // Handle assign bed form submission
     $('#assignBedForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         const leaseId = $('#assignBedLeaseId').val();
         const bedId = $('#assignBedSelect').val();
         const moveInDate = $('#moveInDate').val();
-        
+
         if (!bedId) {
             toastr.error('Please select a bed');
             return;
         }
-        
+
         if (!moveInDate) {
             toastr.error('Please select a move-in date');
             return;
         }
-        
+
         // Show loading state
         $('#assignBedSpinner').removeClass('d-none');
         $('#assignBedSubmitBtn').prop('disabled', true);
-        
+
         $.ajax({
             url: `{{ url('admin/leases') }}/${leaseId}/assign-bed`,
             type: 'POST',
@@ -1014,11 +1014,11 @@
             success: function(response) {
                 $('#assignBedSpinner').addClass('d-none');
                 $('#assignBedSubmitBtn').prop('disabled', false);
-                
+
                 if (response.success) {
                     toastr.success(response.message || 'Bed assigned successfully');
                     $('#assignBedModal').modal('hide');
-                    
+
                     // Reload the page to reflect changes
                     setTimeout(function() {
                         window.location.reload();
@@ -1030,12 +1030,381 @@
             error: function(xhr) {
                 $('#assignBedSpinner').addClass('d-none');
                 $('#assignBedSubmitBtn').prop('disabled', false);
-                
+
                 const response = xhr.responseJSON;
                 toastr.error(response?.message || 'An error occurred while assigning the bed');
             }
         });
     });
+</script>
+
+
+
+<script>
+    // Global variables
+    const tenantId = {{ $tenant->id }};
+    let paymentsDataTable;
+    let transactionsDataTable;
+
+    $(document).ready(function() {
+        // Load payment history on page load
+        loadPaymentHistory();
+
+        // Load transactions when tab is clicked
+        $('#transactions-tab').on('click', function() {
+            if (!transactionsDataTable) {
+                loadTransactionHistory();
+            }
+        });
+    });
+
+    /**
+     * Load Payment History
+     */
+    function loadPaymentHistory() {
+        $('#paymentsLoading').show();
+        $('#paymentsContent').hide();
+        $('#paymentsEmpty').hide();
+
+        $.ajax({
+            url: `{{ route('tenants.payments.history', ':id') }}`.replace(':id', tenantId),
+            type: 'GET',
+            success: function(response) {
+                $('#paymentsLoading').hide();
+
+                if (response.success && response.data.length > 0) {
+                    renderPayments(response.data);
+                    $('#paymentsContent').show();
+                } else {
+                    $('#paymentsEmpty').show();
+                }
+            },
+            error: function(xhr) {
+                $('#paymentsLoading').hide();
+                $('#paymentsEmpty').show();
+                toastr.error('Failed to load payment history');
+            }
+        });
+    }
+
+    /**
+     * Render Payments Table
+     */
+    function renderPayments(payments) {
+        const tbody = $('#paymentsTableBody');
+        tbody.empty();
+
+        payments.forEach(function(payment) {
+            const statusBadge = getReviewStatusBadge(payment.review_status);
+            const methodBadge = getPaymentMethodBadge(payment.payment_method);
+
+            const row = `
+            <tr>
+                <td><strong>${payment.payment_number}</strong></td>
+                <td>${payment.invoice_number}</td>
+                <td>${formatDate(payment.payment_date)}</td>
+                <td><strong class="text-success">$${payment.amount}</strong></td>
+                <td>${methodBadge}</td>
+                <td><span class="badge bg-success p-3">${payment.payment_type}</span></td>
+                <td><code class="small">${truncateText(payment.reference_number, 15)}</code></td>
+                <td>${payment.property_name}</td>
+                <td>${statusBadge}</td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-primary" onclick="viewPaymentDetails(${payment.id})"
+                            title="View Details">
+                        <i class="fe fe-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+            tbody.append(row);
+        });
+
+        // Initialize DataTable
+        if ($.fn.DataTable.isDataTable('#paymentsTable')) {
+            $('#paymentsTable').DataTable().destroy();
+        }
+
+        paymentsDataTable = $('#paymentsTable').DataTable({
+            order: [
+                [2, 'desc']
+            ], // Sort by date descending
+            pageLength: 25,
+            dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        });
+    }
+
+    /**
+     * Load Transaction History
+     */
+    function loadTransactionHistory() {
+        $('#transactionsLoading').show();
+        $('#transactionsContent').hide();
+        $('#transactionsEmpty').hide();
+
+        $.ajax({
+            url: `{{ route('tenants.transactions.history', ':id') }}`.replace(':id', tenantId),
+            type: 'GET',
+            success: function(response) {
+                $('#transactionsLoading').hide();
+
+                if (response.success && response.data.length > 0) {
+                    renderTransactions(response.data);
+                    $('#transactionsContent').show();
+                } else {
+                    $('#transactionsEmpty').show();
+                }
+            },
+            error: function(xhr) {
+                $('#transactionsLoading').hide();
+                $('#transactionsEmpty').show();
+                toastr.error('Failed to load transaction history');
+            }
+        });
+    }
+
+    /**
+     * Render Transactions Table
+     */
+    function renderTransactions(transactions) {
+        const tbody = $('#transactionsTableBody');
+        tbody.empty();
+
+        transactions.forEach(function(transaction) {
+            const entryBadge = transaction.entry_type === 'Credit' ?
+                '<span class="badge bg-success p-3">Credit</span>' :
+                '<span class="badge bg-danger p-3">Debit</span>';
+
+            const row = `
+            <tr>
+                <td><strong>${transaction.transaction_number}</strong></td>
+                <td>${formatDate(transaction.transaction_date)}</td>
+                <td><span class="badge bg-info p-3">${transaction.type}</span></td>
+                <td>${entryBadge}</td>
+                <td><strong>$${transaction.amount}</strong></td>
+                <td>${transaction.invoice_number}</td>
+                <td>${transaction.payment_number}</td>
+                <td>${transaction.property_name}</td>
+                <td class="small">${truncateText(transaction.description, 40)}</td>
+            </tr>
+        `;
+            tbody.append(row);
+        });
+
+        // Initialize DataTable
+        if ($.fn.DataTable.isDataTable('#transactionsTable')) {
+            $('#transactionsTable').DataTable().destroy();
+        }
+
+        transactionsDataTable = $('#transactionsTable').DataTable({
+            order: [
+                [1, 'desc']
+            ], // Sort by date descending
+            pageLength: 25,
+            dom: "<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+        });
+    }
+
+    /**
+     * View Payment Details
+     */
+    function viewPaymentDetails(paymentId) {
+        $('#paymentDetailsModal').modal('show');
+        $('#paymentDetailsLoading').show();
+        $('#paymentDetailsContent').hide();
+
+        $.ajax({
+            url: `{{ route('tenants.payments.details', ':id') }}`.replace(':id', paymentId),
+            type: 'GET',
+            success: function(response) {
+                $('#paymentDetailsLoading').hide();
+
+                if (response.success) {
+                    populatePaymentDetails(response);
+                    $('#paymentDetailsContent').show();
+                } else {
+                    toastr.error('Failed to load payment details');
+                    $('#paymentDetailsModal').modal('hide');
+                }
+            },
+            error: function(xhr) {
+                $('#paymentDetailsLoading').hide();
+                toastr.error('Failed to load payment details');
+                $('#paymentDetailsModal').modal('hide');
+            }
+        });
+    }
+
+    /**
+     * Populate Payment Details Modal
+     */
+    function populatePaymentDetails(data) {
+        const {
+            payment,
+            tenant,
+            invoice,
+            lease,
+            metadata
+        } = data;
+
+        // Payment Information
+        $('#detailPaymentNumber').text(payment.payment_number);
+        $('#detailAmount').text('$' + parseFloat(payment.amount).toFixed(2));
+        $('#detailPaymentDate').text(formatDate(payment.payment_date));
+        $('#detailPaymentMethod').text(payment.payment_method.toUpperCase());
+        $('#detailPaymentType').text(payment.payment_type.toUpperCase());
+        $('#detailPaidBy').text(payment.paid_by);
+        $('#detailCreatedAt').text(payment.created_at);
+
+        // Gateway Information
+        $('#detailReferenceNumber').text(payment.reference_number || 'N/A');
+        $('#detailTransactionId').text(payment.gateway_transaction_id || 'N/A');
+
+        // Tenant Information
+        $('#detailTenantName').text(tenant.name);
+        $('#detailTenantEmail').text(tenant.email);
+        $('#detailTenantPhone').text(tenant.phone);
+        $('#detailTenantAddress').text(tenant.address);
+
+        // Invoice Information
+        $('#detailInvoiceNumber').text(invoice.invoice_number);
+        $('#detailInvoiceType').text(invoice.type);
+        $('#detailInvoiceTotal').text('$' + parseFloat(invoice.total_amount).toFixed(2));
+        $('#detailInvoicePaid').text('$' + parseFloat(invoice.paid_amount).toFixed(2));
+        $('#detailInvoiceBalance').text('$' + parseFloat(invoice.balance_due).toFixed(2));
+
+        const invoiceStatusClass = invoice.status === 'PAID' ? 'bg-success' :
+            (invoice.status === 'PARTIAL' ? 'bg-warning' : 'bg-danger');
+        $('#detailInvoiceStatus').removeClass().addClass('badge ' + invoiceStatusClass).text(invoice.status);
+        $('#detailInvoiceDueDate').text(invoice.due_date);
+
+        // Lease Information
+        $('#detailLeaseProperty').text(lease.property_name);
+        $('#detailLeaseUnit').text(lease.unit);
+        $('#detailLeaseRent').text('$' + parseFloat(lease.rent_amount).toFixed(2));
+        $('#detailLeasePeriod').text(lease.start_date + ' - ' + lease.end_date);
+
+        // Review Status
+        $('#reviewPaymentId').val(payment.id);
+        $('#reviewStatus').val(payment.review_status || 'pending');
+        $('#reviewNote').val(payment.review_note || '');
+
+        if (payment.reviewed_at) {
+            $('#reviewInfo').show();
+            $('#lastReviewedAt').text(payment.reviewed_at);
+            $('#lastReviewedBy').text(payment.reviewed_by_name || 'System');
+        } else {
+            $('#reviewInfo').hide();
+        }
+
+        // Notes
+        $('#detailNote').text(payment.note || 'No notes available');
+    }
+
+    /**
+     * Submit Payment Review Form
+     */
+    $('#paymentReviewForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const paymentId = $('#reviewPaymentId').val();
+        const formData = {
+            review_status: $('#reviewStatus').val(),
+            review_note: $('#reviewNote').val()
+        };
+
+        NProgress.start();
+
+        $.ajax({
+            url: `{{ route('tenants.payments.review', ':id') }}`.replace(':id', paymentId),
+            type: 'POST',
+            data: formData,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                NProgress.done();
+
+                if (response.success) {
+                    toastr.success('Payment review updated successfully');
+                    $('#paymentDetailsModal').modal('hide');
+                    refreshPayments();
+                } else {
+                    toastr.error(response.message || 'Failed to update review');
+                }
+            },
+            error: function(xhr) {
+                NProgress.done();
+                toastr.error('Failed to update payment review');
+            }
+        });
+    });
+
+    /**
+     * Refresh Functions
+     */
+    function refreshPayments() {
+        if (paymentsDataTable) {
+            paymentsDataTable.destroy();
+        }
+        loadPaymentHistory();
+    }
+
+    function refreshTransactions() {
+        if (transactionsDataTable) {
+            transactionsDataTable.destroy();
+        }
+        loadTransactionHistory();
+    }
+
+    /**
+     * Export Payments to CSV
+     */
+    function exportPayments() {
+        window.location.href = `{{ route('tenants.payments.export', ':id') }}`.replace(':id', tenantId);
+    }
+
+    /**
+     * Helper Functions
+     */
+    function getReviewStatusBadge(status) {
+        const badges = {
+            'pending': '<span class="badge bg-warning p-3">Pending</span>',
+            'reviewed': '<span class="badge bg-info p-3">Reviewed</span>',
+            'confirmed': '<span class="badge bg-success p-3">Confirmed</span>',
+            'disputed': '<span class="badge bg-danger p-3">Disputed</span>'
+        };
+        return badges[status] || badges['pending'];
+    }
+
+    function getPaymentMethodBadge(method) {
+        const methodFormatted = method.charAt(0).toUpperCase() + method.slice(1).toLowerCase();
+        const badges = {
+            'stripe': '<span class="badge bg-primary d-inline-flex align-items-center"><i class="fe fe-credit-card me-1"></i>Stripe</span>',
+            'cash': '<span class="badge bg-success d-inline-flex align-items-center"><i class="fe fe-dollar-sign me-1"></i>Cash</span>',
+            'check': '<span class="badge bg-info d-inline-flex align-items-center"><i class="fe fe-file-text me-1"></i>Check</span>',
+            'bank_transfer': '<span class="badge bg-secondary d-inline-flex align-items-center"><i class="fe fe-send me-1"></i>Transfer</span>'
+        };
+        return badges[method.toLowerCase()] || `<span class="badge bg-secondary d-inline-flex align-items-center">${methodFormatted}</span>`;
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    function truncateText(text, maxLength) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
+    }
 </script>
 @endpush
 
@@ -1293,13 +1662,13 @@
             padding: 12px;
             gap: 12px;
         }
-        
+
         .bed-icon {
             width: 40px;
             height: 40px;
             font-size: 18px;
         }
-        
+
         .bed-label {
             font-size: 14px;
         }
