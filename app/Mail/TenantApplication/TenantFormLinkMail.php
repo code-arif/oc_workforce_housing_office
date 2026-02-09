@@ -3,11 +3,12 @@
 namespace App\Mail\TenantApplication;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class TenantFormLinkMail extends Mailable
 {
@@ -24,6 +25,8 @@ class TenantFormLinkMail extends Mailable
     {
         $this->tenant = $tenant;
         $this->formUrl = $formUrl;
+
+        Log::info('TenantFormLinkMail initialized with tenant email: ' . $tenant->email . ' and form URL: ' . $formUrl);
     }
 
     /**
