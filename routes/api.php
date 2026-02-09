@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Tenants\TenantProfileController;
 use App\Http\Controllers\Api\Tenants\TenantPasswordController;
 use App\Http\Controllers\Api\Tenants\TenantDashboardController;
 use App\Http\Controllers\Api\Tenants\TenantLeaseSignController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
 //health-check
 Route::get('/health', function () {
     return response()->json([
@@ -111,6 +112,8 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
         Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
         // Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+        Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
+
 
         // Lease Routes
         Route::prefix('leases')->name('leases.')->group(function () {
