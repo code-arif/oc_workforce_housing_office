@@ -1,52 +1,53 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Web\Backend\BedController;
-use App\Http\Controllers\Web\Backend\FaqController;
-use App\Http\Controllers\Web\Backend\ItemController;
-use App\Http\Controllers\Web\Backend\RoomController;
-use App\Http\Controllers\Web\Backend\UnitController;
-use App\Http\Controllers\Web\Backend\SeasonController;
-use App\Http\Controllers\Web\Backend\AmenityController;
-use App\Http\Controllers\Web\Backend\PropertyController;
-use App\Http\Controllers\Web\Backend\DashboardController;
-use App\Http\Controllers\Web\Backend\Lease\LeaseController;
-use App\Http\Controllers\Web\Backend\PropertyTypeController;
-use App\Http\Controllers\Web\Backend\Income\IncomeController;
-use App\Http\Controllers\Web\Backend\Settings\ProfileController;
-use App\Http\Controllers\Web\Backend\Settings\SettingController;
 use App\Http\Controllers\Api\Backend\Lease\LeaseManageController;
-use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
-use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
-use App\Http\Controllers\Web\Backend\CMS\Home\HomeVideoController;
-use App\Http\Controllers\Web\Backend\Reports\RentReportController;
-use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
-use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
+use App\Http\Controllers\Web\Backend\AmenityController;
+use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
+use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
+use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
+use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomeVideoController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
+use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
+use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
+use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
+use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
+use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\DashboardController;
+use App\Http\Controllers\Web\Backend\FaqController;
+use App\Http\Controllers\Web\Backend\Income\IncomeController;
+use App\Http\Controllers\Web\Backend\ItemController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
 use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
+use App\Http\Controllers\Web\Backend\PropertyController;
+use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
+use App\Http\Controllers\Web\Backend\PropertyTypeController;
+use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentCollectionReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentReportController;
+use App\Http\Controllers\Web\Backend\Reports\TenantReportController;
+use App\Http\Controllers\Web\Backend\RoomController;
+use App\Http\Controllers\Web\Backend\SeasonController;
+use App\Http\Controllers\Web\Backend\Settings\MailTemplateController;
+use App\Http\Controllers\Web\Backend\Settings\ProfileController;
+use App\Http\Controllers\Web\Backend\Settings\SettingController;
 use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
+use App\Http\Controllers\Web\Backend\Stripe\StripeConnectController;
+use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
+use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
+use App\Http\Controllers\Web\Backend\Tenant\PaymentManageController;
 use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
+use App\Http\Controllers\Web\Backend\UnitController;
+use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
 use App\Http\Controllers\Web\Backend\UserManagement\UserController;
-use App\Http\Controllers\Web\Backend\Reports\TenantReportController;
-use App\Http\Controllers\Web\Backend\Tenant\PaymentManageController;
-use App\Http\Controllers\Web\Backend\Settings\MailTemplateController;
-use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
-use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
-use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
-use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
-use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
-use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
-use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
-use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
-use App\Http\Controllers\Web\Backend\Reports\RentCollectionReportController;
-use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
-use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
-use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -123,6 +124,17 @@ Route::prefix('property')->name('property.')->group(function () {
     Route::delete('/delete/{id}', [PropertyController::class, 'destroy'])->name('delete');
 
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
+
+
+    // Stripe Connect routes
+    Route::prefix('{id}/stripe')->name('stripe.connect.')->group(function () {
+        Route::get('/connect', [StripeConnectController::class, 'connect'])->name('connect');
+        Route::get('/return', [StripeConnectController::class, 'handleReturn'])->name('return');
+        Route::get('/refresh', [StripeConnectController::class, 'handleRefresh'])->name('refresh');
+        Route::get('/sync', [StripeConnectController::class, 'syncStatus'])->name('sync');
+        Route::get('/dashboard', [StripeConnectController::class, 'dashboard'])->name('dashboard');
+        Route::delete('/disconnect', [StripeConnectController::class, 'disconnect'])->name('disconnect');
+    });
 });
 
 
@@ -254,7 +266,7 @@ Route::group([], function () {
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
-    Route::post('/tenants/update', [TenantManageController::class, 'update'])->name('tenants.update');
+    Route::post('/tenants/update/{id}', [TenantManageController::class, 'update'])->name('tenants.update');
     Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
 
     // Tenant API routes for lease creation

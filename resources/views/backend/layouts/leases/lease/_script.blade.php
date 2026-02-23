@@ -49,23 +49,23 @@
         function setupAssignBedLaterHandler() {
             $('#assign_bed_later').on('change', function() {
                 const assignLater = $(this).is(':checked');
-                
+
                 if (assignLater) {
                     // Disable and clear bed selection fields, remove required attribute
                     $('#unit_id, #room_id, #bed_id').prop('disabled', true).val('').prop('required', false);
                     $('#selectedPropertyInfo').hide();
                     $('#pendingBedAssignmentInfo').show();
                     $('.bed-required-marker').hide();
-                    
+
                     // Hide the unit/room/bed containers to make it clearer
                     $('#unitFieldContainer').addClass('opacity-50');
                     $('#roomBedFieldContainer').addClass('opacity-50');
-                    
+
                     // Clear lease data for bed selection
                     leaseData.unit_id = null;
                     leaseData.room_id = null;
                     leaseData.bed_id = null;
-                    
+
                     // Update summary
                     $('#summaryUnit').text('Pending Assignment');
                 } else {
@@ -75,14 +75,14 @@
                     }
                     $('#pendingBedAssignmentInfo').hide();
                     $('.bed-required-marker').show();
-                    
+
                     // Show the containers again
                     $('#unitFieldContainer').removeClass('opacity-50');
                     $('#roomBedFieldContainer').removeClass('opacity-50');
-                    
+
                     $('#summaryUnit').text('Not Selected');
                 }
-                
+
                 validateStep1();
             });
         }
@@ -102,7 +102,7 @@
             $('#property_id').on('change', function() {
                 const propertyId = $(this).val();
                 leaseData.property_id = propertyId;
-                
+
                 // Reset dependent fields
                 $('#unit_id').html('<option value="">Loading units...</option>').prop('disabled', true);
                 $('#room_id').html('<option value="">Select Unit First</option>').prop('disabled', true);
@@ -138,7 +138,7 @@
             $('#unit_id').on('change', function() {
                 const unitId = $(this).val();
                 leaseData.unit_id = unitId;
-                
+
                 $('#room_id').html('<option value="">Loading rooms...</option>').prop('disabled', true);
                 $('#bed_id').html('<option value="">Select Room First</option>').prop('disabled', true);
                 $('#selectedPropertyInfo').hide();
@@ -171,7 +171,7 @@
             $('#room_id').on('change', function() {
                 const roomId = $(this).val();
                 leaseData.room_id = roomId;
-                
+
                 $('#bed_id').html('<option value="">Loading beds...</option>').prop('disabled', true);
                 $('#selectedPropertyInfo').hide();
                 validateStep1();
@@ -187,7 +187,7 @@
                                     let bedLabel = bed.bed_label || bed.bed_number || 'Bed ' + bed.id;
                                     let isDisabled = '';
                                     let bookedInfo = '';
-                                    
+
                                     // Check if bed is booked and show lease info
                                     if (bed.is_booked && bed.lease_info) {
                                         const leaseInfo = bed.lease_info;
@@ -214,13 +214,13 @@
             $('#bed_id').on('change', function() {
                 const bedId = $(this).val();
                 leaseData.bed_id = bedId;
-                
+
                 if (bedId) {
                     const propertyName = $('#property_id option:selected').text();
                     const unitName = $('#unit_id option:selected').text();
                     const roomName = $('#room_id option:selected').text();
                     const bedName = $('#bed_id option:selected').text();
-                    
+
                     $('#fullPropertyPath').text(`${propertyName} → ${bedName}`);
                     // $('#fullPropertyPath').text(`${propertyName} → ${unitName} → ${roomName} → ${bedName}`);
                     $('#selectedPropertyInfo').show();
@@ -238,7 +238,7 @@
             // Toggle custom payment section based on payment frequency
             $('#payment_frequency').on('change', function() {
                 const frequency = $(this).val();
-                
+
                 if (frequency === 'CUSTOM') {
                     $('#customPaymentSection').slideDown();
                     $('#standardDueDayContainer').closest('.col-md-6').hide();
@@ -252,7 +252,7 @@
                     $('#due_day').prop('required', true);
                     $('#first_invoice_date').prop('required', true);
                 }
-                
+
                 updateRentalSummary();
             });
 
@@ -266,26 +266,26 @@
             customPaymentCounter++;
             const rentAmount = parseFloat($('#rent_amount').val()) || 0;
             const defaultAmount = amount || rentAmount;
-            
+
             const paymentHtml = `
                 <div class="custom-payment-entry mb-2" data-payment-id="${customPaymentCounter}">
                     <div class="row align-items-center">
                         <div class="col-md-4">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text"><i class="fe fe-calendar"></i></span>
-                                <input type="text" class="form-control custom-payment-date datepicker2" 
+                                <input type="text" class="form-control custom-payment-date datepicker2"
                                     value="${dueDate}" placeholder="Due Date" required>
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control custom-payment-amount" 
+                                <input type="number" class="form-control custom-payment-amount"
                                     value="${defaultAmount}" min="0" step="0.01" placeholder="Amount" required>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <input type="text" class="form-control form-control-sm custom-payment-description" 
+                            <input type="text" class="form-control form-control-sm custom-payment-description"
                                 value="${description}" placeholder="Description (optional)">
                         </div>
                         <div class="col-md-1">
@@ -296,18 +296,18 @@
                     </div>
                 </div>
             `;
-            
+
             $('#customPaymentsList').append(paymentHtml);
             $('#noCustomPaymentsAlert').hide();
             $('#customPaymentsSummary').show();
-            
+
             updateCustomPaymentsSummary();
-            
+
             // Bind change events
             $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-amount').on('input', function() {
                 updateCustomPaymentsSummary();
             });
-            
+
             // Initialize datepicker for the new custom payment date input
             $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-date').each(function () {
                 const value = $(this).val();
@@ -325,37 +325,37 @@
 
         function removeCustomPaymentEntry(paymentId) {
             $(`[data-payment-id="${paymentId}"]`).remove();
-            
+
             if ($('#customPaymentsList .custom-payment-entry').length === 0) {
                 $('#noCustomPaymentsAlert').show();
                 $('#customPaymentsSummary').hide();
             }
-            
+
             updateCustomPaymentsSummary();
         }
 
         function updateCustomPaymentsSummary() {
             let total = 0;
             let count = 0;
-            
+
             $('#customPaymentsList .custom-payment-entry').each(function() {
                 const amount = parseFloat($(this).find('.custom-payment-amount').val()) || 0;
                 total += amount;
                 count++;
             });
-            
+
             $('#customPaymentsCount').text(count);
             $('#customPaymentsTotal').text(total.toFixed(2));
         }
 
         function getCustomPayments() {
             const payments = [];
-            
+
             $('#customPaymentsList .custom-payment-entry').each(function() {
                 const dueDate = $(this).find('.custom-payment-date').val();
                 const amount = parseFloat($(this).find('.custom-payment-amount').val()) || 0;
                 const description = $(this).find('.custom-payment-description').val();
-                
+
                 if (dueDate && amount > 0) {
                     payments.push({
                         due_date: dueDate,
@@ -364,7 +364,7 @@
                     });
                 }
             });
-            
+
             return payments;
         }
 
@@ -373,13 +373,13 @@
                 const selectedOption = $(this).find('option:selected');
                 const termId = $(this).val();
                 const termType = selectedOption.data('type') || 'fixed';
-                
+
                 leaseData.lease_term_id = termId;
                 leaseData.lease_type = termType;
                 leaseData.start_date = selectedOption.data('start') || null;
                 leaseData.end_date = selectedOption.data('end') || null;
                 // console.log(leaseData);
-                
+
 
                 if (!termId) {
                     $('#leaseTypeDisplay').hide();
@@ -418,28 +418,28 @@
             // Auto-select dates for fixed term
             const today = new Date();
             // console.log(leaseData);
-            
+
             const startDate = leaseData.start_date ? new Date(leaseData.start_date) : new Date(today);
-            
-            
+
+
             const endDate = leaseData.end_date ? new Date(leaseData.end_date) : new Date(startDate);
             // endDate.setFullYear(startDate.getFullYear() + 1); // 1 year lease
-            
+
             $('#start_date').val(formatDateForInput(startDate)).datepicker('update');
             $('#end_date').val(formatDateForInput(endDate)).prop('readonly', false).datepicker('update');
-            
+
             $('#endDateField').show();
             $('#endDateRequired').show();
             $('#end_date').prop('required', true);
             $('#switchToMonthSection').show();
-            
+
             $('#startDateHint').text('Lease start date (auto-selected 7 days from today, can be modified)');
             $('#endDateHint').text('Lease end date (auto-selected for 1 year, can be modified)');
-            
+
             leaseData.start_date = formatDateForInput(startDate);
             leaseData.end_date = formatDateForInput(endDate);
             leaseData.lease_type = 'fixed';
-            
+
             updateRentalSummary();
             validateStep1();
         }
@@ -449,21 +449,21 @@
             const today = new Date();
             const startDate = new Date(today);
             startDate.setDate(today.getDate() + 7);
-            
+
             $('#start_date').val(formatDateForInput(startDate)).prop('readonly', false);
             $('#end_date').val('').prop('readonly', true).prop('required', false);
-            
+
             $('#endDateField').show();
             $('#endDateRequired').hide();
             $('#switchToMonthSection').hide();
-            
+
             $('#startDateHint').text('Lease start date (auto-selected 7 days from today, can be modified)');
             $('#endDateHint').text('No end date - lease will automatically renew monthly');
-            
+
             leaseData.start_date = formatDateForInput(startDate);
             leaseData.end_date = null;
             leaseData.lease_type = 'month_to_month';
-            
+
             updateRentalSummary();
             validateStep1();
         }
@@ -477,20 +477,20 @@
 
         function validateStep1() {
             const assignBedLater = $('#assign_bed_later').is(':checked');
-            
+
             // Bed selection is optional if "Assign Bed Later" is checked
             const bedValid = assignBedLater || leaseData.bed_id;
             const roomValid = assignBedLater || leaseData.room_id;
             const unitValid = assignBedLater || leaseData.unit_id;
-            
-            const isValid = leaseData.property_id && 
-                          unitValid && 
-                          roomValid && 
-                          bedValid && 
-                          leaseData.lease_term_id && 
-                          leaseData.start_date && 
+
+            const isValid = leaseData.property_id &&
+                          unitValid &&
+                          roomValid &&
+                          bedValid &&
+                          leaseData.lease_term_id &&
+                          leaseData.start_date &&
                           (leaseData.lease_type === 'month_to_month' || leaseData.end_date);
-            
+
             $('#step1NextBtn').prop('disabled', !isValid);
             return isValid;
         }
@@ -537,7 +537,7 @@
 
             // Update summary
             $('#summaryStartDate').text(startDate ? formatDate(startDate) : 'N/A');
-            
+
             if (leaseData.lease_type === 'month_to_month') {
                 $('#summaryEndDate').text('No End Date (Month-to-Month)');
                 $('#summaryEndDateContainer').show();
@@ -562,7 +562,7 @@
                 const start = new Date(startDate);
                 const end = new Date(endDate);
                 const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1; // +1 for inclusive
-                
+
                 // Calculate actual calendar months difference
                 const months = calculateCalendarMonths(start, end);
                 $('#leaseDuration').text(`for ${months} month${months > 1 ? 's' : ''} (${days} days)`);
@@ -586,10 +586,10 @@
             // April 1 to July 31 = 4 months (April, May, June, July)
             let months = (endDate.getFullYear() - startDate.getFullYear()) * 12;
             months += endDate.getMonth() - startDate.getMonth();
-            
+
             // Add 1 for inclusive month counting (covers both start and end months)
             months += 1;
-            
+
             return Math.max(1, months); // At least 1 month
         }
 
@@ -626,16 +626,16 @@
             if (leaseData.start_date) {
                 const startDate = new Date(leaseData.start_date);
                 const dueDay = parseInt($('#due_day').val());
-                
+
                 // Set first invoice to the first occurrence of due day after start date
                 let firstInvoiceDate = new Date(startDate);
                 firstInvoiceDate.setDate(dueDay);
-                
+
                 // If due day is before start date, move to next month
                 if (firstInvoiceDate < startDate) {
                     firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
                 }
-                
+
                 $('#first_invoice_date').val(formatDateForInput(firstInvoiceDate)).datepicker('update');
             }
 
@@ -701,7 +701,7 @@
             $('#finalLeasePeriod').text(`${startDate} - ${endDate}`);
 
             // Tenant Summary (single tenant)
-            const tenantListHtml = selectedTenants.length > 0 
+            const tenantListHtml = selectedTenants.length > 0
                 ? `<div class="d-flex align-items-center">
                     <div class="avatar avatar-md bg-primary-transparent text-primary rounded-circle me-2">
                         <i class="fe fe-user"></i>
@@ -865,13 +865,13 @@
                     let options = '<option value="">Select a tenant...</option>';
                     if (response.success && response.data && response.data.length > 0) {
                         response.data.forEach(tenant => {
-                            options += `<option value="${tenant.id}" 
-                                data-firstname="${tenant.first_name || ''}" 
-                                data-lastname="${tenant.last_name || ''}" 
-                                data-email="${tenant.email || ''}" 
+                            options += `<option value="${tenant.id}"
+                                data-firstname="${tenant.first_name || ''}"
+                                data-lastname="${tenant.last_name || ''}"
+                                data-email="${tenant.email || ''}"
                                 data-phone="${tenant.phone || ''}"
                                 data-status="${tenant.status || 'active'}">
-                                ${tenant.first_name} ${tenant.last_name} 
+                                ${tenant.first_name} ${tenant.last_name}
                             </option>`;
                         });
                     }
@@ -924,7 +924,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearTenantSelection()">
+                                <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-item-center" onclick="clearTenantSelection()">
                                     <i class="fe fe-x me-1"></i> Change Tenant
                                 </button>
                             </div>
@@ -1057,22 +1057,22 @@
             const paymentFrequency = $('#payment_frequency').val() || 'MONTHLY';
             const isCustomPayment = paymentFrequency === 'CUSTOM';
             const assignBedLater = $('#assign_bed_later').is(':checked');
-                
+
             return {
                 // Property & Bed
                 property_id: leaseData.property_id,
                 bed_id: assignBedLater ? null : leaseData.bed_id,
                 assign_bed_later: assignBedLater,
-                
+
                 // Season/Term
                 season_id: leaseData.lease_term_id,
                 actual_move_in : leaseData.actual_move_in || leaseData.start_date,
                 lease_type: leaseData.lease_type,
-                
+
                 // Dates
                 start_date: leaseData.start_date,
                 end_date: leaseData.lease_type === 'month_to_month' ? null : leaseData.end_date,
-                
+
                 // Rent & Deposit
                 rent_amount: parseFloat($('#rent_amount').val()) || 0,
                 deposit_amount: parseFloat($('#deposit_amount').val()) || 0,
@@ -1080,24 +1080,24 @@
                 due_day: isCustomPayment ? null : (parseInt($('#due_day').val()) || 1),
                 first_invoice_date: isCustomPayment ? null : ($('#first_invoice_date').val() || null),
                 deposit_collected: $('#deposit_collected').is(':checked'),
-                
+
                 // Custom Payments (only if CUSTOM frequency)
                 custom_payments: isCustomPayment ? getCustomPayments() : [],
-                
+
                 // Tenants
                 tenant_ids: selectedTenants.map(t => t.id),
-                
+
                 // Lease Template
                 lease_template_id: $('#lease_template_id').val() || null,
-                
+
                 // Options
                 send_for_signature: $('#sendForSignature').is(':checked'),
                 send_welcome_email: $('#sendWelcomeEmail').is(':checked'),
                 allow_partial_payment: $('#partialPayment').is(':checked'),
-                
+
                 // Notes
                 notes: $('#notes').val() || null,
-                
+
                 // CSRF Token
                 _token: $('meta[name="csrf-token"]').attr('content')
             };
@@ -1114,7 +1114,7 @@
             if (data.lease_type === 'fixed' && !data.end_date) errors.push('Please select an end date for fixed term lease');
             if (!data.rent_amount || data.rent_amount <= 0) errors.push('Please enter a valid rent amount');
             if (data.tenant_ids.length === 0) errors.push('Please select a tenant for this lease');
-            
+
             // Custom payment validation
             if (data.payment_frequency === 'CUSTOM') {
                 if (!data.custom_payments || data.custom_payments.length === 0) {
@@ -1129,7 +1129,7 @@
             const data = collectLeaseData();
             data.save_as_draft = saveAsDraft;
             console.log(data);
-            
+
             // Validate
             const errors = validateLeaseData(data);
             if (errors.length > 0 && !saveAsDraft) {
@@ -1143,8 +1143,8 @@
             }
 
             // Confirm submission
-            const confirmMsg = saveAsDraft 
-                ? 'You want to save this lease as a draft?' 
+            const confirmMsg = saveAsDraft
+                ? 'You want to save this lease as a draft?'
                 : 'You want to create this lease and send it for signing?';
             Swal.fire({
                 title: "Are you sure?",
@@ -1163,7 +1163,7 @@
         }
 
         function proceedWithSubmission(data, saveAsDraft) {
-            
+
             // Show loading state
             const btn = saveAsDraft ? $('#saveDraftBtn') : $('#createLeaseBtn');
             const originalText = btn.html();

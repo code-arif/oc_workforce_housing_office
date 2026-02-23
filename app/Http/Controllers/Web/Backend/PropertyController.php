@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Web\Backend;
 
+use App\Http\Controllers\Controller;
 use App\Models\Bed;
+use App\Models\Property;
+use App\Models\PropertyType;
 use App\Models\Room;
 use App\Models\Unit;
-use App\Models\Property;
-use Illuminate\Support\Str;
-use App\Models\PropertyType;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
 class PropertyController extends Controller
@@ -26,20 +27,20 @@ class PropertyController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index( Request $request)
+    public function index(Request $request)
     {
-        
+
         return view('backend.layouts.properties.layout.property-layout');
     }
 
-    public function getData(Request $request) 
+    public function getData(Request $request)
     {
         if ($request->ajax()) {
             $properties = Property::with('leases')->latest('id')->get();
 
             return DataTables::of($properties)
                 ->addIndexColumn()
-                ->addColumn('name', function($item){
+                ->addColumn('name', function ($item) {
                     return '
                         <a href="' . route('property.show', $item->id) . '" class="text-decoration-none fw-bold text-primary">
                             <span class="fw-bold">' . $item->name . '</span> <br>
@@ -52,25 +53,25 @@ class PropertyController extends Controller
                 ->addColumn('rent', function ($item) {
                     // Get active leases for this property
                     $activeLeases = $item->leases()->where('status', 'active')->get();
-                    
+
                     // Calculate totals
                     $totalRent = 0;
                     $totalPaid = 0;
                     $totalDue = 0;
-                    
+
                     foreach ($activeLeases as $lease) {
                         // Get all invoices for this lease (including soft deleted if needed)
                         $invoices = $lease->invoices()
                             ->whereNull('deleted_at') // Only non-deleted invoices
                             ->get();
-                        
+
                         foreach ($invoices as $invoice) {
                             $totalRent += $invoice->total_amount;
                             $totalPaid += $invoice->paid_amount ?? 0;
                             $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
                         }
                     }
-                    
+
                     $rent = '
                         Total Rent: <span class="fw-bold">$' . number_format($totalRent, 2) . '</span> <br>
                         Paid: <span class="fw-bold">$' . number_format($totalPaid, 2) . '</span> <br>
@@ -107,8 +108,8 @@ class PropertyController extends Controller
                     }
                     return $buttons;
                 })
-                    ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
-                    ->make(true);
+                ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
+                ->make(true);
         }
     }
     /**
@@ -159,8 +160,7 @@ class PropertyController extends Controller
                 'message' => 'Property created successfully.',
                 'property' => $property,
             ], 201);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -187,31 +187,31 @@ class PropertyController extends Controller
 
         // Calculate summary stats
         $totalBeds = $property->totalBeds();
-        $occupiedBeds = Bed::whereIn('room_id', 
+        $occupiedBeds = Bed::whereIn(
+            'room_id',
             Room::whereIn('unit_id', $property->units->pluck('id'))->pluck('id')
         )->where('is_occupied', true)->count();
         $availableBeds = $totalBeds - $occupiedBeds;
-        
+
         // Calculate rental stats
         $activeLeases = $property->leases->where('status', 'ACTIVE');
         $totalMonthlyRent = $activeLeases->sum('rent_amount');
-                   
+
         // Calculate totals
         $totalRent = 0;
         $totalPaid = 0;
         $totalDue = 0;
-        
+
         foreach ($activeLeases as $lease) {
             // Get all invoices for this lease (including soft deleted if needed)
             $invoices = $lease->invoices()
                 ->whereNull('deleted_at') // Only non-deleted invoices
                 ->get();
-            
+
             foreach ($invoices as $invoice) {
                 $totalRent += $invoice->total_amount;
                 $totalPaid += $invoice->paid_amount ?? 0;
                 $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
-                
             }
         }
 
@@ -242,7 +242,7 @@ class PropertyController extends Controller
                 'success' => true,
                 'data' => $property,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Property not found.',
@@ -273,6 +273,14 @@ class PropertyController extends Controller
                 $validated['image_path'] = $imagePath;
             }
 
+            // if ($request->hasFile('image_path')) {
+            //     if ($property->image_path && Storage::disk('public')->exists($property->image_path)) {
+            //         Storage::disk('public')->delete($property->image_path);
+            //     }
+
+            //     $validated['image_path'] = $request->file('image_path')->store('properties', 'public');
+            // }
+
             $validated['slug'] = Str::slug($validated['name']);
             // Create property
             $property->update($validated);
@@ -283,8 +291,7 @@ class PropertyController extends Controller
                 'message' => 'Property updated successfully.',
                 'property' => $property,
             ], 201);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,

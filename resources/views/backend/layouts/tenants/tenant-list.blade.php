@@ -164,7 +164,7 @@
                                                 <th class="bg-transparent border-bottom-0" style="width: 180px;">Address
                                                 </th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
-                                                    style="width: 120px;">Account Status</th>
+                                                    style="width: 120px;">Has Active Lease</th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
                                                     style="width: 100px;">Status</th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
@@ -192,7 +192,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="tenantModalLabel">Add Tenant</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times</button>
                 </div>
                 <form id="tenantForm">
                     <input type="hidden" id="tenant_id" name="tenant_id">
@@ -273,7 +273,6 @@
                     [20, 50, 100, 200]
                 ],
                 processing: true,
-                responsive: true,
                 serverSide: true,
                 language: {
                     processing: `<div class="text-center">
@@ -322,8 +321,8 @@
                         searchable: false
                     },
                     {
-                        data: 'account_status',
-                        name: 'account_status',
+                        data: 'has_active_lease',
+                        name: 'has_active_lease',
                         orderable: false,
                         searchable: false,
                         className: 'text-center'
@@ -462,7 +461,7 @@
             const url = tenantId ?
                 "{{ route('tenants.update', ':id') }}".replace(':id', tenantId) :
                 "{{ route('tenants.store') }}";
-            const method = tenantId ? 'PUT' : 'POST';
+            const method = tenantId ? 'POST' : 'POST';
 
             $('.invalid-feedback').text('').parent().removeClass('is-invalid');
             $('#submitBtn').prop('disabled', true);
