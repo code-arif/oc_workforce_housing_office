@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Bed;
 use App\Models\Room;
-use App\Models\Work;
 use App\Models\Lease;
 use App\Models\Property;
 use App\Models\Tenant;
