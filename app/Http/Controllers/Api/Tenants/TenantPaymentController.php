@@ -6,8 +6,8 @@ use Exception;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Services\Stripe\V2\V2StripePaymentService;
 use Illuminate\Support\Facades\Validator;
-use App\Services\Tenants\StripePaymentService;
 
 class TenantPaymentController extends Controller
 {
@@ -15,7 +15,7 @@ class TenantPaymentController extends Controller
 
     protected $stripeService;
 
-    public function __construct(StripePaymentService $stripeService)
+    public function __construct(V2StripePaymentService $stripeService)
     {
         $this->stripeService = $stripeService;
     }

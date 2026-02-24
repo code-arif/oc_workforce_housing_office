@@ -8,7 +8,7 @@
                     <span class="badge bg-success fs-12" id="availableRooms">Available</span>
                     <span class="badge bg-danger fs-12" id="occupiedRooms">Occupied</span>
                 </h4>
-                <button class="btn btn-primary btn-sm" id="addRoomBtn">
+                <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="addRoomBtn">
                     <i class="fe fe-plus me-1"></i> Add Room
                 </button>
             </div>
@@ -207,7 +207,6 @@
                 ],
                 order: [[0, 'asc']],
                 pageLength: 10,
-                responsive: true
             });
 
             // Add Button
@@ -245,7 +244,7 @@
 
                     try {
                         const formData = new FormData(this);
-                        const url = isEditMode 
+                        const url = isEditMode
                             ? "{{ route('rooms.update', '') }}/" + editingId
                             : "{{ route('rooms.store') }}";
 
@@ -309,7 +308,7 @@
 
             function addBedInput(bedData = null) {
                 const bedContainer = document.getElementById('bedContainer');
-                
+
                 const emptyMsg = bedContainer.querySelector('.bed-item-empty');
                 if (emptyMsg) {
                     emptyMsg.remove();

@@ -58,7 +58,10 @@ return [
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'success_url' => env('STRIPE_SUCCESS_URL'),
-        'cancel_url' => env('STRIPE_CANCEL_URL')
+        'cancel_url' => env('STRIPE_CANCEL_URL'),
+
+        // Platform fee % — 0 means no fee, change if needed
+        'platform_fee_percentage' => env('STRIPE_PLATFORM_FEE_PERCENTAGE', 0),
     ],
 
     'google' => [

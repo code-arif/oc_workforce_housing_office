@@ -16,7 +16,7 @@
                             <li class="breadcrumb-item active" aria-current="page">Leases</li>
                         </ol>
                     </div>
-                    
+
                 </div>
 
                 <!-- Statistics Cards -->
@@ -152,8 +152,8 @@
                     <div class="card-header border-bottom">
                         <h3 class="card-title">All Leases</h3>
                         <div class="ms-auto">
-                            <a href="{{ route('leases.create') }}" class="btn btn-primary">
-                                <i class="fe fe-plus me-2"></i> New Lease
+                            <a href="{{ route('leases.create') }}" class="btn btn-primary d-inline-flex align-items-center">
+                                <i class="fe fe-plus me-1"></i> New Lease
                             </a>
                         </div>
                     </div>
@@ -317,7 +317,7 @@
                         type: 'GET',
                         success: function(response) {
                             console.log(response);
-                            
+
                             response.data.forEach(function(bed) {
                                 $('#bedFilter').append(
                                     `<option value="${bed.id}">${bed.bed_label}</option>`

@@ -5,9 +5,9 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h4 class="card-title">Properties</h4>
                 @can('property.create')
-                <button class="btn btn-primary btn-sm" id="addPropertyBtn">
-                    <i class="fe fe-plus me-1"></i> Add Property
-                </button>
+                    <button class="btn btn-primary btn-sm d-inline-flex align-items-center" id="addPropertyBtn">
+                        <i class="fe fe-plus me-1"></i> Add Property
+                    </button>
                 @endcan
             </div>
 
@@ -36,7 +36,7 @@
 <div class="modal fade" id="propertyModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form id="propertyForm">
+            <form id="propertyForm" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" name="id" id="propertyId">
 
@@ -48,13 +48,15 @@
                 <div class="modal-body">
                     <div class="form-group mb-3">
                         <label for="prop_name" class="form-label">Property Name</label>
-                        <input type="text" class="form-control" name="name" id="prop_name" placeholder="Enter property name">
+                        <input type="text" class="form-control" name="name" id="prop_name"
+                            placeholder="Enter property name">
                         <div class="invalid-feedback"></div>
                     </div>
 
                     <div class="form-group mb-3">
                         <label for="prop_address" class="form-label">Address</label>
-                        <input type="text" class="form-control" name="address" id="prop_address" placeholder="Enter address">
+                        <input type="text" class="form-control" name="address" id="prop_address"
+                            placeholder="Enter address">
                         <div class="invalid-feedback"></div>
                     </div>
 
@@ -62,7 +64,7 @@
                         <label for="prop_type" class="form-label">Property Type</label>
                         <select class="form-control" name="property_type_id" id="prop_type">
                             <option value="">Select Property Type</option>
-                            @foreach(App\Models\PropertyType::where('is_active', true)->get() as $type)
+                            @foreach (App\Models\PropertyType::where('is_active', true)->get() as $type)
                                 <option value="{{ $type->id }}">{{ $type->name }}</option>
                             @endforeach
                         </select>
@@ -72,6 +74,13 @@
                     <div class="form-group mb-3">
                         <label for="prop_description" class="form-label">Description</label>
                         <textarea class="form-control" name="description" id="prop_description" rows="3" placeholder="Enter description"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="prop_image" class="form-label">Property Image</label>
+                        <input type="file" class="form-control dropify" name="image_path" id="prop_image"
+                            data-allowed-file-extensions="jpg jpeg png gif" data-max-file-size="5M" />
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -114,15 +123,40 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('property.get.data') }}",
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false },
-                    { data: 'name', name: 'name' },
-                    { data: 'description', name: 'description', orderable: false },
-                    { data: 'rent', name: 'rent', orderable: false },
-                    { data: 'status', name: 'is_active', orderable: false },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'description',
+                        name: 'description',
+                        orderable: false
+                    },
+                    {
+                        data: 'rent',
+                        name: 'rent',
+                        orderable: false
+                    },
+                    {
+                        data: 'status',
+                        name: 'is_active',
+                        orderable: false
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
-                order: [[0, 'asc']],
+                order: [
+                    [0, 'asc']
+                ],
                 pageLength: 10,
                 responsive: true,
                 language: {
@@ -159,14 +193,15 @@
 
                     try {
                         const formData = new FormData(this);
-                        const url = isEditMode 
-                            ? "{{ route('property.update', '') }}/" + editingId
-                            : "{{ route('property.store') }}";
+                        const url = isEditMode ?
+                            "{{ route('property.update', '') }}/" + editingId :
+                            "{{ route('property.store') }}";
 
                         const response = await axios.post(url, formData);
 
                         if (response.data.success) {
-                            window.showToast('success', response.data.message || 'Saved successfully!');
+                            window.showToast('success', response.data.message ||
+                                'Saved successfully!');
                             table.draw();
                             if (propertyModal) propertyModal.hide();
                             resetForm();
@@ -180,7 +215,8 @@
                                 const input = this.querySelector(`[name="${field}"]`);
                                 if (input) {
                                     input.classList.add('is-invalid');
-                                    const feedback = input.parentElement.querySelector('.invalid-feedback');
+                                    const feedback = input.parentElement.querySelector(
+                                        '.invalid-feedback');
                                     if (feedback) {
                                         feedback.textContent = errors[field][0];
                                     }
@@ -188,7 +224,8 @@
                             });
                             window.showToast('error', Object.values(errors).flat()[0]);
                         } else {
-                            window.showToast('error', error.response?.data?.message || 'Something went wrong!');
+                            window.showToast('error', error.response?.data?.message ||
+                                'Something went wrong!');
                         }
                     } finally {
                         submitBtn.disabled = false;
@@ -219,7 +256,7 @@
                 });
             }
 
-                        // Edit Unit
+            // Edit Unit
             window.editProperty = function(id) {
                 $.ajax({
                     url: `{{ route('property.edit', '') }}/${id}`,
@@ -233,15 +270,19 @@
                             editingId = id;
                             document.getElementById('propertyId').value = response.data.id;
                             document.getElementById('prop_name').value = response.data.name;
-                            document.getElementById('prop_address').value = response.data.address;
-                            document.getElementById('prop_type').value = response.data.property_type_id;
-                            document.getElementById('propertyModalLabel').textContent = 'Edit Property';
+                            document.getElementById('prop_address').value = response.data
+                                .address;
+                            document.getElementById('prop_type').value = response.data
+                                .property_type_id;
+                            document.getElementById('propertyModalLabel').textContent =
+                                'Edit Property';
                             document.getElementById('submitBtnText').textContent = 'Update';
                             if (propertyModal) propertyModal.show();
                         }
                     },
                     error: function(xhr) {
-                        window.showToast('error', xhr.responseJSON?.message || 'Error loading property');
+                        window.showToast('error', xhr.responseJSON?.message ||
+                            'Error loading property');
                     }
                 });
             };
@@ -276,7 +317,8 @@
                         table.draw();
                     },
                     error: function(error) {
-                        window.showToast('error', error.responseJSON?.message || 'Error deleting unit');
+                        window.showToast('error', error.responseJSON?.message ||
+                            'Error deleting unit');
                     }
                 });
             };
@@ -306,7 +348,8 @@
                                 }
                             },
                             error: function(xhr) {
-                                window.showToast('error', xhr.responseJSON?.message || 'Error toggling status');
+                                window.showToast('error', xhr.responseJSON?.message ||
+                                    'Error toggling status');
                             }
                         });
                     }
@@ -322,4 +365,3 @@
         }
     })();
 </script>
-

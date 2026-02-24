@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Bed;
 use App\Models\Room;
-use App\Models\Work;
 use App\Models\Lease;
 use App\Models\Property;
 use App\Models\Tenant;
@@ -71,24 +70,24 @@ class DashboardController extends Controller
     {
         // Get all unit IDs for this property
         $unitIds = $property->units()->pluck('id');
-        
+
         // Get all room IDs for these units
         $roomIds = Room::whereIn('unit_id', $unitIds)->pluck('id');
-        
+
         // Get bed stats
         $totalBeds = Bed::whereIn('room_id', $roomIds)->count();
         $occupiedBeds = Bed::whereIn('room_id', $roomIds)->where('is_occupied', true)->count();
         $availableBeds = $totalBeds - $occupiedBeds;
-        
+
         // Get unit and room counts
         $totalUnits = $unitIds->count();
         $totalRooms = $roomIds->count();
-        
+
         // Get active leases count
         $activeLeases = Lease::where('property_id', $property->id)
             ->where('status', 'ACTIVE')
             ->get();
-        
+
         // Calculate occupancy rate
         $occupancyRate = $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0;
         // Calculate totals
@@ -100,12 +99,12 @@ class DashboardController extends Controller
             $invoices = $lease->invoices()
                 ->whereNull('deleted_at') // Only non-deleted invoices
                 ->get();
-            
+
             foreach ($invoices as $invoice) {
                 $totalRent += $invoice->total_amount;
                 $totalPaid += $invoice->paid_amount ?? 0;
                 $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
-                
+
             }
         }
 

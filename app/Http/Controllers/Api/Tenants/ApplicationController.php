@@ -56,8 +56,8 @@ class ApplicationController extends Controller
 
             // Send notification to admin
             try {
-                Mail::to(config('mail.admin_email'))
-                    ->queue(new ReservationReceivedAdminMail($application));
+                // Mail::to(config('mail.admin_email'))
+                //     ->queue(new ReservationReceivedAdminMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
             }

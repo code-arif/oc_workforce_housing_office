@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Web\Backend\Tenant;
 
+use App\Http\Controllers\Controller;
+use App\Models\Invoice;
+use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\TenantProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
-use App\Models\Property;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -200,7 +201,7 @@ class TenantManageController extends Controller
 
                     return '<small class="text-muted">Property Address</small>';
                 })
-                ->addColumn('account_status', function ($data) {
+                ->addColumn('has_active_lease', function ($data) {
                     $hasActiveLease = $data->leases->where('status', 'ACTIVE')->isNotEmpty();
 
                     if ($hasActiveLease) {
@@ -271,7 +272,7 @@ class TenantManageController extends Controller
                                 </button>
                             </div>';
                 })
-                ->rawColumns(['name', 'property_unit', 'address', 'account_status', 'tenant_status', 'rent', 'action'])
+                ->rawColumns(['name', 'property_unit', 'address', 'has_active_lease', 'tenant_status', 'rent', 'action'])
                 ->make(true);
         }
     }
@@ -437,7 +438,7 @@ class TenantManageController extends Controller
         ])->findOrFail($id);
 
         // Get all invoices for this tenant
-        $invoices = \App\Models\Invoice::where('tenant_id', $id)
+        $invoices = Invoice::where('tenant_id', $id)
             ->with(['lease.property'])
             ->whereHas('lease', function ($q) {
                 $q->where('status', 'ACTIVE');
