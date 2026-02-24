@@ -51,7 +51,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // working
+    Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // DONE
 });
 
 // property type manage
