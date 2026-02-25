@@ -257,6 +257,8 @@ class ApplicationController extends Controller
                 $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
                     'token' => $tenant->approval_token,
                 ]);
+
+                Log::info($formLink);
                 Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formLink));
             } catch (Exception $e) {
                 Log::error('Failed to send tenant form link email: ' . $e->getMessage());
