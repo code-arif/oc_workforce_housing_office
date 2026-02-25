@@ -258,7 +258,7 @@ class ApplicationController extends Controller
                     'token' => $tenant->approval_token,
                 ]);
 
-                Log::info($formLink);
+                Log::info($formLink); // check form link
                 Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formLink));
             } catch (Exception $e) {
                 Log::error('Failed to send tenant form link email: ' . $e->getMessage());
