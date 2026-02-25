@@ -71,10 +71,10 @@
             box-sizing: border-box;
         }
 
-        body,
+        /* body,
         * {
             font-family: 'Sora', sans-serif !important;
-        }
+        } */
 
         .db-canvas {
             background: var(--canvas);

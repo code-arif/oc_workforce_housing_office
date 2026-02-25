@@ -201,7 +201,7 @@ class MaintananceController extends Controller
     public function create()
     {
         $properties = Property::all();
-        $tenants = Tenant::with(['profile'])->where('status', 'active')->get();
+        $tenants = Tenant::with(['profile'])->where('status', 'approved')->get();
 
         return view('backend.layouts.maintenance.create', compact('properties', 'tenants'));
     }

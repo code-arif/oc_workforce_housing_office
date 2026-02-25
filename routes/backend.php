@@ -559,7 +559,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/update/{id}', [FaqController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [FaqController::class, 'destroy'])->name('delete');
 
-        // ✅ STATUS TOGGLE (POST)
+        // STATUS TOGGLE (POST)
         Route::post('/status/{id}', [FaqController::class, 'status'])->name('status');
     });
 
