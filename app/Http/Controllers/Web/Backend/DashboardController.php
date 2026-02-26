@@ -9,6 +9,7 @@ use App\Models\Property;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\MaintenanceRequest;
 
 class DashboardController extends Controller
 {
@@ -53,6 +54,9 @@ class DashboardController extends Controller
             'available_beds' => $properties->sum('available_beds'),
             'occupied_beds' => $properties->sum('occupied_beds'),
         ];
+
+        // maintanance list
+        // $maintanance = MaintenanceRequest::
 
         return view('backend.layouts.dashboard', compact(
             'properties',

@@ -253,7 +253,12 @@ class ApplicationController extends Controller
             //     Log::error('Failed to send tenant form link email: ' . $e->getMessage());
             // }
             try {
-                $formLink = config('app.frontend_url') . "/apply-lease/{$tenant->approval_token}";
+                // $formLink = config('app.frontend_url') . "/apply-lease & token ={$tenant->approval_token}";
+                $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
+                    'token' => $tenant->approval_token,
+                ]);
+
+                Log::info($formLink); // check form link
                 Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formLink));
             } catch (Exception $e) {
                 Log::error('Failed to send tenant form link email: ' . $e->getMessage());

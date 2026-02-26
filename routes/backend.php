@@ -51,7 +51,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // working
+    Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // DONE
 });
 
 // property type manage
@@ -559,7 +559,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/update/{id}', [FaqController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [FaqController::class, 'destroy'])->name('delete');
 
-        // ✅ STATUS TOGGLE (POST)
+        // STATUS TOGGLE (POST)
         Route::post('/status/{id}', [FaqController::class, 'status'])->name('status');
     });
 
