@@ -8,12 +8,11 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Mail\Tenant\PasswordReset\TenantPasswordResetOTPMail as PasswordResetTenantPasswordResetOTPMail;
+use App\Mail\Tenant\PasswordReset\TenantPasswordResetOTPMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use App\Mail\TenantApplication\TenantPasswordResetOTPMail;
 
 class TenantPasswordController extends Controller
 {
@@ -231,13 +230,13 @@ class TenantPasswordController extends Controller
             $tenant->generateOTP();
 
             // Send OTP email
-            // try {
-            //     Mail::to($tenant->email)->send(new PasswordResetTenantPasswordResetOTPMail($tenant));
-            // } catch (Exception $mailError) {
-            //     Log::error('Failed to send OTP email: ' . $mailError->getMessage());
-            //     DB::rollBack();
-            //     return $this->error([], 'Failed to send OTP. Please try again.', 500);
-            // }
+            try {
+                Mail::to($tenant->email)->send(new TenantPasswordResetOTPMail($tenant));
+            } catch (Exception $mailError) {
+                Log::error('Failed to send OTP email: ' . $mailError->getMessage());
+                DB::rollBack();
+                return $this->error([], 'Failed to send OTP. Please try again.', 500);
+            }
 
             DB::commit();
 

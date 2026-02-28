@@ -45,7 +45,6 @@ Route::group(['middleware' => 'guest:api'], function () {
     // Contact Form submission
     Route::post('/submit-contact', [ContactFormController::class, 'submitContact']);
 
-
     /*
     |--------------------------------------------------------------------------
     | Tenent Routes
@@ -61,11 +60,6 @@ Route::group(['middleware' => 'guest:api'], function () {
 
             // Full reservation submission (corporate/office form)
             Route::post('/submit-reservation', [ApplicationController::class, 'submitReservation']);
-        });
-
-        // Admin Actions
-        Route::prefix('admin')->group(function () {
-            Route::post('/tenant/proceed/application', [LandingController::class, 'adminApplicationProceed']); // only for developemnt purpose
         });
 
         // Tenant Form (Token-based)
@@ -85,9 +79,9 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::post('/setup', [TenantPasswordController::class, 'setPasswordAfterApproval']); // done
 
             // Forgot password flow (OTP-based)
-            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // done
-            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
-            Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
+            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // DONE: Send forget passowrd otp
+            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // DONE: Verify otp
+            Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // DEONE: Set new password
         });
     });
 });

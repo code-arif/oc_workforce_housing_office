@@ -103,7 +103,7 @@
                                     <label class="form-label">Property</label>
                                     <select class="form-select select3" id="propertyFilter">
                                         <option value="">Select Property</option>
-                                        @foreach($properties as $property)
+                                        @foreach ($properties as $property)
                                             <option value="{{ $property->id }}">{{ $property->name }}</option>
                                         @endforeach
                                     </select>
@@ -114,14 +114,17 @@
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Date From</label>
-                                    <input type="text" class="form-control datepicker2" id="dateFrom" placeholder="Search by tenant created from...">
+                                    <input type="text" class="form-control datepicker2" id="dateFrom"
+                                        placeholder="Search by tenant created from...">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Date To</label>
-                                    <input type="text" class="form-control datepicker2" id="dateTo" placeholder="Search by tenant created to...">
+                                    <input type="text" class="form-control datepicker2" id="dateTo"
+                                        placeholder="Search by tenant created to...">
                                 </div>
-                                 <div class="col-md-1 mb-1">
-                                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center" id="resetFilter">
+                                <div class="col-md-1 mb-1">
+                                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center"
+                                        id="resetFilter">
                                         <i class="fe fe-refresh-cw me-1"></i> Reset
                                     </button>
                                 </div>
@@ -238,7 +241,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+    <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
     <script>
         let dataTable;
 
@@ -250,7 +253,7 @@
                 }
             });
 
-             $('.datepicker2').datepicker({
+            $('.datepicker2').datepicker({
                 format: 'yyyy-mm-dd',
                 autoclose: true
             });
@@ -355,7 +358,8 @@
             // Reset filters
             $('#resetFilter').click(function() {
                 // $('#filterForm')[0].reset();
-                $('#propertyFilter, #bedsFilter, #tenantFilter, #statusFilter, #dateFrom, #dateTo').val(null).trigger('change');
+                $('#propertyFilter, #bedsFilter, #tenantFilter, #statusFilter, #dateFrom, #dateTo').val(null)
+                    .trigger('change');
                 $('#tenantFilter').val('');
                 dataTable.ajax.reload();
             });
@@ -524,6 +528,7 @@
             });
         }
 
+        // Delete tenant
         function deleteTenant(id) {
             NProgress.start();
             $.ajax({
@@ -545,10 +550,81 @@
             });
         }
 
+        // Export tenant
         function exportTenants() {
-            toastr.info('Export functionality coming soon!');
+            // Collect current active filters
+            const params = new URLSearchParams({
+                tenant: $('#tenantFilter').val() || '',
+                property_id: $('#propertyFilter').val() || '',
+                bed_id: $('#bedsFilter').val() || '',
+                status: $('#statusFilter').val() || '',
+                account_status: $('#accountStatusFilter').val() || '',
+                source: $('#sourceFilter').val() || '',
+                date_from: $('#dateFrom').val() || '',
+                date_to: $('#dateTo').val() || '',
+            });
+
+            // Remove empty params
+            for (const [key, value] of [...params.entries()]) {
+                if (!value) params.delete(key);
+            }
+
+            const url = "{{ route('tenants.export') }}" + '?' + params.toString();
+
+            // Trigger download
+            window.location.href = url;
+            toastr.info('Preparing export, download will start shortly...');
         }
 
+        // Approve tenant
+        function approveTenant(id, currentStatus = 'pending') {
+            Swal.fire({
+                title: 'Approve Tenant?',
+                text: 'This will approve the tenant and send a password setup email.',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: '#28a745',
+                denyButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fe fe-check"></i> Approve',
+                denyButtonText: '<i class="fe fe-x"></i> Reject',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendApprovalRequest(id, 'approved');
+                } else if (result.isDenied) {
+                    sendApprovalRequest(id, 'rejected');
+                }
+            });
+        }
+
+        function sendApprovalRequest(id, status) {
+            NProgress.start();
+
+            $.ajax({
+                url: "{{ route('tenants.approve', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: {
+                    status: status
+                },
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        toastr.success(response.message);
+                        dataTable.ajax.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    NProgress.done();
+                    toastr.error(xhr.responseJSON?.message || 'Failed to update tenant status!');
+                }
+            });
+        }
+
+        // Initialize select field
         function initializeSelect2() {
             if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
                 $('.select3').select2({
@@ -567,6 +643,7 @@
         .select2-container {
             width: 100% !important;
         }
+
         .filter-card {
             background: #f8f9fa;
             border-radius: 8px;

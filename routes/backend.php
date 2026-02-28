@@ -269,6 +269,9 @@ Route::group([], function () {
     Route::post('/tenants/update/{id}', [TenantManageController::class, 'update'])->name('tenants.update');
     Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
 
+    Route::get('/tenants/export/excel', [TenantManageController::class, 'export'])->name('tenants.export'); // DONE: Tenant Export in excel
+    Route::post('/tenants/{id}/approve', [TenantManageController::class, 'approveStatus'])->name('tenants.approve'); // DONE: Tenant approval
+
     // Tenant API routes for lease creation
     Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
     Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
@@ -309,6 +312,9 @@ Route::group([], function () {
 
     // Reject any application
     Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('tenants.applications.reject');
+
+    // Send Invitation
+    Route::post('/applications/send-invitation', [ApplicationController::class, 'sendInvitation'])->name('tenants.applications.invite');
 });
 
 

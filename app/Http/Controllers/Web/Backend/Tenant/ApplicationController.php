@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Web\Backend\Tenant;
 
-use Exception;
-use App\Models\Tenant;
+use App\Http\Controllers\Controller;
+use App\Mail\TenantApplication\TenantFormLinkMail;
 use App\Models\Application;
-use Illuminate\Support\Str;
+use App\Models\Tenant;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
-use App\Mail\TenantApplication\TenantFormLinkMail;
 
 class ApplicationController extends Controller
 {
@@ -246,20 +247,15 @@ class ApplicationController extends Controller
             $tenant->generateApprovalToken();
 
             // Send email with form link
-            // try {
-            //     $formLink = config('app.frontend_url') . "/apply-lease/{$tenant->approval_token}";
-            //     Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
-            // } catch (Exception $e) {
-            //     Log::error('Failed to send tenant form link email: ' . $e->getMessage());
-            // }
             try {
                 // $formLink = config('app.frontend_url') . "/apply-lease & token ={$tenant->approval_token}";
                 $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
                     'token' => $tenant->approval_token,
+                    'email' => $tenant->email,
                 ]);
 
                 Log::info($formLink); // check form link
-                Mail::to($tenant->email)->send(new TenantFormLinkMail($tenant, $formLink));
+                Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
             } catch (Exception $e) {
                 Log::error('Failed to send tenant form link email: ' . $e->getMessage());
             }
@@ -314,5 +310,76 @@ class ApplicationController extends Controller
         // Otherwise return view
         return view('backend.layouts.tenants.applications.show', compact('application'));
         // return false;
+    }
+
+    /**
+     * Admin manually invites a tenant by email
+     */
+    public function sendInvitation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|unique:tenants,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Check if already applied
+            $existingApplication = Application::where('email', $request->email)
+                ->whereNull('company_name')
+                ->whereNull('reservation_item')
+                ->first();
+
+            // Create application record if not exists
+            if (!$existingApplication) {
+                Application::create([
+                    'email'  => $request->email,
+                    'status' => 'approved',
+                ]);
+            } else {
+                $existingApplication->update(['status' => 'approved']);
+            }
+
+            // Create tenant
+            $tenant = Tenant::create([
+                'email'              => $request->email,
+                'status'             => 'approved',
+                'password'           => Hash::make(Str::random(16)),
+                'application_source' => 'admin',
+            ]);
+
+            // Generate approval token
+            $tenant->generateApprovalToken();
+            $tenant->refresh();
+
+            // Send form link email
+            $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
+                'token' => $tenant->approval_token,
+                'email' => $tenant->email,
+            ]);
+
+            Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invitation sent successfully to ' . $request->email,
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Invitation failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send invitation: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
