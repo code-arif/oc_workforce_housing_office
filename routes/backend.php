@@ -312,6 +312,9 @@ Route::group([], function () {
 
     // Reject any application
     Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('tenants.applications.reject');
+
+    // Send Invitation
+    Route::post('/applications/send-invitation', [ApplicationController::class, 'sendInvitation'])->name('tenants.applications.invite');
 });
 
 

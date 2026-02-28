@@ -136,9 +136,14 @@
 
                         <!-- TABLE -->
                         <div class="card">
-                            <div class="card-header border-bottom">
-                                <h3 class="card-title">Single Email Applications</h3>
+                            <div class="card-header border-bottom d-flex justify-content-between align-items-center">
+                                <h3 class="card-title mb-0">Single Email Applications</h3>
+                                <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center"
+                                    onclick="showInviteModal()">
+                                    <i class="fe fe-send me-1"></i> Send Invitation
+                                </button>
                             </div>
+
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-bordered text-nowrap border-bottom" id="singleEmailTable">
@@ -259,7 +264,8 @@
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-bordered text-nowrap border-bottom" id="reservationTable">
+                                    {{-- <table class="table table-bordered text-nowrap border-bottom" id="reservationTable"> --}}
+                                    <table class="table table-bordered border-bottom w-100" id="reservationTable">
                                         <thead>
                                             <tr>
                                                 <th style="width: 80px;">ID</th>
@@ -313,6 +319,41 @@
                     </button>
                     <button type="button" class="btn btn-primary" id="contactApplicantBtn">
                         <i class="fe fe-mail me-1"></i>Contact Applicant
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Invite Modal -->
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="inviteModalLabel">
+                        <i class="fe fe-send text-primary me-2"></i>Send Invitation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3">
+                        Enter the email address to send a tenant application form link directly.
+                    </p>
+                    <div class="mb-3">
+                        <label for="inviteEmail" class="form-label fw-semibold">
+                            Email Address <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" class="form-control" id="inviteEmail" placeholder="tenant@example.com">
+                        <div class="invalid-feedback" id="inviteEmailError"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary d-inline-flex align-items-center" id="inviteSubmitBtn"
+                        onclick="sendInvitation()">
+                        <span class="btn-text"><i class="fe fe-send me-1"></i> Send Invite</span>
+                        <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
                     </button>
                 </div>
             </div>
@@ -389,6 +430,8 @@
             reservationTable = $('#reservationTable').DataTable({
                 processing: true,
                 serverSide: true,
+                autoWidth: false,
+                scrollX: false,
                 ajax: {
                     url: '{{ route('tenants.applications.get.data') }}',
                     data: function(d) {
@@ -403,7 +446,8 @@
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex',
                         orderable: false,
-                        searchable: false
+                        searchable: false,
+                        width: '50px'
                     },
                     {
                         data: 'applicant',
@@ -425,19 +469,22 @@
                         data: 'status_badge',
                         name: 'status',
                         orderable: true,
-                        className: 'text-center'
+                        className: 'text-center',
+                        width: '120px'
                     },
                     {
                         data: 'submitted_at',
                         name: 'created_at',
-                        orderable: true
+                        orderable: true,
+                        width: '150px'
                     },
                     {
                         data: 'action',
                         name: 'action',
                         orderable: false,
                         searchable: false,
-                        className: 'text-center'
+                        className: 'text-center',
+                        width: '120px'
                     }
                 ],
                 order: [
@@ -508,6 +555,18 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Show loader
+                    Swal.fire({
+                        title: 'Processing...',
+                        html: 'Approving application and sending email.<br><small class="text-muted">This may take a moment.</small>',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
                         url: `/admin/applications/${id}/approve-single`,
                         type: 'POST',
@@ -515,12 +574,21 @@
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
-                            Swal.fire('Approved!', response.message, 'success');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Approved!',
+                                html: response.message,
+                                confirmButtonColor: '#28a745'
+                            });
                             singleEmailTable.ajax.reload();
                         },
                         error: function(xhr) {
-                            const message = xhr.responseJSON?.message || 'An error occurred';
-                            Swal.fire('Error!', message, 'error');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Failed!',
+                                text: xhr.responseJSON?.message || 'An error occurred',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     });
                 }
@@ -677,15 +745,15 @@
 
                     <!-- Additional Notes -->
                     ${application.notes ? `
-                                                <div class="mb-3">
-                                                    <h6 class="border-bottom pb-2 mb-3">
-                                                        <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
-                                                    </h6>
-                                                    <div class="alert alert-info">
-                                                        ${application.notes}
-                                                    </div>
-                                                </div>
-                                            ` : ''}
+                                                                                    <div class="mb-3">
+                                                                                        <h6 class="border-bottom pb-2 mb-3">
+                                                                                            <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
+                                                                                        </h6>
+                                                                                        <div class="alert alert-info">
+                                                                                            ${application.notes}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ` : ''}
 
                     <!-- Application Info -->
                     <div class="mb-3">
@@ -730,6 +798,16 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Processing...',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
                     $.ajax({
                         url: `/admin/applications/${id}/reject`,
                         type: 'POST',
@@ -737,15 +815,96 @@
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
-                            Swal.fire('Rejected!', response.message, 'success');
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Rejected!',
+                                text: response.message
+                            });
                             singleEmailTable.ajax.reload();
                             reservationTable.ajax.reload();
                         },
                         error: function(xhr) {
-                            const message = xhr.responseJSON?.message || 'An error occurred';
-                            Swal.fire('Error!', message, 'error');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: xhr.responseJSON?.message || 'An error occurred'
+                            });
                         }
                     });
+                }
+            });
+        }
+
+        // Show Invitation Modal
+        function showInviteModal() {
+            $('#inviteEmail').val('').removeClass('is-invalid');
+            $('#inviteEmailError').text('');
+            $('#inviteModal').modal('show');
+        }
+
+        // Send Invitation
+        function sendInvitation() {
+            const email = $('#inviteEmail').val().trim();
+
+            // Basic validation
+            $('#inviteEmail').removeClass('is-invalid');
+            if (!email) {
+                $('#inviteEmail').addClass('is-invalid');
+                $('#inviteEmailError').text('Email is required.');
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                $('#inviteEmail').addClass('is-invalid');
+                $('#inviteEmailError').text('Please enter a valid email address.');
+                return;
+            }
+
+            // Show loading
+            const btn = $('#inviteSubmitBtn');
+            btn.prop('disabled', true);
+            btn.find('.btn-text').addClass('d-none');
+            btn.find('.spinner-border').removeClass('d-none');
+
+            $.ajax({
+                url: "{{ route('tenants.applications.invite') }}",
+                type: 'POST',
+                data: {
+                    email: email,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    btn.prop('disabled', false);
+                    btn.find('.btn-text').removeClass('d-none');
+                    btn.find('.spinner-border').addClass('d-none');
+
+                    if (response.success) {
+                        $('#inviteModal').modal('hide');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Invitation Sent!',
+                            html: `Form link has been sent to <strong>${email}</strong>`,
+                            confirmButtonColor: '#28a745'
+                        });
+                        singleEmailTable.ajax.reload();
+                    }
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false);
+                    btn.find('.btn-text').removeClass('d-none');
+                    btn.find('.spinner-border').addClass('d-none');
+
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON.errors;
+                        const firstError = Object.values(errors)[0][0];
+                        $('#inviteEmail').addClass('is-invalid');
+                        $('#inviteEmailError').text(firstError);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed!',
+                            text: xhr.responseJSON?.message || 'An error occurred'
+                        });
+                    }
                 }
             });
         }
