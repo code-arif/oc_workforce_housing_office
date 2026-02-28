@@ -2,16 +2,23 @@
 
 namespace App\Http\Controllers\Web\Backend\Tenant;
 
+use App\Exports\TenantsExport;
 use App\Http\Controllers\Controller;
+use App\Mail\Tenant\Application\ApplicationRejectionMail;
+use App\Mail\Tenant\TenantPasswordRestLinkMail;
 use App\Models\Invoice;
 use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\TenantProfile;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
 class TenantManageController extends Controller
@@ -109,29 +116,29 @@ class TenantManageController extends Controller
                 $query->whereDate('tenants.created_at', '<=', $request->date_to);
             }
 
-            if($request->filled('property_id')) {
+            if ($request->filled('property_id')) {
                 $propertyId = $request->property_id;
                 $query->whereHas('leases', function ($q) use ($propertyId) {
                     $q->where('property_id', $propertyId)
-                      ->whereNull('deleted_at');
+                        ->whereNull('deleted_at');
                 });
             }
 
-            if($request->filled('bed_id')) {
+            if ($request->filled('bed_id')) {
                 $bedId = $request->bed_id;
                 $query->whereHas('leases.assignments', function ($q) use ($bedId) {
                     $q->where('bed_id', $bedId)
-                      ->where('is_current', true)
-                      ->whereNull('deleted_at');
+                        ->where('is_current', true)
+                        ->whereNull('deleted_at');
                 });
             }
 
-            if($request->filled('tenant')){
+            if ($request->filled('tenant')) {
                 $tenantKeyword = $request->tenant;
                 $query->whereHas('profile', function ($q) use ($tenantKeyword) {
                     $q->where(DB::raw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', COALESCE(last_name, ''))"), 'like', "%{$tenantKeyword}%")
-                    ->orWhere('phone', 'like', "%{$tenantKeyword}%")
-                    ->orWhere('email', 'like', "%{$tenantKeyword}%");
+                        ->orWhere('phone', 'like', "%{$tenantKeyword}%")
+                        ->orWhere('email', 'like', "%{$tenantKeyword}%");
                 });
             }
 
@@ -233,44 +240,31 @@ class TenantManageController extends Controller
 
                     return '<span class="fw-semibold">$' . number_format($activeLease->rent_amount, 2) . '</span>';
                 })
-                // ->addColumn('roommates', function ($data) {
-                //     $activeLease = $data->leases->where('status', 'ACTIVE')->first();
-
-                //     if (!$activeLease) {
-                //         return '<span class="text-muted">0</span>';
-                //     }
-
-                //     $assignment = $activeLease->assignments->first();
-                //     if (!$assignment || !$assignment->bed) {
-                //         return '<span class="text-muted">0</span>';
-                //     }
-
-                //     $roomId = $assignment->bed->room_id;
-                //     $roommatesCount = DB::table('lease_assignments')
-                //         ->join('leases', 'lease_assignments.lease_id', '=', 'leases.id')
-                //         ->join('beds', 'lease_assignments.bed_id', '=', 'beds.id')
-                //         ->where('beds.room_id', $roomId)
-                //         ->where('lease_assignments.is_current', true)
-                //         ->where('leases.status', 'ACTIVE')
-                //         ->where('leases.tenant_id', '!=', $data->id)
-                //         ->whereNull('lease_assignments.deleted_at')
-                //         ->whereNull('leases.deleted_at')
-                //         ->count();
-
-                //     return '<span>' . $roommatesCount . '</span>';
-                // })
                 ->addColumn('action', function ($data) {
+                    $approveBtn = '';
+
+                    // Only show approve button for non-approved tenants
+                    if (!in_array($data->status, ['approved', 'active'])) {
+                        $approveBtn = '<button type="button"
+                            onclick="approveTenant(' . $data->id . ')"
+                            class="btn btn-success btn-sm"
+                            title="Approve Tenant">
+                            <i class="fe fe-check"></i>
+                        </button>';
+                    }
+
                     return '<div class="btn-group btn-group-sm" role="group">
-                                <a href="' . route('tenants.show', $data->id) . '" class="btn btn-primary" title="View Details">
-                                    <i class="fe fe-eye"></i>
-                                </a>
-                                <button type="button" onclick="editTenant(' . $data->id . ')" class="btn btn-info" title="Edit Tenant">
-                                    <i class="fe fe-edit"></i>
-                                </button>
-                                <button type="button" onclick="showDeleteConfirm(' . $data->id . ')" class="btn btn-danger" title="Delete Tenant">
-                                    <i class="fe fe-trash"></i>
-                                </button>
-                            </div>';
+                <a href="' . route('tenants.show', $data->id) . '" class="btn btn-primary" title="View Details">
+                    <i class="fe fe-eye"></i>
+                </a>
+                <button type="button" onclick="editTenant(' . $data->id . ')" class="btn btn-info" title="Edit Tenant">
+                    <i class="fe fe-edit"></i>
+                </button>
+                ' . $approveBtn . '
+                <button type="button" onclick="showDeleteConfirm(' . $data->id . ')" class="btn btn-danger" title="Delete Tenant">
+                    <i class="fe fe-trash"></i>
+                </button>
+            </div>';
                 })
                 ->rawColumns(['name', 'property_unit', 'address', 'has_active_lease', 'tenant_status', 'rent', 'action'])
                 ->make(true);
@@ -325,11 +319,88 @@ class TenantManageController extends Controller
                 'success' => true,
                 'message' => 'Tenant created successfully!'
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create tenant: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Approve or reject tenant status by admin
+     */
+    public function approveStatus(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:approved,rejected',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $tenant = Tenant::findOrFail($id);
+
+            // Already in desired state check
+            if ($tenant->status === $request->status) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tenant is already ' . $request->status . '.'
+                ], 422);
+            }
+
+            $tenant->update(['status' => $request->status]);
+
+            if ($request->status === 'approved') {
+                // Generate approval token
+                $tenant->generateApprovalToken();
+                $tenant->refresh();
+
+                // Password reset URL with token + email as query string
+                $passResetUrl = config('app.frontend_url')
+                    . "/password-setup?"
+                    . http_build_query([
+                        'token' => $tenant->approval_token,
+                        'email' => $tenant->email,
+                    ]);
+
+                Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tenant approved successfully! Password setup email sent.',
+                    'status' => $tenant->status,
+                ]);
+            }
+
+            if ($request->status === 'rejected') {
+                $contactUrl = config('app.frontend_url') . "/contact";
+                Mail::to($tenant->email)->queue(new ApplicationRejectionMail($tenant, $contactUrl));
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Tenant rejected. Notification email sent.',
+                    'status' => $tenant->status,
+                ]);
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Tenant approval failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -353,7 +424,7 @@ class TenantManageController extends Controller
                     'phone' => $tenant->profile->phone ?? '',
                 ]
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Tenant not found'
@@ -406,7 +477,7 @@ class TenantManageController extends Controller
                 'success' => true,
                 'message' => 'Tenant updated successfully!'
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -512,7 +583,7 @@ class TenantManageController extends Controller
                     })
                 ]
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Tenant not found'
@@ -631,7 +702,7 @@ class TenantManageController extends Controller
                     'status' => ucfirst($tenant->status)
                 ]
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -645,5 +716,28 @@ class TenantManageController extends Controller
                 'message' => 'Failed to create tenant: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Export in excel all tenants
+     */
+    /**
+     * Export tenants to Excel
+     */
+    public function export(Request $request)
+    {
+        $filters = $request->only([
+            'status',
+            'account_status',
+            'property_id',
+            'date_from',
+            'date_to',
+            'tenant',
+            'source',
+        ]);
+
+        $filename = 'tenants_' . now()->format('Y_m_d_His') . '.xlsx';
+
+        return Excel::download(new TenantsExport($filters), $filename);
     }
 }

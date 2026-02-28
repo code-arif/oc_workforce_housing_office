@@ -55,15 +55,20 @@ class DashboardController extends Controller
             'occupied_beds' => $properties->sum('occupied_beds'),
         ];
 
-        // maintanance list
-        // $maintanance = MaintenanceRequest::
+        // Recent maintenance requests
+        $recentMaintenance = MaintenanceRequest::with(['tenant.profile', 'property'])
+            ->whereNull('deleted_at')
+            ->orderBy('created_at', 'desc')
+            ->limit(6)
+            ->get();
 
-        return view('backend.layouts.dashboard', compact(
+        return view('backend.layouts.new-dashboard', compact(
             'properties',
             'pendingApplications',
             'unsignedLeases',
             'recentTenants',
-            'totals'
+            'totals',
+            'recentMaintenance'
         ));
     }
 
@@ -108,7 +113,6 @@ class DashboardController extends Controller
                 $totalRent += $invoice->total_amount;
                 $totalPaid += $invoice->paid_amount ?? 0;
                 $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
-
             }
         }
 

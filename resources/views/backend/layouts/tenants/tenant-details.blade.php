@@ -56,6 +56,15 @@
                                 <p class="text-muted mb-3">
                                     <i class="fe fe-calendar me-1"></i> Tenant since {{ $tenant->created_at->format('M d, Y') }}
                                 </p>
+                                {{-- <div class="d-flex justify-content-center gap-2 mb-3">
+                                    <span class="badge bg-{{ $tenant->status === 'approved' || $tenant->status === 'active' ? 'success' : ($tenant->status === 'pending' ? 'warning' : 'secondary') }} px-3 py-2">
+                                        {{ ucfirst($tenant->status) }}
+                                    </span>
+                                    @if($activeLease)
+                                        <span class="badge bg-primary px-3 py-2">Active Lease</span>
+                                    @endif
+                                </div> --}}
+
                                 <div class="d-flex justify-content-center gap-2 mb-3">
                                     <span class="badge bg-{{ $tenant->status === 'approved' || $tenant->status === 'active' ? 'success' : ($tenant->status === 'pending' ? 'warning' : 'secondary') }} px-3 py-2">
                                         {{ ucfirst($tenant->status) }}
@@ -64,6 +73,23 @@
                                         <span class="badge bg-primary px-3 py-2">Active Lease</span>
                                     @endif
                                 </div>
+
+                                {{-- Approve/Reject buttons for non-approved tenants --}}
+                                @if(!in_array($tenant->status, ['approved', 'active']))
+                                    <div class="d-flex justify-content-center gap-2 mb-3">
+                                        <button type="button"
+                                                class="btn btn-success btn-sm d-inline-flex align-items-center"
+                                                onclick="approveTenantDetails({{ $tenant->id }}, 'approved')">
+                                            <i class="fe fe-check me-1"></i> Approve
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-danger btn-sm d-inline-flex align-items-center"
+                                                onclick="approveTenantDetails({{ $tenant->id }}, 'rejected')">
+                                            <i class="fe fe-x me-1"></i> Reject
+                                        </button>
+                                    </div>
+                                @endif
+
                             </div>
                             <div class="card-footer bg-light">
                                 <div class="row text-center">
@@ -1405,6 +1431,52 @@
         if (text.length <= maxLength) return text;
         return text.substring(0, maxLength) + '...';
     }
+
+    // Approve tenant
+    function approveTenantDetails(id, status) {
+    const actionText = status === 'approved' ? 'Approve' : 'Reject';
+    const actionColor = status === 'approved' ? '#28a745' : '#dc3545';
+    const actionIcon = status === 'approved' ? 'question' : 'warning';
+    const actionMsg = status === 'approved'
+        ? 'This will approve the tenant and send a password setup email.'
+        : 'This will reject the tenant and send a notification email.';
+
+    Swal.fire({
+        title: actionText + ' Tenant?',
+        text: actionMsg,
+        icon: actionIcon,
+        showCancelButton: true,
+        confirmButtonColor: actionColor,
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, ' + actionText + '!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            NProgress.start();
+
+            $.ajax({
+                url: "{{ route('tenants.approve', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: { status: status },
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        toastr.success(response.message);
+                        // Reload page to reflect status change
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    NProgress.done();
+                    toastr.error(xhr.responseJSON?.message || 'Failed to update status!');
+                }
+            });
+        }
+    });
+}
 </script>
 @endpush
 

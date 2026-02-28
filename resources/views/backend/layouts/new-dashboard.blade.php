@@ -72,9 +72,9 @@
         }
 
         /* body,
-        * {
-            font-family: 'Sora', sans-serif !important;
-        } */
+            * {
+                font-family: 'Sora', sans-serif !important;
+            } */
 
         .db-canvas {
             background: var(--canvas);
@@ -577,128 +577,6 @@
             color: #1e40af;
         }
 
-        /* CHART */
-        .chart-wrap {
-            position: relative;
-            height: 200px;
-        }
-
-        /* CHAT */
-        .chat-widget {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 280px;
-            min-height: 220px;
-        }
-
-        .chat-messages::-webkit-scrollbar {
-            width: 3px;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: var(--ink-200);
-            border-radius: 3px;
-        }
-
-        .chat-bubble {
-            max-width: 82%;
-            padding: 9px 13px;
-            border-radius: 14px;
-            font-size: 12.5px;
-            line-height: 1.5;
-        }
-
-        .chat-bubble.admin {
-            background: var(--accent);
-            color: #fff;
-            align-self: flex-end;
-            border-bottom-right-radius: 3px;
-        }
-
-        .chat-bubble.bot {
-            background: var(--ink-100);
-            color: var(--ink-700);
-            align-self: flex-start;
-            border-bottom-left-radius: 3px;
-        }
-
-        .chat-bubble .ts {
-            font-size: 9.5px;
-            opacity: 0.55;
-            margin-top: 3px;
-            display: block;
-            font-family: 'IBM Plex Mono', monospace !important;
-        }
-
-        .chat-input-row {
-            display: flex;
-            gap: 8px;
-            padding: 12px 16px;
-            border-top: 1px solid var(--border-subtle);
-            background: var(--ink-50);
-        }
-
-        .chat-input {
-            flex: 1;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 9px 13px;
-            font-size: 12.5px;
-            color: var(--ink-800);
-            outline: none;
-            font-family: 'Sora', sans-serif !important;
-            transition: border-color .2s;
-        }
-
-        .chat-input:focus {
-            border-color: var(--accent);
-        }
-
-        .chat-input::placeholder {
-            color: var(--ink-300);
-        }
-
-        .chat-send {
-            width: 36px;
-            height: 36px;
-            background: var(--accent);
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background .2s, transform .1s;
-            flex-shrink: 0;
-        }
-
-        .chat-send:hover {
-            background: #5558e8;
-            transform: scale(1.05);
-        }
-
-        .chat-online-indicator {
-            width: 8px;
-            height: 8px;
-            background: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
-            animation: blink 2s infinite;
-        }
-
         /* ACTIVITY */
         .activity-item {
             display: flex;
@@ -1150,53 +1028,110 @@
                     </div>
                 </div>
 
-                {{-- CHAT WIDGET --}}
+                {{-- Recent Maintenance list --}}
                 <div class="card-base" style="display:flex;flex-direction:column;">
                     <div class="card-head">
                         <div class="card-title">
-                            <span class="card-title-dot" style="background:#22c55e;animation:blink 2s infinite;"></span>
-                            Assistant
+                            <span class="card-title-dot" style="background:#f97316"></span>
+                            Recent Maintenance
                         </div>
-                        <span style="font-size:11px;color:var(--ink-400);">
-                            <span class="chat-online-indicator"></span>Online
-                        </span>
+                        <a href="{{ route('maintanance.index') }}" class="card-action">View all →</a>
                     </div>
-                    <div class="chat-widget">
-                        <div class="chat-messages" id="chatMessages">
-                            <div class="chat-bubble bot">
-                                👋 Hi {{ $firstName }}! I'm your property assistant. How can I help today?
-                                <span class="ts">System · now</span>
+                    <div class="card-body" style="padding:0;flex:1;overflow-y:auto;max-height:340px;">
+                        @forelse($recentMaintenance as $req)
+                            @php
+                                $tenantName = $req->tenant?->profile
+                                    ? trim($req->tenant->profile->first_name . ' ' . $req->tenant->profile->last_name)
+                                    : $req->tenant?->email ?? 'N/A';
+
+                                $statusConfig = [
+                                    'pending' => ['color' => '#d97706', 'bg' => '#fef3c7', 'label' => 'Pending'],
+                                    'in_progress' => [
+                                        'color' => '#2563eb',
+                                        'bg' => '#dbeafe',
+                                        'label' => 'In Progress',
+                                    ],
+                                    'completed' => ['color' => '#059669', 'bg' => '#d1fae5', 'label' => 'Completed'],
+                                    'rejected' => ['color' => '#dc2626', 'bg' => '#fee2e2', 'label' => 'Rejected'],
+                                    'cancelled' => ['color' => '#6b7280', 'bg' => '#f3f4f6', 'label' => 'Cancelled'],
+                                ];
+                                $sc = $statusConfig[$req->status] ?? $statusConfig['pending'];
+
+                                $categoryIcons = [
+                                    'ac' => '❄️',
+                                    'appliance' => '🔧',
+                                    'electrical' => '⚡',
+                                    'heat' => '🔥',
+                                    'kitchen' => '🍳',
+                                    'plumbing' => '🚿',
+                                    'other' => '🔩',
+                                ];
+                                $icon = $categoryIcons[$req->category] ?? '🔩';
+                            @endphp
+
+                            <div class="list-row"
+                                style="padding:12px 20px;border-bottom:1px solid var(--border-subtle);margin:0;">
+                                {{-- Category Icon --}}
+                                <div
+                                    style="
+                    width:36px;height:36px;border-radius:9px;
+                    background:var(--amber-bg);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:17px;flex-shrink:0;">
+                                    {{ $icon }}
+                                </div>
+
+                                {{-- Info --}}
+                                <div style="flex:1;min-width:0;">
+                                    <div class="row-name" style="display:flex;align-items:center;gap:6px;">
+                                        {{ \Illuminate\Support\Str::limit($req->title ?? ucfirst($req->category), 28) }}
+                                        @if ($req->is_urgent)
+                                            <span
+                                                style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;background:#fee2e2;color:#dc2626;letter-spacing:.4px;">URGENT</span>
+                                        @endif
+                                    </div>
+                                    <div class="row-meta">
+                                        <i class="bi bi-buildings me-1"></i>{{ $req->property?->name ?? 'N/A' }}
+                                        @if ($tenantName !== 'N/A')
+                                            · {{ $tenantName }}
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Right side: status + date --}}
+                                <div
+                                    style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+                                    <span
+                                        style="
+                        font-size:10px;font-weight:600;padding:3px 8px;
+                        border-radius:100px;white-space:nowrap;
+                        background:{{ $sc['bg'] }};color:{{ $sc['color'] }};">
+                                        {{ $sc['label'] }}
+                                    </span>
+                                    <span
+                                        style="font-size:10px;color:var(--ink-400);font-family:'IBM Plex Mono',monospace;">
+                                        {{ $req->created_at->format('M d') }}
+                                    </span>
+                                </div>
                             </div>
-                            @if ($pendingApplications->count() > 0)
-                                <div class="chat-bubble bot">
-                                    📋 You have <strong>{{ $pendingApplications->count() }} pending</strong> application(s)
-                                    waiting for review.
-                                    <span class="ts">Alert · now</span>
-                                </div>
-                            @endif
-                            @if ($unsignedLeases->count() > 0)
-                                <div class="chat-bubble bot">
-                                    ✍️ <strong>{{ $unsignedLeases->count() }} lease(s)</strong> are awaiting tenant
-                                    signature.
-                                    <span class="ts">Alert · now</span>
-                                </div>
-                            @endif
-                            @if ($totals['available_beds'] > 0)
-                                <div class="chat-bubble bot">
-                                    🛏 <strong>{{ $totals['available_beds'] }} bed(s)</strong> available across all
-                                    properties.
-                                    <span class="ts">Info · now</span>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="chat-input-row">
-                            <input type="text" class="chat-input" id="chatInput" placeholder="Ask anything..."
-                                onkeydown="handleChatKey(event)">
-                            <button class="chat-send" onclick="sendChat()">
-                                <i class="bi bi-send-fill" style="font-size:13px;"></i>
-                            </button>
-                        </div>
+                        @empty
+                            <div class="mt-empty" style="padding:40px 16px;">
+                                <i class="bi bi-tools"
+                                    style="font-size:28px;display:block;margin-bottom:8px;opacity:.3;"></i>
+                                <p style="font-size:12.5px;color:var(--ink-400);">No maintenance requests yet</p>
+                            </div>
+                        @endforelse
                     </div>
+
+                    {{-- Footer --}}
+                    @if ($recentMaintenance->count() > 0)
+                        <div style="padding:10px 20px;border-top:1px solid var(--border-subtle);background:var(--ink-50);">
+                            <a href="{{ route('maintenance.index') }}"
+                                style="display:block;text-align:center;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;">
+                                See all maintenance requests →
+                            </a>
+                        </div>
+                    @endif
                 </div>
 
             </div>
@@ -1365,7 +1300,7 @@
             const pad = n => String(n).padStart(2, '0');
             const timeEl = document.getElementById('live-time');
             if (timeEl) timeEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now
-        .getSeconds());
+                .getSeconds());
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const dateEl = document.getElementById('live-date');
@@ -1383,42 +1318,6 @@
 
         function viewLease(id) {
             window.location.href = '/admin/leases/' + id;
-        }
-
-        const chatResponses = [
-            "I'll look into that for you right away!",
-            "Thanks for the update. I'll flag this for the team.",
-            "Got it! Check the details in the reports section.",
-            "Noted! The tenant portal has been updated.",
-            "Sure thing! Let me know if you need anything else.",
-            "Check the lease management section for more details.",
-        ];
-
-        function sendChat() {
-            const input = document.getElementById('chatInput');
-            const messages = document.getElementById('chatMessages');
-            const text = input.value.trim();
-            if (!text) return;
-            const now = new Date();
-            const ts = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-            const userBubble = document.createElement('div');
-            userBubble.className = 'chat-bubble admin';
-            userBubble.innerHTML = text + '<span class="ts">You \u00B7 ' + ts + '</span>';
-            messages.appendChild(userBubble);
-            input.value = '';
-            messages.scrollTop = messages.scrollHeight;
-            setTimeout(() => {
-                const botBubble = document.createElement('div');
-                botBubble.className = 'chat-bubble bot';
-                const resp = chatResponses[Math.floor(Math.random() * chatResponses.length)];
-                botBubble.innerHTML = resp + '<span class="ts">Assistant \u00B7 ' + ts + '</span>';
-                messages.appendChild(botBubble);
-                messages.scrollTop = messages.scrollHeight;
-            }, 800);
-        }
-
-        function handleChatKey(e) {
-            if (e.key === 'Enter') sendChat();
         }
 
         const propData = {!! json_encode($chartData) !!};
