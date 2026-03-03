@@ -1126,7 +1126,7 @@
                     {{-- Footer --}}
                     @if ($recentMaintenance->count() > 0)
                         <div style="padding:10px 20px;border-top:1px solid var(--border-subtle);background:var(--ink-50);">
-                            <a href="{{ route('maintenance.index') }}"
+                            <a href="{{ route('maintanance.index') }}"
                                 style="display:block;text-align:center;font-size:12px;font-weight:600;color:var(--accent);text-decoration:none;">
                                 See all maintenance requests →
                             </a>
