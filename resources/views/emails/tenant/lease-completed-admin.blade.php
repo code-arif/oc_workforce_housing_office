@@ -11,14 +11,14 @@
         <p>A lease has automatically been marked as <strong>completed</strong> due to reaching its end date. Below are the details:</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">👤 Tenant Information:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">👤 Tenant Information:</h3>
             <p><strong>Tenant Name:</strong> {{ $tenant->profile->first_name ?? 'N/A' }} {{ $tenant->profile->last_name ?? '' }}</p>
             <p><strong>Email:</strong> {{ $tenant->email ?? 'N/A' }}</p>
             <p><strong>Phone:</strong> {{ $tenant->profile->phone ?? 'N/A' }}</p>
         </div>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">📋 Lease Details:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">📋 Lease Details:</h3>
             <p><strong>Lease ID:</strong> #{{ $lease->id }}</p>
             <p><strong>Property:</strong> {{ $property->name ?? 'N/A' }}</p>
             @if(isset($bed))

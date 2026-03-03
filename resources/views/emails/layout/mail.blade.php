@@ -37,7 +37,7 @@
 
         /* HEADER */
         .email-header {
-            background-color: #D9A600;
+            background-color: #ba9779;
             padding: 30px 20px;
             text-align: center;
             color: #000000;
@@ -77,7 +77,7 @@
 
         .highlight-box {
             background-color: #f9f9f9;
-            border-left: 4px solid #D9A600;
+            border-left: 4px solid #ba9779;
             padding: 20px;
             margin: 25px 0;
             border-radius: 0 4px 4px 0;
@@ -85,7 +85,7 @@
 
         .action-button {
             display: inline-block;
-            background-color: #D9A600;
+            background-color: #ba9779;
             color: #000000 !important;
             text-decoration: none;
             padding: 14px 32px;
@@ -114,7 +114,7 @@
             font-size: 18px;
             font-weight: 700;
             margin-bottom: 10px;
-            color: #D9A600;
+            color: #ba9779;
         }
 
         .contact-info {
@@ -124,7 +124,7 @@
         }
 
         .contact-info a {
-            color: #D9A600 !important;
+            color: #ba9779 !important;
             text-decoration: none;
         }
 
@@ -189,7 +189,7 @@
         <!-- HEADER SECTION -->
         <div class="email-header">
             <h1>{{ $companyName ?? 'OC Workforce Housing' }}</h1>
-            <div class="subtitle">{{ $tagline ?? 'Professional Business Solutions' }}</div>
+            <div class="subtitle">{{ $tagline ?? '2004 Philadelphia Ave, Ocean City, Maryland 21842' }}</div>
         </div>
 
         <!-- CONTENT SECTION -->

@@ -11,7 +11,7 @@
         <p>Your lease agreement is ready and requires your signature. Please review the document carefully and sign it electronically to complete your tenancy registration with <strong>{{ $companyName }}</strong>.</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">📋 Lease Agreement Details:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">📋 Lease Agreement Details:</h3>
             <p><strong>Property:</strong> {{ $property->name ?? 'N/A' }} -> {{ $bed->bed_label ?? 'N/A' }}</p>
             <p><strong>Address:</strong> {{ $property->address ?? 'N/A' }}{{ isset($property->city) ? ', ' . $property->city : '' }}{{ isset($property->state) ? ', ' . $property->state : '' }} {{ $property->zip_code ?? '' }}</p>
             <p><strong>Lease Start Date:</strong> {{ \Carbon\Carbon::parse($lease->start_date)->format('F d, Y') }}</p>
@@ -27,7 +27,7 @@
 
         <div style="text-align: center; margin: 35px 0;">
             <a href="{{ $signatureUrl }}" class="action-button"
-                style="display: inline-block; background-color: #D9A600; color: #000000; text-decoration: none; padding: 18px 40px; border-radius: 6px; font-weight: 700; font-size: 18px; border: none; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(217, 166, 0, 0.3);">
+                style="display: inline-block; background-color: #ba9779; color: #000000; text-decoration: none; padding: 18px 40px; border-radius: 6px; font-weight: 700; font-size: 18px; border: none; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(217, 166, 0, 0.3);">
                 ✍️ Sign Lease Agreement
             </a>
         </div>
@@ -57,7 +57,7 @@
         <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 20px;">
             <p style="margin: 0; font-size: 14px; color: #666;">
                 <strong>Having trouble with the button?</strong> Copy and paste this link into your browser:<br>
-                <a href="{{ $signatureUrl }}" style="color: #D9A600; word-break: break-all;">{{ $signatureUrl }}</a>
+                <a href="{{ $signatureUrl }}" style="color: #ba9779; word-break: break-all;">{{ $signatureUrl }}</a>
             </p>
         </div>
     </div>
@@ -70,7 +70,7 @@
     <br>
     Please do not forward this email as it contains a secure signature link.
     <br><br>
-    For inquiries, contact <a href="mailto:{{ $companyEmail }}" style="color: #D9A600 !important; text-decoration: none;">{{ $companyEmail }}</a> or call {{ $companyPhone }}.
+    For inquiries, contact <a href="mailto:{{ $companyEmail }}" style="color: #ba9779 !important; text-decoration: none;">{{ $companyEmail }}</a> or call {{ $companyPhone }}.
     <br><br>
     © {{ date('Y') }} {{ $companyName }}. All rights reserved.
 @endsection

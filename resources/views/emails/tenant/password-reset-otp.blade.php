@@ -12,7 +12,7 @@
 
             <!-- OTP Display -->
             <div style="text-align: center; margin: 30px 0;">
-                <div style="background-color: #f8f9fa; border: 2px dashed #D9A600; border-radius: 8px; padding: 20px; display: inline-block;">
+                <div style="background-color: #f8f9fa; border: 2px dashed #ba9779; border-radius: 8px; padding: 20px; display: inline-block;">
                     <span style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #333; font-family: monospace;">{{ $otp }}</span>
                 </div>
             </div>

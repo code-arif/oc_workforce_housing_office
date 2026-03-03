@@ -11,14 +11,14 @@
         <p>A new message has been received through the contact form. Here are the details submitted by the user:</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">Contact Information:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">Contact Information:</h3>
             <p><strong>Name:</strong> {{ $contact->first_name ?? '' }} {{ $contact->last_name ?? 'N/A' }}</p>
             <p><strong>Email:</strong> {{ $contact->email ?? 'N/A' }}</p>
             <p><strong>Phone:</strong> {{ $contact->phone ?? 'N/A' }}</p>
         </div>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">Message Details:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">Message Details:</h3>
             <p><strong>Subject:</strong> {{ $contact->subject ?? 'No subject provided' }}</p>
             <p><strong>Message:</strong></p>
             <div style="background-color: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word;">

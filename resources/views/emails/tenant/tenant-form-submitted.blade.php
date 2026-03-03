@@ -7,7 +7,7 @@
         <p>A new tenant application has been submitted and requires your review.</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 20px;">Application Summary</h3>
+            <h3 style="color: #ba9779; margin-bottom: 20px;">Application Summary</h3>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr>
@@ -31,7 +31,7 @@
                 <tr>
                     <td style="padding: 8px 0;"><strong>Current Status:</strong></td>
                     <td style="padding: 8px 0;"><span
-                            style="color: #D9A600; font-weight: 600;">{{ ucfirst($tenant->status) }}</span></td>
+                            style="color: #ba9779; font-weight: 600;">{{ ucfirst($tenant->status) }}</span></td>
                 </tr>
             </table>
         </div>
@@ -43,7 +43,7 @@
                 <tr>
                     <td align="center">
                         <a href="{{ $viewUrl }}" class="action-button"
-                            style="display: inline-block; background-color: #D9A600; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
+                            style="display: inline-block; background-color: #ba9779; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
                             View Dashboard
                         </a>
                     </td>

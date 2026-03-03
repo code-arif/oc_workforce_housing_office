@@ -11,7 +11,7 @@
         <p>Congratulations! We are delighted to inform you that you have been successfully registered as a tenant with <strong>{{ $companyName }}</strong>. Welcome to our community!</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">Your Tenant Information:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">Your Tenant Information:</h3>
             <p><strong>Tenant ID:</strong> {{ $tenant->id }}</p>
             <p><strong>Name:</strong> {{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}</p>
             <p><strong>Email:</strong> {{ $tenant->email }}</p>
@@ -52,13 +52,13 @@
         <div style="text-align: center; margin: 30px 0;">
             @if(isset($tenantPortalUrl))
                 <a href="{{ $tenantPortalUrl }}" class="action-button"
-                    style="display: inline-block; background-color: #D9A600; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
+                    style="display: inline-block; background-color: #ba9779; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
                     Access Tenant Portal →
                 </a>
             @endif
             @if(isset($supportUrl))
                 <a href="{{ $supportUrl }}" class="action-button"
-                    style="display: inline-block; background-color: #000000; color: #D9A600; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: 1px solid #D9A600; cursor: pointer; text-align: center;">
+                    style="display: inline-block; background-color: #000000; color: #ba9779; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: 1px solid #ba9779; cursor: pointer; text-align: center;">
                     Contact Support
                 </a>
             @endif
@@ -80,7 +80,7 @@
     This email was sent to {{ $tenant->email }} regarding your tenant registration with {{ $companyName }}.
     <br>
     Please do not reply to this automated email. For inquiries, contact <a href="mailto:{{ $companyEmail }}"
-        style="color: #D9A600 !important; text-decoration: none;">{{ $companyEmail }}</a> or call {{ $companyPhone }}.
+        style="color: #ba9779 !important; text-decoration: none;">{{ $companyEmail }}</a> or call {{ $companyPhone }}.
     <br><br>
     © {{ date('Y') }} {{ $companyName }}. All rights reserved.
 @endsection

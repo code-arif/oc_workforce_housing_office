@@ -11,7 +11,7 @@
         <p>This is a friendly reminder that your invoice is <strong>{{ round($daysOverdue) }} day(s) overdue</strong>. Please arrange payment at your earliest convenience to avoid any late fees or service interruptions.</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">📄 Invoice Details:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">📄 Invoice Details:</h3>
             <p><strong>Invoice Number:</strong> {{ $invoice->invoice_number ?? 'INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}</p>
             <p><strong>Invoice Date:</strong> {{ \Carbon\Carbon::parse($invoice->issue_date)->format('F d, Y') }}</p>
             <p><strong>Due Date:</strong> <span style="color: #dc3545; font-weight: 600;">{{ \Carbon\Carbon::parse($invoice->due_date)->format('F d, Y') }}</span></p>
@@ -24,7 +24,7 @@
 
         @if($property)
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 15px;">🏠 Property Information:</h3>
+            <h3 style="color: #ba9779; margin-bottom: 15px;">🏠 Property Information:</h3>
             <p><strong>Property:</strong> {{ $property->name ?? 'N/A' }}</p>
             <p><strong>Address:</strong> {{ $property->address ?? 'N/A' }}{{ isset($property->city) ? ', ' . $property->city : '' }}{{ isset($property->state) ? ', ' . $property->state : '' }} {{ $property->zip_code ?? '' }}</p>
         </div>
@@ -59,7 +59,7 @@
 @section('disclaimer')
     This email was sent to {{ $tenant->email }} regarding your outstanding invoice with {{ $companyName }}.
     <br><br>
-    For inquiries or to make a payment, contact <a href="mailto:{{ $companyEmail }}" style="color: #D9A600 !important; text-decoration: none;">{{ $companyEmail }}</a>{{ !empty($companyPhone) ? ' or call ' . $companyPhone : '' }}.
+    For inquiries or to make a payment, contact <a href="mailto:{{ $companyEmail }}" style="color: #ba9779 !important; text-decoration: none;">{{ $companyEmail }}</a>{{ !empty($companyPhone) ? ' or call ' . $companyPhone : '' }}.
     <br><br>
     © {{ date('Y') }} {{ $companyName }}. All rights reserved.
 @endsection
