@@ -32,7 +32,7 @@ class TenantPasswordRestLinkMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tenant Form Link Mail',
+            subject: 'Setup Your Password - OC Workforce Housing',
         );
     }
 
