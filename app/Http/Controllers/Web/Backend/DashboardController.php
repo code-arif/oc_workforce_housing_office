@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Backend;
 use App\Models\Bed;
 use App\Models\Room;
 use App\Models\Lease;
+use App\Models\Invoice;
 use App\Models\Property;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
@@ -15,33 +16,48 @@ class DashboardController extends Controller
 {
     /**
      * Display the dashboard view.
+     * OPTIMIZED: Uses eager loading and aggregated queries to prevent N+1 issues at 100K+ records
      */
     public function index()
     {
-        // Get all active properties with their stats
+        // OPTIMIZED: Single query with eager loading and counts
         $properties = Property::where('is_active', true)
+            ->withCount([
+                'units',
+                'units as rooms_count' => function ($q) {
+                    $q->join('rooms', 'units.id', '=', 'rooms.unit_id');
+                }
+            ])
             ->orderBy('name')
             ->get()
             ->map(function ($property) {
-                return $this->getPropertyStats($property);
+                return $this->getPropertyStatsOptimized($property);
             });
 
         // Get pending applications (tenants with pending status)
-        $pendingApplications = Tenant::with('profile')
+        $pendingApplications = Tenant::with('profile:id,tenant_id,first_name,last_name,avatar')
             ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         // Get unsigned leases (leases pending tenant signature)
-        $unsignedLeases = Lease::with(['tenant.profile', 'property'])
+        $unsignedLeases = Lease::with(['tenant.profile:id,tenant_id,first_name,last_name', 'property:id,name'])
             ->where('status', 'PENDING_TENANT_SIGN')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        // Get recent tenants (active tenants)
-        $recentTenants = Tenant::with(['profile', 'leases.property', 'leases.assignments.bed.room.unit'])
+        // Get recent tenants (active tenants) - OPTIMIZED eager loading
+        $recentTenants = Tenant::with([
+            'profile:id,tenant_id,first_name,last_name,avatar',
+            'leases' => function ($q) {
+                $q->where('status', 'ACTIVE')
+                    ->with(['property:id,name', 'assignments' => function ($q) {
+                        $q->where('is_current', true)->with('bed:id,bed_label,room_id');
+                    }]);
+            }
+        ])
             ->where('status', 'active')
             ->orderBy('created_at', 'desc')
             ->limit(5)
@@ -56,7 +72,7 @@ class DashboardController extends Controller
         ];
 
         // Recent maintenance requests
-        $recentMaintenance = MaintenanceRequest::with(['tenant.profile', 'property'])
+        $recentMaintenance = MaintenanceRequest::with(['tenant.profile:id,tenant_id,first_name,last_name', 'property:id,name'])
             ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->limit(6)
@@ -73,48 +89,50 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get stats for a single property
+     * OPTIMIZED: Get stats for a single property using efficient queries
+     * Reduces N+1 by using aggregated subqueries instead of loops
      */
-    private function getPropertyStats($property)
+    private function getPropertyStatsOptimized($property)
     {
-        // Get all unit IDs for this property
+        // Get unit IDs in a single query
         $unitIds = $property->units()->pluck('id');
+        
+        if ($unitIds->isEmpty()) {
+            return $this->emptyPropertyStats($property);
+        }
 
-        // Get all room IDs for these units
+        // Get room IDs in a single query
         $roomIds = Room::whereIn('unit_id', $unitIds)->pluck('id');
 
-        // Get bed stats
-        $totalBeds = Bed::whereIn('room_id', $roomIds)->count();
-        $occupiedBeds = Bed::whereIn('room_id', $roomIds)->where('is_occupied', true)->count();
-        $availableBeds = $totalBeds - $occupiedBeds;
+        // OPTIMIZED: Get bed stats in a single query with aggregation
+        $bedStats = Bed::whereIn('room_id', $roomIds)
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN is_occupied = 1 THEN 1 ELSE 0 END) as occupied')
+            ->first();
 
-        // Get unit and room counts
+        $totalBeds = $bedStats->total ?? 0;
+        $occupiedBeds = $bedStats->occupied ?? 0;
+        $availableBeds = $totalBeds - $occupiedBeds;
         $totalUnits = $unitIds->count();
         $totalRooms = $roomIds->count();
 
-        // Get active leases count
-        $activeLeases = Lease::where('property_id', $property->id)
+        // OPTIMIZED: Get invoice totals in a single aggregated query instead of looping
+        $invoiceTotals = Invoice::whereHas('lease', function ($q) use ($property) {
+                $q->where('property_id', $property->id)->where('status', 'ACTIVE');
+            })
+            ->whereNull('deleted_at')
+            ->selectRaw('
+                SUM(total_amount) as total_rent,
+                SUM(COALESCE(paid_amount, 0)) as total_paid,
+                SUM(total_amount - COALESCE(paid_amount, 0)) as total_due
+            ')
+            ->first();
+
+        // Get active lease count
+        $activeLeasesCount = Lease::where('property_id', $property->id)
             ->where('status', 'ACTIVE')
-            ->get();
+            ->count();
 
-        // Calculate occupancy rate
         $occupancyRate = $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0;
-        // Calculate totals
-        $totalRent = 0;
-        $totalPaid = 0;
-        $totalDue = 0;
-        foreach ($activeLeases as $lease) {
-            // Get all invoices for this lease (including soft deleted if needed)
-            $invoices = $lease->invoices()
-                ->whereNull('deleted_at') // Only non-deleted invoices
-                ->get();
-
-            foreach ($invoices as $invoice) {
-                $totalRent += $invoice->total_amount;
-                $totalPaid += $invoice->paid_amount ?? 0;
-                $totalDue += ($invoice->total_amount - ($invoice->paid_amount ?? 0));
-            }
-        }
 
         return (object) [
             'id' => $property->id,
@@ -126,11 +144,34 @@ class DashboardController extends Controller
             'total_beds' => $totalBeds,
             'occupied_beds' => $occupiedBeds,
             'available_beds' => $availableBeds,
-            'active_leases' => $activeLeases->count(),
+            'active_leases' => $activeLeasesCount,
             'occupancy_rate' => $occupancyRate,
-            'total_rent' => $totalRent ?? 0,
-            'total_paid' => $totalPaid ?? 0,
-            'total_due' => $totalDue ?? 0,
+            'total_rent' => $invoiceTotals->total_rent ?? 0,
+            'total_paid' => $invoiceTotals->total_paid ?? 0,
+            'total_due' => $invoiceTotals->total_due ?? 0,
+        ];
+    }
+
+    /**
+     * Return empty stats for properties with no units
+     */
+    private function emptyPropertyStats($property)
+    {
+        return (object) [
+            'id' => $property->id,
+            'name' => $property->name,
+            'address' => $property->address,
+            'image_path' => $property->image_path,
+            'total_units' => 0,
+            'total_rooms' => 0,
+            'total_beds' => 0,
+            'occupied_beds' => 0,
+            'available_beds' => 0,
+            'active_leases' => 0,
+            'occupancy_rate' => 0,
+            'total_rent' => 0,
+            'total_paid' => 0,
+            'total_due' => 0,
         ];
     }
 

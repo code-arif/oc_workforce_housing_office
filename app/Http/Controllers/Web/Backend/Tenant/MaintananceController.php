@@ -197,11 +197,16 @@ class MaintananceController extends Controller
 
     /**
      * Maintenance create page
+     * OPTIMIZED: Select only needed columns for dropdowns
      */
     public function create()
     {
-        $properties = Property::all();
-        $tenants = Tenant::with(['profile'])->where('status', 'approved')->get();
+        $properties = Property::where('is_active', true)->select('id', 'name')->get();
+        $tenants = Tenant::with(['profile:id,tenant_id,first_name,last_name'])
+            ->where('status', 'approved')
+            ->select('id', 'email')
+            ->limit(500)
+            ->get();
 
         return view('backend.layouts.maintenance.create', compact('properties', 'tenants'));
     }
@@ -266,12 +271,17 @@ class MaintananceController extends Controller
 
     /**
      * Maintenance edit
+     * OPTIMIZED: Select only needed columns for dropdowns
      */
     public function edit($id)
     {
         $maintenance = MaintenanceRequest::with(['tenant.profile', 'property', 'attachments'])->findOrFail($id);
-        $properties = Property::all();
-        $tenants = Tenant::with(['profile'])->where('status', 'active')->get();
+        $properties = Property::where('is_active', true)->select('id', 'name')->get();
+        $tenants = Tenant::with(['profile:id,tenant_id,first_name,last_name'])
+            ->where('status', 'active')
+            ->select('id', 'email')
+            ->limit(500)
+            ->get();
 
         return view('backend.layouts.maintenance.edit', compact('maintenance', 'properties', 'tenants'));
     }

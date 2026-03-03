@@ -28,7 +28,7 @@ class LeaseController extends Controller
      */
     public function index(Request $request)
     {
-        // Get statistics
+        // Get statistics - OPTIMIZED: Uses index on status column
         $stats = [
             'active' => Lease::where('status', 'ACTIVE')->count(),
             'inProcess' => Lease::whereIn('status', ['PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])->count(),
@@ -39,8 +39,12 @@ class LeaseController extends Controller
             'expired' => Lease::whereIn('status', ['TERMINATED', 'COMPLETED'])->count()
         ];
 
-        $properties = Property::where('is_active', true)->get();
-        $tenants = Tenant::all();
+        // OPTIMIZED: Select only needed columns for dropdown population
+        $properties = Property::where('is_active', true)->select('id', 'name')->get();
+        $tenants = Tenant::with('profile:id,tenant_id,first_name,last_name')
+            ->select('id', 'email')
+            ->limit(500) // Limit for dropdown performance
+            ->get();
 
         return view('backend.layouts.leases.lease.index', compact('stats', 'properties', 'tenants'));
     }
@@ -213,11 +217,16 @@ class LeaseController extends Controller
 
     public function create()
     {
-        $terms = Season::where('is_active', true)->get();
-        $properties = Property::with(['units'])->get();
-        $tenants = Tenant::with(['profile'])->where('status', 'approved')->get();
+        // OPTIMIZED: Select only needed columns for dropdowns
+        $terms = Season::where('is_active', true)->select('id', 'name', 'blanket_start_date', 'blanket_end_date')->get();
+        $properties = Property::with(['units:id,property_id,name'])->select('id', 'name')->get();
+        $tenants = Tenant::with(['profile:id,tenant_id,first_name,last_name'])
+            ->where('status', 'approved')
+            ->select('id', 'email')
+            ->limit(500) // Prevent memory issues with large datasets
+            ->get();
 
-        $leaseTemplates = LeaseTemplate::where('is_active', true)->get();
+        $leaseTemplates = LeaseTemplate::where('is_active', true)->select('id', 'name')->get();
 
         return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants', 'leaseTemplates'));
     }

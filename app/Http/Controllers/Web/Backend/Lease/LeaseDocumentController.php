@@ -241,9 +241,13 @@ class LeaseDocumentController extends Controller
 
     public function create()
     {
-        $templates = LeaseTemplate::where('is_active', true)->get();
+        $templates = LeaseTemplate::where('is_active', true)->select('id', 'name')->get();
 
-        $tenants = Tenant::all();
+        // OPTIMIZED: Select only needed columns for dropdowns
+        $tenants = Tenant::with(['profile:id,tenant_id,first_name,last_name'])
+            ->select('id', 'email')
+            ->limit(500)
+            ->get();
         
         return view('backend.lease.lease_doc.create', compact('templates', 'tenants'));
     }
