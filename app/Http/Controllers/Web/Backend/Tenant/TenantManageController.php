@@ -366,11 +366,9 @@ class TenantManageController extends Controller
 
                 // Password reset URL with token + email as query string
                 $passResetUrl = config('app.frontend_url')
-                    . "/password-setup/"
-                    . http_build_query([
-                        $tenant->approval_token,
-                        'email' => $tenant->email,
-                    ]);
+                  . "/password-setup/"
+                  . $tenant->approval_token
+                  . "?" . http_build_query(['email' => $tenant->email]);
 
                 Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
 

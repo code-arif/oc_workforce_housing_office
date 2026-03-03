@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
-use Exception;
-use App\Models\Application;
-use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 use App\Mail\TenantApplication\ReservationReceivedAdminMail;
 use App\Mail\TenantApplication\ReservationSubmittedConfirmationMail;
+use App\Mail\TenantApplication\TenantFormLinkMail;
+use App\Models\Application;
+use App\Models\Tenant;
+use App\Traits\ApiResponse;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ApplicationController extends Controller
 {
@@ -60,6 +64,38 @@ class ApplicationController extends Controller
                 //     ->queue(new ReservationReceivedAdminMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
+            }
+
+            // Short delay to avoid rate limiting
+            sleep(3);
+
+            // Send confirmation mail to applicant
+           // Create dummy tenant
+            $tenant = Tenant::create([
+                'email' => $application->email,
+                'status' => 'approved',
+                'password' => Hash::make(Str::random(16)), // temporary password
+            ]);
+
+            // Update application status
+            $application->status = 'approved';
+            $application->save();
+
+            // auto generate approval token
+            $tenant->generateApprovalToken();
+
+            // Send email with form link
+            try {
+                // $formLink = config('app.frontend_url') . "/apply-lease & token ={$tenant->approval_token}";
+                $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
+                    'token' => $tenant->approval_token,
+                    'email' => $tenant->email,
+                ]);
+
+                Log::info($formLink); // check form link
+                Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
+            } catch (Exception $e) {
+                Log::error('Failed to send tenant form link email: ' . $e->getMessage());
             }
 
             DB::commit();
