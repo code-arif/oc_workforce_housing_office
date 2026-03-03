@@ -37,7 +37,7 @@
 
         /* HEADER */
         .email-header {
-            background-color: #ba9779;
+            background-color: #ba9779 !important;
             padding: 30px 20px;
             text-align: center;
             color: #000000;
@@ -189,7 +189,7 @@
         <!-- HEADER SECTION -->
         <div class="email-header">
             <h1>{{ $companyName ?? 'OC Workforce Housing' }}</h1>
-            <div class="subtitle">{{ $tagline ?? '2004 Philadelphia Ave, Ocean City, Maryland 21842' }}</div>
+            <div class="subtitle">2004 Philadelphia Ave, Ocean City, Maryland 21842.</div>
         </div>
 
         <!-- CONTENT SECTION -->
