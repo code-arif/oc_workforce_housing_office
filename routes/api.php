@@ -57,21 +57,18 @@ Route::group(['middleware' => 'guest:api'], function () {
         Route::prefix('tenant/applications')->group(function () {
             // Single email submission (from landing page)
             Route::post('/submit-email', [ApplicationController::class, 'submitSingleEmail']);
-
-            // Full reservation submission (corporate/office form)
             Route::post('/submit-reservation', [ApplicationController::class, 'submitReservation']);
         });
 
         // Tenant Form (Token-based)
-        Route::prefix('tenant/form')->group(function () {
-            Route::post('/{approval_token}', [TenantFormController::class, 'submit']); // done
+        Route::prefix('/tenant/application/form')->group(function () {
+            Route::post('/{token}', [TenantFormController::class, 'submitApplication']); 
         });
 
         // Tenant Authentication
         Route::prefix('tenant')->group(function () {
             Route::post('/login', [TenantAuthController::class, 'login']);
         });
-
 
         // Tenant Password Management
         Route::prefix('tenant/password')->group(function () {

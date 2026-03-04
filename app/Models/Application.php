@@ -16,19 +16,48 @@ class Application extends Model
         'last_name',
         'email',
         'phone',
-        'company_name',
-        'industry',
-        'company_address',
-        'employee_count',
-        'reservation_item',
+        'country_of_origin',
+        'date_of_birth',
+        'arrival_date',
+        'departure_date',
+        'passport_copy',
+        'visa_document',
+        'front_id_document',
+        'back_id_document',
         'notes',
+        'application_type',
+        'application_number',
+        'application_status',
+        'property_id',
+        'employer_info',
+        'sponsor_name',
+        'sponsor_city',
+        'sponsor_state',
+        'sponsor_zipcode',
+        'sponsor_country',
+        'sponsor_phone',
+        'sponsor_email',
+        'sponsor_relationship',
+        'is_j1_sponsor',
     ];
 
     protected $casts = [
-        'reservation_item' => 'array',
-        'employee_count' => 'integer',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'arrival_date' => 'date',
+        'departure_date' => 'date',
+        'date_of_birth' => 'date',
+        'employer_info' => 'array', 
+    ];
+
+     /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array<int, string>
+     */    
+    protected $hidden = [
+        'passport_copy',
+        'visa_document',
+        'front_id_document',
+        'back_id_document',
     ];
 
     /**
@@ -43,6 +72,34 @@ class Application extends Model
         ]);
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * Get the property that owns the application.
+     */
+    public function property()
+    {
+        return $this->belongsTo(Property::class);
+    }
+
+    public function getPassportCopyUrlAttribute()
+    {
+        return $this->passport_copy ? asset('storage/' . $this->passport_copy) : null;
+    }
+
+    public function getVisaDocumentUrlAttribute()
+    {
+        return $this->visa_document ? asset('storage/' . $this->visa_document) : null;
+    }
+
+    public function getFrontIdDocumentUrlAttribute()
+    {
+        return $this->front_id_document ? asset('storage/' . $this->front_id_document) : null;
+    }
+
+    public function getBackIdDocumentUrlAttribute()
+    {
+        return $this->back_id_document ? asset('storage/' . $this->back_id_document) : null;
     }
 
     /**

@@ -2,17 +2,17 @@
 
 @section('content')
     <div class="message-content">
-        <p>Dear {{ $tenant->name ?? 'Applicant' }},</p>
+        <p>Dear {{ $application->first_name }} {{ $application->last_name ?? '' }},</p>
 
         <p>Thank you for submitting your application to <strong>{{ $companyName }}</strong>. We have successfully received
             your application and it is now under review.</p>
 
         <div class="highlight-box">
             <h3 style="color: #ba9779; margin-bottom: 15px;">Application Details:</h3>
-            <p><strong>Application ID:</strong> {{ $tenant->id }}</p>
-            <p><strong>Email:</strong> {{ $tenant->email }}</p>
+            <p><strong>Application ID:</strong> {{ $application->id }}</p>
+            <p><strong>Email:</strong> {{ $application->email }}</p>
             <p><strong>Status:</strong> <span style="color: #ba9779; font-weight: 600;">Pending Review</span></p>
-            <p><strong>Submitted:</strong> {{ $tenant->created_at->format('F d, Y') }}</p>
+            <p><strong>Submitted:</strong> {{ $application->created_at->format('F d, Y') }}</p>
         </div>
 
         <p>Our team will review your application thoroughly. You can expect to hear back from us within <strong>1-2 business
@@ -39,7 +39,7 @@
 @endsection
 
 @section('disclaimer')
-    This email was sent to {{ $tenant->email }} regarding your application with {{ $companyName }}.
+    This email was sent to {{ $application->email }} regarding your application with {{ $companyName }}.
     <br>
     Please do not reply to this automated email. For inquiries, contact <a href="mailto:{{ $companyEmail }}"
         style="color: #ba9779 !important; text-decoration: none;">{{ $companyEmail }}</a> or call {{ $companyPhone }}.

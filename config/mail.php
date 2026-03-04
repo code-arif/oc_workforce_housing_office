@@ -116,6 +116,6 @@ return [
     /**
      * Admin email for sending email to admin
      */
-    'admin_email' => env('ADMIN_EMAIL', 'rufuzxyz@gmail.com'),
+    'admin_email' => env('ADMIN_EMAIL', 'softvance.arif2025@gmail.com'),
 
 ];

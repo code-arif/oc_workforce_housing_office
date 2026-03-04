@@ -40,7 +40,7 @@ class MessagingController extends Controller
         $account = EmailAccount::firstOrCreate(
             ['user_id' => $user->id, 'is_default' => true],
             [
-                'email' => config('mail.from.address', 'softvance.arif2025@gmail.com'),
+                'email' => config('mail.from.address', 'info@ocworkforcehousing.com'),
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'provider' => 'gmail',
                 'is_active' => true,
