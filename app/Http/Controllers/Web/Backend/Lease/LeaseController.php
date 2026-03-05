@@ -2,24 +2,25 @@
 
 namespace App\Http\Controllers\Web\Backend\Lease;
 
+use App\Http\Controllers\Controller;
+use App\Mail\Tenant\LeaseSignatureRequestMail;
+use App\Mail\Tenant\TenantPasswordRestLinkMail;
+use App\Mail\TenantApplication\TenantWelcomeMail;
 use App\Models\Bed;
-use App\Models\Lease;
-use App\Models\Season;
-use App\Models\Tenant;
 use App\Models\Invoice;
-use App\Models\Property;
-use Illuminate\Http\Request;
-use App\Models\LeaseAssignment;
-use Illuminate\Support\Facades\DB;
+use App\Models\Lease;
 use App\Models\Lease\LeaseDocument;
 use App\Models\Lease\LeaseTemplate;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
+use App\Models\LeaseAssignment;
 use App\Models\LeasePaymentSchedule;
+use App\Models\Property;
+use App\Models\Season;
+use App\Models\Tenant;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
-use App\Mail\TenantApplication\TenantWelcomeMail;
-use App\Mail\Tenant\LeaseSignatureRequestMail;
 
 class LeaseController extends Controller
 {
@@ -368,6 +369,21 @@ class LeaseController extends Controller
                 ]);
             }
 
+            // if (env('APP_ENV') !== 'production') {
+                $tenant = Tenant::find($tenantId);
+                // Generate approval token
+                $tenant->generateApprovalToken();
+                $tenant->refresh();
+
+                // Password reset URL with token + email as query string
+                $passResetUrl = config('app.frontend_url')
+                  . "/password-setup/"
+                  . $tenant->approval_token
+                  . "?" . http_build_query(['email' => $tenant->email]);
+
+                Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+            // }
+
             // Send welcome email if enabled
             if ($request->boolean('send_welcome_email')) {
                 $this->sendWelcomeEmail($lease);
@@ -375,7 +391,7 @@ class LeaseController extends Controller
             if($request->boolean('send_for_signature') && !$isDraft){
                 // Trigger sending for signature process
                 $this->sendLeaseForSignature($lease);
-            }
+            }            
 
             DB::commit();
 

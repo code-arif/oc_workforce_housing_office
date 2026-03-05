@@ -170,6 +170,7 @@ class ApplicationController extends Controller
                 'status'             => 'under_review',
                 'date_of_birth'      => $application->date_of_birth,
                 'arrival_date'       => $application->arrival_date,
+                'move_in_date'     => $application->departure_date,
                 'password'           => Hash::make($application->application_number),
             ]);
 
@@ -310,41 +311,44 @@ class ApplicationController extends Controller
         try {
             DB::beginTransaction();
 
-            // Check if already applied
-            $existingApplication = Application::where('email', $request->email)
-                ->whereNull('company_name')
-                ->whereNull('reservation_item')
-                ->first();
+            // // Check if already applied
+            // $existingApplication = Application::where('email', $request->email)
+            //     ->whereNull('company_name')
+            //     ->whereNull('reservation_item')
+            //     ->first();
 
-            // Create application record if not exists
-            if (!$existingApplication) {
-                Application::create([
-                    'email'  => $request->email,
-                    'status' => 'approved',
-                ]);
-            } else {
-                $existingApplication->update(['status' => 'approved']);
-            }
+            // // Create application record if not exists
+            // if (!$existingApplication) {
+            //     Application::create([
+            //         'email'  => $request->email,
+            //         'status' => 'approved',
+            //     ]);
+            // } else {
+            //     $existingApplication->update(['status' => 'approved']);
+            // }
 
-            // Create tenant
-            $tenant = Tenant::create([
-                'email'              => $request->email,
-                'status'             => 'approved',
-                'password'           => Hash::make(Str::random(16)),
-                'application_source' => 'admin',
-            ]);
+            // // Create tenant
+            // $tenant = Tenant::create([
+            //     'email'              => $request->email,
+            //     'status'             => 'approved',
+            //     'password'           => Hash::make(Str::random(16)),
+            //     'application_source' => 'admin',
+            // ]);
 
             // Generate approval token
-            $tenant->generateApprovalToken();
-            $tenant->refresh();
+           $token = Str::random(64);
+           $applicationToken = DB::table('application_tokens')->updateOrInsert(
+                ['email' => $request->email],
+                ['token' => $token, 'created_at' => now(), 'updated_at' => now()]
+            );
 
             // Send form link email
             $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
-                'token' => $tenant->approval_token,
-                'email' => $tenant->email,
+                'token' => $token,
+                'email' => $request->email,
             ]);
 
-            Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
+            Mail::to($request->email)->queue(new TenantFormLinkMail($request->email, $formLink));
 
             DB::commit();
 

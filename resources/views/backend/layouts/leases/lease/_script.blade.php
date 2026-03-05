@@ -35,7 +35,7 @@
             setupAssignBedLaterHandler();
 
             // Form field changes
-            $('#start_date, #end_date').on('change', function() {
+            $('#start_date, #end_date').on('change changeDate', function() {
                 leaseData.start_date = $('#start_date').val();
                 leaseData.end_date = $('#end_date').val();
                 updateRentalSummary();
@@ -302,10 +302,12 @@
             $('#customPaymentsSummary').show();
 
             updateCustomPaymentsSummary();
+            updateRentalSummary();
 
             // Bind change events
             $(`[data-payment-id="${customPaymentCounter}"]`).find('.custom-payment-amount').on('input', function() {
                 updateCustomPaymentsSummary();
+                updateRentalSummary();
             });
 
             // Initialize datepicker for the new custom payment date input
@@ -332,6 +334,7 @@
             }
 
             updateCustomPaymentsSummary();
+            updateRentalSummary();
         }
 
         function updateCustomPaymentsSummary() {
@@ -534,6 +537,11 @@
             const endDate = $('#end_date').val();
             const rentAmount = parseFloat($('#rent_amount').val()) || 0;
             const depositAmount = parseFloat($('#deposit_amount').val()) || 0;
+            const isCustom = $('#payment_frequency').val() === 'CUSTOM';
+
+            // Sync leaseData dates from DOM in case datepicker updated them
+            if (startDate) leaseData.start_date = startDate;
+            if (endDate) leaseData.end_date = endDate;
 
             // Update summary
             $('#summaryStartDate').text(startDate ? formatDate(startDate) : 'N/A');
@@ -550,15 +558,37 @@
             }
 
             if (currentStep >= 2) {
-                $('#summaryRent').text('$' + rentAmount.toFixed(2) + '/month');
+                if (isCustom) {
+                    let customTotal = 0;
+                    let customCount = $('#customPaymentsList .custom-payment-entry').length;
+                    $('#customPaymentsList .custom-payment-entry').each(function() {
+                        customTotal += parseFloat($(this).find('.custom-payment-amount').val()) || 0;
+                    });
+                    $('#summaryRent').text(`$${customTotal.toFixed(2)} (${customCount} payment${customCount !== 1 ? 's' : ''})`);
+                } else {
+                    $('#summaryRent').text('$' + rentAmount.toFixed(2) + '/month');
+                }
                 $('#summaryRentContainer').show();
                 $('#summaryDeposit').text('$' + depositAmount.toFixed(2));
                 $('#summaryDepositContainer').show();
                 $('#summaryInvoices').show();
             }
 
-            // Calculate duration for fixed term
-            if (startDate && endDate && leaseData.lease_type === 'fixed') {
+            // Calculate totals
+            if (isCustom) {
+                let customTotal = 0;
+                let customCount = 0;
+                $('#customPaymentsList .custom-payment-entry').each(function() {
+                    customTotal += parseFloat($(this).find('.custom-payment-amount').val()) || 0;
+                    customCount++;
+                });
+                $('.summary-amount h2').text('$' + (customTotal + depositAmount).toFixed(2));
+                if (customCount > 0) {
+                    $('#leaseDuration').text(`for ${customCount} custom payment${customCount !== 1 ? 's' : ''}`);
+                } else {
+                    $('#leaseDuration').text('No custom payments added yet');
+                }
+            } else if (startDate && endDate && leaseData.lease_type === 'fixed') {
                 const start = new Date(startDate);
                 const end = new Date(endDate);
                 const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1; // +1 for inclusive
