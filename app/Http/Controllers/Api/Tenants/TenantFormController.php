@@ -22,6 +22,7 @@ class TenantFormController extends Controller
 
     public function submitApplication(TenentApplicationRequest $request, $approvalToken)
     {
+        // dd($request->all(), $approvalToken);
         try { 
             $validateToken = DB::table('application_tokens')
                 ->where('email', $request->email)
@@ -81,14 +82,15 @@ class TenantFormController extends Controller
             } else {
                 // Single employment history (backward compatibility)
                 $employerInfo = [
-                    'company_name' => $request->company_name ?? null,
-                    'company_address' => $request->company_address ?? null,
-                    'industry' => $request->industry ?? null,
-                    'job_title' => $request->job_title ?? null,
-                    'employer_contact_person_name' => $request->employer_contact_person_name ?? null,
-                    'employer_contact_person_phone' => $request->employer_contact_person_phone ?? null,
-                    'employer_contact_person_email' => $request->employer_contact_person_email ?? null,
+                    'company_name' => $request->employment_historie['company_name'] ?? null,
+                    'company_address' => $request->employment_historie['company_address'] ?? null,
+                    'industry' => $request->employment_historie['industry'] ?? null,
+                    'job_title' => $request->employment_historie['job_title'] ?? null,
+                    'employer_contact_person_name' => $request->employment_historie['employer_contact_person_name'] ?? null,
+                    'employer_contact_person_phone' => $request->employment_historie['employer_contact_person_phone'] ?? null,
+                    'employer_contact_person_email' => $request->employment_historie['employer_contact_person_email'] ?? null,
                 ];
+
                 $application->update([
                     'employer_info' => $employerInfo
                 ]);

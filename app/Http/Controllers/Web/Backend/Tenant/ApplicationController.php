@@ -238,26 +238,11 @@ class ApplicationController extends Controller
             // Update application status to approved
             $application->status = 'approved';
             $application->save();
-
-            // Generate approval token and send form link email
-            $tenant->generateApprovalToken();
-
-            try {
-                $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
-                    'token' => $tenant->approval_token,
-                    'email' => $tenant->email,
-                ]);
-
-                Log::info('Tenant form link: ' . $formLink);
-                Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
-            } catch (Exception $e) {
-                Log::error('Failed to send tenant form link email: ' . $e->getMessage());
-            }
-
+            
             DB::commit();
 
             return response()->json([
-                'message'   => 'Application approved. Tenant created with under_review status and form link sent to ' . $tenant->email,
+                'message'   => 'Application approved. Tenant created with under_review status',
                 'tenant_id' => $tenant->id,
             ]);
         } catch (Exception $e) {
