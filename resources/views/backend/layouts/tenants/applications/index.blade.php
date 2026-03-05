@@ -46,7 +46,7 @@
                     <div class="tab-pane fade show active" id="single" role="tabpanel" aria-labelledby="single-tab">
 
                         <!-- STATISTICS ROW -->
-                        <div class="row mb-4">
+                        {{-- <div class="row mb-4">
                             <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
                                 <div class="card stats-card" style="border-left: 4px solid #007bff;">
                                     <div class="card-body">
@@ -92,7 +92,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <!-- FILTERS -->
                         <div class="row mb-4">
@@ -169,7 +169,7 @@
                     <div class="tab-pane fade" id="reservation" role="tabpanel" aria-labelledby="reservation-tab">
 
                         <!-- STATISTICS ROW -->
-                        <div class="row mb-4">
+                        {{-- <div class="row mb-4">
                             <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
                                 <div class="card stats-card" style="border-left: 4px solid #007bff;">
                                     <div class="card-body">
@@ -215,7 +215,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <!-- FILTERS -->
                         <div class="row mb-4">
@@ -325,6 +325,43 @@
         </div>
     </div>
 
+    <!-- Single Email Application Details Modal -->
+    <div class="modal fade" id="singleEmailModal" tabindex="-1" aria-labelledby="singleEmailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="singleEmailModalLabel">
+                        <i class="fe fe-user me-2"></i>Application Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="singleEmailDetails">
+                        <!-- Details will be loaded here -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>Close
+                    </button>
+                    <button type="button" class="btn btn-success d-none" id="approveFromModalBtn">
+                        <i class="fe fe-check me-1"></i>Approve & Send Form
+                    </button>
+                    <button type="button" class="btn btn-danger d-none" id="rejectFromModalBtn">
+                        <i class="fe fe-x me-1"></i>Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Invite Modal -->
     <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="inviteModalLabel" aria-hidden="true">
@@ -426,77 +463,7 @@
                 }
             });
 
-            // Initialize Reservation Table
-            reservationTable = $('#reservationTable').DataTable({
-                processing: true,
-                serverSide: true,
-                autoWidth: false,
-                scrollX: false,
-                ajax: {
-                    url: '{{ route('tenants.applications.get.data') }}',
-                    data: function(d) {
-                        d.type = 'reservation';
-                        d.status = $('#reservationStatusFilter').val();
-                        d.search = $('#reservationSearchFilter').val();
-                        d.date_from = $('#reservationDateFrom').val();
-                        d.date_to = $('#reservationDateTo').val();
-                    }
-                },
-                columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false,
-                        width: '50px'
-                    },
-                    {
-                        data: 'applicant',
-                        name: 'company_name',
-                        orderable: true
-                    },
-                    {
-                        data: 'contact',
-                        name: 'email',
-                        orderable: true
-                    },
-                    {
-                        data: 'details',
-                        name: 'details',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'status_badge',
-                        name: 'status',
-                        orderable: true,
-                        className: 'text-center',
-                        width: '120px'
-                    },
-                    {
-                        data: 'submitted_at',
-                        name: 'created_at',
-                        orderable: true,
-                        width: '150px'
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center',
-                        width: '120px'
-                    }
-                ],
-                order: [
-                    [0, 'desc']
-                ],
-                pageLength: 25,
-                language: {
-                    search: "",
-                    searchPlaceholder: "Search...",
-                }
-            });
-
+            
             // Single Email Filters
             $('#singleStatusFilter').on('change', function() {
                 singleEmailTable.ajax.reload();
@@ -546,7 +513,7 @@
         function approveSingleEmail(id) {
             Swal.fire({
                 title: 'Approve Application?',
-                text: "This will create a tenant account and send them a form link.",
+                text: "This will approve the application and ready for processing.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
@@ -625,6 +592,304 @@
                     });
                 }
             });
+        }
+
+        // View Single Email Application Details
+        function viewSingleEmailDetails(id) {
+            // Show modal
+            $('#singleEmailModal').modal('show');
+
+            // Reset modal content to loading state
+            $('#singleEmailDetails').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `);
+
+            // Load application details
+            $.ajax({
+                url: `/admin/applications/${id}`,
+                type: 'GET',
+                success: function(response) {
+                    displaySingleEmailDetails(response);
+                },
+                error: function(xhr) {
+                    $('#singleEmailDetails').html(`
+                        <div class="alert alert-danger">
+                            <i class="fe fe-alert-triangle me-2"></i>
+                            Failed to load application details. Please try again.
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        // Display Single Email Application Details in Modal
+        function displaySingleEmailDetails(application) {
+            // Format dates
+            const formatDate = (dateStr) => {
+                if (!dateStr) return 'N/A';
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            };
+
+            // Build document section if documents exist
+            let documentsHtml = '';
+            const hasDocuments = application.passport_copy_url || application.visa_document_url || 
+                                application.front_id_document_url || application.back_id_document_url;
+
+            if (hasDocuments) {
+                documentsHtml = `
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-file-text text-info me-2"></i>Documents
+                        </h6>
+                        <div class="row">
+                            ${application.passport_copy_url ? `
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block">Passport Copy</small>
+                                    <a href="${application.passport_copy_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fe fe-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            ` : ''}
+                            ${application.visa_document_url ? `
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block">Visa Document</small>
+                                    <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fe fe-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            ` : ''}
+                            ${application.front_id_document_url ? `
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block">Front ID</small>
+                                    <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fe fe-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            ` : ''}
+                            ${application.back_id_document_url ? `
+                                <div class="col-md-3 mb-3">
+                                    <small class="text-muted d-block">Back ID</small>
+                                    <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                        <i class="fe fe-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Build employer info section if exists
+            let employerHtml = '';
+            if (application.employer_info && Object.keys(application.employer_info).length > 0) {
+                const employer = application.employer_info;
+                employerHtml = `
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-briefcase text-info me-2"></i>Employer Information
+                        </h6>
+                        <div class="row">
+                            ${employer.company_name ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Company Name</small>
+                                    <strong>${employer.company_name}</strong>
+                                </div>
+                            ` : ''}
+                            ${employer.contact_person ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Contact Person</small>
+                                    <strong>${employer.contact_person}</strong>
+                                </div>
+                            ` : ''}
+                            ${employer.phone ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Phone</small>
+                                    <strong>${employer.phone}</strong>
+                                </div>
+                            ` : ''}
+                            ${employer.email ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Email</small>
+                                    <strong>${employer.email}</strong>
+                                </div>
+                            ` : ''}
+                            ${employer.address ? `
+                                <div class="col-md-12 mb-3">
+                                    <small class="text-muted d-block">Address</small>
+                                    <strong>${employer.address}</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Build sponsor info section if exists
+            let sponsorHtml = '';
+            if (application.sponsor_name) {
+                sponsorHtml = `
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-users text-info me-2"></i>Sponsor Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Sponsor Name</small>
+                                <strong>${application.sponsor_name || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Relationship</small>
+                                <strong>${application.sponsor_relationship || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Phone</small>
+                                <strong>${application.sponsor_phone || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Email</small>
+                                <strong>${application.sponsor_email || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <small class="text-muted d-block">Address</small>
+                                <strong>${[
+                                    application.sponsor_city,
+                                    application.sponsor_state,
+                                    application.sponsor_zipcode,
+                                    application.sponsor_country
+                                ].filter(Boolean).join(', ') || 'N/A'}</strong>
+                            </div>
+                            ${application.is_j1_sponsor ? `
+                                <div class="col-md-12 mb-3">
+                                    <small class="text-muted d-block">J-1 Sponsor</small>
+                                    <span class="badge bg-info">${application.is_j1_sponsor}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="application-details">
+                    <!-- Personal Information -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-user text-info me-2"></i>Personal Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Full Name</small>
+                                <strong>${[application.first_name, application.middle_name, application.last_name].filter(Boolean).join(' ') || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Email</small>
+                                <strong>${application.email || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Phone</small>
+                                <strong>${application.phone || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Date of Birth</small>
+                                <strong>${formatDate(application.date_of_birth)}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Country of Origin</small>
+                                <strong>${application.country_of_origin || 'N/A'}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Travel Information -->
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-calendar text-info me-2"></i>Travel Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Arrival Date</small>
+                                <strong>${formatDate(application.arrival_date)}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Departure Date</small>
+                                <strong>${formatDate(application.departure_date)}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${documentsHtml}
+                    ${employerHtml}
+                    ${sponsorHtml}
+
+                    <!-- Additional Notes -->
+                    ${application.notes ? `
+                        <div class="mb-4">
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="fe fe-message-square text-info me-2"></i>Additional Notes
+                            </h6>
+                            <div class="alert alert-light border">
+                                ${application.notes}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Application Status -->
+                    <div class="mb-3">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-info text-info me-2"></i>Application Status
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <small class="text-muted d-block">Status</small>
+                                <span class="badge p-2 bg-${application.status === 'pending' ? 'warning' : application.status === 'approved' ? 'success' : 'danger'}">
+                                    ${application.status.charAt(0).toUpperCase() + application.status.slice(1).replace('_', ' ')}
+                                </span>
+                            </div>
+                            ${application.application_type ? `
+                                <div class="col-md-4 mb-2">
+                                    <small class="text-muted d-block">Application Type</small>
+                                    <strong>${application.application_type}</strong>
+                                </div>
+                            ` : ''}
+                            ${application.application_number ? `
+                                <div class="col-md-4 mb-2">
+                                    <small class="text-muted d-block">Application Number</small>
+                                    <strong>${application.application_number}</strong>
+                                </div>
+                            ` : ''}
+                            <div class="col-md-4 mb-2">
+                                <small class="text-muted d-block">Submitted At</small>
+                                <strong>${new Date(application.created_at).toLocaleString()}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $('#singleEmailDetails').html(html);
+
+            // Show/hide action buttons based on status
+            if (application.status === 'pending') {
+                $('#approveFromModalBtn').removeClass('d-none').off('click').on('click', function() {
+                    $('#singleEmailModal').modal('hide');
+                    approveSingleEmail(application.id);
+                });
+                $('#rejectFromModalBtn').removeClass('d-none').off('click').on('click', function() {
+                    $('#singleEmailModal').modal('hide');
+                    rejectApplication(application.id);
+                });
+            } else {
+                $('#approveFromModalBtn').addClass('d-none');
+                $('#rejectFromModalBtn').addClass('d-none');
+            }
         }
 
         // View Reservation Details
@@ -1034,6 +1299,72 @@
         .reservation-items-wrapper {
             max-height: 300px;
             overflow-y: auto;
+        }
+
+        /* Single Email Modal Styling */
+        #singleEmailModal .modal-content {
+            border-radius: 10px;
+            overflow: scroll;
+        }
+
+        #singleEmailModal .modal-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #6dd5ed 100%);
+            border: none;
+        }
+
+        #singleEmailModal .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .application-details h6 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .application-details small.text-muted {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .application-details strong {
+            font-size: 0.95rem;
+            color: #495057;
+        }
+
+        /* Scrollbar Styling for Single Email Modal */
+        #singleEmailModal .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #singleEmailModal .modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        #singleEmailModal .modal-body::-webkit-scrollbar-thumb {
+            background: #17a2b8;
+        }
+
+        #singleEmailModal .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #138496;
+        }
+
+        /* Single Email Modal Scroll Fix */
+        #singleEmailModal .modal-dialog {
+            max-height: 90vh;
+        }
+
+        #singleEmailModal .modal-content {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #singleEmailModal .modal-body {
+            overflow-y: auto;
+            max-height: calc(90vh - 140px);
         }
     </style>
 @endpush

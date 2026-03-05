@@ -46,18 +46,6 @@
                     </li>
                 @endcan
 
-
-                {{-- Tenants --}}
-                @can('tenant.list')
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
-                        href="{{ route('tenants.index') }}">
-                        <i class="fa fa-users"></i>
-                        <span class="side-menu__label">Tenants</span>
-                    </a>
-                </li>
-                @endcan
-
                 {{-- Applications --}}
                 @can('applications.list')
                 <li class="slide">
@@ -68,6 +56,17 @@
                     </a>
                 </li>
                 @endcan
+
+                {{-- Tenants --}}
+                @can('tenant.list')
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
+                        href="{{ route('tenants.index') }}">
+                        <i class="fa fa-users"></i>
+                        <span class="side-menu__label">Tenants</span>
+                    </a>
+                </li>
+                @endcan               
 
                 {{-- Leases and files --}}
                 @canany(['lease.list', 'lease.template.list', 'seasons.list'])

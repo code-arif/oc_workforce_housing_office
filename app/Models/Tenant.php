@@ -13,6 +13,7 @@ class Tenant extends Authenticatable implements JWTSubject
     use HasFactory;
 
     protected $fillable = [
+        'application_id',
         'application_source',
         'status',
         'move_in_date',

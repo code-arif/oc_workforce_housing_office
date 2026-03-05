@@ -2,15 +2,16 @@
 
 namespace App\Mail\TenantApplication;
 
+use App\Models\Application;
 use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\SerializesModels;
 
-class TenantFormSubmissionSuccessMail extends Mailable
+class TenantFormSubmissionSuccessMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

@@ -11,7 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TenantFormSubmittedMail extends Mailable
+class TenantFormSubmittedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 

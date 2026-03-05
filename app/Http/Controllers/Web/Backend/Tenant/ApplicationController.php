@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Mail\TenantApplication\TenantFormLinkMail;
 use App\Models\Application;
 use App\Models\Tenant;
+use App\Models\TenantAddress;
+use App\Models\TenantDocument;
+use App\Models\TenantEmergencyContact;
+use App\Models\TenantEmploymentHistory;
+use App\Models\TenantProfile;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,50 +29,8 @@ class ApplicationController extends Controller
      */
     public function index()
     {
-        // Get statistics for both types
-        $singleEmailTotal = Application::whereNotNull('email')
-            ->whereNull('company_name')
-            ->whereNull('reservation_item')
-            ->count();
-
-        $singleEmailPending = Application::whereNotNull('email')
-            ->whereNull('company_name')
-            ->whereNull('reservation_item')
-            ->where('status', 'pending')
-            ->count();
-
-        $singleEmailApproved = Application::whereNotNull('email')
-            ->whereNull('company_name')
-            ->whereNull('reservation_item')
-            ->where('status', 'approved')
-            ->count();
-
-        $reservationTotal = Application::whereNotNull('company_name')
-            ->orWhereNotNull('reservation_item')
-            ->count();
-
-        $reservationPending = Application::where(function ($q) {
-            $q->whereNotNull('company_name')
-                ->orWhereNotNull('reservation_item');
-        })
-            ->where('status', 'pending')
-            ->count();
-
-        $reservationApproved = Application::where(function ($q) {
-            $q->whereNotNull('company_name')
-                ->orWhereNotNull('reservation_item');
-        })
-            ->where('status', 'approved')
-            ->count();
-
-        return view('backend.layouts.tenants.applications.index', compact(
-            'singleEmailTotal',
-            'singleEmailPending',
-            'singleEmailApproved',
-            'reservationTotal',
-            'reservationPending',
-            'reservationApproved'
-        ));
+        
+        return view('backend.layouts.tenants.applications.index');
     }
 
     /**
@@ -76,26 +39,14 @@ class ApplicationController extends Controller
     public function getData(Request $request)
     {
         if ($request->ajax() && $request->wantsJson()) {
-            $type = $request->get('type', 'single'); // 'single' or 'reservation'
-
+            
             $query = Application::query()
                 ->select([
                     'applications.*'
                 ])
                 ->orderBy('applications.id', 'desc');
 
-            // Filter by type
-            if ($type === 'single') {
-                $query->whereNotNull('email')
-                    ->whereNull('company_name')
-                    ->whereNull('reservation_item');
-            } else {
-                $query->where(function ($q) {
-                    $q->whereNotNull('company_name')
-                        ->orWhereNotNull('reservation_item');
-                });
-            }
-
+            
             // Status filter
             if ($request->filled('status')) {
                 $query->where('applications.status', $request->status);
@@ -123,19 +74,13 @@ class ApplicationController extends Controller
 
             return DataTables::eloquent($query)
                 ->addIndexColumn()
-                ->addColumn('applicant', function ($data) use ($type) {
-                    if ($type === 'single') {
-                        return '<div class="text-truncate">
-                                    <div class="fw-semibold">' . e($data->email) . '</div>
-                                    <small class="text-muted">' . ($data->first_name ? e($data->first_name . ' ' . $data->last_name) : 'Name not provided') . '</small>
-                                </div>';
-                    } else {
-                        $name = trim(($data->first_name ?? '') . ' ' . ($data->last_name ?? ''));
-                        return '<div class="text-truncate">
-                                    <div class="fw-semibold">' . e($data->company_name ?? 'N/A') . '</div>
-                                    <small class="text-muted">' . e($name ?: $data->email) . '</small>
-                                </div>';
-                    }
+                ->addColumn('applicant', function ($data){
+                    
+                    return '<div class="text-truncate">
+                                <div class="fw-semibold">' . e($data->email) . '</div>
+                                <small class="text-muted">' . ($data->first_name ? e($data->first_name . ' ' . $data->last_name) : 'Name not provided') . '</small>
+                            </div>';
+                    
                 })
                 ->addColumn('contact', function ($data) {
                     return '<div class="text-truncate">
@@ -143,17 +88,10 @@ class ApplicationController extends Controller
                                 <small class="text-muted">' . e($data->phone ?? 'No phone') . '</small>
                             </div>';
                 })
-                ->addColumn('details', function ($data) use ($type) {
-                    if ($type === 'single') {
-                        return '<span class="text-muted">Email-only application</span>';
-                    } else {
-                        $items = $data->reservation_item ?? [];
-                        $count = is_array($items) ? count($items) : 0;
-                        return '<div class="text-truncate">
-                                    <div class="fw-semibold">' . e($data->industry ?? 'N/A') . '</div>
-                                    <small class="text-muted">' . $count . ' reservation item(s)</small>
-                                </div>';
-                    }
+                ->addColumn('details', function ($data) {
+                                    
+                    return '<span class="text-muted">Email-only application</span>';
+                    
                 })
                 ->addColumn('status_badge', function ($data) {
                     $statusColors = [
@@ -172,29 +110,26 @@ class ApplicationController extends Controller
                                 <small class="text-muted">' . $data->created_at->format('h:i A') . '</small>
                             </div>';
                 })
-                ->addColumn('action', function ($data) use ($type) {
+                ->addColumn('action', function ($data){
                     $btn = '<div class="btn-group" role="group">';
 
-                    if ($data->status === 'pending') {
-                        if ($type === 'single') {
-                            // Single email - only approve button
+                        // Single email - view details button always visible
+                        $btn .= '<button type="button" onclick="viewSingleEmailDetails(' . $data->id . ')" class="btn btn-sm btn-info d-inline-flex align-items-center" title="View Details">
+                                    <i class="fe fe-eye"></i>
+                                </button>';
+
+                        if ($data->status === 'pending') {
+                            // Approve button
                             $btn .= '<button type="button" onclick="approveSingleEmail(' . $data->id . ')" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Approve & Send Form">
                                         <i class="fe fe-check"></i>
                                     </button>';
 
-
+                            // Reject button
                             $btn .= '<button type="button" onclick="rejectApplication(' . $data->id . ')" class="btn btn-sm btn-danger d-inline-flex align-items-center" title="Reject">
                                     <i class="fe fe-x"></i>
                                 </button>';
-                        } else {
-                            // Reservation - approve and reject
-                            $btn .= '<button type="button" onclick="seeReservation(' . $data->id . ')" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Approve">
-                                        <i class="fe fe-eye"></i>
-                                    </button>';
                         }
-                    } else {
-                        $btn .= '<span class="badge p-3 bg-secondary">Already processed</span>';
-                    }
+                    
 
                     $btn .= '</div>';
                     return $btn;
@@ -207,8 +142,8 @@ class ApplicationController extends Controller
     }
 
     /**
-     * Approve single email application
-     * Creates dummy tenant and sends form link
+     * Approve application
+     * Creates tenant from application data with under_review status and sends form link
      */
     public function approveSingleEmail($id)
     {
@@ -216,11 +151,6 @@ class ApplicationController extends Controller
             DB::beginTransaction();
 
             $application = Application::findOrFail($id);
-
-            // Validate it's a single email application
-            if ($application->company_name || $application->reservation_item) {
-                return response()->json(['message' => 'This is not a single email application.'], 400);
-            }
 
             if ($application->status !== 'pending') {
                 return response()->json(['message' => 'This application has already been processed.'], 400);
@@ -232,29 +162,79 @@ class ApplicationController extends Controller
                 return response()->json(['message' => 'A tenant with this email already exists.'], 400);
             }
 
-            // Create dummy tenant
+            // Create tenant from application data
             $tenant = Tenant::create([
-                'email' => $application->email,
-                'status' => 'approved',
-                'password' => Hash::make(Str::random(16)), // temporary password
+                'application_id'     => $application->id,
+                'application_source' => 'self',
+                'email'              => $application->email,
+                'status'             => 'under_review',
+                'date_of_birth'      => $application->date_of_birth,
+                'arrival_date'       => $application->arrival_date,
+                'password'           => Hash::make($application->application_number),
             ]);
 
-            // Update application status
+            // Create tenant profile from application data
+            TenantProfile::create([
+                'tenant_id'   => $tenant->id,
+                'first_name'  => $application->first_name ?? '',
+                'middle_name' => $application->middle_name,
+                'last_name'   => $application->last_name,
+                'phone'       => $application->phone,
+            ]);
+
+            // Create tenant address from application data
+            TenantAddress::create([
+                'tenant_id' => $tenant->id,
+                'address'   => $application->address,
+            ]);
+
+            TenantEmergencyContact::create([
+                'tenant_id'    => $tenant->id,
+                'name'         => $application->emergency_contact_name,
+                'relationship' => $application->emergency_contact_relationship,
+                'phone'        => $application->emergency_contact_phone,
+            ]);
+
+            TenantEmploymentHistory::create([
+                'tenant_id'   => $tenant->id,
+                'company_name' => $application->company_name,
+                'position'     => $application->position,
+                'salary'       => $application->salary,
+            ]);
+
+
+            // Transfer documents from application to tenant documents
+            $documentMap = [
+                'passport_copy'     => 'passport',
+                'visa_document'     => 'visa',
+                'front_id_document' => 'id_front',
+                'back_id_document'  => 'id_back',
+            ];
+
+            foreach ($documentMap as $appField => $docType) {
+                if (!empty($application->$appField)) {
+                    TenantDocument::create([
+                        'tenant_id'     => $tenant->id,
+                        'document_type' => $docType,
+                        'file_path'     => $application->$appField,
+                    ]);
+                }
+            }
+
+            // Update application status to approved
             $application->status = 'approved';
             $application->save();
 
-            // auto generate approval token
+            // Generate approval token and send form link email
             $tenant->generateApprovalToken();
 
-            // Send email with form link
             try {
-                // $formLink = config('app.frontend_url') . "/apply-lease & token ={$tenant->approval_token}";
                 $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
                     'token' => $tenant->approval_token,
                     'email' => $tenant->email,
                 ]);
 
-                Log::info($formLink); // check form link
+                Log::info('Tenant form link: ' . $formLink);
                 Mail::to($tenant->email)->queue(new TenantFormLinkMail($tenant, $formLink));
             } catch (Exception $e) {
                 Log::error('Failed to send tenant form link email: ' . $e->getMessage());
@@ -263,8 +243,8 @@ class ApplicationController extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Application approved successfully. Tenant form link has been sent to ' . $tenant->email,
-                'tenant_id' => $tenant->id
+                'message'   => 'Application approved. Tenant created with under_review status and form link sent to ' . $tenant->email,
+                'tenant_id' => $tenant->id,
             ]);
         } catch (Exception $e) {
             DB::rollBack();

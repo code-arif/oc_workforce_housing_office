@@ -61,6 +61,19 @@ class Application extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'passport_copy_url',
+        'visa_document_url',
+        'front_id_document_url',
+        'back_id_document_url',
+        'full_name',
+    ];
+
+    /**
      * Get full name of the applicant
      */
     public function getFullNameAttribute()

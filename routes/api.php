@@ -80,6 +80,9 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // DONE: Verify otp
             Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // DEONE: Set new password
         });
+
+        // Get Properties for application form dropdowns
+        Route::get('/properties', [LandingController::class, 'propertiesForForms']);
     });
 });
 

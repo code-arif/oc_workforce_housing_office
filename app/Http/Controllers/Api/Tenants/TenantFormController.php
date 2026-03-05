@@ -136,7 +136,8 @@ class TenantFormController extends Controller
                 Log::error('Failed to send success email to tenant: ' . $mailError->getMessage());
             }
 
-            $validateToken->delete();
+            // Delete the used token
+            DB::table('application_tokens')->where('email', $request->email)->where('token', $approvalToken)->delete();
 
             DB::commit();
 

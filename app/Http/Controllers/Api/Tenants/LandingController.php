@@ -22,6 +22,23 @@ class LandingController extends Controller
 {
     use ApiResponse;
 
+    public function propertiesForForms()
+    {
+        try {
+            $properties = DB::table('properties')
+                ->select('id', 'name')
+                ->where('is_active', true)
+                ->get();
+
+            return $this->success($properties, 'Properties retrieved successfully');
+        } catch (Exception $e) {
+            Log::error('Failed to retrieve properties for forms: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return $this->error([], 'Failed to retrieve properties. Please try again later.', 500);
+        }
+    }
+
     /**
      * Submit tenant email and create initial application
      */
