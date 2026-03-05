@@ -65,17 +65,16 @@ class TenantFormController extends Controller
             $employmentHistories = [];
             if ($request->has('employment_histories') && is_array($request->employment_histories)) {
                 foreach ($request->employment_histories as $empData) {
-                   $employerInfo = [
-                       'company_name' => $empData['company_name'] ?? null,
-                       'company_address' => $empData['company_address'] ?? null,
-                       'industry' => $empData['industry'] ?? null,
-                       'job_title' => $empData['job_title'] ?? null,
-                       'employer_contact_person_name' => $empData['employer_contact_person_name'] ?? null,
-                       'employer_contact_person_phone' => $empData['employer_contact_person_phone'] ?? null,
-                       'employer_contact_person_email' => $empData['employer_contact_person_email'] ?? null,
-                   ];
+                    $employmentHistories[] = [
+                        'company_name' => $empData['company_name'] ?? null,
+                        'company_address' => $empData['company_address'] ?? null,
+                        'industry' => $empData['industry'] ?? null,
+                        'job_title' => $empData['job_title'] ?? null,
+                        'employer_contact_person_name' => $empData['employer_contact_person_name'] ?? null,
+                        'employer_contact_person_phone' => $empData['employer_contact_person_phone'] ?? null,
+                        'employer_contact_person_email' => $empData['employer_contact_person_email'] ?? null,
+                    ];
                 }
-                $employmentHistories[] = $employerInfo;
                 $application->update([
                     'employer_info' => $employmentHistories
                 ]);

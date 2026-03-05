@@ -185,23 +185,37 @@ class ApplicationController extends Controller
             // Create tenant address from application data
             TenantAddress::create([
                 'tenant_id' => $tenant->id,
-                'address'   => $application->address,
+                'address'   => $application->country_of_origin ?? null,
             ]);
 
             TenantEmergencyContact::create([
                 'tenant_id'    => $tenant->id,
-                'name'         => $application->emergency_contact_name,
-                'relationship' => $application->emergency_contact_relationship,
-                'phone'        => $application->emergency_contact_phone,
+                'name'         => $application->sponsor_name ?? null,
+                'phone'        => $application->sponsor_phone ?? null,
+                'email'        => $application->sponsor_email ?? null,
             ]);
 
-            TenantEmploymentHistory::create([
-                'tenant_id'   => $tenant->id,
-                'company_name' => $application->company_name,
-                'position'     => $application->position,
-                'salary'       => $application->salary,
-            ]);
-
+            if (!empty($application->employer_info) && is_array($application->employer_info)) {
+                foreach ($application->employer_info as $employment) {
+                    TenantEmploymentHistory::create([
+                        'tenant_id'   => $tenant->id,
+                        'employer' => $employment['company_name'] ?? null,
+                        'title'     => $employment['job_title'] ?? null,
+                        'contact_person_name'       => $employment['employer_contact_person_name'] ?? null,
+                        'contact_email'             => $employment['employer_contact_person_email'] ?? null,
+                        'contact_phone'             => $employment['employer_contact_person_phone'] ?? null,
+                    ]);
+                }
+            } else {
+                TenantEmploymentHistory::create([
+                    'tenant_id'   => $tenant->id,
+                    'employer' => $application->employer_name ?? null,
+                    'title'     => $application->job_title ?? null,
+                    'contact_person_name'       => $application->employer_contact_person_name ?? null,
+                    'contact_email'             => $application->employer_contact_person_email ?? null,
+                    'contact_phone'             => $application->employer_contact_person_phone ?? null,
+                ]);
+            }
 
             // Transfer documents from application to tenant documents
             $documentMap = [
