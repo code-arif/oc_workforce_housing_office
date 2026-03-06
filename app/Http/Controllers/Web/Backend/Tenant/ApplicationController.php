@@ -339,7 +339,7 @@ class ApplicationController extends Controller
            $token = Str::random(64);
            $applicationToken = DB::table('application_tokens')->updateOrInsert(
                 ['email' => $request->email],
-                ['token' => $token, 'created_at' => now(), 'updated_at' => now()]
+                ['token' => $token, 'expires_at' => now()->addHours(24), 'created_at' => now(), 'updated_at' => now()]
             );
 
             // Send form link email

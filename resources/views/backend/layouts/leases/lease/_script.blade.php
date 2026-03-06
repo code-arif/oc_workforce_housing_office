@@ -901,7 +901,7 @@
                                 data-email="${tenant.email || ''}"
                                 data-phone="${tenant.phone || ''}"
                                 data-status="${tenant.status || 'active'}">
-                                ${tenant.first_name} ${tenant.last_name}
+                                ${tenant.first_name} ${tenant.last_name} - ${tenant.email}
                             </option>`;
                         });
                     }

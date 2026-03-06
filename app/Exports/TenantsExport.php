@@ -87,6 +87,11 @@ class TenantsExport implements
             });
         }
 
+        // Apply tab filter (under_review)
+        if (!empty($this->filters['tab']) && $this->filters['tab'] === 'under_review') {
+            $query->whereIn('status', ['pending', 'processing', 'under_review']);
+        }
+
         return $query->get();
     }
 
