@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\Backend\Lease\LeaseManageController;
 use App\Http\Controllers\Web\Backend\AmenityController;
 use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
@@ -9,6 +8,7 @@ use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
 use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
 use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomePageHousingOptionController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomeVideoController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
@@ -174,8 +174,8 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Home Hero Section
     Route::post('/home/hero/update', [HomePageController::class, 'update'])->name('home.hero.section.update');
 
-    // Home housing option section
-    Route::post('/home/housing-option/update', [HomePageController::class, 'housingOptionupdate'])->name('home.housing.option.section.update');
+    // Home who we are section
+    Route::post('/home/who-we-are/update', [HomePageController::class, 'whoWeAreUpdate'])->name('home.who.we.are.section.update');
 
     // Slider Management Routes
     Route::prefix('home/slider')->name('slider.')->group(function () {
@@ -184,6 +184,14 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::post('/{id}/status', [HomePageSliderController::class, 'updateStatus'])->name('status');
         Route::delete('/{id}', [HomePageSliderController::class, 'destroy'])->name('destroy');
         Route::post('/update-order', [HomePageSliderController::class, 'updateOrder'])->name('updateOrder');
+    });
+
+    Route::prefix('home/housing-option')->name('housing.option.')->group(function () {
+        // Accordion CRUD
+        Route::post('/accordion/store',[HomePageHousingOptionController::class, 'storeAccordion'])->name('accordion.store');
+        Route::post('/accordion/update/{id}',[HomePageHousingOptionController::class, 'updateAccordion'])->name('accordion.update');
+        Route::delete('/accordion/{id}',[HomePageHousingOptionController::class, 'destroyAccordion'])->name('accordion.destroy');
+        Route::post('/accordion/update-order',[HomePageHousingOptionController::class, 'updateOrder'])->name('accordion.updateOrder');
     });
 
     // Video Section Routes

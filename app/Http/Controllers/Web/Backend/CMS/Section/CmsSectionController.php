@@ -64,9 +64,23 @@ class CmsSectionController extends Controller
                     $data = CMS::where('page', 'home')
                         ->where('section', 'housing-options')
                         ->where('name', 'item')
+                        ->first();   // ← must be ->first(), NOT ->get()
+
+                    $accordions = CMS::where('page', 'home')
+                        ->where('section', 'housing-options')
+                        ->where('name', 'accordion')
+                        ->get();
+
+                    return view('backend.layouts.cms.home.housing-option', compact('data', 'accordions'))->render();
+
+                    // who we are.
+                case 'who-we-are':
+                    $data = CMS::where('page', 'home')
+                        ->where('section', 'who-we-are')
+                        ->where('name', 'item')
                         ->first();
 
-                    return view('backend.layouts.cms.home.housing-option', compact('data'))->render();
+                    return view('backend.layouts.cms.home.who-we-are', compact('data'))->render();
 
 
                     // home page how it works section
