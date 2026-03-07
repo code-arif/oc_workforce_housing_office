@@ -43,6 +43,7 @@ class TenentApplicationRequest extends FormRequest
             'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:20',
+            'gender' => 'nullable|string|max:20',
             'country_of_origin' => 'nullable|string|max:100',
             'date_of_birth' => 'required|date|before:today',
 

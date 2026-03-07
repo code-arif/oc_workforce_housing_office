@@ -43,6 +43,7 @@ class TenantFormController extends Controller
                 'last_name' => $request->last_name ?? null,
                 'email' => $request->email ?? null,
                 'phone' => $request->phone ?? null,
+                'gender' => $request->gender ?? null,
                 'country_of_origin' => $request->country_of_origin ?? null,
                 'date_of_birth' => $request->date_of_birth ?? null,
                 'arrival_date' => $request->arrival_date ?? null,

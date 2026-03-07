@@ -16,6 +16,7 @@ class Application extends Model
         'last_name',
         'email',
         'phone',
+        'gender',
         'country_of_origin',
         'date_of_birth',
         'arrival_date',
