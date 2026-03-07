@@ -933,7 +933,7 @@
                                         </div>
                                         <div class="text-muted small">
                                             Created At: ${formatDate(invite.created_at)} <br>
-                                            Expire At: ${formatDate(invite.expires_at)}
+                                            Expire At: <span class="text-danger"> ${formatDate(invite.expires_at)}</span>
                                         </div>
                                     </li>
                                 `).join('')}
