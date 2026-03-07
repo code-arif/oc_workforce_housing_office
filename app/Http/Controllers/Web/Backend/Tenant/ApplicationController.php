@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Backend\Tenant;
 use App\Http\Controllers\Controller;
 use App\Mail\TenantApplication\TenantFormLinkMail;
 use App\Models\Application;
+use App\Models\ReservationRequest;
 use App\Models\Tenant;
 use App\Models\TenantAddress;
 use App\Models\TenantDocument;
@@ -131,6 +132,114 @@ class ApplicationController extends Controller
                         }
                     
 
+                    $btn .= '</div>';
+                    return $btn;
+                })
+                ->rawColumns(['applicant', 'contact', 'details', 'status_badge', 'submitted_at', 'action'])
+                ->make(true);
+        }
+
+        return abort(404);
+    }
+
+    public function getReservationData(Request $request)
+    {
+        if ($request->ajax() && $request->wantsJson()) {
+
+            $query = ReservationRequest::query()
+                ->select(['reservation_requests.*'])
+                ->orderBy('reservation_requests.id', 'desc');
+
+            // Status filter
+            if ($request->filled('status')) {
+                $query->where('reservation_requests.status', $request->status);
+            }
+
+            // Search filter
+            if ($request->filled('search')) {
+                $keyword = $request->search;
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('company_name', 'like', "%{$keyword}%")
+                        ->orWhere('email', 'like', "%{$keyword}%")
+                        ->orWhere('first_name', 'like', "%{$keyword}%")
+                        ->orWhere('last_name', 'like', "%{$keyword}%")
+                        ->orWhere('phone', 'like', "%{$keyword}%")
+                        ->orWhere('industry', 'like', "%{$keyword}%");
+                });
+            }
+
+            // Date range filter
+            if ($request->filled('date_from')) {
+                $query->whereDate('reservation_requests.created_at', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->whereDate('reservation_requests.created_at', '<=', $request->date_to);
+            }
+
+            return DataTables::eloquent($query)
+                ->addIndexColumn()
+                ->addColumn('applicant', function ($data) {
+                    $contactPerson = trim(($data->first_name ?? '') . ' ' . ($data->last_name ?? ''));
+                    return '<div>
+                                <div class="fw-semibold">' . e($data->company_name) . '</div>
+                                <small class="text-muted">' . ($contactPerson ? e($contactPerson) : 'No contact name') . '</small>
+                            </div>';
+                })
+                ->addColumn('contact', function ($data) {
+                    return '<div>
+                                <div>' . e($data->email ?? 'No email') . '</div>
+                                <small class="text-muted">' . e($data->phone ?? 'No phone') . '</small>
+                            </div>';
+                })
+                ->addColumn('details', function ($data) {
+                    $industry = $data->industry ? '<span class="badge bg-secondary me-1">' . e($data->industry) . '</span>' : '';
+                    $empCount = $data->employee_count ? '<small class="text-muted"><i class="fe fe-users me-1"></i>' . e($data->employee_count) . ' employees</small>' : '';
+                    return '<div>' . $industry . ($empCount ? '<br>' . $empCount : '') . '</div>';
+                })
+                ->addColumn('status_badge', function ($data) {
+                    $statusColors = [
+                        'pending'   => 'warning',
+                        'contacted' => 'info',
+                        'accepted'  => 'success',
+                        'declined'  => 'danger',
+                    ];
+                    $color = $statusColors[$data->status] ?? 'secondary';
+                    return '<span class="badge p-2 bg-' . $color . '">' . e(ucfirst($data->status)) . '</span>';
+                })
+                ->addColumn('submitted_at', function ($data) {
+                    return '<div>
+                                <div>' . $data->created_at->format('M d, Y') . '</div>
+                                <small class="text-muted">' . $data->created_at->format('h:i A') . '</small>
+                            </div>';
+                })
+                ->addColumn('action', function ($data) {
+                    $btn = '<div class="d-flex gap-1">';
+
+                    // View button — always visible
+                    $btn .= '<button type="button" onclick="seeReservation(' . $data->id . ')"
+                                class="btn btn-sm btn-info d-inline-flex align-items-center" title="View Details">
+                                <i class="fe fe-eye"></i>
+                            </button>';
+
+                    // Status update dropdown
+                    $btn .= '<div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                    data-bs-toggle="dropdown" title="Update Status">
+                                    <i class="fe fe-settings"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">';
+
+                    $statuses = ['pending' => 'warning', 'contacted' => 'info', 'accepted' => 'success', 'declined' => 'danger'];
+                    foreach ($statuses as $status => $color) {
+                        $activeClass = $data->status === $status ? ' fw-bold' : '';
+                        $btn .= '<li><a class="dropdown-item' . $activeClass . '" href="#"
+                                    onclick="updateReservationStatus(' . $data->id . ', \'' . $status . '\'); return false;">
+                                    <span class="badge bg-' . $color . ' me-1">&nbsp;</span>' . ucfirst($status) .
+                                    ($data->status === $status ? ' <i class="fe fe-check ms-1"></i>' : '') .
+                                '</a></li>';
+                    }
+
+                    $btn .= '</ul></div>';
                     $btn .= '</div>';
                     return $btn;
                 })
@@ -293,6 +402,47 @@ class ApplicationController extends Controller
     }
 
     /**
+     * Show reservation request details
+     */
+    public function showReservation(Request $request, $id)
+    {
+        $reservation = ReservationRequest::findOrFail($id);
+
+        if ($request->ajax()) {
+            return response()->json($reservation);
+        }
+
+        return abort(404);
+    }
+
+    /**
+     * Update reservation request status
+     */
+    public function updateReservationStatus(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,contacted,accepted,declined',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Invalid status value.'], 422);
+        }
+
+        try {
+            $reservation = ReservationRequest::findOrFail($id);
+            $reservation->status = $request->status;
+            $reservation->save();
+
+            return response()->json([
+                'message' => 'Status updated to ' . ucfirst($request->status) . ' successfully.',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Reservation status update failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to update status.'], 500);
+        }
+    }
+
+    /**
      * Admin manually invites a tenant by email
      */
     public function sendInvitation(Request $request)
@@ -311,35 +461,11 @@ class ApplicationController extends Controller
         try {
             DB::beginTransaction();
 
-            // // Check if already applied
-            // $existingApplication = Application::where('email', $request->email)
-            //     ->whereNull('company_name')
-            //     ->whereNull('reservation_item')
-            //     ->first();
-
-            // // Create application record if not exists
-            // if (!$existingApplication) {
-            //     Application::create([
-            //         'email'  => $request->email,
-            //         'status' => 'approved',
-            //     ]);
-            // } else {
-            //     $existingApplication->update(['status' => 'approved']);
-            // }
-
-            // // Create tenant
-            // $tenant = Tenant::create([
-            //     'email'              => $request->email,
-            //     'status'             => 'approved',
-            //     'password'           => Hash::make(Str::random(16)),
-            //     'application_source' => 'admin',
-            // ]);
-
             // Generate approval token
            $token = Str::random(64);
            $applicationToken = DB::table('application_tokens')->updateOrInsert(
                 ['email' => $request->email],
-                ['token' => $token, 'created_at' => now(), 'updated_at' => now()]
+                ['token' => $token, 'expires_at' => now()->addHours(24), 'created_at' => now(), 'updated_at' => now()]
             );
 
             // Send form link email
@@ -364,5 +490,14 @@ class ApplicationController extends Controller
                 'message' => 'Failed to send invitation: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getInvitationData(Request $request)
+    {
+        $invitations = DB::table('application_tokens')->get();
+        return response()->json([
+            'success' => true,
+            'data' => $invitations,
+        ]);
     }
 }

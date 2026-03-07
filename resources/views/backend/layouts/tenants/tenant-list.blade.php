@@ -89,6 +89,24 @@
                     </div>
                 </div>
 
+                <!-- TABS -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="all-tenants-tab" data-tab="all" href="#" role="tab">
+                                    <i class="fe fe-users me-2"></i>All Tenants
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="under-review-tab" data-tab="under_review" href="#" role="tab">
+                                    <i class="fe fe-clock me-2"></i>Under Review
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- FILTERS -->
                 <div class="row">
                     <div class="col-12">
@@ -244,6 +262,7 @@
     <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
     <script>
         let dataTable;
+        let currentTab = 'all';
 
         $(document).ready(function() {
             $.ajaxSetup({
@@ -260,7 +279,27 @@
 
             initializeDataTable();
             initializeSelect2();
+            initializeTabs();
         });
+
+        // Handle tab switching
+        function initializeTabs() {
+            $('.nav-link[data-tab]').on('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                $('.nav-link[data-tab]').removeClass('active');
+                
+                // Add active class to clicked tab
+                $(this).addClass('active');
+                
+                // Update current tab
+                currentTab = $(this).data('tab');
+                
+                // Reload table with new filter
+                dataTable.ajax.reload();
+            });
+        }
 
         function initializeDataTable() {
             if ($.fn.DataTable.isDataTable('#datatable')) {
@@ -297,6 +336,7 @@
                         d.source = $('#sourceFilter').val();
                         d.date_from = $('#dateFrom').val();
                         d.date_to = $('#dateTo').val();
+                        d.tab = currentTab; // Add current tab to filter
                     }
                 },
                 columns: [{
@@ -562,6 +602,7 @@
                 source: $('#sourceFilter').val() || '',
                 date_from: $('#dateFrom').val() || '',
                 date_to: $('#dateTo').val() || '',
+                tab: currentTab || 'all',
             });
 
             // Remove empty params
@@ -642,6 +683,33 @@
     <style>
         .select2-container {
             width: 100% !important;
+        }
+
+        /* Tab Styles */
+        .nav-tabs-custom {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 0;
+        }
+
+        .nav-tabs-custom .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #D9A600;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            background: transparent
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            color: #D9A600;
+            border-color: transparent;
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            color: #ffffff !important;
+            border-bottom-color: #D9A600 !important;
+            background: var(--primary-bg-color);;
         }
 
         .filter-card {

@@ -21,6 +21,7 @@ class ReservationRequest extends Model
         'job_title',
         'reservation_item',
         'notes',
+        'status',
     ];
 
     protected $casts = [

@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('job_title')->nullable();
             $table->json('reservation_item')->nullable();
             $table->text('notes')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('status', ['pending', 'contacted', 'accepted', 'declined'])->default('pending');
             $table->timestamps();
         });
     }
