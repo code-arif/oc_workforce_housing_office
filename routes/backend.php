@@ -301,6 +301,7 @@ Route::group([], function () {
     // Get DataTables data (supports type: single | reservation)
     Route::get('/applications/data', [ApplicationController::class, 'getData'])->name('tenants.applications.get.data');
     Route::get('/applications/reservation/data', [ApplicationController::class, 'getReservationData'])->name('tenants.applications.get.reservation.data');
+    Route::get('/applications/invitations', [ApplicationController::class, 'getInvitationData'])->name('tenants.applications.invitations');
 
     // View specific application details
     Route::get('/applications/{id}', [ApplicationController::class, 'show'])->name('tenants.applications.show');

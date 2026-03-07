@@ -491,4 +491,13 @@ class ApplicationController extends Controller
             ], 500);
         }
     }
+
+    public function getInvitationData(Request $request)
+    {
+        $invitations = DB::table('application_tokens')->get();
+        return response()->json([
+            'success' => true,
+            'data' => $invitations,
+        ]);
+    }
 }
