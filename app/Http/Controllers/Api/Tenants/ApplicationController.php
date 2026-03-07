@@ -177,8 +177,8 @@ class ApplicationController extends Controller
 
             // Send mail to admin for review
             try {
-                Mail::to(config('mail.admin_email'))
-                    ->queue(new ReservationReceivedAdminMail($application));
+                // Mail::to(config('mail.admin_email'))
+                //     ->queue(new ReservationReceivedAdminMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
             }
@@ -188,8 +188,8 @@ class ApplicationController extends Controller
 
             // Send confirmation mail to applicant
             try {
-                Mail::to($application->email)
-                    ->queue(new ReservationSubmittedConfirmationMail($application));
+                // Mail::to($application->email)
+                //     ->queue(new ReservationSubmittedConfirmationMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send confirmation email to applicant: ' . $mailError->getMessage());
             }

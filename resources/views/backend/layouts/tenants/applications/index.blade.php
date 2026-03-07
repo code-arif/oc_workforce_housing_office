@@ -228,8 +228,9 @@
                                                 <select class="form-select" id="reservationStatusFilter">
                                                     <option value="">All Status</option>
                                                     <option value="pending">Pending</option>
-                                                    <option value="approved">Approved</option>
-                                                    <option value="rejected">Rejected</option>
+                                                    <option value="contacted">Contacted</option>
+                                                    <option value="accepted">Accepted</option>
+                                                    <option value="declined">Declined</option>
                                                 </select>
                                             </div>
                                             <div class="col-md-3">
@@ -317,6 +318,17 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fe fe-x me-1"></i>Close
                     </button>
+                    <div class="dropdown me-auto">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="reservationStatusDropdown" data-bs-toggle="dropdown">
+                            <i class="fe fe-settings me-1"></i>Update Status
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'pending'); return false;"><span class="badge bg-warning me-2">&nbsp;</span>Pending</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'contacted'); return false;"><span class="badge bg-info me-2">&nbsp;</span>Contacted</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'accepted'); return false;"><span class="badge bg-success me-2">&nbsp;</span>Accepted</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'declined'); return false;"><span class="badge bg-danger me-2">&nbsp;</span>Declined</a></li>
+                        </ul>
+                    </div>
                     <button type="button" class="btn btn-primary" id="contactApplicantBtn">
                         <i class="fe fe-mail me-1"></i>Contact Applicant
                     </button>
@@ -463,6 +475,78 @@
                 }
             });
 
+            // Initialize Reservation Table
+            reservationTable = $('#reservationTable').DataTable({
+                processing: true,
+                serverSide: true,
+                autoWidth: false,
+                scrollX: false,
+                ajax: {
+                    url: '{{ route('tenants.applications.get.reservation.data') }}',
+                    data: function(d) {
+                        d.type = 'reservation';
+                        d.status = $('#reservationStatusFilter').val();
+                        d.search = $('#reservationSearchFilter').val();
+                        d.date_from = $('#reservationDateFrom').val();
+                        d.date_to = $('#reservationDateTo').val();
+                    }
+                },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false,
+                        width: '50px'
+                    },
+                    {
+                        data: 'applicant',
+                        name: 'company_name',
+                        orderable: true
+                    },
+                    {
+                        data: 'contact',
+                        name: 'email',
+                        orderable: true
+                    },
+                    {
+                        data: 'details',
+                        name: 'details',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'status_badge',
+                        name: 'status',
+                        orderable: true,
+                        className: 'text-center',
+                        width: '120px'
+                    },
+                    {
+                        data: 'submitted_at',
+                        name: 'created_at',
+                        orderable: true,
+                        width: '150px'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center',
+                        width: '120px'
+                    }
+                ],
+                order: [
+                    [0, 'desc']
+                ],
+                pageLength: 25,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search...",
+                }
+            });
+
+
             
             // Single Email Filters
             $('#singleStatusFilter').on('change', function() {
@@ -484,6 +568,10 @@
 
             $('#single').on('shown.bs.tab', function() {
                 singleEmailTable.columns.adjust().responsive.recalc();
+            });
+
+            $('#reservation-tab').on('shown.bs.tab', function() {
+                reservationTable.columns.adjust().draw(false);
             });
 
             
@@ -904,14 +992,25 @@
             }
         }
 
+        let currentReservationId = null;
+
         // View Reservation Details
         function seeReservation(id) {
-            // Show modal
-            $('#reservationModal').modal('show');
+            currentReservationId = id;
 
-            // Load reservation details
+            // Show modal with loading state
+            $('#reservationModal').modal('show');
+            $('#reservationDetails').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `);
+
+            // Load reservation details from dedicated endpoint
             $.ajax({
-                url: `/admin/applications/${id}`,
+                url: `/admin/reservation-requests/${id}`,
                 type: 'GET',
                 success: function(response) {
                     displayReservationDetails(response);
@@ -1055,10 +1154,42 @@
 
             $('#reservationDetails').html(html);
 
-            // Update contact button with application data
+            // Update contact button
             $('#contactApplicantBtn').off('click').on('click', function() {
-                // Store application ID for the contact route
-                window.location.href = `/admin/applications/${application.id}/contact`;
+                window.location.href = `mailto:${application.email}`;
+            });
+        }
+
+        // Update Reservation Status
+        function updateReservationStatus(id, status) {
+            $.ajax({
+                url: `/admin/reservation-requests/${id}/status`,
+                type: 'POST',
+                data: {
+                    status: status,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Status Updated!',
+                        text: response.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    reservationTable.ajax.reload(false);
+                    // Refresh modal if still open
+                    if ($('#reservationModal').hasClass('show') && currentReservationId === id) {
+                        seeReservation(id);
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: xhr.responseJSON?.message || 'Failed to update status.'
+                    });
+                }
             });
         }
 
