@@ -75,6 +75,7 @@ class HomePageController extends Controller
      **/
     public function whoWeAreUpdate(CmsRequest $request)
     {
+        dd($request->all());
         try {
             $validated_data = $request->validated();
 
