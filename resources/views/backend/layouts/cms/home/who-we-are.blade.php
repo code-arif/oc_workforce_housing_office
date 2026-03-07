@@ -41,16 +41,16 @@
 
                     {{-- Sub title section --}}
                     <div class="form-group mb-3">
-                        <label for="who_we_are_sub_title" class="form-label">Sub Title</label>
-                        <input type="text" class="form-control" name="sub_title" id="who_we_are_sub_title"
+                        <label for="sub_title" class="form-label">Sub Title</label>
+                        <input type="text" class="form-control" name="sub_title" id="sub_title"
                             placeholder="Enter sub title" value="{{ $data->sub_title ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
 
                     {{-- Sub description --}}
                     <div class="form-group mb-3">
-                        <label for="who_we_are_sub_description" class="form-label">Sub Description</label>
-                        <input type="text" class="form-control" name="sub_description" id="who_we_are_sub_description"
+                        <label for="sub_description" class="form-label">Sub Description</label>
+                        <input type="text" class="form-control" name="sub_description" id="sub_description"
                             placeholder="Enter sub description" value="{{ $data->sub_description ?? '' }}">
                         <div class="invalid-feedback"></div>
                     </div>
