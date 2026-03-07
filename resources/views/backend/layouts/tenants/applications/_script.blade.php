@@ -382,6 +382,12 @@
                                     <strong>${data.company_name}</strong>
                                 </div>
                             ` : 'N/A    '}
+                             ${data.job_title ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Job Title</small>
+                                    <strong>${data.job_title}</strong>
+                                </div>
+                            ` : 'N/A    '}
                             ${data.employer_contact_person_name ? `
                                 <div class="col-md-6 mb-3">
                                     <small class="text-muted d-block">Contact Person</small>
@@ -433,10 +439,6 @@
                                 <strong>${application.sponsor_name || 'N/A'}</strong>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <small class="text-muted d-block">Relationship</small>
-                                <strong>${application.sponsor_relationship || 'N/A'}</strong>
-                            </div>
-                            <div class="col-md-6 mb-3">
                                 <small class="text-muted d-block">Phone</small>
                                 <strong>${application.sponsor_phone || 'N/A'}</strong>
                             </div>
@@ -444,7 +446,7 @@
                                 <small class="text-muted d-block">Email</small>
                                 <strong>${application.sponsor_email || 'N/A'}</strong>
                             </div>
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <small class="text-muted d-block">Address</small>
                                 <strong>${[
                                     application.sponsor_city,
@@ -488,9 +490,18 @@
                                 <small class="text-muted d-block">Date of Birth</small>
                                 <strong>${formatDate(application.date_of_birth)}</strong>
                             </div>
+
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Gender</small>
+                                <strong>${application.gender || 'N/A'}</strong>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <small class="text-muted d-block">Country of Origin</small>
                                 <strong>${application.country_of_origin || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Interested in Property</small>
+                                <strong class="badge bg-info p-3">${application.property.name || 'N/A'}</strong>
                             </div>
                         </div>
                     </div>

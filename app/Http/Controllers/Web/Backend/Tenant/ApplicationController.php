@@ -390,7 +390,7 @@ class ApplicationController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $application = Application::findOrFail($id);
+        $application = Application::with(['property'])->findOrFail($id);
 
         // If AJAX request, return JSON
         if ($request->ajax()) {
