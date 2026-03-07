@@ -142,10 +142,10 @@ class TenantPasswordController extends Controller
             }
 
             // 🔹 Check approval status
-            if ($tenant->status !== 'approved') {
+            if ($tenant->status == 'approved') {
                 return $this->error([
                     'status' => $tenant->status
-                ], 'Your application is not approved yet.', 400);
+                ], 'Your application is already approved.', 400);
             }
 
             // 🔹 Set password & activate account
@@ -154,6 +154,7 @@ class TenantPasswordController extends Controller
             // 🔹 Invalidate token (one-time use)
             $tenant->approval_token = null;
             $tenant->approval_token_expires_at = null;
+            $tenant->status = 'approved'; // Change status to approved after password set
 
             $tenant->save();
 

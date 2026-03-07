@@ -7,6 +7,7 @@ use App\Mail\TenantApplication\ReservationReceivedAdminMail;
 use App\Mail\TenantApplication\ReservationSubmittedConfirmationMail;
 use App\Mail\TenantApplication\TenantFormLinkMail;
 use App\Models\Application;
+use App\Models\ReservationRequest;
 use App\Models\Tenant;
 use App\Traits\ApiResponse;
 use Exception;
@@ -142,7 +143,7 @@ class ApplicationController extends Controller
             DB::beginTransaction();
 
             // Check if company already has pending application
-            $existingApplication = Application::where('company_name', $request->company_name)
+            $existingApplication = ReservationRequest::where('company_name', $request->company_name)
                 ->where('email', $request->email)
                 ->where('status', 'pending')
                 ->first();
@@ -152,7 +153,7 @@ class ApplicationController extends Controller
             }
 
             // Create reservation application
-            $application = Application::create([
+            $application = ReservationRequest::create([
                 'status' => 'pending',
 
                 // Contact person
@@ -176,8 +177,8 @@ class ApplicationController extends Controller
 
             // Send mail to admin for review
             try {
-                Mail::to(config('mail.admin_email'))
-                    ->queue(new ReservationReceivedAdminMail($application));
+                // Mail::to(config('mail.admin_email'))
+                //     ->queue(new ReservationReceivedAdminMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
             }
@@ -187,8 +188,8 @@ class ApplicationController extends Controller
 
             // Send confirmation mail to applicant
             try {
-                Mail::to($application->email)
-                    ->queue(new ReservationSubmittedConfirmationMail($application));
+                // Mail::to($application->email)
+                //     ->queue(new ReservationSubmittedConfirmationMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send confirmation email to applicant: ' . $mailError->getMessage());
             }

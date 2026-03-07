@@ -308,9 +308,15 @@ Route::group([], function () {
 
     // Get DataTables data (supports type: single | reservation)
     Route::get('/applications/data', [ApplicationController::class, 'getData'])->name('tenants.applications.get.data');
+    Route::get('/applications/reservation/data', [ApplicationController::class, 'getReservationData'])->name('tenants.applications.get.reservation.data');
+    Route::get('/applications/invitations', [ApplicationController::class, 'getInvitationData'])->name('tenants.applications.invitations');
 
     // View specific application details
     Route::get('/applications/{id}', [ApplicationController::class, 'show'])->name('tenants.applications.show');
+
+    // Reservation request detail & status update
+    Route::get('/reservation-requests/{id}', [ApplicationController::class, 'showReservation'])->name('tenants.reservation.show');
+    Route::post('/reservation-requests/{id}/status', [ApplicationController::class, 'updateReservationStatus'])->name('tenants.reservation.update.status');
 
     // Approve single email application
     Route::post('/applications/{id}/approve-single', [ApplicationController::class, 'approveSingleEmail'])->name('tenants.applications.approve.single');

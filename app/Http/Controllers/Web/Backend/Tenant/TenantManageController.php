@@ -88,6 +88,17 @@ class TenantManageController extends Controller
                 $query->where('tenants.status', $request->status);
             }
 
+            // Tab-based filtering
+            if ($request->filled('tab')) {
+                if ($request->tab === 'under_review') {
+                    // Show only tenants under review (pending, processing, under_review)
+                    $query->whereIn('tenants.status', ['pending', 'processing', 'under_review']);
+                }elseif ($request->tab === 'all') {
+                    $query->whereIn('tenants.status', ['approved']);
+                }
+                // For 'all' tab, no additional filtering needed
+            }
+
             // Application source filter
             if ($request->filled('source')) {
                 $query->where('tenants.application_source', $request->source);
@@ -627,6 +638,7 @@ class TenantManageController extends Controller
     {
         try {
             $tenants = Tenant::where('status', 'approved')
+                ->orWhere('status', 'under_review')
                 ->with('profile:id,tenant_id,first_name,last_name,phone')
                 ->orderBy('created_at', 'desc')
                 ->get()
@@ -732,6 +744,7 @@ class TenantManageController extends Controller
             'date_to',
             'tenant',
             'source',
+            'tab',
         ]);
 
         $filename = 'tenants_' . now()->format('Y_m_d_His') . '.xlsx';
