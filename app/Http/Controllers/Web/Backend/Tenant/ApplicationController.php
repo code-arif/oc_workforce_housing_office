@@ -281,6 +281,7 @@ class ApplicationController extends Controller
                 'arrival_date'       => $application->arrival_date,
                 'move_in_date'     => $application->departure_date,
                 'password'           => Hash::make($application->application_number),
+                'gender'             => $application->gender ?? null,
             ]);
 
             // Create tenant profile from application data
