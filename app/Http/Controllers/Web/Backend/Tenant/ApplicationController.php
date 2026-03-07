@@ -311,30 +311,6 @@ class ApplicationController extends Controller
         try {
             DB::beginTransaction();
 
-            // // Check if already applied
-            // $existingApplication = Application::where('email', $request->email)
-            //     ->whereNull('company_name')
-            //     ->whereNull('reservation_item')
-            //     ->first();
-
-            // // Create application record if not exists
-            // if (!$existingApplication) {
-            //     Application::create([
-            //         'email'  => $request->email,
-            //         'status' => 'approved',
-            //     ]);
-            // } else {
-            //     $existingApplication->update(['status' => 'approved']);
-            // }
-
-            // // Create tenant
-            // $tenant = Tenant::create([
-            //     'email'              => $request->email,
-            //     'status'             => 'approved',
-            //     'password'           => Hash::make(Str::random(16)),
-            //     'application_source' => 'admin',
-            // ]);
-
             // Generate approval token
            $token = Str::random(64);
            $applicationToken = DB::table('application_tokens')->updateOrInsert(

@@ -7,6 +7,7 @@ use App\Mail\TenantApplication\ReservationReceivedAdminMail;
 use App\Mail\TenantApplication\ReservationSubmittedConfirmationMail;
 use App\Mail\TenantApplication\TenantFormLinkMail;
 use App\Models\Application;
+use App\Models\ReservationRequest;
 use App\Models\Tenant;
 use App\Traits\ApiResponse;
 use Exception;
@@ -142,7 +143,7 @@ class ApplicationController extends Controller
             DB::beginTransaction();
 
             // Check if company already has pending application
-            $existingApplication = Application::where('company_name', $request->company_name)
+            $existingApplication = ReservationRequest::where('company_name', $request->company_name)
                 ->where('email', $request->email)
                 ->where('status', 'pending')
                 ->first();
@@ -152,7 +153,7 @@ class ApplicationController extends Controller
             }
 
             // Create reservation application
-            $application = Application::create([
+            $application = ReservationRequest::create([
                 'status' => 'pending',
 
                 // Contact person

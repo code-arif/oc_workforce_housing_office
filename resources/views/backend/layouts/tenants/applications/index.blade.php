@@ -481,6 +481,12 @@
             $('#reservationSearchFilter').on('keyup', debounce(function() {
                 reservationTable.ajax.reload();
             }, 500));
+
+            $('#single').on('shown.bs.tab', function() {
+                singleEmailTable.columns.adjust().responsive.recalc();
+            });
+
+            
         });
 
         // Debounce function
@@ -691,43 +697,49 @@
             let employerHtml = '';
             if (application.employer_info && Object.keys(application.employer_info).length > 0) {
                 const employer = application.employer_info;
+                console.log(employer);
+                employer.forEach(data => {
+                    employerinfo = `
+                        <div class="row">
+                            ${data.company_name ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Company Name</small>
+                                    <strong>${data.company_name}</strong>
+                                </div>
+                            ` : 'N/A    '}
+                            ${data.employer_contact_person_name ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Contact Person</small>
+                                    <strong>${data.employer_contact_person_name}</strong>
+                                </div>
+                            ` : ''}
+                            ${data.employer_contact_person_phone ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Phone</small>
+                                    <strong>${data.employer_contact_person_phone}</strong>
+                                </div>
+                            ` : ''}
+                            ${data.employer_contact_person_email ? `
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Email</small>
+                                    <strong>${data.employer_contact_person_email}</strong>
+                                </div>
+                            ` : ''}
+                            ${data.company_address ? `
+                                <div class="col-md-12 mb-3">
+                                    <small class="text-muted d-block">Address</small>
+                                    <strong>${data.company_address}</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
                 employerHtml = `
                     <div class="mb-4">
                         <h6 class="border-bottom pb-2 mb-3">
                             <i class="fe fe-briefcase text-info me-2"></i>Employer Information
                         </h6>
-                        <div class="row">
-                            ${employer.company_name ? `
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Company Name</small>
-                                    <strong>${employer.company_name}</strong>
-                                </div>
-                            ` : ''}
-                            ${employer.contact_person ? `
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Contact Person</small>
-                                    <strong>${employer.contact_person}</strong>
-                                </div>
-                            ` : ''}
-                            ${employer.phone ? `
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Phone</small>
-                                    <strong>${employer.phone}</strong>
-                                </div>
-                            ` : ''}
-                            ${employer.email ? `
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Email</small>
-                                    <strong>${employer.email}</strong>
-                                </div>
-                            ` : ''}
-                            ${employer.address ? `
-                                <div class="col-md-12 mb-3">
-                                    <small class="text-muted d-block">Address</small>
-                                    <strong>${employer.address}</strong>
-                                </div>
-                            ` : ''}
-                        </div>
+                        ${employerinfo}
                     </div>
                 `;
             }
