@@ -33,6 +33,29 @@ class CmsController extends Controller
 
         $housingOptions = CMS::where('page', 'home')
             ->where('section', 'housing-options')
+            ->where('name', 'accordion')
+            ->orderBy('order', 'asc')
+            ->get()
+            ->map(function ($item) {
+                $cards = collect($item->metadata['cards'] ?? [])->map(function ($card) {
+                    return [
+                        'image'         => $card['image'] ? asset($card['image']) : null,
+                        'price'         => $card['price'],
+                        'property_type' => $card['property_type'],
+                    ];
+                });
+
+                return [
+                    'id'          => $item->id,
+                    'title'       => $item->title,
+                    'order'       => $item->order,
+                    'bottom_text' => $item->metadata['bottom_text'] ?? '',
+                    'cards'       => $cards,
+                ];
+            });
+
+        $whoWeAre = CMS::where('page', 'home')
+            ->where('section', 'who-we-are')
             ->where('name', 'item')
             ->get();
 
@@ -77,7 +100,8 @@ class CmsController extends Controller
             'home' => [
                 'hero' => CMSResource::collection($hero),
                 'sliders' => SliderResource::collection($sliders),
-                'housing_options' => CMSResource::collection($housingOptions),
+                'housing_options' => $housingOptions,
+                'who_we_are' => CMSResource::collection($whoWeAre),
                 'how_it_works' => CMSResource::collection($howItWorks),
                 'how_it_works_item' => CMSResource::collection($howItWorksItem),
                 'employee_and_sponsor' => CMSResource::collection($employeeAndSponsor),
@@ -276,7 +300,8 @@ class CmsController extends Controller
     /**
      * Navigation data
      */
-    public function navigation(){
+    public function navigation()
+    {
         $navigation = Setting::first();
         return $this->success($navigation, 'Topbar data retrieved successfully');
     }
