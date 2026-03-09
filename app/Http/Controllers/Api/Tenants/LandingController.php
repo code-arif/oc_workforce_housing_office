@@ -26,8 +26,10 @@ class LandingController extends Controller
     {
         try {
             $properties = DB::table('properties')
+                ->whereNull('deleted_at')
                 ->select('id', 'name')
                 ->where('is_active', true)
+                ->orderBy('name')
                 ->get();
 
             return $this->success($properties, 'Properties retrieved successfully');
