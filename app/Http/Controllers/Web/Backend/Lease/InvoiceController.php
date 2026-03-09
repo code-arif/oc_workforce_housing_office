@@ -7,6 +7,8 @@ use App\Models\Lease;
 use App\Models\Payment;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use App\Models\Item;
+use App\Models\InvoiceItem;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +25,7 @@ class InvoiceController extends Controller
             'lease.property', 
             'lease.tenant.profile', 
             'lease.assignments.bed',
+            'items.item',
             'payments' => function($query) {
                 $query->orderBy('payment_date', 'desc');
             }
@@ -59,6 +62,11 @@ class InvoiceController extends Controller
             $canMakePayment = !$previousInvoice || $previousInvoice->status === 'PAID' || $invoice->type == 'ITEM_SALE';
         }
 
+        // Payment blocked on CANCELLED invoices
+        if ($invoice->status === 'CANCELLED') {
+            $canMakePayment = false;
+        }
+
         // Calculate totals - use stored values if available
         $totalDue = $invoice->total_amount;
         
@@ -72,7 +80,10 @@ class InvoiceController extends Controller
 
         $totalPaid = $invoice->paid_amount ?? $invoice->payments->sum('amount');
         $balanceDue = $invoice->balance_due ?? ($totalDue - $totalPaid);
-        // dd($depositInvoice);
+
+        // Items list for edit modal (ITEM_SALE invoices)
+        $availableItems = Item::where('status', true)->get();
+
         return view('backend.layouts.leases.invoice.show', compact(
             'invoice', 
             'lease', 
@@ -81,69 +92,150 @@ class InvoiceController extends Controller
             'totalDue',
             'totalPaid',
             'balanceDue',
-            'depositInvoice'
+            'depositInvoice',
+            'availableItems'
         ));
     }
 
     /**
-     * Update the specified invoice.
+     * Update the specified invoice (amounts, due date, notes, line items).
      */
     public function update(Request $request, $id)
     {
         $request->validate([
-            'amount' => 'sometimes|numeric|min:0',
-            'due_date' => 'sometimes|date',
-            'notes' => 'nullable|string',
-            'status' => 'sometimes|in:UNPAID,PARTIAL,PAID,OVERDUE,CANCELLED',
+            'amount'               => 'sometimes|numeric|min:0',
+            'due_date'             => 'sometimes|date',
+            'notes'                => 'nullable|string|max:2000',
+            'items'                => 'sometimes|array|min:1',
+            'items.*.item_id'      => 'nullable|exists:items,id',
+            'items.*.item_name'    => 'required_with:items|string|max:255',
+            'items.*.description'  => 'nullable|string|max:1000',
+            'items.*.quantity'     => 'required_with:items|integer|min:1',
+            'items.*.rate'         => 'required_with:items|numeric|min:0',
         ]);
 
+        DB::beginTransaction();
         try {
-            $invoice = Invoice::findOrFail($id);
-            
-            $updateData = [];
-            
-            if ($request->has('amount')) {
-                $updateData['amount'] = $request->amount;
-                // Recalculate total if amount changes
-                $lease = $invoice->lease;
-                $isFirstInvoice = $invoice->is_first_invoice;
-                
-                $totalAmount = $request->amount;
-                if ($isFirstInvoice && $invoice->includes_deposit && !$lease->deposit_collected) {
-                    $totalAmount += $lease->deposit_amount;
-                }
-                $updateData['total_amount'] = $totalAmount;
-                $updateData['balance_due'] = $totalAmount - $invoice->paid_amount;
+            $invoice = Invoice::with(['items', 'lease'])->findOrFail($id);
+
+            if ($invoice->status === 'CANCELLED') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot edit a cancelled/voided invoice.',
+                ], 422);
             }
-            
-            if ($request->has('due_date')) {
+
+            $lease       = $invoice->lease;
+            $updateData  = [];
+            $changeLog   = [];
+
+            // ── Due date ─────────────────────────────────────────────────────────
+            if ($request->filled('due_date') && $request->due_date !== $invoice->due_date->format('Y-m-d')) {
+                $changeLog['due_date'] = ['from' => $invoice->due_date->format('Y-m-d'), 'to' => $request->due_date];
                 $updateData['due_date'] = $request->due_date;
             }
-            
+
+            // ── Notes ────────────────────────────────────────────────────────────
             if ($request->has('notes')) {
                 $updateData['notes'] = $request->notes;
             }
-            
-            if ($request->has('status')) {
-                $updateData['status'] = $request->status;
-                if ($request->status === 'PAID') {
-                    $updateData['paid_at'] = now();
+
+            // ── Line-item recalculation (ITEM_SALE invoices) ─────────────────────
+            if ($invoice->type === 'ITEM_SALE' && $request->has('items')) {
+                $invoice->items()->delete();
+
+                $newTotal = 0;
+                foreach ($request->items as $itemData) {
+                    $lineAmount = (int) $itemData['quantity'] * (float) $itemData['rate'];
+                    $newTotal  += $lineAmount;
+
+                    InvoiceItem::create([
+                        'invoice_id'  => $invoice->id,
+                        'item_id'     => $itemData['item_id'] ?? null,
+                        'item_name'   => $itemData['item_name'],
+                        'description' => $itemData['description'] ?? null,
+                        'quantity'    => (int) $itemData['quantity'],
+                        'rate'        => (float) $itemData['rate'],
+                        'amount'      => $lineAmount,
+                    ]);
+                }
+
+                $changeLog['total_amount'] = ['from' => $invoice->total_amount, 'to' => $newTotal];
+                $updateData['amount']      = $newTotal;
+                $updateData['total_amount'] = $newTotal;
+                $updateData['balance_due'] = max(0, $newTotal - ($invoice->paid_amount ?? 0));
+
+            // ── Amount adjustment (non-ITEM_SALE invoices) ───────────────────────
+            } elseif ($request->filled('amount') && $invoice->type !== 'ITEM_SALE') {
+                $newAmount = (float) $request->amount;
+                $newTotal  = $newAmount;
+
+                // Preserve deposit component for first invoices
+                if ($invoice->is_first_invoice && $invoice->includes_deposit && !$lease->deposit_collected) {
+                    $newTotal += (float) $lease->deposit_amount;
+                }
+
+                $changeLog['amount']       = ['from' => $invoice->amount,       'to' => $newAmount];
+                $changeLog['total_amount'] = ['from' => $invoice->total_amount, 'to' => $newTotal];
+
+                $updateData['amount']       = $newAmount;
+                $updateData['total_amount'] = $newTotal;
+                $updateData['balance_due']  = max(0, $newTotal - ($invoice->paid_amount ?? 0));
+            }
+
+            // ── Recalculate status when balance/amounts changed ───────────────────
+            if (isset($updateData['balance_due'])) {
+                $paid = $invoice->paid_amount ?? 0;
+                if ($updateData['balance_due'] <= 0 && $paid > 0) {
+                    $updateData['status']  = 'PAID';
+                    $updateData['paid_at'] = $invoice->paid_at ?? now();
+                } elseif ($paid > 0) {
+                    $updateData['status'] = 'PARTIAL';
+                } else {
+                    $checkDate = $updateData['due_date'] ?? $invoice->due_date->format('Y-m-d');
+                    $updateData['status'] = (strtotime($checkDate) < time()) ? 'OVERDUE' : 'UNPAID';
                 }
             }
 
             $invoice->update($updateData);
 
+            // ── Audit transaction ─────────────────────────────────────────────────
+            if (!empty($changeLog)) {
+                $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+                Transaction::create([
+                    'tenant_id'          => $invoice->tenant_id,
+                    'bed_id'             => $bedId,
+                    'lease_id'           => $invoice->lease_id,
+                    'invoice_id'         => $invoice->id,
+                    'transaction_number' => $this->generateTransactionNumber(),
+                    'type'               => 'adjustment',
+                    'entry_type'         => 'debit',
+                    'amount'             => $invoice->fresh()->total_amount,
+                    'transaction_date'   => now()->toDateString(),
+                    'description'        => 'Invoice ' . $invoice->invoice_number . ' edited by admin',
+                    'notes'              => 'Fields changed: ' . implode(', ', array_keys($changeLog)),
+                    'metadata'           => [
+                        'updated_by' => auth()->id(),
+                        'updated_at' => now()->toISOString(),
+                        'changes'    => $changeLog,
+                    ],
+                ]);
+            }
+
+            DB::commit();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Invoice updated successfully.',
-                'invoice' => $invoice->fresh()
+                'invoice' => $invoice->fresh()->load('items.item'),
             ]);
+
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Failed to update invoice: ' . $e->getMessage());
-            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update invoice.'
+                'message' => 'Failed to update invoice: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -404,53 +496,106 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Cancel an invoice.
+     * Cancel / void an invoice.
+     * Works regardless of payment status — creates a full audit trail.
      */
-    public function cancel($id)
+    public function cancel(Request $request, $id)
     {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        DB::beginTransaction();
         try {
-            $invoice = Invoice::findOrFail($id);
-            
-            // Don't allow cancellation if payments have been made
-            if ($invoice->paid_amount > 0) {
+            $invoice = Invoice::with(['lease.assignments', 'payments'])->findOrFail($id);
+
+            if ($invoice->status === 'CANCELLED') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot cancel an invoice that has payments. Please refund payments first.'
+                    'message' => 'Invoice is already cancelled/voided.',
                 ], 422);
             }
 
+            $previousStatus = $invoice->status;
+            $bedId = $invoice->lease->assignments()->where('is_current', true)->value('bed_id');
+            $now   = now();
+
+            // ── Mark invoice as CANCELLED with audit fields ────────────────────
             $invoice->update([
-                'status' => 'CANCELLED',
+                'status'            => 'CANCELLED',
+                'cancelled_reason'  => $request->reason,
+                'cancelled_by'      => auth()->id(),
+                'cancelled_at'      => $now,
             ]);
 
-            // Create transaction record for cancellation
+            // ── Audit transaction 1: void the outstanding balance ──────────────
             Transaction::create([
-                'tenant_id' => $invoice->tenant_id,
-                'bed_id' => $invoice->lease->bed_id,
-                'lease_id' => $invoice->lease_id,
-                'invoice_id' => $invoice->id,
+                'tenant_id'          => $invoice->tenant_id,
+                'bed_id'             => $bedId,
+                'lease_id'           => $invoice->lease_id,
+                'invoice_id'         => $invoice->id,
                 'transaction_number' => $this->generateTransactionNumber(),
-                'type' => 'adjustment',
-                'entry_type' => 'credit', // Removes the debt
-                'amount' => $invoice->total_amount,
-                'transaction_date' => now(),
-                'description' => 'Invoice ' . $invoice->invoice_number . ' cancelled',
-                'metadata' => [
-                    'cancelled_by' => auth()->id(),
-                    'cancelled_at' => now()->toISOString(),
-                ]
+                'type'               => 'adjustment',
+                'entry_type'         => 'credit',
+                'amount'             => $invoice->balance_due,
+                'transaction_date'   => $now->toDateString(),
+                'description'        => 'Invoice ' . $invoice->invoice_number . ' voided — outstanding balance written off',
+                'notes'              => $request->reason,
+                'metadata'           => [
+                    'voided_by'                   => auth()->id(),
+                    'voided_at'                   => $now->toISOString(),
+                    'previous_status'             => $previousStatus,
+                    'paid_amount_at_cancellation' => $invoice->paid_amount,
+                    'balance_at_cancellation'     => $invoice->balance_due,
+                ],
             ]);
+
+            // ── Audit transaction 2: note any already-collected payments ───────
+            if ((float) $invoice->paid_amount > 0) {
+                Transaction::create([
+                    'tenant_id'          => $invoice->tenant_id,
+                    'bed_id'             => $bedId,
+                    'lease_id'           => $invoice->lease_id,
+                    'invoice_id'         => $invoice->id,
+                    'transaction_number' => $this->generateTransactionNumber(),
+                    'type'               => 'reversal',
+                    'entry_type'         => 'debit',
+                    'amount'             => $invoice->paid_amount,
+                    'transaction_date'   => $now->toDateString(),
+                    'description'        => 'Audit: Invoice ' . $invoice->invoice_number . ' voided with $'
+                                            . number_format($invoice->paid_amount, 2) . ' in existing payments — manual refund required if applicable',
+                    'notes'              => $request->reason,
+                    'metadata'           => [
+                        'voided_by'      => auth()->id(),
+                        'voided_at'      => $now->toISOString(),
+                        'payment_count'  => $invoice->payments->count(),
+                        'total_paid'     => $invoice->paid_amount,
+                        'requires_refund_review' => true,
+                    ],
+                ]);
+            }
+
+            DB::commit();
+
+            $message = 'Invoice voided successfully.';
+            if ((float) $invoice->paid_amount > 0) {
+                $message .= ' Note: $' . number_format($invoice->paid_amount, 2)
+                    . ' in payments were recorded on this invoice — please review refunds if applicable.';
+            }
 
             return response()->json([
-                'success' => true,
-                'message' => 'Invoice cancelled successfully.'
+                'success'      => true,
+                'message'      => $message,
+                'had_payments' => (float) $invoice->paid_amount > 0,
+                'paid_amount'  => $invoice->paid_amount,
             ]);
+
         } catch (\Exception $e) {
-            Log::error('Failed to cancel invoice: ' . $e->getMessage());
-            
+            DB::rollBack();
+            Log::error('Failed to void invoice: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to cancel invoice.'
+                'message' => 'Failed to void invoice.',
             ], 500);
         }
     }

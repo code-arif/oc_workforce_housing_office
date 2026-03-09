@@ -33,6 +33,14 @@
                         <a href="{{ route('invoices.download.pdf', $invoice->id) }}" class="btn btn-outline-primary">
                             <i class="fe fe-download me-2"></i>Download PDF
                         </a>
+                        @if($invoice->status !== 'CANCELLED')
+                        <button class="btn btn-outline-warning" onclick="showEditForm()" title="Edit invoice details">
+                            <i class="fe fe-edit me-2"></i>Edit Invoice
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="showVoidModal()" title="Void / Cancel this invoice">
+                            <i class="fe fe-slash me-2"></i>Void Invoice
+                        </button>
+                        @endif
                         @if($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED' && $canMakePayment)
                         <button class="btn btn-success" onclick="showPaymentForm()">
                             <i class="fe fe-dollar-sign me-2"></i>Make Payment
@@ -64,6 +72,10 @@
                                     @elseif($invoice->status == 'PARTIAL')
                                         <span class="status-badge paid">
                                             <i class="fe fe-credit-card me-1"></i> Partially Paid
+                                        </span>
+                                    @elseif($invoice->status == 'CANCELLED')
+                                        <span class="status-badge cancelled">
+                                            <i class="fe fe-slash me-1"></i> Voided
                                         </span>
                                     @elseif($invoice->isOverdue())
                                         <span class="status-badge overdue">
@@ -114,8 +126,25 @@
                                         <span class="text-success">{{ date('M d, Y', strtotime($invoice->paid_at)) }}</span>
                                     </div>
                                     @endif
+                                    @if($invoice->cancelled_at)
+                                    <div class="date-row">
+                                        <label>Voided On</label>
+                                        <span class="text-danger">{{ date('M d, Y', strtotime($invoice->cancelled_at)) }}</span>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
+
+                            @if($invoice->status === 'CANCELLED')
+                            <!-- Voided Banner -->
+                            <div class="voided-banner">
+                                <i class="fe fe-slash me-2"></i>
+                                <strong>This invoice has been VOIDED</strong>
+                                @if($invoice->cancelled_reason)
+                                <span class="ms-2 text-muted">— Reason: {{ $invoice->cancelled_reason }}</span>
+                                @endif
+                            </div>
+                            @endif
 
                             <!-- Lease Info Banner -->
                             <div class="lease-info-banner">
@@ -453,6 +482,228 @@
             </div>
         </div>
     </div>
+
+    {{-- ════════════════════════════════════════════════════════════
+         EDIT INVOICE MODAL
+    ════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-labelledby="editInvoiceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editInvoiceModalLabel">
+                        <i class="fe fe-edit me-2 text-warning"></i>Edit Invoice {{ $invoice->invoice_number }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editInvoiceForm">
+                        @csrf
+
+                        {{-- Due Date --}}
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Due Date <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control datepicker2" id="edit_due_date" name="due_date"
+                                    value="{{ $invoice->due_date->format('Y-m-d') }}" required>
+                            </div>
+                            @if($invoice->type !== 'ITEM_SALE')
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    Base Amount ($)
+                                    @if($invoice->is_first_invoice && $invoice->includes_deposit)
+                                    <small class="text-muted">(excl. deposit)</small>
+                                    @endif
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="edit_amount" name="amount"
+                                        value="{{ $invoice->amount }}" min="0" step="0.01">
+                                </div>
+                                @if($invoice->is_first_invoice && $invoice->includes_deposit)
+                                <div class="form-text">
+                                    Deposit (${{ number_format($lease->deposit_amount ?? 0, 2) }}) will be
+                                    {{ $lease->deposit_collected ? 'excluded — already collected' : 'added automatically to total' }}.
+                                </div>
+                                @endif
+                            </div>
+                            @endif
+                        </div>
+
+                        {{-- Notes --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Notes / Internal Memo</label>
+                            <textarea class="form-control" id="edit_notes" name="notes" rows="3"
+                                placeholder="Add internal notes (optional)">{{ $invoice->notes }}</textarea>
+                        </div>
+
+                        @if($invoice->type === 'ITEM_SALE')
+                        {{-- Line Items Editor --}}
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Line Items</label>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm" id="editItemsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width:28%">Item</th>
+                                            <th style="width:28%">Description</th>
+                                            <th style="width:12%" class="text-center">Qty</th>
+                                            <th style="width:14%" class="text-center">Rate ($)</th>
+                                            <th style="width:12%" class="text-center">Amount</th>
+                                            <th style="width:6%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="editItemsBody">
+                                        @foreach($invoice->items as $idx => $invItem)
+                                        <tr class="edit-item-row">
+                                            <td>
+                                                <select class="form-select form-select-sm edit-item-select" name="items[{{ $idx }}][item_id]">
+                                                    <option value="">Custom / Manual</option>
+                                                    @foreach($availableItems as $avItem)
+                                                    <option value="{{ $avItem->id }}"
+                                                        data-name="{{ $avItem->name }}"
+                                                        data-price="{{ $avItem->price }}"
+                                                        {{ $invItem->item_id == $avItem->id ? 'selected' : '' }}>
+                                                        {{ $avItem->name }}
+                                                    </option>
+                                                    @endforeach
+                                                </select>
+                                                <input type="hidden" class="edit-item-name" name="items[{{ $idx }}][item_name]" value="{{ $invItem->item_name }}">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    name="items[{{ $idx }}][description]" value="{{ $invItem->description }}" placeholder="Description">
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm text-center edit-item-qty"
+                                                    name="items[{{ $idx }}][quantity]" value="{{ $invItem->quantity }}" min="1" required>
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm text-end edit-item-rate"
+                                                    name="items[{{ $idx }}][rate]" value="{{ $invItem->rate }}" min="0" step="0.01" required>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <span class="edit-item-amount fw-bold">${{ number_format($invItem->amount, 2) }}</span>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <button type="button" class="btn btn-sm btn-outline-danger remove-edit-row" title="Remove">
+                                                    <i class="fe fe-trash-2"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="4" class="text-end fw-bold">New Total:</td>
+                                            <td class="text-center fw-bold text-primary" id="editItemsTotal">
+                                                ${{ number_format($invoice->total_amount, 2) }}
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="addEditItemBtn">
+                                <i class="fe fe-plus me-1"></i> Add Line Item
+                            </button>
+                        </div>
+                        @endif
+
+                        {{-- Live summary for non ITEM_SALE --}}
+                        @if($invoice->type !== 'ITEM_SALE')
+                        <div class="alert alert-secondary py-2" id="editAmountSummary">
+                            <div class="d-flex justify-content-between small">
+                                <span>Base Amount:</span>
+                                <strong id="summaryBase">${{ number_format($invoice->amount, 2) }}</strong>
+                            </div>
+                            @if($invoice->is_first_invoice && $invoice->includes_deposit && !$lease->deposit_collected)
+                            <div class="d-flex justify-content-between small">
+                                <span>Security Deposit (auto-added):</span>
+                                <strong>${{ number_format($lease->deposit_amount ?? 0, 2) }}</strong>
+                            </div>
+                            @endif
+                            <div class="d-flex justify-content-between small">
+                                <span>Already Paid:</span>
+                                <strong class="text-success">${{ number_format($invoice->paid_amount ?? 0, 2) }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold border-top pt-1 mt-1">
+                                <span>New Balance Due:</span>
+                                <strong class="text-danger" id="summaryBalance">$0.00</strong>
+                            </div>
+                        </div>
+                        @endif
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-warning" id="saveEditBtn" onclick="submitEditInvoice()">
+                        <i class="fe fe-save me-1"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ════════════════════════════════════════════════════════════
+         VOID / CANCEL INVOICE MODAL
+    ════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="voidInvoiceModal" tabindex="-1" aria-labelledby="voidInvoiceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="voidInvoiceModalLabel">
+                        <i class="fe fe-alert-triangle me-2"></i>Void / Cancel Invoice
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong><i class="fe fe-alert-circle me-1"></i>Warning:</strong>
+                        Voiding an invoice is <strong>permanent</strong>. No further payments will be accepted.
+                        An audit record will be created for accounting history.
+                    </div>
+
+                    @if(($invoice->paid_amount ?? 0) > 0)
+                    <div class="alert alert-danger">
+                        <strong><i class="fe fe-dollar-sign me-1"></i>Payments Exist!</strong>
+                        This invoice has <strong>${{ number_format($invoice->paid_amount, 2) }}</strong> in recorded payments.
+                        Voiding will <strong>not</strong> automatically refund these payments.
+                        A reversal record will be created in the audit trail — please process any refunds manually.
+                    </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Reason for Voiding <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="voidReason" rows="3" maxlength="500"
+                            placeholder="Enter the reason this invoice is being voided (required)..."></textarea>
+                        <div class="form-text">This reason will be stored in the audit trail, max 500 characters.</div>
+                    </div>
+
+                    <div class="mb-0">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Invoice: <strong>{{ $invoice->invoice_number }}</strong></span>
+                            <span>Total: <strong>${{ number_format($invoice->total_amount, 2) }}</strong></span>
+                            <span>Status: <strong>{{ $invoice->status }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmVoidBtn" onclick="submitVoidInvoice()">
+                        <i class="fe fe-slash me-2"></i>Confirm Void Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -541,7 +792,239 @@
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
         updateRemainingBalance();
+        initEditModal();
     });
+
+    // ═══════════════════════════════════════════════════════════
+    // EDIT INVOICE
+    // ═══════════════════════════════════════════════════════════
+
+    function showEditForm() {
+        $('#editInvoiceModal').modal('show');
+    }
+
+    function initEditModal() {
+        // Live balance recalculation for non-ITEM_SALE invoices
+        const amountInput = document.getElementById('edit_amount');
+        if (amountInput) {
+            amountInput.addEventListener('input', recalcEditSummary);
+            recalcEditSummary(); // initial
+        }
+
+        // Line item events (ITEM_SALE)
+        bindEditItemEvents();
+
+        // Add item row button
+        const addBtn = document.getElementById('addEditItemBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', addEditItemRow);
+        }
+    }
+
+    function recalcEditSummary() {
+        const amountInput = document.getElementById('edit_amount');
+        if (!amountInput) return;
+
+        const base       = parseFloat(amountInput.value) || 0;
+        const deposit    = {{ ($invoice->is_first_invoice && $invoice->includes_deposit && !$lease->deposit_collected) ? ($lease->deposit_amount ?? 0) : 0 }};
+        const paid       = {{ $invoice->paid_amount ?? 0 }};
+        const newTotal   = base + deposit;
+        const newBalance = Math.max(0, newTotal - paid);
+
+        const summaryBase = document.getElementById('summaryBase');
+        const summaryBalance = document.getElementById('summaryBalance');
+        if (summaryBase) summaryBase.textContent = '$' + base.toFixed(2);
+        if (summaryBalance) summaryBalance.textContent = '$' + newBalance.toFixed(2);
+    }
+
+    // ── ITEM_SALE line items ─────────────────────────────────────
+
+    function bindEditItemEvents() {
+        document.querySelectorAll('#editItemsBody .edit-item-qty, #editItemsBody .edit-item-rate').forEach(input => {
+            input.addEventListener('input', recalcEditItems);
+        });
+        document.querySelectorAll('#editItemsBody .edit-item-select').forEach(sel => {
+            sel.addEventListener('change', function() {
+                const row   = this.closest('tr');
+                const opt   = this.options[this.selectedIndex];
+                const name  = opt.dataset.name || '';
+                const price = parseFloat(opt.dataset.price) || 0;
+                row.querySelector('.edit-item-name').value = name;
+                if (price > 0) row.querySelector('.edit-item-rate').value = price.toFixed(2);
+                recalcEditItems();
+            });
+        });
+        document.querySelectorAll('#editItemsBody .remove-edit-row').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (document.querySelectorAll('#editItemsBody .edit-item-row').length <= 1) {
+                    toastr.warning('At least one line item is required.');
+                    return;
+                }
+                this.closest('tr').remove();
+                reindexEditRows();
+                recalcEditItems();
+            });
+        });
+    }
+
+    function addEditItemRow() {
+        const tbody = document.getElementById('editItemsBody');
+        const idx   = tbody.querySelectorAll('.edit-item-row').length;
+        const availableItems = @json($availableItems->map(fn($i) => ['id' => $i->id, 'name' => $i->name, 'price' => $i->price]));
+
+        let opts = '<option value="">Custom / Manual</option>';
+        availableItems.forEach(i => {
+            opts += `<option value="${i.id}" data-name="${i.name}" data-price="${i.price}">${i.name}</option>`;
+        });
+
+        const row = document.createElement('tr');
+        row.className = 'edit-item-row';
+        row.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm edit-item-select" name="items[${idx}][item_id]">${opts}</select>
+                <input type="hidden" class="edit-item-name" name="items[${idx}][item_name]" value="Custom">
+            </td>
+            <td><input type="text" class="form-control form-control-sm" name="items[${idx}][description]" placeholder="Description"></td>
+            <td><input type="number" class="form-control form-control-sm text-center edit-item-qty" name="items[${idx}][quantity]" value="1" min="1" required></td>
+            <td><input type="number" class="form-control form-control-sm text-end edit-item-rate" name="items[${idx}][rate]" value="0" min="0" step="0.01" required></td>
+            <td class="text-center align-middle"><span class="edit-item-amount fw-bold">$0.00</span></td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-edit-row" title="Remove">
+                    <i class="fe fe-trash-2"></i>
+                </button>
+            </td>`;
+        tbody.appendChild(row);
+        bindEditItemEvents();
+    }
+
+    function reindexEditRows() {
+        document.querySelectorAll('#editItemsBody .edit-item-row').forEach((row, i) => {
+            row.querySelectorAll('[name]').forEach(el => {
+                el.name = el.name.replace(/items\[\d+\]/, `items[${i}]`);
+            });
+        });
+    }
+
+    function recalcEditItems() {
+        let total = 0;
+        document.querySelectorAll('#editItemsBody .edit-item-row').forEach(row => {
+            const qty  = parseFloat(row.querySelector('.edit-item-qty').value)  || 0;
+            const rate = parseFloat(row.querySelector('.edit-item-rate').value) || 0;
+            const amt  = qty * rate;
+            total += amt;
+            row.querySelector('.edit-item-amount').textContent = '$' + amt.toFixed(2);
+        });
+        const totalEl = document.getElementById('editItemsTotal');
+        if (totalEl) totalEl.textContent = '$' + total.toFixed(2);
+    }
+
+    function submitEditInvoice() {
+        const form = document.getElementById('editInvoiceForm');
+        const dueDate = document.getElementById('edit_due_date').value;
+
+        if (!dueDate) {
+            toastr.error('Due date is required.');
+            return;
+        }
+
+        // Validate line-items if ITEM_SALE
+        @if($invoice->type === 'ITEM_SALE')
+        const rows = document.querySelectorAll('#editItemsBody .edit-item-row');
+        if (rows.length === 0) {
+            toastr.error('At least one line item is required.');
+            return;
+        }
+        let itemsValid = true;
+        rows.forEach(row => {
+            const name = row.querySelector('.edit-item-name').value;
+            const qty  = parseFloat(row.querySelector('.edit-item-qty').value);
+            const rate = parseFloat(row.querySelector('.edit-item-rate').value);
+            if (!name || qty < 1 || rate < 0) itemsValid = false;
+        });
+        if (!itemsValid) {
+            toastr.error('Please fill all line item fields correctly.');
+            return;
+        }
+        @endif
+
+        const saveBtn = document.getElementById('saveEditBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving…';
+
+        const formData = new FormData(form);
+        // Laravel PUT requires _method spoofing via FormData for multipart
+        formData.append('_method', 'PUT');
+
+        $.ajax({
+            url: '{{ route('invoices.update', $invoice->id) }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message || 'Invoice updated successfully.');
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    toastr.error(res.message || 'Failed to update invoice.');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fe fe-save me-1"></i>Save Changes';
+                }
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message || 'Failed to update invoice.';
+                toastr.error(msg);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fe fe-save me-1"></i>Save Changes';
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // VOID INVOICE
+    // ═══════════════════════════════════════════════════════════
+
+    function showVoidModal() {
+        document.getElementById('voidReason').value = '';
+        $('#voidInvoiceModal').modal('show');
+    }
+
+    function submitVoidInvoice() {
+        const reason = document.getElementById('voidReason').value.trim();
+        if (!reason) {
+            toastr.error('A reason is required to void this invoice.');
+            document.getElementById('voidReason').focus();
+            return;
+        }
+
+        const confirmBtn = document.getElementById('confirmVoidBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
+
+        $.ajax({
+            url: '{{ route('invoices.cancel', $invoice->id) }}',
+            type: 'POST',
+            data: { reason: reason, _token: '{{ csrf_token() }}' },
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message || 'Invoice voided successfully.');
+                    $('#voidInvoiceModal').modal('hide');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    toastr.error(res.message || 'Failed to void invoice.');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="fe fe-slash me-2"></i>Confirm Void Invoice';
+                }
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message || 'Failed to void invoice.';
+                toastr.error(msg);
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fe fe-slash me-2"></i>Confirm Void Invoice';
+            }
+        });
+    }
 </script>
 @endpush
 
@@ -608,6 +1091,25 @@
     .status-badge.overdue {
         background: rgba(244, 67, 54, 0.2);
         color: #ef9a9a;
+    }
+
+    .status-badge.cancelled {
+        background: rgba(108, 117, 125, 0.2);
+        color: #adb5bd;
+        text-decoration: line-through;
+    }
+
+    /* Voided invoice banner */
+    .voided-banner {
+        background: #fff3cd;
+        border: 2px dashed #dc3545;
+        color: #842029;
+        padding: 14px 30px;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
     }
 
     /* Invoice Info Grid */

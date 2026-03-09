@@ -207,6 +207,7 @@
                         </li>
                         <li><a href="{{ route('social.profile.index') }}" class="slide-item {{ request()->routeIs('social.profile.*') ? 'active' : '' }}">Social Profile</a></li>
                         <li><a href="{{ route('setting.mail-templates.index') }}" class="slide-item {{ request()->routeIs('setting.mail-templates.*') ? 'active' : '' }}">Mail Templates</a></li>
+                        <li><a href="{{ route('system-monitor.index') }}" class="slide-item {{ request()->routeIs('system-monitor.*') ? 'active' : '' }}">System Monitor</a></li>
                     </ul>
                 </li>
                 @endcan

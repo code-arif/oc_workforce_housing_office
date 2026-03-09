@@ -68,7 +68,7 @@
                     <div class="col-md-2">
                         <div class="card text-center h-100">
                             <div class="card-body">
-                                <h3 class="mb-1">${{ number_format(0, 2) }}</h3>
+                                <h3 class="mb-1">${{ number_format($stats['processing'], 2) }}</h3>
                                 <p class="text-muted mb-0 small">PROCESSING</p>
                             </div>
                         </div>
@@ -211,7 +211,7 @@
                                                 <span class="text-muted">PROCESSING</span>
                                             </div>
                                         </div>
-                                        <h4 class="mb-0 ms-4">$0.00</h4>
+                                        <h4 class="mb-0 ms-4">${{ number_format($stats['processing'], 2) }}</h4>
                                     </div>
 
                                     <div class="stat-item mb-3">
@@ -241,11 +241,15 @@
                                 <div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">TOTAL DUE AMOUNT</span>
-                                        <strong>${{ number_format($stats['unpaid'] + $stats['overdue'] + $stats['partial'], 2) }}</strong>
+                                        <strong>${{ number_format($stats['due_amount'], 2) }}</strong>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span class="text-muted">TOTAL PAID AMOUNT</span>
-                                        <strong>${{ number_format($stats['paid'], 2) }}</strong>
+                                        <strong>${{ number_format($stats['collected_amount'], 2) }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">TOTAL INVOICES</span>
+                                        <strong>{{ number_format($stats['invoice_count']) }}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -391,7 +395,7 @@
             const overdue = {{ $stats['overdue'] }};
             const partial = {{ $stats['partial'] }};
             const paid = {{ $stats['paid'] }};
-            const processing = 0;
+            const processing = {{ $stats['processing'] ?? 0 }};
 
             new Chart(ctx, {
                 type: 'doughnut',
