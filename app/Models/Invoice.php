@@ -27,13 +27,17 @@ class Invoice extends Model
         'recurring_frequency',
         'paid_at',
         'notes',
-        'metadata'
+        'metadata',
+        'cancelled_reason',
+        'cancelled_by',
+        'cancelled_at',
     ];
 
     protected $casts = [
         'issue_date' => 'date',
         'due_date' => 'date',
         'paid_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'metadata' => 'array',
         'is_first_invoice' => 'boolean',
         'is_recurring' => 'boolean',

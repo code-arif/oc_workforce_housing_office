@@ -47,6 +47,7 @@ use App\Http\Controllers\Web\Backend\UnitController;
 use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
 use App\Http\Controllers\Web\Backend\UserManagement\UserController;
+use App\Http\Controllers\Web\Backend\SystemMonitorController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -634,4 +635,25 @@ Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin'])->group
     Route::get('/tenant/data', [TenantReportController::class, 'getData'])->name('tenant.data');
     Route::get('/tenant/export-pdf', [TenantReportController::class, 'exportPdf'])->name('tenant.export.pdf');
     Route::get('/tenant/export-excel', [TenantReportController::class, 'exportExcel'])->name('tenant.export.excel');
+});
+
+// System Monitoring Routes (Superadmin Only)
+Route::prefix('system-monitor')->name('system-monitor.')->group(function () {
+    // Web Views
+    Route::get('/', [SystemMonitorController::class, 'index'])->name('index');
+    Route::get('/health', [SystemMonitorController::class, 'health'])->name('health');
+    Route::get('/resources', [SystemMonitorController::class, 'resources'])->name('resources');
+    Route::get('/database', [SystemMonitorController::class, 'database'])->name('database');
+    Route::get('/applications', [SystemMonitorController::class, 'applications'])->name('applications');
+    Route::get('/activity', [SystemMonitorController::class, 'activity'])->name('activity');
+    Route::get('/security', [SystemMonitorController::class, 'security'])->name('security');
+    Route::get('/errors', [SystemMonitorController::class, 'errors'])->name('errors');
+
+    // API Endpoints (JSON)
+    // Route::get('/api/overview', [SystemMonitorController::class, 'getOverview'])->name('api.overview');
+    // Route::get('/api/health', [SystemMonitorController::class, 'getHealthStatus'])->name('api.health');
+    // Route::get('/api/resources', [SystemMonitorController::class, 'getResources'])->name('api.resources');
+    // Route::get('/api/database', [SystemMonitorController::class, 'getDatabaseInfo'])->name('api.database');
+    // Route::get('/api/stats', [SystemMonitorController::class, 'getApplicationStats'])->name('api.stats');
+    // Route::get('/api/activity', [SystemMonitorController::class, 'getUserActivity'])->name('api.activity');
 });

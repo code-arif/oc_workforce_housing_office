@@ -22,12 +22,26 @@ class IncomeController extends Controller
      */
     public function index(Request $request)
     {
+        // Calculate all invoice statistics accurately
+        $unpaidAmount = Invoice::where('status', 'UNPAID')->sum('balance_due') ?? 0;
+        $overdueAmount = Invoice::overdue()->sum('balance_due') ?? 0;
+        $partialAmount = Invoice::where('status', 'PARTIAL')->sum('balance_due') ?? 0;
+        $paidAmount = Invoice::where('status', 'PAID')->sum('paid_amount') ?? 0;
+        $processingAmount = Invoice::where('status', 'PROCESSING')->sum('balance_due') ?? 0;
+        
+        // Total invoice amount = sum of all total_amount regardless of status
+        $totalInvoiceAmount = Invoice::sum('total_amount') ?? 0;
+
         $stats = [
-            'total' => Invoice::count(),
-            'unpaid' => Invoice::where('status', 'UNPAID')->sum('balance_due'),
-            'overdue' => Invoice::overdue()->sum('balance_due'),
-            'partial' => Invoice::where('status', 'PARTIAL')->sum('balance_due'),
-            'paid' => Invoice::where('status', 'PAID')->sum('paid_amount'),
+            'total' => $totalInvoiceAmount,  // Sum of all invoice total_amount
+            'unpaid' => $unpaidAmount,       // Sum of balance_due for UNPAID status
+            'overdue' => $overdueAmount,     // Sum of balance_due for overdue invoices
+            'partial' => $partialAmount,     // Sum of balance_due for PARTIAL status
+            'paid' => $paidAmount,           // Sum of paid_amount for PAID status
+            'processing' => $processingAmount, // Sum of balance_due for PROCESSING status
+            'invoice_count' => Invoice::count(), // Total number of invoices
+            'due_amount' => $unpaidAmount + $overdueAmount + $partialAmount, // Total amount due
+            'collected_amount' => $paidAmount, // Total collected amount
         ];
 
         $properties = Property::where('is_active', true)->get();
