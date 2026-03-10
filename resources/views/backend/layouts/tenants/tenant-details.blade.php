@@ -66,14 +66,17 @@
                                 </div> --}}
 
                                 <div class="d-flex justify-content-center gap-2 mb-3">
-                                    <span class="badge bg-{{ $tenant->status === 'approved' || $tenant->status === 'active' ? 'success' : ($tenant->status === 'pending' ? 'warning' : 'secondary') }} px-3 py-2">
+                                    <span class="badge bg-{{ $tenant->status === 'approved' || $tenant->status === 'active' ? 'success' : ($tenant->status === 'pending' ? 'warning' : 'secondary') }} px-3 py-3 rounded-pill" >
                                         {{ ucfirst($tenant->status) }}
                                     </span>
                                     @if($activeLease)
-                                        <span class="badge bg-primary px-3 py-2">Active Lease</span>
+                                        <span class="badge bg-primary px-3 py-3 rounded-pill">Active Lease</span>
                                     @endif
                                 </div>
-
+                                <button type="button" class="btn btn-secondary me-2 d-inline-flex align-items-center" title="View application details" id="viewApplicationBtn"
+                                        data-tenant-id="{{ $tenant->id }}" onclick="viewApplicationDetails({{$tenant->application_id}})">
+                                    <i class="fe fe-eye me-1"></i> Open Application
+                                </button>
                                 {{-- Approve/Reject buttons for non-approved tenants --}}
                                 @if(!in_array($tenant->status, ['approved', 'active']))
                                     <div class="d-flex justify-content-center gap-2 mb-3">
@@ -365,14 +368,15 @@
                                         <div class="progress-bar bg-primary" style="width: {{ $progress }}%"></div>
                                     </div>
                                 </div> --}}
-                                <div class="mt-3 d-flex justify-content-between">
-                                    <a href="{{ route('leases.show', $activeLease->id) }}" class="btn btn-primary d-inline-flex align-items-center" title="View lease details">
+                                <div class="mt-3 d-flex justify-content-start">
+                                    <a href="{{ route('leases.show', $activeLease->id) }}" class="btn btn-primary me-2 d-inline-flex align-items-center" title="View lease details">
                                         <i class="fe fe-eye me-1"></i> View Lease Details
                                     </a>
                                     <a href="#" class="btn btn-outline-info me-2 d-inline-flex align-items-center" title="Change bed for the lease" id="changeBedBtn"
                                             data-lease-id="{{ $activeLease->id }}">
                                         <i class="fe fe-edit-3 me-1"></i> Change Bed
                                     </a>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -781,6 +785,43 @@
             </div>
         </div>
     </div>
+
+    <!-- Single Email Application Details Modal -->
+    <div class="modal fade" id="tenantApplication" tabindex="-1" aria-labelledby="tenantApplicationLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="tenantApplicationLabel">
+                        <i class="fe fe-user me-2"></i>Application Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="tenantApplicationDetails">
+                        <!-- Details will be loaded here -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-info" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>Close
+                    </button>
+                    <button type="button" class="btn btn-success d-none" id="approveFromModalBtn">
+                        <i class="fe fe-check me-1"></i>Approve & Send Form
+                    </button>
+                    <button type="button" class="btn btn-danger d-none" id="rejectFromModalBtn">
+                        <i class="fe fe-x me-1"></i>Reject
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -1062,6 +1103,323 @@
             }
         });
     });
+
+            // View Single Email Application Details
+    function viewApplicationDetails(id) {
+        console.log(id);
+        
+        // Show modal
+        $('#tenantApplication').modal('show');
+
+        // Reset modal content to loading state
+        $('#tenantApplicationDetails').html(`
+            <div class="text-center py-4">
+                <div class="spinner-border text-info" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `);
+
+        // Load application details
+        $.ajax({
+            url: `/admin/applications/${id}`,
+            type: 'GET',
+            success: function(response) {
+                displaytenantApplicationDetails(response);
+            },
+            error: function(xhr) {
+                $('#tenantApplicationDetails').html(`
+                    <div class="alert alert-danger">
+                        <i class="fe fe-alert-triangle me-2"></i>
+                        Failed to load application details. Please try again.
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // Display Single Email Application Details in Modal
+    function displaytenantApplicationDetails(application) {
+        // Format dates
+        const formatDate = (dateStr) => {
+            if (!dateStr) return 'N/A';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        };
+
+        // Build document section if documents exist
+        let documentsHtml = '';
+        const hasDocuments = application.passport_copy_url || application.visa_document_url || 
+                            application.front_id_document_url || application.back_id_document_url;
+
+        if (hasDocuments) {
+            documentsHtml = `
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fe fe-file-text text-info me-2"></i>Documents
+                    </h6>
+                    <div class="row">
+                        ${application.passport_copy_url ? `
+                            <div class="col-md-3 mb-3">
+                                <small class="text-muted d-block">Passport Copy</small>
+                                <a href="${application.passport_copy_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fe fe-eye me-1"></i>View
+                                </a>
+                            </div>
+                        ` : ''}
+                        ${application.visa_document_url ? `
+                            <div class="col-md-3 mb-3">
+                                <small class="text-muted d-block">Visa Document</small>
+                                <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fe fe-eye me-1"></i>View
+                                </a>
+                            </div>
+                        ` : ''}
+                        ${application.front_id_document_url ? `
+                            <div class="col-md-3 mb-3">
+                                <small class="text-muted d-block">Front ID</small>
+                                <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fe fe-eye me-1"></i>View
+                                </a>
+                            </div>
+                        ` : ''}
+                        ${application.back_id_document_url ? `
+                            <div class="col-md-3 mb-3">
+                                <small class="text-muted d-block">Back ID</small>
+                                <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="fe fe-eye me-1"></i>View
+                                </a>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Build employer info section if exists
+        let employerHtml = '';
+        if (application.employer_info && Object.keys(application.employer_info).length > 0) {
+            const employer = application.employer_info;
+            console.log(employer);
+            employer.forEach(data => {
+                employerinfo = `
+                    <div class="row">
+                        ${data.company_name ? `
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Company Name</small>
+                                <strong>${data.company_name}</strong>
+                            </div>
+                        ` : 'N/A    '}
+                            ${data.job_title ? `
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Job Title</small>
+                                <strong>${data.job_title}</strong>
+                            </div>
+                        ` : 'N/A    '}
+                        ${data.employer_contact_person_name ? `
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Contact Person</small>
+                                <strong>${data.employer_contact_person_name}</strong>
+                            </div>
+                        ` : ''}
+                        ${data.employer_contact_person_phone ? `
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Phone</small>
+                                <strong>${data.employer_contact_person_phone}</strong>
+                            </div>
+                        ` : ''}
+                        ${data.employer_contact_person_email ? `
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Email</small>
+                                <strong>${data.employer_contact_person_email}</strong>
+                            </div>
+                        ` : ''}
+                        ${data.company_address ? `
+                            <div class="col-md-12 mb-3">
+                                <small class="text-muted d-block">Address</small>
+                                <strong>${data.company_address}</strong>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            employerHtml = `
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fe fe-briefcase text-info me-2"></i>Employer Information
+                    </h6>
+                    ${employerinfo}
+                </div>
+            `;
+        }
+
+        // Build sponsor info section if exists
+        let sponsorHtml = '';
+        if (application.sponsor_name) {
+            sponsorHtml = `
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fe fe-users text-info me-2"></i>Sponsor Information
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Sponsor Name</small>
+                            <strong>${application.sponsor_name || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Phone</small>
+                            <strong>${application.sponsor_phone || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Email</small>
+                            <strong>${application.sponsor_email || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Address</small>
+                            <strong>${[
+                                application.sponsor_city,
+                                application.sponsor_state,
+                                application.sponsor_zipcode,
+                                application.sponsor_country
+                            ].filter(Boolean).join(', ') || 'N/A'}</strong>
+                        </div>
+                        ${application.is_j1_sponsor ? `
+                            <div class="col-md-12 mb-3">
+                                <small class="text-muted d-block">J-1 Sponsor</small>
+                                <span class="badge bg-info">${application.is_j1_sponsor}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        const html = `
+            <div class="application-details">
+                <!-- Personal Information -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fe fe-user text-info me-2"></i>Personal Information
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Full Name</small>
+                            <strong>${[application.first_name, application.middle_name, application.last_name].filter(Boolean).join(' ') || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Email</small>
+                            <strong>${application.email || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Phone</small>
+                            <strong>${application.phone || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Date of Birth</small>
+                            <strong>${formatDate(application.date_of_birth)}</strong>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Gender</small>
+                            <strong>${application.gender || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Country of Origin</small>
+                            <strong>${application.country_of_origin || 'N/A'}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Interested in Property</small>
+                            <strong class="badge bg-info p-3">${application.property.name || 'N/A'}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Information -->
+                <div class="mb-4">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fe fe-calendar text-info me-2"></i>Travel Information
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Arrival Date</small>
+                            <strong>${formatDate(application.arrival_date)}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <small class="text-muted d-block">Departure Date</small>
+                            <strong>${formatDate(application.departure_date)}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                ${documentsHtml}
+                ${employerHtml}
+                ${sponsorHtml}
+
+                <!-- Additional Notes -->
+                ${application.notes ? `
+                    <div class="mb-4">
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-message-square text-info me-2"></i>Additional Notes
+                        </h6>
+                        <div class="alert alert-light border">
+                            ${application.notes}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Application Status -->
+                <div class="mb-3">
+                    <h6 class="border-bottom pb-2 mb-3">
+                        <i class="fe fe-info text-info me-2"></i>Application Status
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-2">
+                            <small class="text-muted d-block">Status</small>
+                            <span class="badge p-2 bg-${application.status === 'pending' ? 'warning' : application.status === 'approved' ? 'success' : 'danger'}">
+                                ${application.status.charAt(0).toUpperCase() + application.status.slice(1).replace('_', ' ')}
+                            </span>
+                        </div>
+                        ${application.application_type ? `
+                            <div class="col-md-4 mb-2">
+                                <small class="text-muted d-block">Application Type</small>
+                                <strong>${application.application_type}</strong>
+                            </div>
+                        ` : ''}
+                        ${application.application_number ? `
+                            <div class="col-md-4 mb-2">
+                                <small class="text-muted d-block">Application Number</small>
+                                <strong>${application.application_number}</strong>
+                            </div>
+                        ` : ''}
+                        <div class="col-md-4 mb-2">
+                            <small class="text-muted d-block">Submitted At</small>
+                            <strong>${new Date(application.created_at).toLocaleString()}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('#tenantApplicationDetails').html(html);
+
+        // Show/hide action buttons based on status
+        if (application.status === 'pending') {
+            $('#approveFromModalBtn').removeClass('d-none').off('click').on('click', function() {
+                $('#tenantApplication').modal('hide');
+                approveSingleEmail(application.id);
+            });
+            $('#rejectFromModalBtn').removeClass('d-none').off('click').on('click', function() {
+                $('#tenantApplication').modal('hide');
+                rejectApplication(application.id);
+            });
+        } else {
+            $('#approveFromModalBtn').addClass('d-none');
+            $('#rejectFromModalBtn').addClass('d-none');
+        }
+    }
 </script>
 
 
