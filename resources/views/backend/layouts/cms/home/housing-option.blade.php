@@ -220,12 +220,11 @@
 
                 <div class="mb-3">
                     <label class="form-label small fw-semibold">
-                        Price / Month <span class="text-danger">*</span>
+                        Price / Bed <span class="text-danger">*</span>
                     </label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">$</span>
-                        <input type="number" class="form-control card-price" placeholder="850" min="0"
-                            step="50">
+                        <input type="number" class="form-control card-price" placeholder="e.g 850" min="0">
                     </div>
                 </div>
 
