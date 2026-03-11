@@ -387,17 +387,20 @@ class LeaseController extends Controller
 
             // if (env('APP_ENV') !== 'production') {
                 $tenant = Tenant::find($tenantId);
-                // Generate approval token
-                $tenant->generateApprovalToken();
-                $tenant->refresh();
-
-                // Password reset URL with token + email as query string
-                $passResetUrl = config('app.frontend_url')
-                  . "/password-setup/"
-                  . $tenant->approval_token
-                  . "?" . http_build_query(['email' => $tenant->email]);
-
-                Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+                if ($tenant->status !== 'approved') {
+                   
+                    // Generate approval token
+                    $tenant->generateApprovalToken();
+                    $tenant->refresh();
+                    
+                    // Password reset URL with token + email as query string
+                    $passResetUrl = config('app.frontend_url')
+                    . "/password-setup/"
+                    . $tenant->approval_token
+                    . "?" . http_build_query(['email' => $tenant->email]);
+                    
+                    Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+                }
             // }
 
             // Send welcome email if enabled

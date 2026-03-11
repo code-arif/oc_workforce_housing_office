@@ -32,7 +32,7 @@
 
 <body class="ltr app sidebar-mini">
 
-    @include('backend.partials.loader')
+    {{-- @include('backend.partials.loader') --}}
 
     <!-- PAGE -->
     <div class="page">

@@ -31,7 +31,7 @@ class TenantWelcomeMail extends Mailable implements ShouldQueue
 
         // Support URL or general info page
         $this->supportUrl = config('app.frontend_url') . '/contact';
-        $this->tenantPortalUrl = config('app.frontend_url') . '/tenant/dashboard';
+        $this->tenantPortalUrl = config('app.frontend_url') . '/dashboard';
     }
 
     /**
