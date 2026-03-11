@@ -747,7 +747,7 @@
             // Rent Summary
             const rentAmount = parseFloat($('#rent_amount').val()) || 0;
             const depositAmount = parseFloat($('#deposit_amount').val()) || 0;
-            $('#finalRentAmount').text(`$${rentAmount.toFixed(2)}/month`);
+            $('#finalRentAmount').text(`$${rentAmount.toFixed(2)}/season`);
             $('#finalDepositAmount').text(`$${depositAmount.toFixed(2)}`);
 
             // Payment Details
@@ -1252,5 +1252,21 @@
             $('#saveDraftBtn').on('click', function() {
                 submitLease(true);
             });
+
+            // Auto-select pre-selected tenant if passed from tenant details page
+            @if(isset($selectedTenant) && $selectedTenant)
+                $('.add-tenant-section').addClass('d-none');
+                let moveInDate = '{{ $selectedTenant->arrival_date }}';
+                $('#actual_move_in').val('{{ $selectedTenant->arrival_date }}');
+                const preSelectedTenant = {
+                    id: {{ $selectedTenant->id }},
+                    first_name: @json($selectedTenant->profile->first_name ?? ''),
+                    last_name: @json($selectedTenant->profile->last_name ?? ''),
+                    email: @json($selectedTenant->email ?? ''),
+                    phone: @json($selectedTenant->profile->phone ?? ''),
+                    status: 'approved'
+                };
+                setTenantForLease(preSelectedTenant);
+            @endif
         });
     </script>

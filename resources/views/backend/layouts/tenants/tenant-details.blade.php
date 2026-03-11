@@ -78,7 +78,7 @@
                                     <i class="fe fe-eye me-1"></i> Open Application
                                 </button>
                                 {{-- Approve/Reject buttons for non-approved tenants --}}
-                                @if(!in_array($tenant->status, ['approved', 'active']))
+                                {{-- @if(!in_array($tenant->status, ['approved', 'active']))
                                     <div class="d-flex justify-content-center gap-2 mb-3">
                                         <button type="button"
                                                 class="btn btn-success btn-sm d-inline-flex align-items-center"
@@ -91,7 +91,7 @@
                                             <i class="fe fe-x me-1"></i> Reject
                                         </button>
                                     </div>
-                                @endif
+                                @endif --}}
 
                             </div>
                             <div class="card-footer bg-light">

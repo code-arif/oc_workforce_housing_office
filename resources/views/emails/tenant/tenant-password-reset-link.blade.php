@@ -4,7 +4,7 @@
     <div class="message-content">
         <p>Dear {{ $tenant->first_name ?? 'Applicant' }},</p>
 
-        <p>We are approve you email and please click the View Application button below for application</p>
+        <p>We approve your application and please click the button below for setup new password for the tenant account.</p>
 
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ $passResetUrl }}" class="action-button"
