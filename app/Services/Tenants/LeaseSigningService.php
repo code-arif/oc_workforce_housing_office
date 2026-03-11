@@ -6,8 +6,11 @@ use Exception;
 use App\Models\Lease;
 use App\Helper\FileUrl;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Lease\LeaseDocument;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\Tenant\LeaseFullySignedMail;
 
 class LeaseSigningService
 {
@@ -90,25 +93,11 @@ class LeaseSigningService
                 ];
             }
 
-            // Store signature (if it's base64, save to storage)
-            // $signaturePath = null;
-            // if ($signatureType === 'digital' && strpos($signature, 'data:image') === 0) {
-            //     // Extract base64 data
-            //     $image = str_replace('data:image/png;base64,', '', $signature);
-            //     $image = str_replace(' ', '+', $image);
-            //     $imageName = 'signatures/tenant_' . $tenantId . '_lease_' . $leaseId . '_' . time() . '.png';
-
-            //     Storage::disk('public')->put($imageName, base64_decode($image));
-            //     $signaturePath = $imageName;
-            // }
-
             // Update document with signature
             $document->update([
                 'tenant_signed_at' => now(),
                 'tenant_signature' => $signature,
                 'tenant_signature_type' => $signatureType,
-                // 'tenant_signature_ip' => $ipAddress,
-                // 'status' => 'pending_admin_signature',
             ]);
 
             // Update lease status
@@ -124,7 +113,19 @@ class LeaseSigningService
                 'status' => $lease->status
             ]);
 
+            $fullySignedNow = $lease->status === 'ACTIVE' && $document->admin_signed_at;
+
             DB::commit();
+
+            // Send notification when both parties have signed
+            if ($fullySignedNow) {
+                try {
+                    $lease->load(['tenant.profile', 'property', 'assignments.bed']);
+                    Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
+                } catch (Exception $e) {
+                    Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+                }
+            }
 
             return [
                 'success' => true,

@@ -10,9 +10,11 @@ use Illuminate\Http\Request;
 use App\Models\Lease\LeaseDocument;
 use App\Models\Lease\LeaseTemplate;
 use App\Http\Controllers\Controller;
+use App\Mail\Tenant\LeaseFullySignedMail;
 use App\Services\DynamicDocumentGenerationService;
 use setasign\Fpdi\Fpdi;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LeaseDocumentController extends Controller
 {
@@ -346,9 +348,16 @@ class LeaseDocumentController extends Controller
             'status' => $document->tenant_signature ? 'signed' : 'pending_signatures'
         ]);
 
-        // If tenant has also signed, mark lease as ACTIVE
+        // If tenant has also signed, mark lease as ACTIVE and notify tenant
         if ($document->tenant_signature) {
             $document->lease->update(['status' => 'ACTIVE']);
+
+            try {
+                $lease = $document->lease->load(['tenant.profile', 'property', 'assignments.bed']);
+                Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
+            } catch (\Exception $e) {
+                Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+            }
         } else {
             $document->lease->update(['status' => 'PENDING_TENANT_SIGN']);
         }
@@ -375,6 +384,13 @@ class LeaseDocumentController extends Controller
 
         if ($document->admin_signature) {
             $document->lease->update(['status' => 'ACTIVE']);
+
+            try {
+                $lease = $document->lease->load(['tenant.profile', 'property', 'assignments.bed']);
+                Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
+            } catch (\Exception $e) {
+                Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+            }
         } else {
             $document->update(['status' => 'pending_signatures']);
             $document->lease->update(['status' => 'PENDING_ADMIN_SIGN']);
