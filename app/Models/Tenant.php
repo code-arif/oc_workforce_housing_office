@@ -233,4 +233,10 @@ class Tenant extends Authenticatable implements JWTSubject
     {
         return $this->hasManyThrough(LeaseDocument::class, Lease::class);
     }
+
+    public function application()
+    {
+        return $this->hasOne(Application::class, 'id', 'application_id');
+    }
+
 }

@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="greeting">
-        🎉 Your Lease Agreement is Fully Executed!
+        Your Lease Agreement is Fully Executed!
     </div>
 
     <div class="message-content">
@@ -31,7 +31,7 @@
         <div style="text-align: center; margin: 35px 0;">
             <a href="{{ $paymentsUrl }}"
                style="display: inline-block; background-color: #ba9779; color: #000000; text-decoration: none; padding: 16px 38px; border-radius: 6px; font-weight: 700; font-size: 17px; box-shadow: 0 4px 12px rgba(186,151,121,0.35);">
-                💳 Pay Your First Invoice
+                Pay Your First Invoice
             </a>
         </div>
 
@@ -43,7 +43,7 @@
         </p>
 
         <div class="highlight-box" style="border-left-color: #000000; margin-top: 10px;">
-            <h3 style="color: #000000; margin-bottom: 12px;">📌 What Happens Next?</h3>
+            <h3 style="color: #000000; margin-bottom: 12px;">What Happens Next?</h3>
             <ul style="margin-left: 20px; margin-top: 8px; line-height: 2;">
                 <li>Log in to your tenant dashboard to view and pay your invoices</li>
                 <li>A copy of your fully signed lease is available for download anytime</li>

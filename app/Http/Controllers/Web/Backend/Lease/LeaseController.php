@@ -228,8 +228,8 @@ class LeaseController extends Controller
                 'tenant_id' => 'exists:tenants,id'
             ]);
              // Pre-select tenant if tenant_id is provided in query string
-             $selectedTenant = Tenant::with('profile:id,tenant_id,first_name,last_name,phone')
-                ->select('id', 'email', 'arrival_date')
+             $selectedTenant = Tenant::with(['profile:id,tenant_id,first_name,last_name,phone', 'application:id,property_id','application.property:id,name'])
+                ->select('id', 'email', 'arrival_date', 'application_id', 'status')
                 ->find($request->input('tenant_id'));
             // dd($selectedTenant);
              if (!$selectedTenant) {

@@ -35,7 +35,7 @@ class LeaseSignatureRequestMail extends Mailable implements ShouldQueue
 
         // Build the API URL for the tenant dashboard (Next.js frontend)
         $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-        $this->signatureUrl = $frontendUrl . '/dashboard/' . $leaseDocument->id;
+        $this->signatureUrl = $frontendUrl . '/dashboard/';
     }
 
     /**
