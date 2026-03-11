@@ -216,11 +216,27 @@ class LeaseController extends Controller
         }
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $selectedTenant = null;
         // OPTIMIZED: Select only needed columns for dropdowns
         $terms = Season::where('is_active', true)->select('id', 'name', 'blanket_start_date', 'blanket_end_date')->get();
         $properties = Property::with(['units:id,property_id,name'])->select('id', 'name')->get();
+
+        if($request->input('tenant_id')){
+            $request->validate([
+                'tenant_id' => 'exists:tenants,id'
+            ]);
+             // Pre-select tenant if tenant_id is provided in query string
+             $selectedTenant = Tenant::with('profile:id,tenant_id,first_name,last_name,phone')
+                ->select('id', 'email', 'arrival_date')
+                ->find($request->input('tenant_id'));
+            // dd($selectedTenant);
+             if (!$selectedTenant) {
+                 return redirect()->back()->withErrors(['tenant_id' => 'Selected tenant not found.']);
+             }
+        }
+
         $tenants = Tenant::with(['profile:id,tenant_id,first_name,last_name'])
             ->where('status', 'approved')
             ->select('id', 'email')
@@ -229,7 +245,7 @@ class LeaseController extends Controller
 
         $leaseTemplates = LeaseTemplate::where('is_active', true)->select('id', 'name')->get();
 
-        return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants', 'leaseTemplates'));
+        return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants', 'leaseTemplates', 'selectedTenant'));
     }
 
     public function store(Request $request)

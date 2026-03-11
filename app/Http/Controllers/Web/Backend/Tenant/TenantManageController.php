@@ -263,19 +263,19 @@ class TenantManageController extends Controller
                             <i class="fe fe-check"></i>
                         </button>';
                     }
-
+                    //' . $approveBtn . '
                     return '<div class="btn-group btn-group-sm" role="group">
-                <a href="' . route('tenants.show', $data->id) . '" class="btn btn-primary" title="View Details">
-                    <i class="fe fe-eye"></i>
-                </a>
-                <button type="button" onclick="editTenant(' . $data->id . ')" class="btn btn-info" title="Edit Tenant">
-                    <i class="fe fe-edit"></i>
-                </button>
-                ' . $approveBtn . '
-                <button type="button" onclick="showDeleteConfirm(' . $data->id . ')" class="btn btn-danger" title="Delete Tenant">
-                    <i class="fe fe-trash"></i>
-                </button>
-            </div>';
+                                <a href="' . route('tenants.show', $data->id) . '" class="btn btn-primary" title="View Details">
+                                    <i class="fe fe-eye"></i>
+                                </a>
+                                <button type="button" onclick="editTenant(' . $data->id . ')" class="btn btn-info" title="Edit Tenant">
+                                    <i class="fe fe-edit"></i>
+                                </button>
+                                
+                                <button type="button" onclick="showDeleteConfirm(' . $data->id . ')" class="btn btn-danger" title="Delete Tenant">
+                                    <i class="fe fe-trash"></i>
+                                </button>
+                            </div>';
                 })
                 ->rawColumns(['name', 'property_unit', 'address', 'has_active_lease', 'tenant_status', 'rent', 'action'])
                 ->make(true);
