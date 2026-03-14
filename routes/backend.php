@@ -221,7 +221,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Apartment section update
     Route::post('/home/apartment/update', [ApartmentController::class, 'update'])->name('home.apartment.section.update');
 
-    // Upload gallery
+    // Upload gallery page
     Route::post('/gallery/update', [GalleryController::class, 'store'])->name('gallery.section.update');
     Route::delete('/gallery/item/delete/{id}', [GalleryController::class, 'destroy'])->name('gallery.item.delete');
 
