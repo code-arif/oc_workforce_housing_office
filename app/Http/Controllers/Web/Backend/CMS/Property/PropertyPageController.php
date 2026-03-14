@@ -69,7 +69,6 @@ class PropertyPageController extends Controller
     }
 
     /**
-     * Update property page banner two section
      */
     public function updatePropertyBannerTwo(CmsRequest $request)
     {
