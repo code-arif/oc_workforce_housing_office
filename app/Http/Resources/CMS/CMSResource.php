@@ -46,7 +46,7 @@ class CMSResource extends JsonResource
             ),
             'btn_text'        => $this->when($this->btn_text, $this->btn_text),
 
-            // metadata fields
+            // metadata
             'gallery_images'  => $this->when(!empty($galleryImages), $galleryImages),
             'video'           => $this->when(!empty($videoUrl), $videoUrl),
         ];
