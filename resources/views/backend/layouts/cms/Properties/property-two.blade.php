@@ -34,7 +34,6 @@
                         <div class="invalid-feedback"></div>
                     </div>
 
-                    {{-- Multiple Gallery Images --}}
                     <div class="form-group mb-3">
                         <label class="form-label">
                             Gallery Images <small class="text-muted">(Multiple)</small>
