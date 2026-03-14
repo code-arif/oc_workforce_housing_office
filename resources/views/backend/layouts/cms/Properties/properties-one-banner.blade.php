@@ -5,7 +5,7 @@
                 <h4 class="card-title">Property Page - Banner Section</h4>
             </div>
             <div class="card-body">
-                <form id="propertyBannerForm" method="post" action="{{ route('cms.property.banner.update') }}"
+                <form id="propertyBannerForm" method="post" action="{{ route('cms.property.banner-one.update') }}"
                     enctype="multipart/form-data">
                     @csrf
 

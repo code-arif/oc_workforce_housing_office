@@ -118,8 +118,17 @@ class CmsController extends Controller
      */
     public function properties()
     {
-        $hero = CMS::where('page', 'properties')
-            ->where('section', 'hero')
+        $propertyOneBaner = CMS::where('page', 'properties')
+            ->where('section', 'property-banner-one')
+            ->where('name', 'item')
+            ->get();
+
+        $propertyTwoBaner = CMS::where('page', 'properties')
+            ->where('section', 'property-banner-two')
+            ->where('name', 'item')
+            ->get();
+        $propertyThreeBaner = CMS::where('page', 'properties')
+            ->where('section', 'property-banner-three')
             ->where('name', 'item')
             ->get();
 
@@ -155,11 +164,13 @@ class CmsController extends Controller
 
         return $this->success([
             'properties' => [
-                'hero' => CMSResource::collection($hero),
+                'property_one_banner' => CMSResource::collection($propertyOneBaner),
                 'our_offer' => CMSResource::collection($ourOffer),
                 'property_one' => CMSResource::collection($propertyOne),
-                'gallery' => $gallery,
+                'property_two_banner' => CMSResource::collection($propertyTwoBaner),
                 'property_two' => CMSResource::collection($propertyTwo),
+                'property_three_banner' => CMSResource::collection($propertyThreeBaner),
+                // 'gallery' => $gallery,
                 'property_three' => CMSResource::collection($propertyThree),
             ]
         ], 'Properties page data retrieved successfully');

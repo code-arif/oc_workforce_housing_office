@@ -5,23 +5,22 @@ namespace App\Http\Controllers\Web\Backend\CMS\Property;
 use Exception;
 use App\Models\CMS;
 use App\Helper\Helper;
-use Illuminate\Http\Request;
 use App\Http\Requests\CmsRequest;
 use App\Http\Controllers\Controller;
 
 class PropertyPageController extends Controller
 {
     /**
-     * Update property page banner section
+     * Update property page banner one section
      */
-    public function update(CmsRequest $request)
+    public function updatePropertyBannerOne(CmsRequest $request)
     {
         try {
             $validated_data = $request->validated();
 
             // get the existing record
             $existing = CMS::where('page', 'properties')
-                ->where('section', 'hero')
+                ->where('section', 'property-banner-one')
                 ->where('name', 'item')
                 ->first();
 
@@ -37,13 +36,13 @@ class PropertyPageController extends Controller
 
             // Add additional data
             $validated_data['page'] = 'properties';
-            $validated_data['section'] = 'hero';
+            $validated_data['section'] = 'property-banner-one';
             $validated_data['name'] = 'item';
 
             CMS::updateOrCreate(
                 [
                     'page' => 'properties',
-                    'section' => 'hero',
+                    'section' => 'property-banner-one',
                     'name' => 'item'
                 ],
                 $validated_data
@@ -69,6 +68,121 @@ class PropertyPageController extends Controller
         }
     }
 
+    /**
+     * Update property page banner two section
+     */
+    public function updatePropertyBannerTwo(CmsRequest $request)
+    {
+        try {
+            $validated_data = $request->validated();
+
+            // get the existing record
+            $existing = CMS::where('page', 'properties')
+                ->where('section', 'property-banner-two')
+                ->where('name', 'item')
+                ->first();
+
+            // handle image if present in request
+            if ($request->hasFile('image')) {
+                if ($existing && $existing->image) {
+                    Helper::deleteImage($existing->image);
+                }
+
+                $image_path = Helper::uploadImage($request->file('image'), 'cms/properties/hero');
+                $validated_data['image'] = $image_path;
+            }
+
+            // Add additional data
+            $validated_data['page'] = 'properties';
+            $validated_data['section'] = 'property-banner-two';
+            $validated_data['name'] = 'item';
+
+            CMS::updateOrCreate(
+                [
+                    'page' => 'properties',
+                    'section' => 'property-banner-two',
+                    'name' => 'item'
+                ],
+                $validated_data
+            );
+
+            // For AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Content updated successfully!'
+                ]);
+            }
+
+            return back()->with('t-success', 'Content updated successfully!');
+        } catch (Exception $e) {
+            // For AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+    }
+
+    /**
+     * Update property page banner three section
+     */
+    public function updatePropertyBannerThree(CmsRequest $request)
+    {
+        try {
+            $validated_data = $request->validated();
+
+            // get the existing record
+            $existing = CMS::where('page', 'properties')
+                ->where('section', 'property-banner-three')
+                ->where('name', 'item')
+                ->first();
+
+            // handle image if present in request
+            if ($request->hasFile('image')) {
+                if ($existing && $existing->image) {
+                    Helper::deleteImage($existing->image);
+                }
+
+                $image_path = Helper::uploadImage($request->file('image'), 'cms/properties/hero');
+                $validated_data['image'] = $image_path;
+            }
+
+            // Add additional data
+            $validated_data['page'] = 'properties';
+            $validated_data['section'] = 'property-banner-three';
+            $validated_data['name'] = 'item';
+
+            CMS::updateOrCreate(
+                [
+                    'page' => 'properties',
+                    'section' => 'property-banner-three',
+                    'name' => 'item'
+                ],
+                $validated_data
+            );
+
+            // For AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Content updated successfully!'
+                ]);
+            }
+
+            return back()->with('t-success', 'Content updated successfully!');
+        } catch (Exception $e) {
+            // For AJAX requests
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+    }
 
     /**
      * Update property page our offer section
@@ -117,7 +231,6 @@ class PropertyPageController extends Controller
             }
         }
     }
-
     /**
      * Update property page property one section
      */
@@ -126,52 +239,78 @@ class PropertyPageController extends Controller
         try {
             $validated_data = $request->validated();
 
-            // get the existing record
             $existing = CMS::where('page', 'properties')
                 ->where('section', 'property-one')
                 ->where('name', 'item')
                 ->first();
 
-            // handle image if present in request
+            // Existing metadata
+            $metadata = [];
+            if ($existing && $existing->metadata) {
+                $metadata = is_array($existing->metadata)
+                    ? $existing->metadata
+                    : json_decode($existing->metadata, true) ?? [];
+            }
+
+            // ── Single primary image ──────────────────────────────────────
             if ($request->hasFile('image')) {
                 if ($existing && $existing->image) {
                     Helper::deleteImage($existing->image);
                 }
-
-                $image_path = Helper::uploadImage($request->file('image'), 'cms/properties/property-one');
-                $validated_data['image'] = $image_path;
+                $validated_data['image'] = Helper::uploadImage(
+                    $request->file('image'),
+                    'cms/properties/property-one'
+                );
             }
 
-            // Add additional data
-            $validated_data['page'] = 'properties';
-            $validated_data['section'] = 'property-one';
-            $validated_data['name'] = 'item';
+            // ── Multiple gallery images ───────────────────────────────────
+            if ($request->hasFile('images')) {
+                // Delete old gallery images
+                if (!empty($metadata['images'])) {
+                    foreach ($metadata['images'] as $old) {
+                        Helper::deleteImage($old);
+                    }
+                }
+
+                $paths = [];
+                foreach ($request->file('images') as $img) {
+                    $paths[] = Helper::uploadImage($img, 'cms/properties/property-one/gallery');
+                }
+                $metadata['images'] = $paths;
+            }
+
+            // ── Video upload ──────────────────────────────────────────────
+            if ($request->hasFile('video')) {
+                // Delete old video
+                if (!empty($metadata['video']) && file_exists(public_path($metadata['video']))) {
+                    @unlink(public_path($metadata['video']));
+                }
+
+                $videoFile = $request->file('video');
+                $videoName = time() . '_' . uniqid() . '.' . $videoFile->getClientOriginalExtension();
+                $videoPath = 'uploads/cms/properties/property-one/video';
+                $videoFile->move(public_path($videoPath), $videoName);
+                $metadata['video'] = $videoPath . '/' . $videoName;
+            }
+
+            $validated_data['metadata'] = $metadata;
+            $validated_data['page']     = 'properties';
+            $validated_data['section']  = 'property-one';
+            $validated_data['name']     = 'item';
 
             CMS::updateOrCreate(
-                [
-                    'page' => 'properties',
-                    'section' => 'property-one',
-                    'name' => 'item'
-                ],
+                ['page' => 'properties', 'section' => 'property-one', 'name' => 'item'],
                 $validated_data
             );
 
-            // For AJAX requests
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Content updated successfully!'
-                ]);
+                return response()->json(['success' => true, 'message' => 'Content updated successfully!']);
             }
 
             return back()->with('t-success', 'Content updated successfully!');
         } catch (Exception $e) {
-            // For AJAX requests
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update: ' . $e->getMessage()
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to update: ' . $e->getMessage()], 500);
             }
         }
     }
@@ -184,55 +323,80 @@ class PropertyPageController extends Controller
         try {
             $validated_data = $request->validated();
 
-            // get the existing record
+            // Bug fix: was querying 'property-one' before
             $existing = CMS::where('page', 'properties')
-                ->where('section', 'property-one')
+                ->where('section', 'property-two')
                 ->where('name', 'item')
                 ->first();
 
-            // handle image if present in request
+            $metadata = [];
+            if ($existing && $existing->metadata) {
+                $metadata = is_array($existing->metadata)
+                    ? $existing->metadata
+                    : json_decode($existing->metadata, true) ?? [];
+            }
+
+            // ── Single primary image ──────────────────────────────────────
             if ($request->hasFile('image')) {
                 if ($existing && $existing->image) {
                     Helper::deleteImage($existing->image);
                 }
-
-                $image_path = Helper::uploadImage($request->file('image'), 'cms/properties/property-two');
-                $validated_data['image'] = $image_path;
+                $validated_data['image'] = Helper::uploadImage(
+                    $request->file('image'),
+                    'cms/properties/property-two'
+                );
             }
 
-            // Add additional data
-            $validated_data['page'] = 'properties';
-            $validated_data['section'] = 'property-two';
-            $validated_data['name'] = 'item';
+            // ── Multiple gallery images ───────────────────────────────────
+            if ($request->hasFile('images')) {
+                if (!empty($metadata['images'])) {
+                    foreach ($metadata['images'] as $old) {
+                        Helper::deleteImage($old);
+                    }
+                }
+
+                $paths = [];
+                foreach ($request->file('images') as $img) {
+                    $paths[] = Helper::uploadImage($img, 'cms/properties/property-two/gallery');
+                }
+                $metadata['images'] = $paths;
+            }
+
+            // ── Video upload ──────────────────────────────────────────────
+            if ($request->hasFile('video')) {
+                if (!empty($metadata['video']) && file_exists(public_path($metadata['video']))) {
+                    @unlink(public_path($metadata['video']));
+                }
+
+                $videoFile = $request->file('video');
+                $videoName = time() . '_' . uniqid() . '.' . $videoFile->getClientOriginalExtension();
+                $videoPath = 'uploads/cms/properties/property-two/video';
+                $videoFile->move(public_path($videoPath), $videoName);
+                $metadata['video'] = $videoPath . '/' . $videoName;
+            }
+
+            $validated_data['metadata'] = $metadata;
+            $validated_data['page']     = 'properties';
+            $validated_data['section']  = 'property-two';
+            $validated_data['name']     = 'item';
 
             CMS::updateOrCreate(
-                [
-                    'page' => 'properties',
-                    'section' => 'property-two',
-                    'name' => 'item'
-                ],
+                ['page' => 'properties', 'section' => 'property-two', 'name' => 'item'],
                 $validated_data
             );
 
-            // For AJAX requests
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Content updated successfully!'
-                ]);
+                return response()->json(['success' => true, 'message' => 'Content updated successfully!']);
             }
 
             return back()->with('t-success', 'Content updated successfully!');
         } catch (Exception $e) {
-            // For AJAX requests
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update: ' . $e->getMessage()
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to update: ' . $e->getMessage()], 500);
             }
         }
     }
+
     /**
      * Update property page property three section
      */
@@ -241,52 +405,75 @@ class PropertyPageController extends Controller
         try {
             $validated_data = $request->validated();
 
-            // get the existing record
             $existing = CMS::where('page', 'properties')
                 ->where('section', 'property-three')
                 ->where('name', 'item')
                 ->first();
 
-            // handle image if present in request
+            $metadata = [];
+            if ($existing && $existing->metadata) {
+                $metadata = is_array($existing->metadata)
+                    ? $existing->metadata
+                    : json_decode($existing->metadata, true) ?? [];
+            }
+
+            // ── Single primary image ──────────────────────────────────────
             if ($request->hasFile('image')) {
                 if ($existing && $existing->image) {
                     Helper::deleteImage($existing->image);
                 }
-
-                $image_path = Helper::uploadImage($request->file('image'), 'cms/properties/property-three');
-                $validated_data['image'] = $image_path;
+                $validated_data['image'] = Helper::uploadImage(
+                    $request->file('image'),
+                    'cms/properties/property-three'
+                );
             }
 
-            // Add additional data
-            $validated_data['page'] = 'properties';
-            $validated_data['section'] = 'property-three';
-            $validated_data['name'] = 'item';
+            // ── Multiple gallery images ───────────────────────────────────
+            if ($request->hasFile('images')) {
+                if (!empty($metadata['images'])) {
+                    foreach ($metadata['images'] as $old) {
+                        Helper::deleteImage($old);
+                    }
+                }
+
+                $paths = [];
+                foreach ($request->file('images') as $img) {
+                    $paths[] = Helper::uploadImage($img, 'cms/properties/property-three/gallery');
+                }
+                $metadata['images'] = $paths;
+            }
+
+            // ── Video upload ──────────────────────────────────────────────
+            if ($request->hasFile('video')) {
+                if (!empty($metadata['video']) && file_exists(public_path($metadata['video']))) {
+                    @unlink(public_path($metadata['video']));
+                }
+
+                $videoFile = $request->file('video');
+                $videoName = time() . '_' . uniqid() . '.' . $videoFile->getClientOriginalExtension();
+                $videoPath = 'uploads/cms/properties/property-three/video';
+                $videoFile->move(public_path($videoPath), $videoName);
+                $metadata['video'] = $videoPath . '/' . $videoName;
+            }
+
+            $validated_data['metadata'] = $metadata;
+            $validated_data['page']     = 'properties';
+            $validated_data['section']  = 'property-three';
+            $validated_data['name']     = 'item';
 
             CMS::updateOrCreate(
-                [
-                    'page' => 'properties',
-                    'section' => 'property-three',
-                    'name' => 'item'
-                ],
+                ['page' => 'properties', 'section' => 'property-three', 'name' => 'item'],
                 $validated_data
             );
 
-            // For AJAX requests
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Content updated successfully!'
-                ]);
+                return response()->json(['success' => true, 'message' => 'Content updated successfully!']);
             }
 
             return back()->with('t-success', 'Content updated successfully!');
         } catch (Exception $e) {
-            // For AJAX requests
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update: ' . $e->getMessage()
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to update: ' . $e->getMessage()], 500);
             }
         }
     }

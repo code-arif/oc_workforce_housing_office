@@ -102,10 +102,10 @@
                                         style="font-size: 0.75rem;">
                                         Properties Page
                                     </h6>
-                                    <a class="nav-link" id="property-banner-tab" href="javascript:void(0);"
-                                        data-section="property-banner" data-title="Property Page Banner"
-                                        data-breadcrumb="Property Page Banner">
-                                        <i class="fa-solid fa-bandage me-2"></i> Property Page Banner
+                                    <a class="nav-link" id="property-one-banner-tab" href="javascript:void(0);"
+                                        data-section="property-one-banner" data-title="Property One Banner"
+                                        data-breadcrumb="Property One Banner">
+                                        <i class="fa-solid fa-bandage me-2"></i> Property One Banner
                                     </a>
                                     <a class="nav-link" id="property-our-offer-tab" href="javascript:void(0);"
                                         data-section="property-our-offer" data-title="Our Offer"
@@ -117,10 +117,20 @@
                                         data-breadcrumb="Property One">
                                         <i class="fa-solid fa-1 me-2"></i> Property One
                                     </a>
+                                    <a class="nav-link" id="property-two-banner-tab" href="javascript:void(0);"
+                                        data-section="property-two-banner" data-title="Property Two Banner"
+                                        data-breadcrumb="Property Two Banner">
+                                        <i class="fa-regular fa-flag me-2"></i> Property Two Banner
+                                    </a>
                                     <a class="nav-link" id="property-two-tab" href="javascript:void(0);"
                                         data-section="property-two" data-title="Property Two"
                                         data-breadcrumb="Property Two">
                                         <i class="fa-solid fa-2 me-2"></i> Property Two
+                                    </a>
+                                    <a class="nav-link" id="property-three-banner-tab" href="javascript:void(0);"
+                                        data-section="property-three-banner" data-title="Property Three Banner"
+                                        data-breadcrumb="Property Three Banner">
+                                        <i class="fa-solid fa-rectangle-ad me-2"></i> Property Three Banner
                                     </a>
                                     <a class="nav-link" id="property-three-tab" href="javascript:void(0);"
                                         data-section="property-three" data-title="Property Three"
