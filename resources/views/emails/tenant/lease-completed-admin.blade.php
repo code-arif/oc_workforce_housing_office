@@ -31,26 +31,6 @@
             <p><strong>Security Deposit:</strong> ${{ number_format($lease->deposit_amount, 2) }}</p>
         </div>
 
-        <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 20px; margin: 25px 0; border-radius: 0 4px 4px 0;">
-            <h3 style="color: #155724; margin-bottom: 10px;">✅ Actions Taken Automatically:</h3>
-            <ul style="margin-left: 20px; margin-top: 10px; color: #155724;">
-                <li>Lease status updated to <strong>COMPLETED</strong></li>
-                <li>Lease assignment marked as not current (<code>is_current = false</code>)</li>
-                <li>Bed marked as unoccupied (<code>is_occupied = false</code>) - Now available for new tenants</li>
-                <li>Tenant notification email sent</li>
-            </ul>
-        </div>
-
-        <div class="highlight-box" style="border-left-color: #ffc107; margin-top: 25px;">
-            <h3 style="color: #856404; margin-bottom: 10px;">⚠️ Action Required:</h3>
-            <ul style="margin-left: 20px; margin-top: 10px;">
-                <li>Review the deposit status and process refund if applicable</li>
-                <li>Verify that the tenant has vacated the property</li>
-                <li>Schedule property inspection if required</li>
-                <li>Update any pending invoices or payments</li>
-            </ul>
-        </div>
-
         <p style="margin-top: 25px;">This is an automated notification from the lease management system.</p>
     </div>
 @endsection

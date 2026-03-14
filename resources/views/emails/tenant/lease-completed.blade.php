@@ -24,16 +24,6 @@
             <p style="color: #155724; margin: 0;">Your lease has been marked as complete in our system. The bed/unit you were assigned is now available for future tenants.</p>
         </div>
 
-        {{-- <div class="highlight-box" style="border-left-color: #000000; margin-top: 25px;">
-            <h3 style="color: #000000; margin-bottom: 15px;">📌 What's Next?</h3>
-            <ul style="margin-left: 20px; margin-top: 10px;">
-                <li>If you have any pending matters regarding your deposit, our team will contact you shortly</li>
-                <li>Please ensure all your belongings have been removed from the property</li>
-                <li>Return all keys and access cards to the property management office</li>
-                <li>If you're interested in a new lease, feel free to reach out to us</li>
-            </ul>
-        </div> --}}
-
         <p style="margin-top: 25px;">Thank you for being our tenant. We wish you all the best in your future endeavors!</p>
 
         <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
