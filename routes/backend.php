@@ -225,7 +225,7 @@ Route::prefix('cms')->name('cms.')->group(function () {
     Route::post('/gallery/update', [GalleryController::class, 'store'])->name('gallery.section.update');
     Route::delete('/gallery/item/delete/{id}', [GalleryController::class, 'destroy'])->name('gallery.item.delete');
 
-    // Property page
+    // Property
     Route::post('/property/banner-one/update', [PropertyPageController::class, 'updatePropertyBannerOne'])->name('property.banner-one.update');
     Route::post('/property/banner-two/update', [PropertyPageController::class, 'updatePropertyBannerTwo'])->name('property.banner-two.update');
     Route::post('/property/banner-three/update', [PropertyPageController::class, 'updatePropertyBannerThree'])->name('property.banner-three.update');
