@@ -17,7 +17,6 @@ jobs:
           server: 147.93.40.177
           username: ocworkforcehousing-ftp
           password: "wkBQJT9JS0W8ln2qJ5SJ"
-          timeout: 60000
-          retries: 5
+          
 
 
