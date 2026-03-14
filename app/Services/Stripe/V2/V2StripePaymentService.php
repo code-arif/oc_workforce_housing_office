@@ -143,18 +143,18 @@ class V2StripePaymentService
             return ['eligible' => false, 'reason' => 'Lease must be signed before making payments'];
         }
 
-        $firstUnpaidInvoice = Invoice::where('tenant_id', $tenantId)
-            ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
-            ->orderBy('due_date', 'asc')
-            ->orderBy('created_at', 'asc')
-            ->first();
+        // $firstUnpaidInvoice = Invoice::where('tenant_id', $tenantId)
+        //     ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
+        //     ->orderBy('due_date', 'asc')
+        //     ->orderBy('created_at', 'asc')
+        //     ->first();
 
-        if ($firstUnpaidInvoice && $firstUnpaidInvoice->id !== $invoice->id) {
-            return [
-                'eligible' => false,
-                'reason' => 'Previous invoice must be paid first (Invoice #' . $firstUnpaidInvoice->invoice_number . ')'
-            ];
-        }
+        // if ($firstUnpaidInvoice && $firstUnpaidInvoice->id !== $invoice->id) {
+        //     return [
+        //         'eligible' => false,
+        //         'reason' => 'Previous invoice must be paid first (Invoice #' . $firstUnpaidInvoice->invoice_number . ')'
+        //     ];
+        // }
 
         return ['eligible' => true];
     }
