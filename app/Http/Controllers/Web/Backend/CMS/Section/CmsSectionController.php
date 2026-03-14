@@ -64,7 +64,7 @@ class CmsSectionController extends Controller
                     $data = CMS::where('page', 'home')
                         ->where('section', 'housing-options')
                         ->where('name', 'item')
-                        ->first();  // updated
+                        ->first();
 
                     $accordions = CMS::where('page', 'home')
                         ->where('section', 'housing-options')
