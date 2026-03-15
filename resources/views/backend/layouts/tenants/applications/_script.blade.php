@@ -332,39 +332,39 @@
                         </h6>
                         <div class="row">
                             ${application.passport_copy_url ? `
-                                   <div class="col-md-3 mb-3">
-                                        <small class="text-muted d-block">Passport Copy</small>
-                                        <a href="${application.passport_copy_url}" target="_blank"
-                                            class="btn btn-sm btn-outline-info d-flex align-items-center">
-                                            <i class="fe fe-eye me-1"></i>
-                                            View
-                                        </a>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-3 mb-3">
+                                            <small class="text-muted d-block">Passport Copy</small>
+                                            <a href="${application.passport_copy_url}" target="_blank"
+                                                class="btn btn-sm btn-outline-info d-inline-flex align-items-center">
+                                                <i class="fe fe-eye me-1"></i>
+                                                View
+                                            </a>
+                                        </div>
+                                    ` : ''}
                             ${application.visa_document_url ? `
-                                    <div class="col-md-3 mb-3">
-                                        <small class="text-muted d-block">Visa Document</small>
-                                        <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fe fe-eye me-1"></i>View
-                                        </a>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-3 mb-3">
+                                            <small class="text-muted d-block">Visa Document</small>
+                                            <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                <i class="fe fe-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    ` : ''}
                             ${application.front_id_document_url ? `
-                                    <div class="col-md-3 mb-3">
-                                        <small class="text-muted d-block">Front ID</small>
-                                        <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fe fe-eye me-1"></i>View
-                                        </a>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-3 mb-3">
+                                            <small class="text-muted d-block">Front ID</small>
+                                            <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                <i class="fe fe-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    ` : ''}
                             ${application.back_id_document_url ? `
-                                    <div class="col-md-3 mb-3">
-                                        <small class="text-muted d-block">Back ID</small>
-                                        <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fe fe-eye me-1"></i>View
-                                        </a>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-3 mb-3">
+                                            <small class="text-muted d-block">Back ID</small>
+                                            <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                                <i class="fe fe-eye me-1"></i>View
+                                            </a>
+                                        </div>
+                                    ` : ''}
                         </div>
                     </div>
                 `;
@@ -379,41 +379,41 @@
                     employerinfo = `
                         <div class="row">
                             ${data.company_name ? `
-                                    <div class="col-md-6 mb-3">
-                                        <small class="text-muted d-block">Company Name</small>
-                                        <strong>${data.company_name}</strong>
-                                    </div>
-                                ` : 'N/A    '}
+                                        <div class="col-md-6 mb-3">
+                                            <small class="text-muted d-block">Company Name</small>
+                                            <strong>${data.company_name}</strong>
+                                        </div>
+                                    ` : 'N/A    '}
                              ${data.job_title ? `
-                                    <div class="col-md-6 mb-3">
-                                        <small class="text-muted d-block">Job Title</small>
-                                        <strong>${data.job_title}</strong>
-                                    </div>
-                                ` : 'N/A    '}
+                                        <div class="col-md-6 mb-3">
+                                            <small class="text-muted d-block">Job Title</small>
+                                            <strong>${data.job_title}</strong>
+                                        </div>
+                                    ` : 'N/A    '}
                             ${data.employer_contact_person_name ? `
-                                    <div class="col-md-6 mb-3">
-                                        <small class="text-muted d-block">Contact Person</small>
-                                        <strong>${data.employer_contact_person_name}</strong>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-6 mb-3">
+                                            <small class="text-muted d-block">Contact Person</small>
+                                            <strong>${data.employer_contact_person_name}</strong>
+                                        </div>
+                                    ` : ''}
                             ${data.employer_contact_person_phone ? `
-                                    <div class="col-md-6 mb-3">
-                                        <small class="text-muted d-block">Phone</small>
-                                        <strong>${data.employer_contact_person_phone}</strong>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-6 mb-3">
+                                            <small class="text-muted d-block">Phone</small>
+                                            <strong>${data.employer_contact_person_phone}</strong>
+                                        </div>
+                                    ` : ''}
                             ${data.employer_contact_person_email ? `
-                                    <div class="col-md-6 mb-3">
-                                        <small class="text-muted d-block">Email</small>
-                                        <strong>${data.employer_contact_person_email}</strong>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-6 mb-3">
+                                            <small class="text-muted d-block">Email</small>
+                                            <strong>${data.employer_contact_person_email}</strong>
+                                        </div>
+                                    ` : ''}
                             ${data.company_address ? `
-                                    <div class="col-md-12 mb-3">
-                                        <small class="text-muted d-block">Address</small>
-                                        <strong>${data.company_address}</strong>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-12 mb-3">
+                                            <small class="text-muted d-block">Address</small>
+                                            <strong>${data.company_address}</strong>
+                                        </div>
+                                    ` : ''}
                         </div>
                     `;
                 });
@@ -458,11 +458,11 @@
                                 ].filter(Boolean).join(', ') || 'N/A'}</strong>
                             </div>
                             ${application.is_j1_sponsor ? `
-                                    <div class="col-md-12 mb-3">
-                                        <small class="text-muted d-block">J-1 Sponsor</small>
-                                        <span class="badge bg-info">${application.is_j1_sponsor}</span>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-12 mb-3">
+                                            <small class="text-muted d-block">J-1 Sponsor</small>
+                                            <span class="badge bg-info">${application.is_j1_sponsor}</span>
+                                        </div>
+                                    ` : ''}
                         </div>
                     </div>
                 `;
@@ -531,15 +531,15 @@
 
                     <!-- Additional Notes -->
                     ${application.notes ? `
-                            <div class="mb-4">
-                                <h6 class="border-bottom pb-2 mb-3">
-                                    <i class="fe fe-message-square text-info me-2"></i>Additional Notes
-                                </h6>
-                                <div class="alert alert-light border">
-                                    ${application.notes}
+                                <div class="mb-4">
+                                    <h6 class="border-bottom pb-2 mb-3">
+                                        <i class="fe fe-message-square text-info me-2"></i>Additional Notes
+                                    </h6>
+                                    <div class="alert alert-light border">
+                                        ${application.notes}
+                                    </div>
                                 </div>
-                            </div>
-                        ` : ''}
+                            ` : ''}
 
                     <!-- Application Status -->
                     <div class="mb-3">
@@ -554,17 +554,17 @@
                                 </span>
                             </div>
                             ${application.application_type ? `
-                                    <div class="col-md-4 mb-2">
-                                        <small class="text-muted d-block">Application Type</small>
-                                        <strong>${application.application_type}</strong>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-4 mb-2">
+                                            <small class="text-muted d-block">Application Type</small>
+                                            <strong>${application.application_type}</strong>
+                                        </div>
+                                    ` : ''}
                             ${application.application_number ? `
-                                    <div class="col-md-4 mb-2">
-                                        <small class="text-muted d-block">Application Number</small>
-                                        <strong>${application.application_number}</strong>
-                                    </div>
-                                ` : ''}
+                                        <div class="col-md-4 mb-2">
+                                            <small class="text-muted d-block">Application Number</small>
+                                            <strong>${application.application_number}</strong>
+                                        </div>
+                                    ` : ''}
                             <div class="col-md-4 mb-2">
                                 <small class="text-muted d-block">Submitted At</small>
                                 <strong>${new Date(application.created_at).toLocaleString()}</strong>
@@ -721,15 +721,15 @@
 
                     <!-- Additional Notes -->
                     ${application.notes ? `
-                            <div class="mb-3">
-                                <h6 class="border-bottom pb-2 mb-3">
-                                    <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
-                                </h6>
-                                <div class="alert alert-info">
-                                    ${application.notes}
+                                <div class="mb-3">
+                                    <h6 class="border-bottom pb-2 mb-3">
+                                        <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
+                                    </h6>
+                                    <div class="alert alert-info">
+                                        ${application.notes}
+                                    </div>
                                 </div>
-                            </div>
-                        ` : ''}
+                            ` : ''}
 
                     <!-- Application Info -->
                     <div class="mb-3">
@@ -939,17 +939,17 @@
                                     </div>
                                 </li>
                                 ${invitations.map(invite => `
-                                        <li class="list-group-item d-flex justify-content-between align-items-center bottom-border">
-                                            <div>
-                                                <i class="fe fe-mail text-info me-2"></i>
-                                                ${invite.email}
-                                            </div>
-                                            <div class="text-muted small">
-                                                Created At: ${formatDate(invite.created_at)} <br>
-                                                Expire At: <span class="text-danger"> ${formatDate(invite.expires_at)}</span>
-                                            </div>
-                                        </li>
-                                    `).join('')}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center bottom-border">
+                                                <div>
+                                                    <i class="fe fe-mail text-info me-2"></i>
+                                                    ${invite.email}
+                                                </div>
+                                                <div class="text-muted small">
+                                                    Created At: ${formatDate(invite.created_at)} <br>
+                                                    Expire At: <span class="text-danger"> ${formatDate(invite.expires_at)}</span>
+                                                </div>
+                                            </li>
+                                        `).join('')}
                             </ul>
                         `;
                     } else {
