@@ -134,7 +134,7 @@
             });
 
 
-            
+
             // Single Email Filters
             $('#singleStatusFilter').on('change', function() {
                 singleEmailTable.ajax.reload();
@@ -161,7 +161,7 @@
                 reservationTable.columns.adjust().draw(false);
             });
 
-            
+
         });
 
         // Debounce function
@@ -321,7 +321,7 @@
 
             // Build document section if documents exist
             let documentsHtml = '';
-            const hasDocuments = application.passport_copy_url || application.visa_document_url || 
+            const hasDocuments = application.passport_copy_url || application.visa_document_url ||
                                 application.front_id_document_url || application.back_id_document_url;
 
             if (hasDocuments) {
@@ -418,7 +418,7 @@
                 employerHtml = `
                     <div class="mb-4">
                         <h6 class="border-bottom pb-2 mb-3">
-                            <i class="fe fe-briefcase text-info me-2"></i>Employer Information
+                            <i class="fe fe-briefcase text-info me-2"></i>Summer Employer Information
                         </h6>
                         ${employerinfo}
                     </div>
@@ -513,11 +513,11 @@
                         </h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <small class="text-muted d-block">Arrival Date</small>
+                                <small class="text-muted d-block">Estimated Arrival Date</small>
                                 <strong>${formatDate(application.arrival_date)}</strong>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <small class="text-muted d-block">Departure Date</small>
+                                <small class="text-muted d-block">Estimated Departure Date</small>
                                 <strong>${formatDate(application.departure_date)}</strong>
                             </div>
                         </div>
@@ -917,16 +917,16 @@
 
         function showInvitationListModal() {
             $('#invitationListModal').modal('show');
-            
+
             // Load invitations via AJAX
             $.ajax({
                 url: "{{ route('tenants.applications.invitations') }}",
                 type: 'GET',
                 success: function(response) {
                     const invitations = response.data || [];
-                    
+
                     let html = '';
-                    
+
                     if (invitations.length > 0) {
                         console.log(invitations);
                         html = `

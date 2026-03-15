@@ -29,7 +29,7 @@ class ApplicationController extends Controller
     public function submitSingleEmail(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:tenants,email',
+            'email' => 'required|email|unique:tenants,email|unique:application_tokens,email',
         ]);
 
         if ($validator->fails()) {
@@ -44,8 +44,7 @@ class ApplicationController extends Controller
             DB::beginTransaction();
 
             // Check if email already submitted
-            $existingApplication = Application::where('email', $request->email)
-                ->first();
+            $existingApplication = Application::where('email', $request->email)->first();
 
             if ($existingApplication) {
                 return $this->error([], 'This email has already been submitted.', 400);
@@ -58,11 +57,10 @@ class ApplicationController extends Controller
             } catch (Exception $mailError) {
                 Log::error('Failed to send admin notification email: ' . $mailError->getMessage());
             }
-            
-            // auto generate approval token
+
+            // Generate approval token
             $token = Str::random(64);
 
-            // Token expiration time (48 hours)
             $tokenExpiration = now()->addHours(48);
 
             DB::table('application_tokens')->insert([
@@ -75,14 +73,16 @@ class ApplicationController extends Controller
 
             // Send email with form link
             try {
-                // $formLink = config('app.frontend_url') . "/apply-lease & token ={$tenant->approval_token}";
+
                 $formLink = config('app.frontend_url') . "/apply-lease?" . http_build_query([
                     'token' => $token,
                     'email' => $request->email,
                 ]);
 
-                Log::info($formLink); // check form link
-                Mail::to($request->email)->queue(new TenantFormLinkMail($request->email, $formLink));
+                Log::info($formLink);
+
+                Mail::to($request->email)
+                    ->queue(new TenantFormLinkMail($request->email, $formLink));
             } catch (Exception $e) {
                 Log::error('Failed to send tenant form link email: ' . $e->getMessage());
             }
@@ -92,13 +92,15 @@ class ApplicationController extends Controller
             return $this->success([
                 'email' => $request->email,
             ], 'Thank you for your interest! We will contact you shortly.', 201);
-
         } catch (Exception $e) {
+
             DB::rollBack();
+
             Log::error('Single email application submission failed: ' . $e->getMessage(), [
                 'email' => $request->email,
                 'trace' => $e->getTraceAsString()
             ]);
+
             return $this->error([], 'Failed to submit application. Please try again later.', 500);
         }
     }

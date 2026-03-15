@@ -99,35 +99,42 @@
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="row align-items-end g-3">
-                                            <div class="col-md-3">
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-3 d-flex flex-column">
                                                 <label class="form-label">Status</label>
-                                                <select class="form-select" id="singleStatusFilter">
+                                                <select class="form-select flex-grow-1" id="singleStatusFilter">
                                                     <option value="">All Status</option>
                                                     <option value="pending">Pending</option>
                                                     <option value="approved">Approved</option>
                                                     <option value="rejected">Rejected</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-3">
+
+                                            <div class="col-md-3 d-flex flex-column">
                                                 <label class="form-label">Search</label>
-                                                <input type="text" class="form-control" id="singleSearchFilter"
-                                                    placeholder="Email, name, phone...">
+                                                <input type="text" class="form-control flex-grow-1"
+                                                    id="singleSearchFilter" placeholder="Email, name, phone...">
                                             </div>
-                                            <div class="col-md-2">
+
+                                            <div class="col-md-2 d-flex flex-column">
                                                 <label class="form-label">Date From</label>
-                                                <input type="date" class="form-control" id="singleDateFrom">
+                                                <input type="date" class="form-control flex-grow-1" id="singleDateFrom">
                                             </div>
-                                            <div class="col-md-2">
+
+                                            <div class="col-md-2 d-flex flex-column">
                                                 <label class="form-label">Date To</label>
-                                                <input type="date" class="form-control" id="singleDateTo">
+                                                <input type="date" class="form-control flex-grow-1" id="singleDateTo">
                                             </div>
-                                            <div class="col-md-2">
-                                                <button type="button" class="btn btn-secondary w-100"
+
+                                            <div class="col-md-2 d-flex flex-column justify-content-end p-1">
+                                                <button type="button" class="btn btn-secondary w-100 p-1 mt-1"
                                                     onclick="resetSingleFilters()">
                                                     <i class="fe fe-refresh-cw me-1"></i> Reset
                                                 </button>
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -138,15 +145,23 @@
                         <div class="card">
                             <div class="card-header border-bottom d-flex justify-content-between align-items-center">
                                 <h3 class="card-title mb-0">Single Email Applications</h3>
-                                <div>
-                                    <button type="button" class="btn btn-sm btn-info d-inline-flex align-items-center"
-                                        onclick="showInvitationListModal()">Invitation List</button>
-                                    <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center"
-                                        onclick="showInviteModal()">
-                                        <i class="fe fe-send me-1"></i> Send Invitation
+
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <button type="button"
+                                        class="btn btn-sm btn-info d-flex align-items-center justify-content-center"
+                                        style="height:32px;" onclick="showInvitationListModal()">
+                                        Invitation List
                                     </button>
+
+                                    <button type="button"
+                                        class="btn btn-sm btn-primary d-flex align-items-center justify-content-center"
+                                        style="height:32px;" onclick="showInviteModal()">
+                                        <i class="fe fe-send me-1"></i>
+                                        Send Invitation
+                                    </button>
+
                                 </div>
-                                
                             </div>
 
                             <div class="card-body">
@@ -173,16 +188,18 @@
                     <!-- RESERVATION TAB -->
                     <div class="tab-pane fade" id="reservation" role="tabpanel" aria-labelledby="reservation-tab">
 
-                        
+
                         <!-- FILTERS -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-body">
-                                        <div class="row align-items-end g-3">
-                                            <div class="col-md-3">
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-3 d-flex flex-column">
                                                 <label class="form-label">Status</label>
-                                                <select class="form-select" id="reservationStatusFilter">
+                                                <select class="form-select flex-grow-1" id="reservationStatusFilter">
                                                     <option value="">All Status</option>
                                                     <option value="pending">Pending</option>
                                                     <option value="contacted">Contacted</option>
@@ -190,26 +207,34 @@
                                                     <option value="declined">Declined</option>
                                                 </select>
                                             </div>
-                                            <div class="col-md-3">
+
+                                            <div class="col-md-3 d-flex flex-column">
                                                 <label class="form-label">Search</label>
-                                                <input type="text" class="form-control" id="reservationSearchFilter"
-                                                    placeholder="Company, email, name...">
+                                                <input type="text" class="form-control flex-grow-1"
+                                                    id="reservationSearchFilter" placeholder="Company, email, name...">
                                             </div>
-                                            <div class="col-md-2">
+
+                                            <div class="col-md-2 d-flex flex-column">
                                                 <label class="form-label">Date From</label>
-                                                <input type="date" class="form-control" id="reservationDateFrom">
+                                                <input type="date" class="form-control flex-grow-1"
+                                                    id="reservationDateFrom">
                                             </div>
-                                            <div class="col-md-2">
+
+                                            <div class="col-md-2 d-flex flex-column">
                                                 <label class="form-label">Date To</label>
-                                                <input type="date" class="form-control" id="reservationDateTo">
+                                                <input type="date" class="form-control flex-grow-1"
+                                                    id="reservationDateTo">
                                             </div>
-                                            <div class="col-md-2">
-                                                <button type="button" class="btn btn-secondary w-100"
+
+                                            <div class="col-md-2 d-flex flex-column justify-content-end p-1">
+                                                <button type="button" class="btn btn-secondary w-100 p-1 mt-1"
                                                     onclick="resetReservationFilters()">
                                                     <i class="fe fe-refresh-cw me-1"></i> Reset
                                                 </button>
                                             </div>
+
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -259,7 +284,7 @@
                         <i class="fe fe-briefcase me-2"></i>Reservation Application Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                        aria-label="Close">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div id="reservationDetails">
@@ -276,14 +301,23 @@
                         <i class="fe fe-x me-1"></i>Close
                     </button>
                     <div class="dropdown me-auto">
-                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="reservationStatusDropdown" data-bs-toggle="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button"
+                            id="reservationStatusDropdown" data-bs-toggle="dropdown">
                             <i class="fe fe-settings me-1"></i>Update Status
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'pending'); return false;"><span class="badge bg-warning me-2">&nbsp;</span>Pending</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'contacted'); return false;"><span class="badge bg-info me-2">&nbsp;</span>Contacted</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'accepted'); return false;"><span class="badge bg-success me-2">&nbsp;</span>Accepted</a></li>
-                            <li><a class="dropdown-item" href="#" onclick="updateReservationStatus(currentReservationId, 'declined'); return false;"><span class="badge bg-danger me-2">&nbsp;</span>Declined</a></li>
+                            <li><a class="dropdown-item" href="#"
+                                    onclick="updateReservationStatus(currentReservationId, 'pending'); return false;"><span
+                                        class="badge bg-warning me-2">&nbsp;</span>Pending</a></li>
+                            <li><a class="dropdown-item" href="#"
+                                    onclick="updateReservationStatus(currentReservationId, 'contacted'); return false;"><span
+                                        class="badge bg-info me-2">&nbsp;</span>Contacted</a></li>
+                            <li><a class="dropdown-item" href="#"
+                                    onclick="updateReservationStatus(currentReservationId, 'accepted'); return false;"><span
+                                        class="badge bg-success me-2">&nbsp;</span>Accepted</a></li>
+                            <li><a class="dropdown-item" href="#"
+                                    onclick="updateReservationStatus(currentReservationId, 'declined'); return false;"><span
+                                        class="badge bg-danger me-2">&nbsp;</span>Declined</a></li>
                         </ul>
                     </div>
                     <button type="button" class="btn btn-primary" id="contactApplicantBtn">
@@ -304,7 +338,7 @@
                         <i class="fe fe-user me-2"></i>Application Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                        aria-label="Close">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div id="singleEmailDetails">
@@ -317,14 +351,22 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fe fe-x me-1"></i>Close
+                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center"
+                        data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>
+                        <span>Close</span>
                     </button>
-                    <button type="button" class="btn btn-success d-none" id="approveFromModalBtn">
-                        <i class="fe fe-check me-1"></i>Approve & Send Form
+
+                    <button type="button" class="btn btn-success d-inline-flex align-items-center d-none"
+                        id="approveFromModalBtn">
+                        <i class="fe fe-check me-1"></i>
+                        <span>Approve & Send Form</span>
                     </button>
-                    <button type="button" class="btn btn-danger d-none" id="rejectFromModalBtn">
-                        <i class="fe fe-x me-1"></i>Reject
+
+                    <button type="button" class="btn btn-danger d-inline-flex align-items-center d-none"
+                        id="rejectFromModalBtn">
+                        <i class="fe fe-x me-1"></i>
+                        <span>Reject</span>
                     </button>
                 </div>
             </div>
@@ -335,14 +377,15 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
+
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title" id="invitationListModalLabel">
                         <i class="fe fe-list me-2"></i>Sent Invitations
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close">
-                    </button>
+                        aria-label="Close">&times;</button>
                 </div>
+
                 <div class="modal-body">
                     <div id="invitationListContent">
                         <!-- Invitation list will be loaded here -->
@@ -353,13 +396,18 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer"></div>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+
+                <div class="modal-footer justify-content-end">
+                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center"
+                        data-bs-dismiss="modal">
                         <i class="fe fe-x me-1"></i>Close
                     </button>
                 </div>
+
             </div>
         </div>
+    </div>
+    </div>
     </div>
 
     <!-- Invite Modal -->
@@ -385,10 +433,16 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary d-inline-flex align-items-center" id="inviteSubmitBtn"
-                        onclick="sendInvitation()">
-                        <span class="btn-text"><i class="fe fe-send me-1"></i> Send Invite</span>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center"
+                        id="inviteSubmitBtn" onclick="sendInvitation()">
+
+                        <i class="fe fe-send me-2"></i>
+                        <span class="btn-text">Send Invite</span>
+
                         <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
                     </button>
                 </div>
@@ -402,5 +456,5 @@
 @endpush
 
 @push('styles')
-@include('backend.layouts.tenants.applications._style')
+    @include('backend.layouts.tenants.applications._style')
 @endpush

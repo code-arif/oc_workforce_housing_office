@@ -164,7 +164,7 @@
                                                             data-type="fixed">
                                                             <div class="lease-type-header">
                                                                 <i class="fe fe-calendar"></i>
-                                                                <div class="badge bg-primary">SELECTED</div>
+                                                                <div class="badge bg-primary p-3">SELECTED</div>
                                                             </div>
                                                             <h6>FIXED TERM LEASE</h6>
                                                             <p class="text-muted">This lease has a fixed start date and
