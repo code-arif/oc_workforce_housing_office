@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Backend\Lease;
 
 use App\Http\Controllers\Controller;
+use App\Mail\Tenant\LeaseCompletedMail;
 use App\Mail\Tenant\LeaseSignatureRequestMail;
 use App\Mail\Tenant\TenantPasswordRestLinkMail;
 use App\Mail\TenantApplication\TenantWelcomeMail;
@@ -14,8 +15,11 @@ use App\Models\Lease\LeaseTemplate;
 use App\Models\LeaseAssignment;
 use App\Models\LeasePaymentSchedule;
 use App\Models\Property;
+use App\Models\Room;
 use App\Models\Season;
 use App\Models\Tenant;
+use App\Models\Unit;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -143,7 +147,7 @@ class LeaseController extends Controller
                     $color = $statusColors[$data->status] ?? 'secondary';
                     $label = $statusLabels[$data->status] ?? $data->status;
 
-                    return '<span class="badge bg-' . $color . '">' . $label . '</span>';
+                    return '<span class="p-3 badge bg-' . $color . '">' . $label . '</span>';
                 })
                 ->addColumn('property_unit', function ($data) {
                     if (!$data->property) {
@@ -207,8 +211,8 @@ class LeaseController extends Controller
                     $adminSigned = $doc->admin_signed_at ? '✓' : '○';
 
                     return '<div class="text-center">
-                                <span class="badge badge-sm ' . ($doc->tenant_signed_at ? 'bg-success' : 'bg-secondary') . '">' . $tenantSigned . ' Tenant</span>
-                                <span class="badge badge-sm ' . ($doc->admin_signed_at ? 'bg-success' : 'bg-secondary') . ' ms-1">' . $adminSigned . ' Admin</span>
+                                <span class="p-3 badge badge-sm ' . ($doc->tenant_signed_at ? 'bg-success' : 'bg-secondary') . '">' . $tenantSigned . ' Tenant</span>
+                                <span class="p-3 badge badge-sm ' . ($doc->admin_signed_at ? 'bg-success' : 'bg-secondary') . ' ms-1">' . $adminSigned . ' Admin</span>
                             </div>';
                 })
                 ->rawColumns(['status_badge', 'property_unit', 'address', 'tenant_name', 'dates', 'rent', 'signature_status'])
@@ -283,7 +287,7 @@ class LeaseController extends Controller
         try {
             // Get the single tenant ID
             $tenantId = $request->tenant_ids[0];
-            
+
             // Determine status based on whether it's a draft or ready for signing
             $isDraft = $request->boolean('save_as_draft');
 
@@ -369,12 +373,12 @@ class LeaseController extends Controller
             }
 
             Log::info('Invoices generated for lease ID: ' . $lease->id);
-            
+
             // Create lease document if template is selected and not a draft
             if ($request->lease_template_id && !$request->boolean('save_as_draft')) {
                 $template = LeaseTemplate::find($request->lease_template_id);
                 Log::info('Creating lease document using template ID: ' . $request->lease_template_id);
-                
+
                 // Create single document for the tenant
                 LeaseDocument::create([
                     'lease_id' => $lease->id,
@@ -388,17 +392,17 @@ class LeaseController extends Controller
             // if (env('APP_ENV') !== 'production') {
                 $tenant = Tenant::find($tenantId);
                 if ($tenant->status !== 'approved') {
-                   
+
                     // Generate approval token
                     $tenant->generateApprovalToken();
                     $tenant->refresh();
-                    
+
                     // Password reset URL with token + email as query string
                     $passResetUrl = config('app.frontend_url')
                     . "/password-setup/"
                     . $tenant->approval_token
                     . "?" . http_build_query(['email' => $tenant->email]);
-                    
+
                     Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
                 }
             // }
@@ -410,7 +414,7 @@ class LeaseController extends Controller
             if($request->boolean('send_for_signature') && !$isDraft){
                 // Trigger sending for signature process
                 $this->sendLeaseForSignature($lease);
-            }            
+            }
 
             DB::commit();
 
@@ -418,7 +422,7 @@ class LeaseController extends Controller
             $message = $request->input('save_as_draft')
                 ? 'Lease saved as draft successfully!'
                 : 'Lease created successfully and sent for signing!';
-            
+
             if ($assignBedLater && !$request->input('save_as_draft')) {
                 $message .= ' Bed assignment is pending and can be done from the tenant profile.';
             }
@@ -752,7 +756,7 @@ class LeaseController extends Controller
 
     public function getUnits($propertyId)
     {
-        $property = \App\Models\Property::with('units')->find($propertyId);
+        $property = Property::with('units')->find($propertyId);
         if (!$property) {
             return response()->json(['success' => false, 'data' => [], 'message' => 'Property not found'], 404);
         }
@@ -761,7 +765,7 @@ class LeaseController extends Controller
 
     public function getRooms($unitId)
     {
-        $unit = \App\Models\Unit::with('rooms')->find($unitId);
+        $unit = Unit::with('rooms')->find($unitId);
         if (!$unit) {
             return response()->json(['success' => false, 'data' => [], 'message' => 'Unit not found'], 404);
         }
@@ -770,7 +774,7 @@ class LeaseController extends Controller
 
     public function getBeds($roomId)
     {
-        $room = \App\Models\Room::with('beds')->find($roomId);
+        $room = Room::with('beds')->find($roomId);
         if (!$room) {
             return response()->json(['success' => false, 'data' => [], 'message' => 'Room not found'], 404);
         }
@@ -788,7 +792,7 @@ class LeaseController extends Controller
             }])
             // ->where('is_occupied', false)
             ->get();
- 
+
         // Format the response with lease info for each bed
         $bedsData = $beds->map(function ($bed) {
             $activeAssignment = $bed->leaseAssignments->first();
@@ -821,7 +825,7 @@ class LeaseController extends Controller
         try {
             // Load necessary relationships
             $lease->load(['tenant', 'property']);
-            
+
             // Check if tenant exists
             if (!$lease->tenant) {
                 Log::warning('Cannot send welcome email - No tenant associated with lease ID: ' . $lease->id);
@@ -836,12 +840,12 @@ class LeaseController extends Controller
 
             // Send the welcome email
             Mail::to($lease->tenant->email)->send(new TenantWelcomeMail($lease));
-            
+
             Log::info('Welcome email sent successfully for lease ID: ' . $lease->id . ' to ' . $lease->tenant->email);
-            
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             Log::error('Failed to send welcome email for lease ID: ' . $lease->id . ' - Error: ' . $e->getMessage());
-            
+
             // Optional: You might want to throw the exception or handle it differently
             // throw $e;
         }
@@ -852,7 +856,7 @@ class LeaseController extends Controller
         try {
             // Load necessary relationships
             $lease->load(['tenant.profile', 'property', 'documents']);
-            
+
             // Check if tenant exists
             if (!$lease->tenant) {
                 Log::warning('Cannot send signature request - No tenant associated with lease ID: ' . $lease->id);
@@ -861,7 +865,7 @@ class LeaseController extends Controller
 
             // Get the lease document
             $leaseDocument = $lease->documents->first();
-            
+
             if (!$leaseDocument) {
                 Log::warning('Cannot send signature request - No document found for lease ID: ' . $lease->id);
                 return;
@@ -874,10 +878,10 @@ class LeaseController extends Controller
 
             // Send the signature request email
             Mail::to($lease->tenant->email)->send(new LeaseSignatureRequestMail($lease, $leaseDocument));
-            
+
             Log::info('Lease signature request email sent successfully for lease ID: ' . $lease->id . ' to ' . $lease->tenant->email);
-            
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             Log::error('Failed to send lease signature request for lease ID: ' . $lease->id . ' - Error: ' . $e->getMessage());
         }
     }
@@ -889,16 +893,16 @@ class LeaseController extends Controller
     {
         try {
             $lease = Lease::with(['tenant.profile', 'property', 'documents'])->findOrFail($id);
-            
+
             $this->sendLeaseForSignature($lease);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Lease signature request has been resent to ' . $lease->tenant->email
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to resend lease for signature: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to resend signature request: ' . $e->getMessage()
@@ -935,7 +939,7 @@ class LeaseController extends Controller
             ])->findOrFail($id);
 
             $profile = $lease->tenant?->profile;
-            $tenantName = $profile 
+            $tenantName = $profile
                 ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
                 : 'No Tenant';
 
@@ -970,9 +974,9 @@ class LeaseController extends Controller
                 'unpaid_invoices' => $unpaidInvoices,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get lease close data: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load lease data: ' . $e->getMessage()
@@ -1026,7 +1030,7 @@ class LeaseController extends Controller
             $oldEndDate = $lease->end_date;
             $closeReason = $request->close_reason;
             $notes = $request->notes;
-            
+
             // Append close reason to notes
             $updatedNotes = $lease->notes ?? '';
             if ($closeReason || $notes) {
@@ -1073,7 +1077,7 @@ class LeaseController extends Controller
 
                     // Send to tenant
                     if ($lease->tenant?->email) {
-                        Mail::to($lease->tenant->email)->send(new \App\Mail\Tenant\LeaseCompletedMail($lease));
+                        Mail::to($lease->tenant->email)->send(new LeaseCompletedMail($lease));
                         Log::info("Lease completion email sent to tenant: {$lease->tenant->email}");
                     }
 
@@ -1083,7 +1087,7 @@ class LeaseController extends Controller
                         Mail::to($adminEmail)->send(new \App\Mail\Tenant\LeaseCompletedAdminMail($lease));
                         Log::info("Lease completion email sent to admin: {$adminEmail}");
                     }
-                } catch (\Exception $mailError) {
+                } catch (Exception $mailError) {
                     Log::error("Failed to send lease completion emails: " . $mailError->getMessage());
                     // Don't fail the request if emails fail
                 }
@@ -1094,7 +1098,7 @@ class LeaseController extends Controller
                 'message' => 'Lease has been closed successfully.'
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to close lease: ' . $e->getMessage());
 
@@ -1128,7 +1132,7 @@ class LeaseController extends Controller
             }
 
             $profile = $lease->tenant?->profile;
-            $tenantName = $profile 
+            $tenantName = $profile
                 ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
                 : 'No Tenant';
 
@@ -1159,7 +1163,7 @@ class LeaseController extends Controller
                     if ($roomName) {
                         $label .= ' (Room: ' . $roomName . ')';
                     }
-                    
+
                     return [
                         'id' => $bed->id,
                         'bed_label' => $label,
@@ -1184,9 +1188,9 @@ class LeaseController extends Controller
                 'available_beds' => $availableBeds,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get change bed data: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load lease data: ' . $e->getMessage()
@@ -1289,7 +1293,7 @@ class LeaseController extends Controller
             if ($request->notes) {
                 $changeNote .= "Notes: " . $request->notes;
             }
-            
+
             $lease->update([
                 'notes' => trim($notes . $changeNote),
             ]);
@@ -1302,7 +1306,7 @@ class LeaseController extends Controller
                 'new_bed_label' => $newBed->bed_label,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to change bed: ' . $e->getMessage());
 
@@ -1336,7 +1340,7 @@ class LeaseController extends Controller
             }
 
             $profile = $lease->tenant?->profile;
-            $tenantName = $profile 
+            $tenantName = $profile
                 ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
                 : 'No Tenant';
 
@@ -1350,7 +1354,7 @@ class LeaseController extends Controller
                 ->map(function ($bed) {
                     $roomName = $bed->room?->room_number;
                     $unitName = $bed->room?->unit?->unit_number;
-                    
+
                     $label = $bed->bed_label ?? $bed->bed_number;
                     if ($unitName) {
                         $label .= ' (Unit: ' . $unitName;
@@ -1361,7 +1365,7 @@ class LeaseController extends Controller
                     } elseif ($roomName) {
                         $label .= ' (Room: ' . $roomName . ')';
                     }
-                    
+
                     return [
                         'id' => $bed->id,
                         'bed_label' => $label,
@@ -1384,9 +1388,9 @@ class LeaseController extends Controller
                 'available_beds' => $availableBeds,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get assign bed data: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load lease data: ' . $e->getMessage()
@@ -1497,7 +1501,7 @@ class LeaseController extends Controller
                 'bed_label' => $bed->bed_label,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to assign bed: ' . $e->getMessage());
 
@@ -1537,9 +1541,9 @@ class LeaseController extends Controller
                 'leases' => $leases,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to get pending bed assignments: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load data: ' . $e->getMessage()
