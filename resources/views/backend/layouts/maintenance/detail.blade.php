@@ -147,12 +147,7 @@
                                         <button class="btn btn-sm btn-success me-2" onclick="markAsResolved()">
                                             <i class="fe fe-check me-1" style="font-size:8px"></i> Mark as Resolved
                                         </button>
-                                        <button class="btn btn-sm btn-primary me-2" onclick="setReminder()">
-                                            <i class="fe fe-clock me-1" style="font-size:8px"></i> Set Reminder/Recurrence
-                                        </button>
-                                        <button class="btn btn-sm btn-info me-2" onclick="forwardMaintenance()">
-                                            <i class="fe fe-send me-1" style="font-size:8px"></i> Forward Maintenance
-                                        </button>
+
                                         <div class="btn-group">
                                             <button class="btn btn-sm" data-bs-toggle="dropdown">
                                                 <i class="fe fe-more-vertical"></i>
@@ -467,15 +462,6 @@
             });
         }
 
-        // Set reminder
-        function setReminder() {
-            toastr.info('Reminder feature coming soon');
-        }
-
-        // Forward maintenance
-        function forwardMaintenance() {
-            toastr.info('Forward feature coming soon');
-        }
 
         // Delete request
         function deleteRequest(id) {

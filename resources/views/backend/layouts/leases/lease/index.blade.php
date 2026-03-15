@@ -118,7 +118,8 @@
                                     <select class="form-select select3" id="tenantFilter">
                                         <option value="">Select Tenant</option>
                                         @foreach ($tenants as $tenant)
-                                            <option value="{{ $tenant->id }}">{{ $tenant?->profile?->first_name }} {{ $tenant?->profile?->last_name }}</option>
+                                            <option value="{{ $tenant->id }}">{{ $tenant?->profile?->first_name }}
+                                                {{ $tenant?->profile?->last_name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -152,7 +153,8 @@
                     <div class="card-header border-bottom">
                         <h3 class="card-title">All Leases</h3>
                         <div class="ms-auto">
-                            <a href="{{ route('leases.create') }}" class="btn btn-primary d-inline-flex align-items-center">
+                            <a href="{{ route('leases.create') }}"
+                                class="btn btn-primary d-inline-flex align-items-center">
                                 <i class="fe fe-plus me-1"></i> New Lease
                             </a>
                         </div>
@@ -196,6 +198,7 @@
                                         <th>Lease Duration</th>
                                         <th>Rent</th>
                                         <th>Signatures</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -255,7 +258,13 @@
                         name: 'signature_status',
                         orderable: false,
                         searchable: false
-                    }
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    },
                 ],
                 order: [
                     [0, 'desc']
@@ -280,7 +289,8 @@
             });
 
             // Row click to view details
-            $('#leasesTable tbody').on('click', 'tr', function() {
+            $('#leasesTable tbody').on('click', 'tr', function(e) {
+                if ($(e.target).closest('.delete-lease-btn').length) return; // <-- ADD THIS LINE
                 const data = table.row(this).data();
                 if (data) {
                     window.location.href = '{{ route('leases.show', '') }}/' + data.id;
@@ -337,6 +347,46 @@
                 toastr.info('Export functionality coming soon');
             });
             initializeSelect2();
+
+
+            // Lease delete
+            $(document).on('click', '.delete-lease-btn', function(e) {
+                e.stopPropagation();
+                const leaseId = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Delete this Lease?',
+                    text: 'This will permanently delete the lease, all invoices, payment schedules, and free up the bed. This cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/admin/leases/' + leaseId + '/delete',
+                            method: 'DELETE',
+                            data: {
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    toastr.success(response.message);
+                                    table.ajax.reload(null, false);
+                                } else {
+                                    toastr.error(response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                const msg = xhr.responseJSON?.message ||
+                                    'Failed to delete lease.';
+                                toastr.error(msg);
+                            }
+                        });
+                    }
+                });
+            });
         });
 
         function resetFilters() {
@@ -361,6 +411,7 @@
         .select2-container {
             width: 100% !important;
         }
+
         .filter-card {
             background: #f8f9fa;
             border-radius: 8px;
@@ -375,6 +426,7 @@
             color: #495057;
             margin-bottom: 8px;
         }
+
         .icon-service {
             width: 60px;
             height: 60px;

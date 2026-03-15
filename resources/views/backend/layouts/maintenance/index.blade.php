@@ -17,8 +17,10 @@
                         </ol>
                     </div>
                     <div class="ms-auto">
-                        <a href="{{ route('maintanance.create') }}" class="btn btn-primary">
-                            <i class="fe fe-plus me-2"></i> New Maintenance
+                        <a href="{{ route('maintanance.create') }}"
+                            class="btn btn-primary d-inline-flex align-items-center">
+                            <i class="fe fe-plus me-1"></i>
+                            New Maintenance
                         </a>
                     </div>
                 </div>
@@ -103,11 +105,14 @@
                     <div class="card-header border-bottom">
                         <h3 class="card-title">All Maintenance Requests</h3>
                         <div class="ms-auto">
-                            <button class="btn btn-sm btn-light me-2" id="exportBtn">
-                                <i class="fe fe-download me-1"></i> Export
-                            </button>
-                            <button class="btn btn-sm btn-light" id="filterBtn">
-                                <i class="fe fe-filter me-1"></i> Filter
+                            {{-- <button class="btn btn-sm btn-light me-2 d-inline-flex align-items-center" id="exportBtn">
+                                <i class="fe fe-download me-1"></i>
+                                Export
+                            </button> --}}
+
+                            <button class="btn btn-sm btn-light d-inline-flex align-items-center" id="filterBtn">
+                                <i class="fe fe-filter me-1"></i>
+                                Filter
                             </button>
                         </div>
                     </div>

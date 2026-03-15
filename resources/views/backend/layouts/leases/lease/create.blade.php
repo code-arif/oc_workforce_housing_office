@@ -382,12 +382,17 @@
                                             </div>
 
                                             <div class="d-flex justify-content-between mt-4">
-                                                <button type="button" class="btn btn-light" onclick="previousStep(1)">
-                                                    <i class="fe fe-chevron-left me-1"></i> Back to Property Details
+                                                <button type="button"
+                                                    class="btn btn-light d-inline-flex align-items-center"
+                                                    onclick="previousStep(1)">
+                                                    <i class="fe fe-chevron-left me-1"></i>
+                                                    Back to Property Details
                                                 </button>
-                                                <button type="button" class="btn btn-primary" id="step2NextBtn"
-                                                    onclick="validateAndNextStep(3)">
-                                                    Next: Add Tenants <i class="fe fe-chevron-right ms-1"></i>
+                                                <button type="button"
+                                                    class="btn btn-primary d-inline-flex align-items-center"
+                                                    id="step2NextBtn" onclick="validateAndNextStep(3)">
+                                                    Next: Add Tenants
+                                                    <i class="fe fe-chevron-right ms-1"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -434,12 +439,13 @@
                                                 <div class="col-md-6">
                                                     <div class="card border">
                                                         <div class="card-header bg-light">
-                                                            <h6 class="mb-0"><i class="fe fe-user-check me-2"></i>Select
-                                                                Existing Tenant</h6>
+                                                            <h6 class="mb-0"><i
+                                                                    class="fe fe-user-check me-2"></i>Existing Applicant
+                                                            </h6>
                                                         </div>
                                                         <div class="card-body">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Active Tenants</label>
+                                                                <label class="form-label">Existing Applicant</label>
                                                                 <select class="form-select select3"
                                                                     id="existingTenantSelect">
                                                                     <option value="">Select a tenant...</option>
@@ -830,7 +836,7 @@
                                             <!-- Action Buttons -->
                                             <div class="d-flex justify-content-between mt-4 pt-3 border-top">
                                                 <button type="button"
-                                                    class="btn btn-light d-inline-flex align-item-center"
+                                                    class="btn btn-light d-inline-flex align-items-center"
                                                     onclick="previousStep(3)">
                                                     <i class="fe fe-chevron-left me-1"></i> Back
                                                 </button>

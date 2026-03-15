@@ -101,7 +101,9 @@
                                             <option value="">All Tenants</option>
                                             @foreach ($tenants as $tenant)
                                                 <option value="{{ $tenant->id }}">
-                                                    {{ $tenant?->profile?->first_name }} {{ $tenant?->profile?->last_name }}
+                                                    {{ $tenant?->profile?->first_name || $tenant?->profile?->last_name
+                                                        ? trim(($tenant?->profile?->first_name ?? '') . ' ' . ($tenant?->profile?->last_name ?? ''))
+                                                        : $tenant->email }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -135,7 +137,8 @@
                                     <button class="btn btn-light btn-sm me-2 d-inline-flex align-items-center">
                                         <i class="fe fe-download me-1"></i> Export
                                     </button>
-                                    <a href="{{ route('invoices.create') }}" class="btn btn-primary btn-sm d-inline-flex align-items-center">
+                                    <a href="{{ route('invoices.create') }}"
+                                        class="btn btn-primary btn-sm d-inline-flex align-items-center">
                                         <i class="fe fe-plus me-1"></i> New Invoice
                                     </a>
                                 </div>
@@ -334,7 +337,7 @@
 
             // Search functionality
             $('#searchFilter').on('keyup', function() {
-                table.search(this.value).draw();
+                table.column(0).search(this.value).draw();
             });
 
             // Filter changes
@@ -344,9 +347,9 @@
 
             // Reset filters
             window.resetFilters = function() {
-                $('#propertyFilter, #tenantFilter, #statusFilter, #typeFilter').val('').trigger('change');
+                $('#tenantFilter, #statusFilter, #typeFilter').val('').trigger('change');
                 $('#searchFilter').val('');
-                table.search('').ajax.reload();
+                table.column(0).search('').ajax.reload(); // ← CHANGED (ছিল table.search(''))
             };
 
             // Row click to view details
@@ -370,7 +373,7 @@
         function initializeSelect2() {
             if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
                 $('.select3').select2({
-                    placeholder: 'Select an option',
+                    placeholder: 'Select a tenant',
                     allowClear: true,
                     width: '100%'
                 });
@@ -380,7 +383,7 @@
         function initializeSelect5() {
             if ($('.select5').length && typeof $.fn.select2 !== 'undefined') {
                 $('.select5').select2({
-                    placeholder: 'Select a tenant',
+                    placeholder: 'Select a property',
                     allowClear: true,
                     width: '100%'
                 });

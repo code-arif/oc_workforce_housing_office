@@ -28,7 +28,7 @@ class IncomeController extends Controller
         $partialAmount = Invoice::where('status', 'PARTIAL')->sum('balance_due') ?? 0;
         $paidAmount = Invoice::where('status', 'PAID')->sum('paid_amount') ?? 0;
         $processingAmount = Invoice::where('status', 'PROCESSING')->sum('balance_due') ?? 0;
-        
+
         // Total invoice amount = sum of all total_amount regardless of status
         $totalInvoiceAmount = Invoice::sum('total_amount') ?? 0;
 
@@ -133,23 +133,31 @@ class IncomeController extends Controller
                             </div>';
                 })
                 ->addColumn('tenant_info', function ($data) {
-                    if (!$data->tenant || !$data->tenant->profile) {
+
+                    if (!$data->tenant) {
                         return '<span class="text-muted">No Tenant</span>';
                     }
 
                     $profile = $data->tenant->profile;
-                    $fullName = trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''));
-                    $avatar = $profile->avatar
+
+                    $fullName = $profile
+                        ? trim(($profile->first_name ?? '') . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
+                        : '';
+
+                    // fallback to email if name empty
+                    $displayName = $fullName ?: $data->tenant->email;
+
+                    $avatar = ($profile && $profile->avatar)
                         ? asset($profile->avatar)
-                        : 'https://ui-avatars.com/api/?name=' . urlencode($fullName) . '&background=random';
+                        : 'https://ui-avatars.com/api/?name=' . urlencode($displayName) . '&background=random';
 
                     return '<div class="d-flex align-items-center">
-                                <img src="' . $avatar . '" alt="avatar" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
-                                <div>
-                                    <div>' . e($fullName) . '</div>
-                                    <small class="text-muted">' . e($data->tenant->email) . '</small>
-                                </div>
-                            </div>';
+                    <img src="' . $avatar . '" alt="avatar" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+                    <div>
+                        <div>' . e($displayName) . '</div>
+                        ' . ($fullName ? '<small class="text-muted">' . e($data->tenant->email) . '</small>' : '') . '
+                    </div>
+                 </div>';
                 })
                 ->addColumn('property_info', function ($data) {
                     if (!$data->lease->property) {
@@ -250,8 +258,8 @@ class IncomeController extends Controller
         try {
             $tenant = Tenant::with('leases.property')->find($request->tenant_id);
             $activeLease = Lease::where('tenant_id', $request->tenant_id)
-                        ->where('status', 'ACTIVE')
-                        ->first();
+                ->where('status', 'ACTIVE')
+                ->first();
 
             $leaseId = $activeLease?->id;
             $propertyId = $tenant->leases->first()->property_id ?? null;

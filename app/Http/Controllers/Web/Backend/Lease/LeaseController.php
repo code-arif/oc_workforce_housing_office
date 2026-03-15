@@ -99,8 +99,8 @@ class LeaseController extends Controller
                 $query->where('leases.property_id', $request->property_id);
             }
 
-            if($request->filled('bed_id')){
-                $query->whereHas('assignments', function($q) use ($request){
+            if ($request->filled('bed_id')) {
+                $query->whereHas('assignments', function ($q) use ($request) {
                     $q->where('bed_id', $request->bed_id);
                 });
             }
@@ -215,11 +215,28 @@ class LeaseController extends Controller
                                 <span class="p-3 badge badge-sm ' . ($doc->admin_signed_at ? 'bg-success' : 'bg-secondary') . ' ms-1">' . $adminSigned . ' Admin</span>
                             </div>';
                 })
-                ->rawColumns(['status_badge', 'property_unit', 'address', 'tenant_name', 'dates', 'rent', 'signature_status'])
+                // Add this column after signature_status column
+                ->addColumn('actions', function ($data) {
+                    if (!in_array($data->status, ['PENDING_TENANT_SIGN', 'DRAFT'])) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return '<div class="d-flex justify-content-center">
+                    <button type="button"
+                        class="btn btn-sm btn-danger delete-lease-btn"
+                        data-id="' . $data->id . '"
+                        title="Delete Lease">
+                        <i class="fe fe-trash-2"></i>
+                    </button>
+                </div>';
+                })
+                ->rawColumns(['status_badge', 'property_unit', 'address', 'tenant_name', 'dates', 'rent', 'signature_status', 'actions'])
                 ->make(true);
         }
     }
 
+    /**
+     * Lease create page
+     */
     public function create(Request $request)
     {
         $selectedTenant = null;
@@ -227,18 +244,18 @@ class LeaseController extends Controller
         $terms = Season::where('is_active', true)->select('id', 'name', 'blanket_start_date', 'blanket_end_date')->get();
         $properties = Property::with(['units:id,property_id,name'])->select('id', 'name')->get();
 
-        if($request->input('tenant_id')){
+        if ($request->input('tenant_id')) {
             $request->validate([
                 'tenant_id' => 'exists:tenants,id'
             ]);
-             // Pre-select tenant if tenant_id is provided in query string
-             $selectedTenant = Tenant::with(['profile:id,tenant_id,first_name,last_name,phone', 'application:id,property_id','application.property:id,name'])
+            // Pre-select tenant if tenant_id is provided in query string
+            $selectedTenant = Tenant::with(['profile:id,tenant_id,first_name,last_name,phone', 'application:id,property_id', 'application.property:id,name'])
                 ->select('id', 'email', 'arrival_date', 'application_id', 'status')
                 ->find($request->input('tenant_id'));
             // dd($selectedTenant);
-             if (!$selectedTenant) {
-                 return redirect()->back()->withErrors(['tenant_id' => 'Selected tenant not found.']);
-             }
+            if (!$selectedTenant) {
+                return redirect()->back()->withErrors(['tenant_id' => 'Selected tenant not found.']);
+            }
         }
 
         $tenants = Tenant::with(['profile:id,tenant_id,first_name,last_name'])
@@ -252,6 +269,9 @@ class LeaseController extends Controller
         return view('backend.layouts.leases.lease.create', compact('terms', 'properties', 'tenants', 'leaseTemplates', 'selectedTenant'));
     }
 
+    /**
+     * Store new lease
+     */
     public function store(Request $request)
     {
         // dd($request->all());
@@ -337,7 +357,7 @@ class LeaseController extends Controller
                     'is_current' => true,
                 ]);
 
-                if($lease && $assignlease){
+                if ($lease && $assignlease) {
                     $bed = \App\Models\Bed::find($request->bed_id);
                     $bed->update(['is_occupied' => 1]);
                 }
@@ -390,28 +410,28 @@ class LeaseController extends Controller
             }
 
             // if (env('APP_ENV') !== 'production') {
-                $tenant = Tenant::find($tenantId);
-                if ($tenant->status !== 'approved') {
+            $tenant = Tenant::find($tenantId);
+            if ($tenant->status !== 'approved') {
 
-                    // Generate approval token
-                    $tenant->generateApprovalToken();
-                    $tenant->refresh();
+                // Generate approval token
+                $tenant->generateApprovalToken();
+                $tenant->refresh();
 
-                    // Password reset URL with token + email as query string
-                    $passResetUrl = config('app.frontend_url')
+                // Password reset URL with token + email as query string
+                $passResetUrl = config('app.frontend_url')
                     . "/password-setup/"
                     . $tenant->approval_token
                     . "?" . http_build_query(['email' => $tenant->email]);
 
-                    Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
-                }
+                Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+            }
             // }
 
             // Send welcome email if enabled
             if ($request->boolean('send_welcome_email')) {
                 $this->sendWelcomeEmail($lease);
             }
-            if($request->boolean('send_for_signature') && !$isDraft){
+            if ($request->boolean('send_for_signature') && !$isDraft) {
                 // Trigger sending for signature process
                 $this->sendLeaseForSignature($lease);
             }
@@ -434,7 +454,6 @@ class LeaseController extends Controller
                 'bed_assignment_pending' => $assignBedLater,
                 'redirect_url' => route('leases.show', $lease->id),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -594,7 +613,7 @@ class LeaseController extends Controller
     private function generateCustomInvoices(Lease $lease, int $tenantId, array $customPayments, bool $depositCollected = false)
     {
         // Sort payments by due date
-        usort($customPayments, function($a, $b) {
+        usort($customPayments, function ($a, $b) {
             return strtotime($a['due_date']) - strtotime($b['due_date']);
         });
 
@@ -645,6 +664,9 @@ class LeaseController extends Controller
         }
     }
 
+    /**
+     * Lease Details Page
+     */
     public function show($id)
     {
         $lease = Lease::with([
@@ -669,6 +691,9 @@ class LeaseController extends Controller
         return view('backend.layouts.leases.lease.lease-detail', compact('lease', 'leases'));
     }
 
+    /**
+     * Lease details data
+     */
     public function details($id)
     {
         $lease = Lease::with([
@@ -744,7 +769,7 @@ class LeaseController extends Controller
                 'success' => true,
                 'message' => 'Security deposit marked as collected successfully.'
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Failed to collect deposit: ' . $e->getMessage());
 
             return response()->json([
@@ -754,6 +779,9 @@ class LeaseController extends Controller
         }
     }
 
+    /**
+     * Get property all units
+     */
     public function getUnits($propertyId)
     {
         $property = Property::with('units')->find($propertyId);
@@ -763,6 +791,9 @@ class LeaseController extends Controller
         return response()->json(['success' => true, 'data' => $property->units]);
     }
 
+    /**
+     * Get rooms of an unit
+     */
     public function getRooms($unitId)
     {
         $unit = Unit::with('rooms')->find($unitId);
@@ -772,6 +803,9 @@ class LeaseController extends Controller
         return response()->json(['success' => true, 'data' => $unit->rooms]);
     }
 
+    /**
+     * Get all beds of a room
+     */
     public function getBeds($roomId)
     {
         $room = Room::with('beds')->find($roomId);
@@ -786,8 +820,8 @@ class LeaseController extends Controller
                     ->whereNull('deleted_at')
                     ->with(['lease' => function ($q) {
                         $q->whereIn('status', ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])
-                          ->select('id', 'start_date', 'end_date', 'status', 'tenant_id')
-                          ->with('tenant:id,email');
+                            ->select('id', 'start_date', 'end_date', 'status', 'tenant_id')
+                            ->with('tenant:id,email');
                     }]);
             }])
             // ->where('is_occupied', false)
@@ -820,6 +854,9 @@ class LeaseController extends Controller
         return response()->json(['success' => true, 'data' => $bedsData]);
     }
 
+    /**
+     * HELPER: Send tenant welcome mail helper funciton
+     */
     private function sendWelcomeEmail(Lease $lease)
     {
         try {
@@ -842,7 +879,6 @@ class LeaseController extends Controller
             Mail::to($lease->tenant->email)->send(new TenantWelcomeMail($lease));
 
             Log::info('Welcome email sent successfully for lease ID: ' . $lease->id . ' to ' . $lease->tenant->email);
-
         } catch (Exception $e) {
             Log::error('Failed to send welcome email for lease ID: ' . $lease->id . ' - Error: ' . $e->getMessage());
 
@@ -851,6 +887,9 @@ class LeaseController extends Controller
         }
     }
 
+    /**
+     * HELPER: Send lease to tenant for singing
+     */
     private function sendLeaseForSignature(Lease $lease)
     {
         try {
@@ -880,7 +919,6 @@ class LeaseController extends Controller
             Mail::to($lease->tenant->email)->send(new LeaseSignatureRequestMail($lease, $leaseDocument));
 
             Log::info('Lease signature request email sent successfully for lease ID: ' . $lease->id . ' to ' . $lease->tenant->email);
-
         } catch (Exception $e) {
             Log::error('Failed to send lease signature request for lease ID: ' . $lease->id . ' - Error: ' . $e->getMessage());
         }
@@ -910,6 +948,9 @@ class LeaseController extends Controller
         }
     }
 
+    /**
+     * Get all beds of a property
+     */
     public function getBedsByProperty($id)
     {
         $beds = Bed::whereHas('room', function ($query) use ($id) {
@@ -973,7 +1014,6 @@ class LeaseController extends Controller
                 ],
                 'unpaid_invoices' => $unpaidInvoices,
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to get lease close data: ' . $e->getMessage());
 
@@ -1097,7 +1137,6 @@ class LeaseController extends Controller
                 'success' => true,
                 'message' => 'Lease has been closed successfully.'
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to close lease: ' . $e->getMessage());
@@ -1187,7 +1226,6 @@ class LeaseController extends Controller
                 ],
                 'available_beds' => $availableBeds,
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to get change bed data: ' . $e->getMessage());
 
@@ -1305,7 +1343,6 @@ class LeaseController extends Controller
                 'message' => 'Bed assignment has been changed successfully.',
                 'new_bed_label' => $newBed->bed_label,
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to change bed: ' . $e->getMessage());
@@ -1346,8 +1383,8 @@ class LeaseController extends Controller
 
             // Get available beds for this property
             $availableBeds = Bed::whereHas('room.unit', function ($q) use ($lease) {
-                    $q->where('property_id', $lease->property_id);
-                })
+                $q->where('property_id', $lease->property_id);
+            })
                 ->where('is_occupied', false)
                 ->with('room.unit')
                 ->get()
@@ -1387,7 +1424,6 @@ class LeaseController extends Controller
                 ],
                 'available_beds' => $availableBeds,
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to get assign bed data: ' . $e->getMessage());
 
@@ -1500,7 +1536,6 @@ class LeaseController extends Controller
                 'message' => 'Bed has been assigned successfully. Tenant can now move in.',
                 'bed_label' => $bed->bed_label,
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to assign bed: ' . $e->getMessage());
@@ -1540,13 +1575,62 @@ class LeaseController extends Controller
                 'success' => true,
                 'leases' => $leases,
             ]);
-
         } catch (Exception $e) {
             Log::error('Failed to get pending bed assignments: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete lease
+     */
+    public function destroy($id)
+    {
+        try {
+            $lease = Lease::with(['assignments'])->findOrFail($id);
+
+            // Only PENDING_TENANT_SIGN or DRAFT leases can be deleted
+            if (!in_array($lease->status, ['PENDING_TENANT_SIGN', 'DRAFT'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only draft or pending-signature leases can be deleted.'
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // Free up the bed(s)
+            $bedIds = $lease->assignments->pluck('bed_id')->filter()->toArray();
+            if (!empty($bedIds)) {
+                Bed::whereIn('id', $bedIds)->update(['is_occupied' => false]);
+                Log::info("Beds freed on lease #{$id} delete: " . implode(', ', $bedIds));
+            }
+
+            // Hard-delete all related records
+            LeaseAssignment::where('lease_id', $id)->forceDelete();
+            Invoice::where('lease_id', $id)->forceDelete();
+            LeasePaymentSchedule::where('lease_id', $id)->forceDelete();
+            LeaseDocument::where('lease_id', $id)->forceDelete();
+            $lease->forceDelete();
+
+            DB::commit();
+            Log::info("Lease #{$id} permanently deleted.");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lease deleted successfully.'
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete lease: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete lease: ' . $e->getMessage()
             ], 500);
         }
     }

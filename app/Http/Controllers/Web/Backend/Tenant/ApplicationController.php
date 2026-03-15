@@ -30,7 +30,6 @@ class ApplicationController extends Controller
      */
     public function index()
     {
-        
         return view('backend.layouts.tenants.applications.index');
     }
 
@@ -40,14 +39,14 @@ class ApplicationController extends Controller
     public function getData(Request $request)
     {
         if ($request->ajax() && $request->wantsJson()) {
-            
+
             $query = Application::query()
                 ->select([
                     'applications.*'
                 ])
                 ->orderBy('applications.id', 'desc');
 
-            
+
             // Status filter
             if ($request->filled('status')) {
                 $query->where('applications.status', $request->status);
@@ -75,13 +74,12 @@ class ApplicationController extends Controller
 
             return DataTables::eloquent($query)
                 ->addIndexColumn()
-                ->addColumn('applicant', function ($data){
-                    
+                ->addColumn('applicant', function ($data) {
+
                     return '<div class="text-truncate">
                                 <div class="fw-semibold">' . e($data->email) . '</div>
                                 <small class="text-muted">' . ($data->first_name ? e($data->first_name . ' ' . $data->last_name) : 'Name not provided') . '</small>
                             </div>';
-                    
                 })
                 ->addColumn('contact', function ($data) {
                     return '<div class="text-truncate">
@@ -90,9 +88,8 @@ class ApplicationController extends Controller
                             </div>';
                 })
                 ->addColumn('details', function ($data) {
-                                    
+
                     return '<span class="text-muted">Email-only application</span>';
-                    
                 })
                 ->addColumn('status_badge', function ($data) {
                     $statusColors = [
@@ -111,26 +108,26 @@ class ApplicationController extends Controller
                                 <small class="text-muted">' . $data->created_at->format('h:i A') . '</small>
                             </div>';
                 })
-                ->addColumn('action', function ($data){
+                ->addColumn('action', function ($data) {
                     $btn = '<div class="btn-group" role="group">';
 
-                        // Single email - view details button always visible
-                        $btn .= '<button type="button" onclick="viewSingleEmailDetails(' . $data->id . ')" class="btn btn-sm btn-info d-inline-flex align-items-center" title="View Details">
+                    // Single email - view details button always visible
+                    $btn .= '<button type="button" onclick="viewSingleEmailDetails(' . $data->id . ')" class="btn btn-sm btn-info d-inline-flex align-items-center" title="View Details">
                                     <i class="fe fe-eye"></i>
                                 </button>';
 
-                        if ($data->status === 'pending') {
-                            // Approve button
-                            $btn .= '<button type="button" onclick="approveSingleEmail(' . $data->id . ')" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Approve & Send Form">
+                    if ($data->status === 'pending') {
+                        // Approve button
+                        $btn .= '<button type="button" onclick="approveSingleEmail(' . $data->id . ')" class="btn btn-sm btn-success d-inline-flex align-items-center" title="Approve & Send Form">
                                         <i class="fe fe-check"></i>
                                     </button>';
 
-                            // Reject button
-                            $btn .= '<button type="button" onclick="rejectApplication(' . $data->id . ')" class="btn btn-sm btn-danger d-inline-flex align-items-center" title="Reject">
+                        // Reject button
+                        $btn .= '<button type="button" onclick="rejectApplication(' . $data->id . ')" class="btn btn-sm btn-danger d-inline-flex align-items-center" title="Reject">
                                     <i class="fe fe-x"></i>
                                 </button>';
-                        }
-                    
+                    }
+
 
                     $btn .= '</div>';
                     return $btn;
@@ -142,6 +139,9 @@ class ApplicationController extends Controller
         return abort(404);
     }
 
+    /**
+     * Reservation application list data
+     */
     public function getReservationData(Request $request)
     {
         if ($request->ajax() && $request->wantsJson()) {
@@ -192,7 +192,7 @@ class ApplicationController extends Controller
                             </div>';
                 })
                 ->addColumn('details', function ($data) {
-                    $industry = $data->industry ? '<span class="badge bg-secondary me-1">' . e($data->industry) . '</span>' : '';
+                    $industry = $data->industry ? '<span class="p-3 badge bg-secondary me-1">' . e($data->industry) . '</span>' : '';
                     $empCount = $data->employee_count ? '<small class="text-muted"><i class="fe fe-users me-1"></i>' . e($data->employee_count) . ' employees</small>' : '';
                     return '<div>' . $industry . ($empCount ? '<br>' . $empCount : '') . '</div>';
                 })
@@ -204,7 +204,7 @@ class ApplicationController extends Controller
                         'declined'  => 'danger',
                     ];
                     $color = $statusColors[$data->status] ?? 'secondary';
-                    return '<span class="badge p-2 bg-' . $color . '">' . e(ucfirst($data->status)) . '</span>';
+                    return '<span class="badge p-3 bg-' . $color . '">' . e(ucfirst($data->status)) . '</span>';
                 })
                 ->addColumn('submitted_at', function ($data) {
                     return '<div>
@@ -235,8 +235,8 @@ class ApplicationController extends Controller
                         $btn .= '<li><a class="dropdown-item' . $activeClass . '" href="#"
                                     onclick="updateReservationStatus(' . $data->id . ', \'' . $status . '\'); return false;">
                                     <span class="badge bg-' . $color . ' me-1">&nbsp;</span>' . ucfirst($status) .
-                                    ($data->status === $status ? ' <i class="fe fe-check ms-1"></i>' : '') .
-                                '</a></li>';
+                            ($data->status === $status ? ' <i class="fe fe-check ms-1"></i>' : '') .
+                            '</a></li>';
                     }
 
                     $btn .= '</ul></div>';
@@ -349,7 +349,7 @@ class ApplicationController extends Controller
             // Update application status to approved
             $application->status = 'approved';
             $application->save();
-            
+
             DB::commit();
 
             return response()->json([
@@ -463,8 +463,8 @@ class ApplicationController extends Controller
             DB::beginTransaction();
 
             // Generate approval token
-           $token = Str::random(64);
-           $applicationToken = DB::table('application_tokens')->updateOrInsert(
+            $token = Str::random(64);
+            $applicationToken = DB::table('application_tokens')->updateOrInsert(
                 ['email' => $request->email],
                 ['token' => $token, 'expires_at' => now()->addHours(24), 'created_at' => now(), 'updated_at' => now()]
             );
