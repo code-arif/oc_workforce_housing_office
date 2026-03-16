@@ -53,7 +53,7 @@ class LeaseDocumentController extends Controller
         }
 
         // Extract actual lease data for placeholders
-        $leaseData = $this->extractPlaceholderData($lease);
+        $leaseData = $this->extractPlaceholderData($lease, $document);
 
         // Get PDF URL
         $pdfPath = $template->pdf_path ?? $template->document_path ?? null;
@@ -62,7 +62,7 @@ class LeaseDocumentController extends Controller
         // Get placeholders and signatures from template
         $placeholders = is_array($template->placeholders) ? $template->placeholders : (json_decode($template->placeholders, true) ?? []);
         $signatures = is_array($template->signatures) ? $template->signatures : (json_decode($template->signatures, true) ?? []);
-
+        // dd($leaseData, $placeholders, $signatures);
         // Return view for full page preview with PDF.js support
         return view('backend.layouts.leases.lease.document-preview', compact(
             'lease', 
@@ -86,7 +86,7 @@ class LeaseDocumentController extends Controller
         }
 
         // Otherwise, generate from template with lease data
-        $placeholderData = $this->extractPlaceholderData($lease);
+        $placeholderData = $this->extractPlaceholderData($lease, $document);
         
         // Get template content
         $content = $template->content ?? '';
@@ -111,10 +111,11 @@ class LeaseDocumentController extends Controller
     /**
      * Extract placeholder data from lease
      */
-    private function extractPlaceholderData($lease)
+    private function extractPlaceholderData($lease, $document = null)
     {
         $tenant = $lease->tenant;
         $profile = $tenant?->profile;
+        $address = $tenant?->address;
         $property = $lease->property;
         $assignment = $lease->assignments->where('is_current', true)->first();
         $bed = $assignment?->bed;
@@ -125,6 +126,9 @@ class LeaseDocumentController extends Controller
             trim($profile->first_name . ' ' . ($profile->middle_name ? $profile->middle_name . ' ' : '') . ($profile->last_name ?? '')) : 
             'N/A';
 
+        $adminSignedAt = $document?->admin_signed_at ?? $lease->admin_signed_at ?? null;
+        $tenantSignedAt = $document?->tenant_signed_at ?? null;
+
         return [
             // Tenant Info
             'tenant_name' => $tenantName,
@@ -132,11 +136,11 @@ class LeaseDocumentController extends Controller
             'tenant_last_name' => $profile?->last_name ?? '',
             'tenant_email' => $tenant?->email ?? '',
             'tenant_phone' => $profile?->phone ?? '',
-            'tenant_address' => $profile?->address ?? '',
-            'tenant_city' => $profile?->city ?? '',
-            'tenant_state' => $profile?->state ?? '',
-            'tenant_zip' => $profile?->zip ?? '',
-            
+            'tenant_address' => $address?->address ?? '',
+            'tenant_city' => $address?->city ?? '',
+            'tenant_state' => $address?->state ?? '',
+            'tenant_zip' => $address?->zip ?? '',
+
             // Property Info
             'property_name' => $property?->name ?? '',
             'property_address' => $property?->address ?? '',
@@ -160,7 +164,12 @@ class LeaseDocumentController extends Controller
             'deposit_amount' => $lease->deposit_amount ? '$' . number_format($lease->deposit_amount, 2) : '',
             'payment_frequency' => ucwords(strtolower(str_replace('_', ' ', $lease->payment_frequency ?? ''))),
             'lease_term' => $this->calculateLeaseTerm($lease->start_date, $lease->end_date),
-            
+            // Signature dates are stored on lease_documents, not leases.
+            'date_signed' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
+            'admin_signed_date' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
+            'tenant_signed_date' => $tenantSignedAt ? date('d M, Y', strtotime($tenantSignedAt)) : '',
+            'admin_signed_at' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
+            'tenant_signed_at' => $tenantSignedAt ? date('d M, Y', strtotime($tenantSignedAt)) : '',
             // Other
             'current_date' => date(' d M, Y'),
             'admin_name' => auth()->user()?->name ?? 'Property Manager',
@@ -459,7 +468,7 @@ class LeaseDocumentController extends Controller
 
         // Get actual lease data
         $lease = $document->lease;
-        $leaseData = $lease ? $this->extractPlaceholderData($lease) : [];
+        $leaseData = $lease ? $this->extractPlaceholderData($lease, $document) : [];
 
         try {
             // Generate PDF with overlays using FPDI
