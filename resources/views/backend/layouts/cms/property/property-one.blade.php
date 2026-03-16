@@ -25,67 +25,89 @@
                     </div>
 
                     {{-- Primary Image --}}
-                    <div class="form-group mb-3">
+                    {{-- <div class="form-group mb-3">
                         <label class="form-label">Primary Image</label>
                         <input type="file" class="dropify form-control"
                             data-default-file="{{ !empty($data->image) && file_exists(public_path($data->image)) ? asset($data->image) : asset('default/placeholder-image.avif') }}"
                             name="image" id="propertyOneImage" accept="image/*">
                         <small class="text-muted">Recommended: 1920x1080px (Max: 2MB)</small>
                         <div class="invalid-feedback"></div>
-                    </div>
+                    </div> --}}
 
                     {{-- Multiple Gallery Images --}}
                     <div class="form-group mb-3">
-                        <label class="form-label">Gallery Images <small class="text-muted">(Multiple)</small></label>
+                        <label class="form-label fw-semibold">Gallery Images <small
+                                class="text-muted">(Multiple)</small></label>
 
                         {{-- Existing gallery images preview --}}
                         @php
                             $galleryImages = $data->metadata['images'] ?? [];
                         @endphp
-                        @if (!empty($galleryImages))
-                            <div class="d-flex flex-wrap gap-2 mb-2" id="propertyOneGalleryPreview">
-                                @foreach ($galleryImages as $img)
-                                    <div class="position-relative">
-                                        <img src="{{ asset($img) }}" alt="Gallery"
-                                            style="width:100px;height:75px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
-                                    </div>
-                                @endforeach
-                            </div>
-                            <small class="text-warning d-block mb-1">
-                                Uploading new images will replace all existing gallery images.
-                            </small>
-                        @endif
 
-                        <input type="file" class="form-control" name="images[]" id="propertyOneImages"
-                            accept="image/*" multiple>
-                        <small class="text-muted">You can select multiple images. Max 2MB each. (JPEG, PNG, WebP,
-                            AVIF)</small>
-                        <div class="invalid-feedback"></div>
+                        <div class="d-flex flex-wrap gap-2 mb-2" id="propertyOneGalleryPreview">
+                            @foreach ($galleryImages as $index => $img)
+                                <div class="img-thumb-wrapper position-relative" data-path="{{ $img }}">
+                                    <img src="{{ asset($img) }}" alt="Gallery"
+                                        style="width:100px;height:75px;object-fit:cover;border-radius:6px;border:1px solid #ddd;">
+                                    <button type="button" class="img-remove-btn" title="Remove">&#10005;</button>
+                                    <input type="hidden" name="existing_images[]" value="{{ $img }}">
+                                </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Custom File Drop Zone --}}
+                        <div class="custom-upload-zone" id="propertyOneDropZone">
+                            <div class="upload-icon">🖼️</div>
+                            <p class="mb-1">Drag & Drop images here or <span class="upload-browse-text">Browse</span>
+                            </p>
+                            <small class="text-muted">JPEG, PNG, WebP, AVIF, HEIC, HEIF and all formats · Max 5MB
+                                each</small>
+                            <input type="file" id="propertyOneImages" name="images[]" accept="image/*" multiple
+                                style="display:none;">
+                        </div>
+
+                        <div class="invalid-feedback" id="propertyOneImagesError"></div>
 
                         {{-- New images preview --}}
                         <div class="d-flex flex-wrap gap-2 mt-2" id="propertyOneNewImagesPreview"></div>
                     </div>
 
                     {{-- Video Upload --}}
+                    {{-- Video Upload --}}
                     <div class="form-group mb-3">
-                        <label class="form-label">Property Video</label>
+                        <label class="form-label fw-semibold">Property Video</label>
 
                         @php $existingVideo = $data->metadata['video'] ?? null; @endphp
-                        @if ($existingVideo && file_exists(public_path($existingVideo)))
-                            <div class="mb-2" id="propertyOneVideoPreview">
-                                <video controls style="max-width:100%;max-height:200px;border-radius:6px;">
-                                    <source src="{{ asset($existingVideo) }}">
-                                </video>
-                                <small class="text-warning d-block mt-1">
-                                    Uploading a new video will replace the existing one.
-                                </small>
-                            </div>
-                        @endif
 
-                        <input type="file" class="form-control" name="video" id="propertyOneVideo"
-                            accept="video/mp4,video/webm,video/ogg,video/mov">
-                        <small class="text-muted">Accepted: MP4, WebM, OGG, MOV (Max: 50MB)</small>
-                        <div class="invalid-feedback"></div>
+                        <div id="propertyOneVideoPreview"
+                            class="{{ $existingVideo && file_exists(public_path($existingVideo)) ? '' : 'd-none' }}">
+                            <div class="video-preview-wrapper position-relative d-inline-block mt-1">
+                                @if ($existingVideo && file_exists(public_path($existingVideo)))
+                                    <video controls
+                                        style="max-width:100%;max-height:200px;border-radius:8px;display:block;">
+                                        <source src="{{ asset($existingVideo) }}">
+                                    </video>
+                                    <input type="hidden" name="existing_video" value="{{ $existingVideo }}"
+                                        id="existingVideoPath">
+                                    <button type="button" class="video-remove-btn" id="propertyOneRemoveExistingVideo"
+                                        title="Remove Video">&#10005;</button>
+                                @endif
+                            </div>
+                            <small class="text-warning d-block mt-1">Uploading a new video will replace the existing
+                                one.</small>
+                        </div>
+
+                        {{-- Custom Video Drop Zone --}}
+                        <div class="custom-upload-zone mt-2" id="propertyOneVideoDropZone">
+                            <div class="upload-icon">🎬</div>
+                            <p class="mb-1">Drag & Drop video here or <span class="upload-browse-text">Browse</span>
+                            </p>
+                            <small class="text-muted">MP4, WebM, OGG, MOV · Max 50MB</small>
+                            <input type="file" id="propertyOneVideo" name="video"
+                                accept="video/mp4,video/webm,video/ogg,video/quicktime,.mov" style="display:none;">
+                        </div>
+
+                        <div class="invalid-feedback" id="propertyOneVideoError"></div>
 
                         {{-- New video preview --}}
                         <div class="mt-2" id="propertyOneNewVideoPreview"></div>
@@ -130,130 +152,206 @@
                 });
             }
 
-            // ── Dropify ───────────────────────────────────────────────────
-            if (typeof $.fn.dropify !== 'undefined') {
-                $(newForm).find('.dropify').dropify({
-                    messages: {
-                        'default': 'Drag and drop a file here or click',
-                        'replace': 'Drag and drop or click to replace',
-                        'remove': 'Remove',
-                        'error': 'Sorry, the file is too large'
-                    }
-                });
-            }
+            // ── Track new image files (DataTransfer trick) ────────────────
+            let newImageFiles = new DataTransfer();
 
-            // ── Multiple images preview ───────────────────────────────────
+            // ── Image Drop Zone ───────────────────────────────────────────
+            const imageDropZone = newForm.querySelector('#propertyOneDropZone');
             const imagesInput = newForm.querySelector('#propertyOneImages');
             const imagesPreview = newForm.querySelector('#propertyOneNewImagesPreview');
+            const galleryPreview = newForm.querySelector('#propertyOneGalleryPreview');
 
-            if (imagesInput) {
+            if (imageDropZone && imagesInput) {
+                imageDropZone.addEventListener('click', () => imagesInput.click());
+
+                ['dragenter', 'dragover'].forEach(ev =>
+                    imageDropZone.addEventListener(ev, e => {
+                        e.preventDefault();
+                        imageDropZone.classList.add('dragover');
+                    }));
+                ['dragleave', 'drop'].forEach(ev =>
+                    imageDropZone.addEventListener(ev, e => {
+                        e.preventDefault();
+                        imageDropZone.classList.remove('dragover');
+                    }));
+
+                imageDropZone.addEventListener('drop', e => {
+                    handleNewImages(e.dataTransfer.files);
+                });
+
                 imagesInput.addEventListener('change', function() {
-                    imagesPreview.innerHTML = '';
-                    const maxSize = 2 * 1024 * 1024;
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp',
-                        'image/avif'
-                    ];
-                    let hasError = false;
-
-                    Array.from(this.files).forEach(file => {
-                        if (file.size > maxSize) {
-                            window.showToast('error', `"${file.name}" exceeds 2MB limit.`);
-                            hasError = true;
-                            return;
-                        }
-                        if (!validTypes.includes(file.type)) {
-                            window.showToast('error',
-                                `"${file.name}" is not a valid image type.`);
-                            hasError = true;
-                            return;
-                        }
-
-                        const reader = new FileReader();
-                        reader.onload = e => {
-                            const img = document.createElement('img');
-                            img.src = e.target.result;
-                            img.style.cssText =
-                                'width:100px;height:75px;object-fit:cover;border-radius:6px;border:1px solid #dee2e6;';
-                            imagesPreview.appendChild(img);
-                        };
-                        reader.readAsDataURL(file);
-                    });
-
-                    if (hasError) this.value = '';
+                    handleNewImages(this.files);
+                    this.value = ''; // reset input — actual files are in newImageFiles DataTransfer
                 });
             }
 
-            // ── Video preview ─────────────────────────────────────────────
+            function handleNewImages(files) {
+                const maxSize = 5 * 1024 * 1024;
+
+                Array.from(files).forEach(file => {
+                    const isImage = file.type.startsWith('image/') || file.type === '';
+                    if (!isImage) {
+                        window.showToast('error', `"${file.name}" is not a valid image.`);
+                        return;
+                    }
+                    if (file.size > maxSize) {
+                        window.showToast('error', `"${file.name}" exceeds 5MB limit.`);
+                        return;
+                    }
+                    newImageFiles.items.add(file);
+                    addNewImageThumb(file, newImageFiles.files.length - 1);
+                });
+            }
+
+            function addNewImageThumb(file, idx) {
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('img-thumb-wrapper', 'position-relative');
+                wrapper.dataset.newIdx = idx;
+
+                const img = document.createElement('img');
+                img.alt = file.name;
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+
+                if (file.type === 'image/heic' || file.type === 'image/heif' || file.type === '') {
+                    img.src = '';
+                    const label = document.createElement('small');
+                    label.textContent = file.name;
+                    label.style.cssText =
+                        'font-size:9px;position:absolute;bottom:2px;left:2px;color:#fff;text-shadow:0 0 3px #000;max-width:96px;overflow:hidden;white-space:nowrap;';
+                    wrapper.appendChild(label);
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'img-remove-btn';
+                btn.innerHTML = '&#10005;';
+                btn.title = 'Remove';
+                btn.addEventListener('click', () => removeNewImage(parseInt(wrapper.dataset.newIdx)));
+
+                wrapper.appendChild(img);
+                wrapper.appendChild(btn);
+                imagesPreview.appendChild(wrapper);
+            }
+
+            function removeNewImage(removeIdx) {
+                const newDT = new DataTransfer();
+                Array.from(newImageFiles.files).forEach((f, i) => {
+                    if (i !== removeIdx) newDT.items.add(f);
+                });
+                newImageFiles = newDT;
+
+                // Re-render preview with corrected indices
+                imagesPreview.innerHTML = '';
+                Array.from(newImageFiles.files).forEach((f, i) => addNewImageThumb(f, i));
+            }
+
+            // ── Existing images remove ────────────────────────────────────
+            if (galleryPreview) {
+                galleryPreview.querySelectorAll('.img-remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const wrapper = this.closest('.img-thumb-wrapper');
+                        // Add hidden input to track removed existing images
+                        const removedInput = document.createElement('input');
+                        removedInput.type = 'hidden';
+                        removedInput.name = 'removed_images[]';
+                        removedInput.value = wrapper.dataset.path;
+                        newForm.appendChild(removedInput);
+
+                        // Remove the hidden existing_images[] input for this image
+                        const existingInput = wrapper.querySelector(
+                            'input[name="existing_images[]"]');
+                        if (existingInput) existingInput.disabled = true;
+
+                        wrapper.remove();
+                    });
+                });
+            }
+
+            // ── Video Drop Zone ───────────────────────────────────────────
+            const videoDropZone = newForm.querySelector('#propertyOneVideoDropZone');
             const videoInput = newForm.querySelector('#propertyOneVideo');
             const videoPreviewBox = newForm.querySelector('#propertyOneNewVideoPreview');
+            const existingVideoWrap = newForm.querySelector('#propertyOneVideoPreview');
+            const removeExistingBtn = newForm.querySelector('#propertyOneRemoveExistingVideo');
+            const existingVideoPath = newForm.querySelector('#existingVideoPath');
 
-            if (videoInput) {
+            if (videoDropZone && videoInput) {
+                videoDropZone.addEventListener('click', () => videoInput.click());
+
+                ['dragenter', 'dragover'].forEach(ev =>
+                    videoDropZone.addEventListener(ev, e => {
+                        e.preventDefault();
+                        videoDropZone.classList.add('dragover');
+                    }));
+                ['dragleave', 'drop'].forEach(ev =>
+                    videoDropZone.addEventListener(ev, e => {
+                        e.preventDefault();
+                        videoDropZone.classList.remove('dragover');
+                    }));
+                videoDropZone.addEventListener('drop', e => {
+                    const files = e.dataTransfer.files;
+                    if (files.length) handleVideoFile(files[0]);
+                });
+
                 videoInput.addEventListener('change', function() {
-                    videoPreviewBox.innerHTML = '';
-                    const file = this.files[0];
-                    if (!file) return;
-
-                    const maxSize = 50 * 1024 * 1024;
-                    const validTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-
-                    if (file.size > maxSize) {
-                        window.showToast('error', 'Video size should not exceed 50MB.');
-                        this.value = '';
-                        return;
-                    }
-                    if (!validTypes.includes(file.type)) {
-                        window.showToast('error', 'Please upload a valid video (MP4, WebM, OGG, MOV).');
-                        this.value = '';
-                        return;
-                    }
-
-                    const url = URL.createObjectURL(file);
-                    videoPreviewBox.innerHTML = `
-                    <video controls style="max-width:100%;max-height:200px;border-radius:6px;">
-                        <source src="${url}">
-                    </video>
-                    <small class="text-success d-block mt-1">New video selected: ${file.name}</small>
-                `;
+                    if (this.files[0]) handleVideoFile(this.files[0]);
                 });
             }
 
-            // ── Primary image validation ──────────────────────────────────
-            const imageInput = newForm.querySelector('#propertyOneImage');
-            if (imageInput) {
-                imageInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
+            function handleVideoFile(file) {
+                const maxSize = 50 * 1024 * 1024;
+                const validTypes = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
 
-                    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp',
-                        'image/avif'
-                    ];
-
-                    if (file.size > 2 * 1024 * 1024) {
-                        window.showToast('error', 'Image size should not exceed 2MB.');
-                        e.target.value = '';
-                        resetDropify(e.target);
-                        return;
-                    }
-                    if (!validTypes.includes(file.type)) {
-                        window.showToast('error',
-                            'Please upload a valid image (JPEG, PNG, WebP, AVIF).');
-                        e.target.value = '';
-                        resetDropify(e.target);
-                    }
-                });
-            }
-
-            function resetDropify(el) {
-                if (typeof $.fn.dropify !== 'undefined') {
-                    const d = $(el).data('dropify');
-                    if (d) {
-                        d.resetPreview();
-                        d.clearElement();
-                    }
+                if (file.size > maxSize) {
+                    window.showToast('error', 'Video size should not exceed 50MB.');
+                    videoInput.value = '';
+                    return;
                 }
+                if (!validTypes.includes(file.type)) {
+                    window.showToast('error', 'Please upload a valid video (MP4, WebM, OGG, MOV).');
+                    videoInput.value = '';
+                    return;
+                }
+
+                const url = URL.createObjectURL(file);
+                videoPreviewBox.innerHTML = `
+                <div class="video-preview-wrapper position-relative d-inline-block">
+                    <video controls style="max-width:100%;max-height:200px;border-radius:8px;display:block;">
+                        <source src="${url}" type="${file.type}">
+                    </video>
+                    <button type="button" class="video-remove-btn" id="removeNewVideo" title="Remove">&#10005;</button>
+                </div>
+                <small class="text-success d-block mt-1">Selected: ${file.name}</small>
+            `;
+
+                videoPreviewBox.querySelector('#removeNewVideo')?.addEventListener('click', () => {
+                    videoInput.value = '';
+                    videoPreviewBox.innerHTML = '';
+                });
             }
 
-            // ── Form submit ───────────────────────────────────────────────
+            // Remove existing video button
+            if (removeExistingBtn) {
+                removeExistingBtn.addEventListener('click', () => {
+                    // Mark existing video for removal
+                    const removeVideoInput = document.createElement('input');
+                    removeVideoInput.type = 'hidden';
+                    removeVideoInput.name = 'remove_video';
+                    removeVideoInput.value = '1';
+                    newForm.appendChild(removeVideoInput);
+
+                    if (existingVideoPath) existingVideoPath.disabled = true;
+                    if (existingVideoWrap) existingVideoWrap.classList.add('d-none');
+                });
+            }
+
+            // ── Form Submit ───────────────────────────────────────────────
             newForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -269,9 +367,12 @@
 
                 try {
                     const formData = new FormData(this);
-
-                    // Summernote content
                     formData.set('description', $(this).find('.summernote').summernote('code'));
+
+                    formData.delete('images[]');
+                    Array.from(newImageFiles.files).forEach(file => {
+                        formData.append('images[]', file);
+                    });
 
                     const response = await axios.post(this.action, formData, {
                         headers: {
@@ -283,9 +384,9 @@
                     if (response.data.success) {
                         window.showToast('success', response.data.message ||
                             'Updated successfully!');
-                        // Clear new images / video preview after save
                         if (imagesPreview) imagesPreview.innerHTML = '';
                         if (videoPreviewBox) videoPreviewBox.innerHTML = '';
+                        newImageFiles = new DataTransfer();
                     } else {
                         window.showToast('error', response.data.message || 'Failed to update!');
                     }
@@ -332,31 +433,4 @@
     })();
 </script>
 
-<style>
-    .dropify-wrapper {
-        border: 2px dashed #D9A600;
-        border-radius: 0.375rem;
-    }
-
-    .dropify-wrapper:hover {
-        border-color: #D9A600;
-    }
-
-    .dropify-message p {
-        font-size: 14px;
-        color: #6b7280;
-    }
-
-    .dropify-preview {
-        background-color: #f9fafb;
-    }
-
-    .note-editor.note-frame {
-        border: 1px solid #dee2e6;
-        border-radius: 0.375rem;
-    }
-
-    .note-editor.note-frame .note-statusbar {
-        background-color: #f8f9fa;
-    }
-</style>
+@include('backend.layouts.cms.property._style')

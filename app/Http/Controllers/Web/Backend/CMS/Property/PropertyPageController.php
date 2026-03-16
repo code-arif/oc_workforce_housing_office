@@ -251,31 +251,37 @@ class PropertyPageController extends Controller
                     : json_decode($existing->metadata, true) ?? [];
             }
 
-            // ── Single primary image ──────────────────────────────────────
-            if ($request->hasFile('image')) {
-                if ($existing && $existing->image) {
-                    Helper::deleteImage($existing->image);
-                }
-                $validated_data['image'] = Helper::uploadImage(
-                    $request->file('image'),
-                    'cms/properties/property-one'
-                );
-            }
+            // ── Handle removed existing images ───────────────────────────
+            $removedImages = $request->input('removed_images', []);
+            $existingImages = $request->input('existing_images', []);
 
-            // ── Multiple gallery images ───────────────────────────────────
             if ($request->hasFile('images')) {
-                // Delete old gallery images
+                // Full replace - delete all old
                 if (!empty($metadata['images'])) {
                     foreach ($metadata['images'] as $old) {
                         Helper::deleteImage($old);
                     }
                 }
-
                 $paths = [];
                 foreach ($request->file('images') as $img) {
                     $paths[] = Helper::uploadImage($img, 'cms/properties/property-one/gallery');
                 }
                 $metadata['images'] = $paths;
+            } else {
+                // Partial - keep existing minus removed
+                $kept = array_filter($metadata['images'] ?? [], fn($img) => !in_array($img, $removedImages));
+                foreach ($removedImages as $rm) {
+                    Helper::deleteImage($rm);
+                }
+                $metadata['images'] = array_values($kept);
+            }
+
+            // ── Handle remove_video flag ──────────────────────────────────
+            if ($request->input('remove_video') == '1') {
+                if (!empty($metadata['video']) && file_exists(public_path($metadata['video']))) {
+                    @unlink(public_path($metadata['video']));
+                }
+                $metadata['video'] = null;
             }
 
             // ── Video upload ──────────────────────────────────────────────
@@ -322,7 +328,6 @@ class PropertyPageController extends Controller
         try {
             $validated_data = $request->validated();
 
-            // Bug fix: was querying 'property-one' before
             $existing = CMS::where('page', 'properties')
                 ->where('section', 'property-two')
                 ->where('name', 'item')
@@ -335,30 +340,37 @@ class PropertyPageController extends Controller
                     : json_decode($existing->metadata, true) ?? [];
             }
 
-            // ── Single primary image ──────────────────────────────────────
-            if ($request->hasFile('image')) {
-                if ($existing && $existing->image) {
-                    Helper::deleteImage($existing->image);
-                }
-                $validated_data['image'] = Helper::uploadImage(
-                    $request->file('image'),
-                    'cms/properties/property-two'
-                );
-            }
+            // ── Gallery images ────────────────────────────────────────────
+            $removedImages = $request->input('removed_images', []);
 
-            // ── Multiple gallery images ───────────────────────────────────
             if ($request->hasFile('images')) {
                 if (!empty($metadata['images'])) {
                     foreach ($metadata['images'] as $old) {
                         Helper::deleteImage($old);
                     }
                 }
-
                 $paths = [];
                 foreach ($request->file('images') as $img) {
                     $paths[] = Helper::uploadImage($img, 'cms/properties/property-two/gallery');
                 }
                 $metadata['images'] = $paths;
+            } else {
+                $kept = array_filter(
+                    $metadata['images'] ?? [],
+                    fn($img) => !in_array($img, $removedImages)
+                );
+                foreach ($removedImages as $rm) {
+                    Helper::deleteImage($rm);
+                }
+                $metadata['images'] = array_values($kept);
+            }
+
+            // ── Remove video flag ─────────────────────────────────────────
+            if ($request->input('remove_video') == '1') {
+                if (!empty($metadata['video']) && file_exists(public_path($metadata['video']))) {
+                    @unlink(public_path($metadata['video']));
+                }
+                $metadata['video'] = null;
             }
 
             // ── Video upload ──────────────────────────────────────────────
@@ -416,30 +428,37 @@ class PropertyPageController extends Controller
                     : json_decode($existing->metadata, true) ?? [];
             }
 
-            // ── Single primary image ──────────────────────────────────────
-            if ($request->hasFile('image')) {
-                if ($existing && $existing->image) {
-                    Helper::deleteImage($existing->image);
-                }
-                $validated_data['image'] = Helper::uploadImage(
-                    $request->file('image'),
-                    'cms/properties/property-three'
-                );
-            }
+            // ── Gallery images ────────────────────────────────────────────
+            $removedImages = $request->input('removed_images', []);
 
-            // ── Multiple gallery images ───────────────────────────────────
             if ($request->hasFile('images')) {
                 if (!empty($metadata['images'])) {
                     foreach ($metadata['images'] as $old) {
                         Helper::deleteImage($old);
                     }
                 }
-
                 $paths = [];
                 foreach ($request->file('images') as $img) {
                     $paths[] = Helper::uploadImage($img, 'cms/properties/property-three/gallery');
                 }
                 $metadata['images'] = $paths;
+            } else {
+                $kept = array_filter(
+                    $metadata['images'] ?? [],
+                    fn($img) => !in_array($img, $removedImages)
+                );
+                foreach ($removedImages as $rm) {
+                    Helper::deleteImage($rm);
+                }
+                $metadata['images'] = array_values($kept);
+            }
+
+            // ── Remove video flag ─────────────────────────────────────────
+            if ($request->input('remove_video') == '1') {
+                if (!empty($metadata['video']) && file_exists(public_path($metadata['video']))) {
+                    @unlink(public_path($metadata['video']));
+                }
+                $metadata['video'] = null;
             }
 
             // ── Video upload ──────────────────────────────────────────────
