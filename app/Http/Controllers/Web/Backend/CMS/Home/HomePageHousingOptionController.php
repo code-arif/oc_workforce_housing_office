@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Web\Backend\cMS\Home;
+namespace App\Http\Controllers\Web\Backend\CMS\Home;
 
 use App\Helper\Helper;
 use App\Models\CMS;
