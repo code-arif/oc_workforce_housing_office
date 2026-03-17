@@ -186,7 +186,7 @@ class LeaseDocumentController extends Controller
         
         $start = \Carbon\Carbon::parse($startDate);
         $end = \Carbon\Carbon::parse($endDate);
-        $months = $start->diffInMonths($end);
+        $months = (int) round($start->diffInMonths($end));
         
         if ($months == 12) return '1 Year';
         if ($months == 6) return '6 Months';
@@ -208,7 +208,7 @@ class LeaseDocumentController extends Controller
 
         $start = \Carbon\Carbon::parse($lease->start_date);
         $end = \Carbon\Carbon::parse($lease->end_date);
-        $months = $start->diffInMonths($end);
+        $months = (int) round($start->diffInMonths($end));
 
         if ($months < 1) $months = 1;
 

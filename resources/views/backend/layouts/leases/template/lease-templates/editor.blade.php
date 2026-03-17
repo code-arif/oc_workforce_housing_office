@@ -540,7 +540,11 @@ $(document).ready(function() {
     let scale = 1.0;
     let placedFields = @json($template->placeholders ?? []);
     let selectedField = null;
-    let fieldIdCounter = placedFields.length;
+    // Initialize counter from the highest numeric id in saved fields to avoid collisions
+    let fieldIdCounter = placedFields.reduce((max, f) => {
+        const num = parseInt((f.id || '').replace('field_', '')) || 0;
+        return Math.max(max, num);
+    }, 0);
 
     // Initialize
     loadPDF();
@@ -682,6 +686,7 @@ $(document).ready(function() {
         // Delete button
         placeholder.find('.delete-btn').on('click', function(e) {
             e.stopPropagation();
+            placedFields = placedFields.filter(f => f.id !== fieldId);
             placeholder.remove();
             updatePlacedFieldsList();
         });
@@ -708,34 +713,19 @@ $(document).ready(function() {
         updatePlacedFieldsList();
     }
 
-    // Make placeholder draggable
-    function makeDraggable(element, container) {
-        let isDragging = false;
-        let startX, startY, origX, origY;
+    // Single shared drag/resize state (prevents stacking handlers)
+    let dragState = null;
+    let resizeState = null;
 
-        element.on('mousedown', function(e) {
-            if ($(e.target).hasClass('resize-handle') || $(e.target).hasClass('delete-btn')) return;
-            
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            origX = parseInt(element.css('left'));
-            origY = parseInt(element.css('top'));
-            
-            element.addClass('active');
-            selectedField = element;
-        });
-
-        $(document).on('mousemove', function(e) {
-            if (!isDragging) return;
-
+    $(document).on('mousemove', function(e) {
+        if (dragState) {
+            const { element, container, startX, startY, origX, origY } = dragState;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
 
             let newX = origX + dx;
             let newY = origY + dy;
 
-            // Bounds checking
             const containerWidth = container.width();
             const containerHeight = container.height();
             const elemWidth = element.outerWidth();
@@ -745,49 +735,66 @@ $(document).ready(function() {
             newY = Math.max(0, Math.min(newY, containerHeight - elemHeight));
 
             element.css({ left: newX, top: newY });
-        });
+        }
 
-        $(document).on('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                element.removeClass('active');
-                updateFieldPosition(element);
-            }
+        if (resizeState) {
+            const { element, startX, startY, origW, origH } = resizeState;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            element.css({
+                width: Math.max(60, origW + dx),
+                height: Math.max(20, origH + dy)
+            });
+        }
+    });
+
+    $(document).on('mouseup', function() {
+        if (dragState) {
+            dragState.element.removeClass('active');
+            updateFieldPosition(dragState.element);
+            dragState = null;
+        }
+        if (resizeState) {
+            updateFieldPosition(resizeState.element);
+            resizeState = null;
+        }
+    });
+
+    // Make placeholder draggable
+    function makeDraggable(element, container) {
+        element.on('mousedown', function(e) {
+            if ($(e.target).hasClass('resize-handle') || $(e.target).hasClass('delete-btn')) return;
+            e.preventDefault();
+
+            dragState = {
+                element: element,
+                container: container,
+                startX: e.clientX,
+                startY: e.clientY,
+                origX: parseInt(element.css('left')) || 0,
+                origY: parseInt(element.css('top')) || 0
+            };
+
+            element.addClass('active');
+            selectedField = element;
         });
     }
 
     // Make placeholder resizable
     function makeResizable(element) {
         const handle = element.find('.resize-handle');
-        let isResizing = false;
-        let startX, startY, origW, origH;
 
         handle.on('mousedown', function(e) {
             e.stopPropagation();
-            isResizing = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            origW = element.width();
-            origH = element.height();
-        });
+            e.preventDefault();
 
-        $(document).on('mousemove', function(e) {
-            if (!isResizing) return;
-
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            element.css({
-                width: Math.max(60, origW + dx),
-                height: Math.max(20, origH + dy)
-            });
-        });
-
-        $(document).on('mouseup', function() {
-            if (isResizing) {
-                isResizing = false;
-                updateFieldPosition(element);
-            }
+            resizeState = {
+                element: element,
+                startX: e.clientX,
+                startY: e.clientY,
+                origW: element.width(),
+                origH: element.height()
+            };
         });
     }
 
@@ -796,8 +803,8 @@ $(document).ready(function() {
         const fieldId = element.attr('id');
         const field = placedFields.find(f => f.id === fieldId);
         if (field) {
-            field.x = parseInt(element.css('left'));
-            field.y = parseInt(element.css('top'));
+            field.x = parseInt(element.css('left')) || 0;
+            field.y = parseInt(element.css('top')) || 0;
             field.width = element.width();
             field.height = element.height();
         }
@@ -899,6 +906,9 @@ $(document).ready(function() {
 
     // Restore placed fields from saved data
     function restorePlacedFields() {
+        // Remove any existing placed placeholders before re-rendering
+        $('.placed-placeholder').remove();
+
         placedFields.forEach(field => {
             const pageWrapper = $(`.pdf-page-wrapper[data-page="${field.page}"]`);
             if (!pageWrapper.length) return;
@@ -906,7 +916,7 @@ $(document).ready(function() {
             const isSignature = field.type === 'signature';
             const isTextInput = field.type === 'text_input';
             const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
-            const displayLabel = isTextInput ? '[Text Input Area]' : field.label;
+            const displayLabel = isTextInput ? (field.customLabel || '[Text Input Area]') : field.label;
             
             const placeholder = $(`
                 <div class="placed-placeholder ${extraClass}" 
