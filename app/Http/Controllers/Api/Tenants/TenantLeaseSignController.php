@@ -214,6 +214,50 @@ class TenantLeaseSignController extends Controller
     }
 
     /**
+     * Update custom text fields for the lease document
+     */
+    public function updateCustomFields(Request $request, $leaseId)
+    {
+        $validator = Validator::make($request->all(), [
+            'custom_fields' => 'required|array',
+            // 'document_id' => 'nullable|integer|exists:lease_documents,id'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationError($validator->errors());
+        }
+
+        try {
+            $tenant = $request->user();
+
+            // Get the lease document
+            $document = $this->signingService->getLeaseDocument($leaseId, $tenant->id);
+
+            if (!$document) {
+                return $this->error([], 'Lease document not found or unauthorized', 404);
+            }
+
+            // If a specific document ID was provided, verify it matches
+            // if ($request->has('document_id') && $request->document_id != $document->id) {
+            //     return $this->error([], 'Document ID mismatch', 400);
+            // }
+
+            // Update custom fields
+            $document->update([
+                'custom_fields' => $request->custom_fields
+            ]);
+
+            return $this->success([
+                // 'document_id' => $document->id,
+                'custom_fields' => $document->custom_fields
+            ], 'Custom fields saved successfully');
+        } catch (Exception $e) {
+            Log::error('Failed to update custom fields: ' . $e->getMessage());
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Extract placeholder data from lease
      */
     private function extractPlaceholderData($lease)
@@ -284,7 +328,7 @@ class TenantLeaseSignController extends Controller
 
         $start = \Carbon\Carbon::parse($startDate);
         $end = \Carbon\Carbon::parse($endDate);
-        $months = $start->diffInMonths($end);
+        $months = (int) round($start->diffInMonths($end));
 
         if ($months == 12) return '1 Year';
         if ($months == 6) return '6 Months';
@@ -306,7 +350,7 @@ class TenantLeaseSignController extends Controller
 
         $start = \Carbon\Carbon::parse($lease->start_date);
         $end = \Carbon\Carbon::parse($lease->end_date);
-        $months = $start->diffInMonths($end);
+        $months = (int) round($start->diffInMonths($end));
 
         if ($months < 1) $months = 1;
 

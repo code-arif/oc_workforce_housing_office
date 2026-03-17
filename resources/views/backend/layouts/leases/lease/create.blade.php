@@ -779,13 +779,13 @@
                                                                 <span class="value" id="finalFirstInvoice">-</span>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-4">
+                                                        {{-- <div class="col-md-4">
                                                             <div class="info-item">
                                                                 <span class="label">Partial Payment</span>
                                                                 <span class="value"
                                                                     id="finalPartialPayment">Allowed</span>
                                                             </div>
-                                                        </div>
+                                                        </div> --}}
                                                     </div>
                                                 </div>
                                             </div>

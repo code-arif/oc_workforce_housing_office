@@ -8,7 +8,7 @@
     <div class="message-content">
         <p>Dear {{ $tenant->profile->last_name }},</p>
 
-        <p>Congratulations! We are delighted to inform you that you have been successfully registered as a tenant with <strong>{{ $companyName }}</strong>. Welcome to our community!</p>
+        <p>Congratulations! We are delighted to inform you that application was approved. Welcome to {{ $companyName }} community!</p>
 
         <div class="highlight-box">
             <h3 style="color: #ba9779; margin-bottom: 15px;">Your Tenant Information:</h3>

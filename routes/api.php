@@ -133,6 +133,7 @@ Route::group(['middleware' => 'auth:api'], function () {
             Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']); // done
             Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']); // done
             Route::get('/{leaseId}/download', [TenantLeaseSignController::class, 'downloadDocument'])->name('download'); // done
+            Route::post('/{leaseId}/custom-fields', [TenantLeaseSignController::class, 'updateCustomFields']); // Save custom text input fields
         });
 
         // Payment Routes (Stripe)

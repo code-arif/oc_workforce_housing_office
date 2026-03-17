@@ -850,7 +850,7 @@
 
             // Update custom text values
             customTextValues[currentTextFieldId] = textValue;
-             console.log(textValue);
+            console.log(textValue);
             console.log(currentTextFieldId);
             console.log(customTextValues);
             
