@@ -179,7 +179,7 @@
                                 </div>
                             </div>
                             <div class="card-body p-0">
-                                @forelse ($property->units as $unit)
+                                @forelse ($property->units->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE) as $unit)
                                     <div class="unit-section border-bottom">
                                         <!-- Unit Header -->
                                         <div class="d-flex justify-content-between align-items-center p-3 bg-light cursor-pointer unit-toggle"
@@ -393,7 +393,7 @@
                             </div>
                             <div class="card-body p-0">
                                 <div class="list-group list-group-flush">
-                                    @forelse ($property->units as $unit)
+                                    @forelse ($property->units->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE) as $unit)
                                         @php
                                             $unitBeds = $unit->rooms->flatMap->beds;
                                             $unitOccupied = $unitBeds->where('is_occupied', true)->count();
