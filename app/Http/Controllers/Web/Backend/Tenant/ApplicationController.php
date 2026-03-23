@@ -355,6 +355,7 @@ class ApplicationController extends Controller
             return response()->json([
                 'message'   => 'Application approved. Tenant created with under_review status',
                 'tenant_id' => $tenant->id,
+                'redirect_url' => route('leases.create', ['tenant_id' => $tenant->id]),
             ]);
         } catch (Exception $e) {
             DB::rollBack();
