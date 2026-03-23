@@ -222,11 +222,18 @@
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
+                            const fallbackRedirectUrl = `{{ route('leases.create') }}?tenant_id=${response.tenant_id}`;
+                            const redirectUrl = response.redirect_url || fallbackRedirectUrl;
+
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Approved!',
-                                html: response.message,
-                                confirmButtonColor: '#28a745'
+                                html: `${response.message}<br><small class="text-muted">Redirecting to lease creation...</small>`,
+                                confirmButtonColor: '#28a745',
+                                timer: 1200,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = redirectUrl;
                             });
                             singleEmailTable.ajax.reload();
                         },

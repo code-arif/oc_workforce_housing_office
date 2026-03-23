@@ -243,8 +243,12 @@ class TenantLeaseSignController extends Controller
             // }
 
             // Update custom fields
+            $existingCustomFields = is_array($document->custom_fields) ? $document->custom_fields : [];
+            $incomingCustomFields = is_array($request->custom_fields) ? $request->custom_fields : [];
+            $mergedCustomFields = array_replace_recursive($existingCustomFields, $incomingCustomFields);
+
             $document->update([
-                'custom_fields' => $request->custom_fields
+                'custom_fields' => $mergedCustomFields
             ]);
 
             return $this->success([

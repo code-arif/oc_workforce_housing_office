@@ -132,11 +132,15 @@
                                         <div class="draggable-field signature-field" draggable="true" data-field="landlord_signature" data-label="Landlord Signature" data-type="signature">
                                             <i class="fas fa-grip-vertical"></i> Landlord Signature
                                         </div>
+                                        <div class="draggable-field" draggable="true" data-field="landlord_date_signed" data-label="Landlord Date Signed" data-type="date">
+                                            <i class="fas fa-grip-vertical"></i> Landlord Date Signed
+                                        </div>
                                         <div class="draggable-field signature-field" draggable="true" data-field="tenant_signature" data-label="Tenant Signature" data-type="signature">
                                             <i class="fas fa-grip-vertical"></i> Tenant Signature
                                         </div>
-                                        <div class="draggable-field" draggable="true" data-field="date_signed" data-label="Date Signed" data-type="date">
-                                            <i class="fas fa-grip-vertical"></i> Date Signed
+                                        
+                                        <div class="draggable-field" draggable="true" data-field="tenant_date_signed" data-label="Tenant Date Signed" data-type="date">
+                                            <i class="fas fa-grip-vertical"></i> Tenant Date Signed
                                         </div>
                                     </div>
                                 </div>

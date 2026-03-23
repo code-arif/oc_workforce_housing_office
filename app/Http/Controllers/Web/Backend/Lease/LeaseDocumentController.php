@@ -166,8 +166,8 @@ class LeaseDocumentController extends Controller
             'lease_term' => $this->calculateLeaseTerm($lease->start_date, $lease->end_date),
             // Signature dates are stored on lease_documents, not leases.
             'date_signed' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
-            'admin_signed_date' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
-            'tenant_signed_date' => $tenantSignedAt ? date('d M, Y', strtotime($tenantSignedAt)) : '',
+            'landlord_date_signed' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
+            'tenant_date_signed' => $tenantSignedAt ? date('d M, Y', strtotime($tenantSignedAt)) : '',
             'admin_signed_at' => $adminSignedAt ? date('d M, Y', strtotime($adminSignedAt)) : '',
             'tenant_signed_at' => $tenantSignedAt ? date('d M, Y', strtotime($tenantSignedAt)) : '',
             // Other
