@@ -1,211 +1,200 @@
-<!DOCTYPE html>
-<html>
+@extends('emails.layout.mail')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Payment Received</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+@section('content')
+    <h2 style="margin:0 0 10px 0;font-size:22px;font-weight:700;color:#333;text-align:center;">
+        New Payment Received
+    </h2>
 
-        .header {
-            background-color: #2196F3;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-        }
+    <p style="margin:0 0 16px 0;">
+        A new payment has been successfully processed through Stripe.
+    </p>
 
-        .content {
-            background-color: #f9f9f9;
-            padding: 30px;
-            border: 1px solid #ddd;
-            border-top: none;
-        }
+    <!-- Amount -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0;">
+        <tr>
+            <td align="center"
+                style="background:#f9f9f9;border-left:4px solid #ba9779;padding:20px;font-size:26px;font-weight:bold;color:#ba9779;">
+                ${{ number_format($data['payment_amount'], 2) }}
+            </td>
+        </tr>
+    </table>
 
-        .notification-icon {
-            text-align: center;
-            font-size: 48px;
-            color: #2196F3;
-            margin: 20px 0;
-        }
 
-        .details-table {
-            width: 100%;
-            margin: 20px 0;
-            border-collapse: collapse;
-        }
+    <!-- Payment Information -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="margin:20px 0;border-collapse:collapse;">
+        <tr>
+            <td colspan="2" style="background:#f2f2f2;padding:12px;font-weight:bold;border-bottom:2px solid #ddd;">
+                Payment Information
+            </td>
+        </tr>
 
-        .details-table th {
-            background-color: #f2f2f2;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-            border-bottom: 2px solid #ddd;
-        }
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Payment Number:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ $data['payment']->payment_number }}
+            </td>
+        </tr>
 
-        .details-table td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
-        }
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Invoice Number:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ $data['invoice_number'] }}
+            </td>
+        </tr>
 
-        .amount {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2196F3;
-            text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #e3f2fd;
-            border-radius: 5px;
-        }
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Amount Paid:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                ${{ number_format($data['payment_amount'], 2) }}
+            </td>
+        </tr>
 
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            color: #666;
-            font-size: 14px;
-        }
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Payment Date:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ date('F d, Y', strtotime($data['payment_date'])) }}
+            </td>
+        </tr>
 
-        .highlight {
-            background-color: #fff3cd;
-            padding: 2px 6px;
-            border-radius: 3px;
-        }
-    </style>
-</head>
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Payment Method:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                Credit Card (Stripe)
+            </td>
+        </tr>
 
-<body>
-    <div class="header">
-        <h1>New Payment Received</h1>
-    </div>
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Payment Type:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ ucfirst($data['invoice']->type) }}
+            </td>
+        </tr>
 
-    <div class="content">
-        <div class="notification-icon">💰</div>
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Transaction ID:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                <span style="background:#f9f9f9;padding:4px 8px;border-radius:3px;">
+                    {{ $data['payment']->reference_number }}
+                </span>
+            </td>
+        </tr>
+    </table>
 
-        <h2 style="text-align: center;">Payment Notification</h2>
 
-        <p>A new payment has been successfully processed through Stripe.</p>
+    <!-- Tenant Information -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="margin:20px 0;border-collapse:collapse;">
+        <tr>
+            <td colspan="2" style="background:#f2f2f2;padding:12px;font-weight:bold;border-bottom:2px solid #ddd;">
+                Tenant Information
+            </td>
+        </tr>
 
-        <div class="amount">
-            ${{ number_format($data['payment_amount'], 2) }}
-        </div>
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Tenant Name:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ $data['tenant_name'] }}
+            </td>
+        </tr>
 
-        <table class="details-table">
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Tenant Email:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ $data['tenant']->email }}
+            </td>
+        </tr>
+
+        @if ($data['tenant']->profile && $data['tenant']->profile->phone)
             <tr>
-                <th colspan="2">Payment Information</th>
+                <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Tenant Phone:</strong></td>
+                <td style="padding:10px;border-bottom:1px solid #ddd;">
+                    {{ $data['tenant']->profile->phone }}
+                </td>
             </tr>
-            <tr>
-                <td><strong>Payment Number:</strong></td>
-                <td>{{ $data['payment']->payment_number }}</td>
-            </tr>
-            <tr>
-                <td><strong>Invoice Number:</strong></td>
-                <td>{{ $data['invoice_number'] }}</td>
-            </tr>
-            <tr>
-                <td><strong>Amount Paid:</strong></td>
-                <td>${{ number_format($data['payment_amount'], 2) }}</td>
-            </tr>
-            <tr>
-                <td><strong>Payment Date:</strong></td>
-                <td>{{ date('F d, Y', strtotime($data['payment_date'])) }}</td>
-            </tr>
-            <tr>
-                <td><strong>Payment Method:</strong></td>
-                <td>Credit Card (Stripe)</td>
-            </tr>
-            <tr>
-                <td><strong>Payment Type:</strong></td>
-                <td>{{ ucfirst($data['invoice']->type) }}</td>
-            </tr>
-            <tr>
-                <td><strong>Transaction ID:</strong></td>
-                <td><span class="highlight">{{ $data['payment']->reference_number }}</span></td>
-            </tr>
-        </table>
-
-        <table class="details-table">
-            <tr>
-                <th colspan="2">Tenant Information</th>
-            </tr>
-            <tr>
-                <td><strong>Tenant Name:</strong></td>
-                <td>{{ $data['tenant_name'] }}</td>
-            </tr>
-            <tr>
-                <td><strong>Tenant Email:</strong></td>
-                <td>{{ $data['tenant']->email }}</td>
-            </tr>
-            @if ($data['tenant']->profile && $data['tenant']->profile->phone)
-                <tr>
-                    <td><strong>Tenant Phone:</strong></td>
-                    <td>{{ $data['tenant']->profile->phone }}</td>
-                </tr>
-            @endif
-        </table>
-
-        <table class="details-table">
-            <tr>
-                <th colspan="2">Property Details</th>
-            </tr>
-            <tr>
-                <td><strong>Property:</strong></td>
-                <td>{{ $data['property_name'] }}</td>
-            </tr>
-            <tr>
-                <td><strong>Unit:</strong></td>
-                <td>{{ $data['unit'] }}</td>
-            </tr>
-        </table>
-
-        <table class="details-table">
-            <tr>
-                <th colspan="2">Invoice Status</th>
-            </tr>
-            <tr>
-                <td><strong>Invoice Status:</strong></td>
-                <td><strong>{{ ucfirst($data['invoice']->status) }}</strong></td>
-            </tr>
-            <tr>
-                <td><strong>Total Paid:</strong></td>
-                <td>${{ number_format($data['invoice']->paid_amount, 2) }}</td>
-            </tr>
-            <tr>
-                <td><strong>Balance Remaining:</strong></td>
-                <td>${{ number_format($data['invoice']->balance_due, 2) }}</td>
-            </tr>
-        </table>
-
-        @if ($data['invoice']->balance_due <= 0)
-            <div
-                style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-top: 20px;">
-                <strong>✓ Invoice Fully Paid</strong> - This invoice has been completely paid off.
-            </div>
-        @else
-            <div
-                style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-top: 20px;">
-                <strong>⚠ Partial Payment</strong> - Remaining balance:
-                ${{ number_format($data['invoice']->balance_due, 2) }}
-            </div>
         @endif
+    </table>
 
-        <p style="margin-top: 30px;">This payment has been automatically recorded in the system.</p>
-    </div>
 
-    <div class="footer">
-        <p>This is an automated notification from the Property Management System.</p>
-        <p>&copy; {{ date('Y') }} Property Management System. All rights reserved.</p>
-    </div>
-</body>
+    <!-- Property Details -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="margin:20px 0;border-collapse:collapse;">
+        <tr>
+            <td colspan="2" style="background:#f2f2f2;padding:12px;font-weight:bold;border-bottom:2px solid #ddd;">
+                Property Details
+            </td>
+        </tr>
 
-</html>
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Property:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ $data['property_name'] }}
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Unit:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                {{ $data['unit'] }}
+            </td>
+        </tr>
+    </table>
+
+
+    <!-- Invoice Status -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+        style="margin:20px 0;border-collapse:collapse;">
+        <tr>
+            <td colspan="2" style="background:#f2f2f2;padding:12px;font-weight:bold;border-bottom:2px solid #ddd;">
+                Invoice Status
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Invoice Status:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                <strong>{{ ucfirst($data['invoice']->status) }}</strong>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Total Paid:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                ${{ number_format($data['invoice']->paid_amount, 2) }}
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding:10px;border-bottom:1px solid #ddd;"><strong>Balance Remaining:</strong></td>
+            <td style="padding:10px;border-bottom:1px solid #ddd;">
+                ${{ number_format($data['invoice']->balance_due, 2) }}
+            </td>
+        </tr>
+    </table>
+
+
+    {{-- status box --}}
+    @if ($data['invoice']->balance_due <= 0)
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+            <tr>
+                <td style="background:#e8f5e9;padding:15px;border-left:4px solid #2e7d32;">
+                    <strong>✓ Invoice Fully Paid</strong> - This invoice has been completely paid off.
+                </td>
+            </tr>
+        </table>
+    @else
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+            <tr>
+                <td style="background:#fff8e1;padding:15px;border-left:4px solid #f57c00;">
+                    <strong>⚠ Partial Payment</strong> - Remaining balance:
+                    ${{ number_format($data['invoice']->balance_due, 2) }}
+                </td>
+            </tr>
+        </table>
+    @endif
+
+
+    <p style="margin-top:20px;">
+        This payment has been automatically recorded in the system.
+    </p>
+@endsection
