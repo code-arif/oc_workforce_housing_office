@@ -190,7 +190,10 @@ class PropertyController extends Controller
         $occupiedBeds = Bed::whereIn(
             'room_id',
             Room::whereIn('unit_id', $property->units->pluck('id'))->pluck('id')
-        )->where('is_occupied', true)->count();
+        )
+        ->where('is_occupied', true)
+        ->count();
+
         $availableBeds = $totalBeds - $occupiedBeds;
 
         // Calculate rental stats
