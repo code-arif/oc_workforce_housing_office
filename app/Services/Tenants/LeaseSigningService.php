@@ -103,11 +103,17 @@ class LeaseSigningService
             // Update lease status
             if ($lease->status === 'PENDING_TENANT_SIGN') {
                 $lease->status = 'PENDING_ADMIN_SIGN';
-            }
-            if ($lease->status == "PENDING_ADMIN_SIGN") {
+            } elseif ($lease->status == "PENDING_ADMIN_SIGN") {
                 $lease->status = "ACTIVE";
                 $document->status = "signed";
                 $document->save();
+            }else {
+                // This should not happen due to earlier check, but just in case
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Invalid lease status for signing'
+                ];
             }
             $lease->update([
                 'status' => $lease->status
