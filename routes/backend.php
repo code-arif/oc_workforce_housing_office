@@ -126,6 +126,10 @@ Route::prefix('property')->name('property.')->group(function () {
 
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
 
+    // Trash management routes
+    Route::get('/trash/data', [PropertyController::class, 'getTrashData'])->name('trash.data');
+    Route::post('/{id}/restore', [PropertyController::class, 'restore'])->name('restore');
+    Route::delete('/{id}/force-delete', [PropertyController::class, 'forceDelete'])->name('force-delete');
 
     // Stripe Connect routes
     Route::prefix('{id}/stripe')->name('stripe.connect.')->group(function () {

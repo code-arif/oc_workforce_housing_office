@@ -330,4 +330,92 @@ class PropertyController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get soft-deleted (trashed) properties for DataTable
+     */
+    public function getTrashData(Request $request)
+    {
+        if ($request->ajax()) {
+            // Get only soft-deleted properties
+            $properties = Property::onlyTrashed()->latest('deleted_at')->get();
+
+            return DataTables::of($properties)
+                ->addIndexColumn()
+                ->addColumn('name', function ($item) {
+                    return '<span class="fw-bold">' . htmlspecialchars($item->name) . '</span>';
+                })
+                ->addColumn('address', function ($item) {
+                    return htmlspecialchars($item->address ?? 'N/A');
+                })
+                ->addColumn('type', function ($item) {
+                    return $item->propertyType?->name ?? 'N/A';
+                })
+                ->addColumn('deleted_at', function ($item) {
+                    return $item->deleted_at->format('M d, Y h:i A');
+                })
+                ->addColumn('actions', function ($item) {
+                    return '
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-sm btn-info" onclick="restoreProperty(' . $item->id . ')" title="Restore Property">
+                                <i class="fa-solid fa-rotate-left"></i> Restore
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="permanentlyDeleteProperty(' . $item->id . ')" title="Permanently Delete">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </div>
+                    ';
+                })
+                ->rawColumns(['actions', 'name'])
+                ->make(true);
+        }
+    }
+
+    /**
+     * Restore a soft-deleted property
+     */
+    public function restore($id)
+    {
+        try {
+            $property = Property::onlyTrashed()->where('id', $id)->firstOrFail();
+            
+            $property->restore();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property "' . $property->name . '" restored successfully!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error restoring property: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Permanently delete a soft-deleted property
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $property = Property::onlyTrashed()->where('id', $id)->firstOrFail();
+            
+            // Get property name before deletion
+            $propertyName = $property->name;
+            
+            // Force delete the property (permanently removes from database)
+            $property->forceDelete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Property "' . $propertyName . '" permanently deleted!',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error permanently deleting property: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

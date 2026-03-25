@@ -78,6 +78,15 @@
                                         <i class="fa-solid fa-bed me-2"></i> Beds
                                     </a>
                                     
+                                    <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light" style="font-size: 0.75rem;">
+                                        Management
+                                    </h6>
+                                    <a class="nav-link" id="trash-tab" href="javascript:void(0);"
+                                        data-section="trash" data-title="Trash"
+                                        data-breadcrumb="Deleted Properties">
+                                        <i class="fa-solid fa-trash me-2"></i> Trash
+                                    </a>
+                                    
                                 </div>
                             </div>
                         </div>

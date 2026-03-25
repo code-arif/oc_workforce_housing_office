@@ -194,7 +194,7 @@ class LeaseController extends Controller
                     $totalduration = $data->start_date && $data->end_date
                         ? (new \DateTime($data->end_date))->diff(new \DateTime($data->start_date))->m + 1
                         : 0;
-                    $totalRent = number_format($data->rent_amount * $totalduration, 2);
+                    $totalRent = number_format($data->invoices()->where('type', 'RENT')->sum('amount'), 2);
                     return '<div>
                                 <div class="fw-semibold">$' . $totalRent . '</div>
                                 <small class="text-muted">' . $frequency . '</small>
