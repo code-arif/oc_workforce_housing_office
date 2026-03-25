@@ -212,7 +212,12 @@ class LeaseDocumentController extends Controller
 
         if ($months < 1) $months = 1;
 
-        $totalRent = $lease->rent_amount * $months;
+        $totalInvoiceAmount = $lease->invoices()->where('type', 'RENT')->sum('amount');
+        if ($totalInvoiceAmount > 0) {
+            return '$' . number_format($totalInvoiceAmount, 2);
+        }
+
+        $totalRent = $totalInvoiceAmount;
         return '$' . number_format($totalRent, 2);
     }
 

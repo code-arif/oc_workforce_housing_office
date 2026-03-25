@@ -286,7 +286,6 @@
                                                             name="payment_frequency" required>
                                                             <option value="WEEKLY">Weekly</option>
                                                             <option value="MONTHLY" selected>Monthly</option>
-                                                            <option value="YEARLY">Yearly</option>
                                                             <option value="CUSTOM">Custom</option>
                                                         </select>
                                                     </div>
@@ -302,7 +301,8 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="row mb-3">
+                                                <!-- Monthly Due Day -->
+                                                <div class="row mb-3" id="monthlyDueDayRow">
                                                     <div class="col-md-6">
                                                         <label class="form-label">Rent Due on the <span
                                                                 class="text-danger">*</span></label>
@@ -327,6 +327,35 @@
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control datepicker2"
                                                             id="first_invoice_date" name="first_invoice_date" required>
+                                                        <small class="text-muted">First invoice will be created with this
+                                                            due date</small>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Weekly Due Day -->
+                                                <div class="row mb-3" id="weeklyDueDayRow" style="display: none;">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Rent Due on <span
+                                                                class="text-danger">*</span></label>
+                                                        <div class="d-flex align-items-center"
+                                                            id="weeklyDueDayContainer">
+                                                            <select class="form-select" id="weekly_due_day" name="weekly_due_day">
+                                                                <option value="1">Monday</option>
+                                                                <option value="2">Tuesday</option>
+                                                                <option value="3">Wednesday</option>
+                                                                <option value="4">Thursday</option>
+                                                                <option value="5" selected>Friday</option>
+                                                                <option value="6">Saturday</option>
+                                                                <option value="7">Sunday</option>
+                                                            </select>
+                                                            <span class="ms-2 text-muted">every week</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6" id="weeklyFirstInvoiceContainer">
+                                                        <label class="form-label">First Rental Invoice Due <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control datepicker2"
+                                                            id="weekly_first_invoice_date" name="weekly_first_invoice_date">
                                                         <small class="text-muted">First invoice will be created with this
                                                             due date</small>
                                                     </div>

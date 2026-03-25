@@ -48,6 +48,41 @@
             validateStep1();
         });
 
+        // Weekly payment handlers
+        $('#weekly_due_day').on('change', function() {
+            if (leaseData.start_date && $('#payment_frequency').val() === 'WEEKLY') {
+                const startDate = new Date(leaseData.start_date + 'T00:00:00');
+                const weeklyDueDay = parseInt($(this).val());
+                const firstInvoiceDate = getNextOccurrenceOfDay(startDate, weeklyDueDay);
+                $('#weekly_first_invoice_date').datepicker('setDate', firstInvoiceDate);
+            }
+            updateRentalSummary();
+        });
+
+        // Monthly payment handler
+        $('#due_day').on('change', function() {
+            if (leaseData.start_date && $('#payment_frequency').val() === 'MONTHLY') {
+                const startDate = new Date(leaseData.start_date + 'T00:00:00');
+                const dueDay = parseInt($(this).val());
+                let firstInvoiceDate = new Date(startDate);
+                firstInvoiceDate.setDate(dueDay);
+
+                if (firstInvoiceDate < startDate) {
+                    firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
+                }
+                $('#first_invoice_date').datepicker('setDate', firstInvoiceDate);
+            }
+            updateRentalSummary();
+        });
+
+        $('#weekly_first_invoice_date').on('change changeDate', function() {
+            updateRentalSummary();
+        });
+
+        $('#first_invoice_date').on('change changeDate', function() {
+            updateRentalSummary();
+        });
+
         $('#rent_amount').on('input', updateRentalSummary);
         $('#deposit_amount').on('input', updateRentalSummary);
     });
@@ -251,17 +286,32 @@
             const frequency = $(this).val();
 
             if (frequency === 'CUSTOM') {
+                // Hide both monthly and weekly, show custom
                 $('#customPaymentSection').slideDown();
-                $('#standardDueDayContainer').closest('.col-md-6').hide();
-                $('#standardFirstInvoiceContainer').hide();
+                $('#monthlyDueDayRow').hide();
+                $('#weeklyDueDayRow').hide();
                 $('#due_day').prop('required', false);
                 $('#first_invoice_date').prop('required', false);
-            } else {
+                $('#weekly_due_day').prop('required', false);
+                $('#weekly_first_invoice_date').prop('required', false);
+            } else if (frequency === 'WEEKLY') {
+                // Show weekly, hide monthly and custom
                 $('#customPaymentSection').slideUp();
-                $('#standardDueDayContainer').closest('.col-md-6').show();
-                $('#standardFirstInvoiceContainer').show();
+                $('#monthlyDueDayRow').hide();
+                $('#weeklyDueDayRow').show();
+                $('#due_day').prop('required', false);
+                $('#first_invoice_date').prop('required', false);
+                $('#weekly_due_day').prop('required', true);
+                $('#weekly_first_invoice_date').prop('required', true);
+            } else {
+                // Show monthly, hide weekly and custom
+                $('#customPaymentSection').slideUp();
+                $('#monthlyDueDayRow').show();
+                $('#weeklyDueDayRow').hide();
                 $('#due_day').prop('required', true);
                 $('#first_invoice_date').prop('required', true);
+                $('#weekly_due_day').prop('required', false);
+                $('#weekly_first_invoice_date').prop('required', false);
             }
 
             updateRentalSummary();
@@ -541,7 +591,9 @@
         const endDate = leaseData.end_date;
         const rentAmount = parseFloat($('#rent_amount').val()) || 0;
         const depositAmount = parseFloat($('#deposit_amount').val()) || 0;
-        const isCustom = $('#payment_frequency').val() === 'CUSTOM';
+        const paymentFrequency = $('#payment_frequency').val();
+        const isCustom = paymentFrequency === 'CUSTOM';
+        const isWeekly = paymentFrequency === 'WEEKLY';
 
         $('#summaryStartDate').text(startDate ? formatDate(startDate) : 'N/A');
 
@@ -565,6 +617,8 @@
                 });
                 $('#summaryRent').text(
                     `$${customTotal.toFixed(2)} (${customCount} payment${customCount !== 1 ? 's' : ''})`);
+            } else if (isWeekly) {
+                $('#summaryRent').text('$' + rentAmount.toFixed(2) + '/week');
             } else {
                 $('#summaryRent').text('$' + rentAmount.toFixed(2) + '/month');
             }
@@ -590,6 +644,16 @@
             } else {
                 $('#leaseDuration').text('No custom payments added yet');
             }
+        } else if (isWeekly && startDate && endDate && leaseData.lease_type === 'fixed') {
+            const start = new Date(startDate + 'T00:00:00');
+            const end = new Date(endDate + 'T00:00:00');
+            const weeklyCalc = calculateWeeklyPayments(startDate, endDate, rentAmount);
+            const weeks = weeklyCalc.weeks;
+            const totalRent = weeklyCalc.totalAmount;
+            const days = weeklyCalc.daysInLease;
+
+            $('#leaseDuration').text(`for ${weeks} week${weeks > 1 ? 's' : ''} (${days} days)`);
+            $('.summary-amount h2').text('$' + totalRent.toFixed(2));
         } else if (startDate && endDate && leaseData.lease_type === 'fixed') {
             const start = new Date(startDate + 'T00:00:00');
             const end = new Date(endDate + 'T00:00:00');
@@ -625,6 +689,48 @@
     }
 
     // ─────────────────────────────────────────────────────────────────
+    // Weekly payment helpers
+    // ─────────────────────────────────────────────────────────────────
+    function getWeeklyDayName(dayNumber) {
+        const dayNames = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        return dayNames[dayNumber] || 'Friday';
+    }
+
+    function getNextOccurrenceOfDay(startDate, targetDayOfWeek) {
+        // targetDayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday
+        const date = new Date(startDate);
+        
+        // Get current day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+        let currentDay = date.getDay();
+        // Convert to our format: 1=Monday, 2=Tuesday, ..., 7=Sunday
+        currentDay = currentDay === 0 ? 7 : currentDay;
+        
+        let daysToAdd = targetDayOfWeek - currentDay;
+        if (daysToAdd <= 0) {
+            daysToAdd += 7;
+        }
+        
+        date.setDate(date.getDate() + daysToAdd);
+        return date;
+    }
+
+    function calculateWeeklyPayments(startDate, endDate, weeklyAmount) {
+        // Calculate how many weeks fit between start and end dates
+        const start = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T00:00:00');
+        
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const weeks = Math.ceil(diffDays / 7);
+        
+        return {
+            weeks: weeks,
+            totalAmount: weeklyAmount * weeks,
+            daysInLease: diffDays
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────────────
     // Step navigation
     // ─────────────────────────────────────────────────────────────────
     function nextStep(step) {
@@ -655,17 +761,36 @@
             $('#deposit_due_date').datepicker('setDate', new Date(leaseData.start_date + 'T00:00:00'));
         }
 
+        const paymentFrequency = $('#payment_frequency').val();
+
         if (leaseData.start_date) {
             const startDate = new Date(leaseData.start_date + 'T00:00:00');
-            const dueDay = parseInt($('#due_day').val());
-            let firstInvoiceDate = new Date(startDate);
-            firstInvoiceDate.setDate(dueDay);
+            let firstInvoiceDate;
 
-            if (firstInvoiceDate < startDate) {
-                firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
+            if (paymentFrequency === 'WEEKLY') {
+                // For weekly: get the next occurrence of the selected day
+                const weeklyDueDay = parseInt($('#weekly_due_day').val());
+                firstInvoiceDate = getNextOccurrenceOfDay(startDate, weeklyDueDay);
+            } else if (paymentFrequency === 'CUSTOM') {
+                // Custom payments - no auto-calculation needed
+                firstInvoiceDate = null;
+            } else {
+                // MONTHLY: existing logic
+                const dueDay = parseInt($('#due_day').val());
+                firstInvoiceDate = new Date(startDate);
+                firstInvoiceDate.setDate(dueDay);
+
+                if (firstInvoiceDate < startDate) {
+                    firstInvoiceDate.setMonth(firstInvoiceDate.getMonth() + 1);
+                }
             }
 
-            $('#first_invoice_date').datepicker('setDate', firstInvoiceDate);
+            // Set the appropriate first invoice date field
+            if (paymentFrequency === 'WEEKLY' && firstInvoiceDate) {
+                $('#weekly_first_invoice_date').datepicker('setDate', firstInvoiceDate);
+            } else if (paymentFrequency !== 'CUSTOM' && firstInvoiceDate) {
+                $('#first_invoice_date').datepicker('setDate', firstInvoiceDate);
+            }
         }
 
         if (leaseData.bed_id) {
@@ -734,16 +859,32 @@
         $('#finalDepositAmount').text(`$${depositAmount.toFixed(2)}`);
 
         const paymentFrequency = $('#payment_frequency option:selected').text() || 'Monthly';
-        const dueDay = $('#due_day').val() || '1';
+        const frequencyValue = $('#payment_frequency').val();
+
+        let dueDayText = '';
+        let firstInvoiceISO = '';
+
+        if (frequencyValue === 'WEEKLY') {
+            const weeklyDayNum = $('#weekly_due_day').val();
+            const weeklyDayName = getWeeklyDayName(parseInt(weeklyDayNum));
+            dueDayText = `Every ${weeklyDayName}`;
+            firstInvoiceISO = getISOFromPicker('#weekly_first_invoice_date');
+        } else if (frequencyValue === 'CUSTOM') {
+            dueDayText = 'Custom Schedule';
+            firstInvoiceISO = null;
+        } else {
+            const dueDay = $('#due_day').val() || '1';
+            dueDayText = dueDay + getSuffix(parseInt(dueDay)) + ' of month';
+            firstInvoiceISO = getISOFromPicker('#first_invoice_date');
+        }
 
         // ─── FIX #2: use getISOFromPicker to get date, then format for display ───
-        const firstInvoiceISO = getISOFromPicker('#first_invoice_date');
         const firstInvoice = firstInvoiceISO ? formatDate(firstInvoiceISO) : '-';
 
         const partialPayment = $('#partialPayment').is(':checked') ? 'Allowed' : 'Not Allowed';
 
         $('#finalPaymentFrequency').text(paymentFrequency);
-        $('#finalDueDay').text(dueDay + getSuffix(parseInt(dueDay)) + ' of month');
+        $('#finalDueDay').text(dueDayText);
         $('#finalFirstInvoice').text(firstInvoice);
         $('#finalPartialPayment').text(partialPayment);
     }
@@ -1052,6 +1193,7 @@
     function collectLeaseData() {
         const paymentFrequency = $('#payment_frequency').val() || 'MONTHLY';
         const isCustomPayment = paymentFrequency === 'CUSTOM';
+        const isWeeklyPayment = paymentFrequency === 'WEEKLY';
         const assignBedLater = $('#assign_bed_later').is(':checked');
 
         return {
@@ -1066,9 +1208,12 @@
             rent_amount: parseFloat($('#rent_amount').val()) || 0,
             deposit_amount: parseFloat($('#deposit_amount').val()) || 0,
             payment_frequency: paymentFrequency,
-            due_day: isCustomPayment ? null : (parseInt($('#due_day').val()) || 1),
+            due_day: isCustomPayment || isWeeklyPayment ? null : (parseInt($('#due_day').val()) || 1),
+            weekly_due_day: isWeeklyPayment ? (parseInt($('#weekly_due_day').val()) || 5) : null,
             // ─── FIX #2: use getISOFromPicker so backend always gets yyyy-mm-dd ───
-            first_invoice_date: isCustomPayment ? null : (getISOFromPicker('#first_invoice_date') || null),
+            first_invoice_date: isCustomPayment ? null : (isWeeklyPayment ? 
+                (getISOFromPicker('#weekly_first_invoice_date') || null) : 
+                (getISOFromPicker('#first_invoice_date') || null)),
             deposit_collected: $('#deposit_collected').is(':checked'),
             custom_payments: isCustomPayment ? getCustomPayments() : [],
             tenant_ids: selectedTenants.map(t => t.id),
@@ -1094,6 +1239,12 @@
         if (data.tenant_ids.length === 0) errors.push('Please select a tenant for this lease');
         if (data.payment_frequency === 'CUSTOM' && (!data.custom_payments || data.custom_payments.length === 0)) {
             errors.push('Please add at least one custom payment date');
+        }
+        if (data.payment_frequency === 'WEEKLY' && !data.weekly_due_day) {
+            errors.push('Please select a weekly due day');
+        }
+        if (data.payment_frequency === 'WEEKLY' && !data.first_invoice_date) {
+            errors.push('Please set the first invoice date for weekly payments');
         }
 
         return errors;

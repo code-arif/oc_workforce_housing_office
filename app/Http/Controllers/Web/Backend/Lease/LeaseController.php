@@ -296,8 +296,13 @@ class LeaseController extends Controller
             $rules['custom_payments'] = 'required|array|min:1';
             $rules['custom_payments.*.due_date'] = 'required|date';
             $rules['custom_payments.*.amount'] = 'required|numeric|min:0';
+        } elseif ($request->payment_frequency === 'WEEKLY') {
+            $rules['weekly_due_day'] = 'required|integer|min:1|max:7';
+            $rules['first_invoice_date'] = 'required|date';
         } else {
+            // MONTHLY, BIWEEKLY, BIMONTHLY, SEMIANNUAL
             $rules['due_day'] = 'required|integer|min:1|max:28';
+            $rules['first_invoice_date'] = 'required|date';
         }
 
         $request->validate($rules);
@@ -364,16 +369,35 @@ class LeaseController extends Controller
             }
 
             // Handle payment schedule and invoices based on payment frequency
-            $isCustomPayment = $request->payment_frequency === 'CUSTOM';
             $depositCollected = $request->boolean('deposit_collected');
 
-            if ($isCustomPayment) {
+            if ($request->payment_frequency === 'CUSTOM') {
                 // Custom payment schedule
                 $this->generateCustomPaymentSchedule($lease, $request->custom_payments);
                 // Generate custom invoices for the tenant
                 $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected);
+            } elseif ($request->payment_frequency === 'WEEKLY') {
+                // Weekly payment schedule
+                if ($request->end_date) {
+                    $this->generateWeeklyPaymentSchedule($lease, $request->weekly_due_day, $request->first_invoice_date);
+                } else {
+                    // For month-to-month with weekly, create first week's payment
+                    $firstInvoiceDate = $request->first_invoice_date ?? $request->start_date;
+                    $periodEnd = date('Y-m-d', strtotime($firstInvoiceDate . ' +6 days'));
+                    LeasePaymentSchedule::create([
+                        'lease_id' => $lease->id,
+                        'due_date' => $firstInvoiceDate,
+                        'amount' => $request->rent_amount,
+                        'period_start' => $request->start_date,
+                        'period_end' => $periodEnd,
+                        'description' => 'Weekly Rent',
+                    ]);
+                }
+
+                // Generate invoices for weekly payment
+                $this->generateWeeklyInvoices($lease, $tenantId, $request->weekly_due_day ?? 5, $request->first_invoice_date, $depositCollected);
             } else {
-                // Standard payment schedule
+                // Standard payment schedule (MONTHLY, BIWEEKLY, etc.)
                 if ($request->end_date) {
                     $this->generatePaymentSchedule($lease, $request->due_day, $request->first_invoice_date);
                 } else {
@@ -465,8 +489,64 @@ class LeaseController extends Controller
     }
 
     /**
-     * Generate payment schedule for the lease
+     * Generate weekly payment schedule for the lease
      */
+    private function generateWeeklyPaymentSchedule(Lease $lease, int $weeklyDueDay, ?string $firstInvoiceDate = null)
+    {
+        $startDate = new \DateTime($lease->start_date);
+        $endDate = new \DateTime($lease->end_date);
+
+        // Use first invoice date or calculate from start date
+        $currentDate = $firstInvoiceDate
+            ? new \DateTime($firstInvoiceDate)
+            : $this->getNextOccurrenceOfDay($startDate, $weeklyDueDay);
+
+        while ($currentDate <= $endDate) {
+            $periodStart = clone $currentDate;
+            $periodEnd = clone $currentDate;
+            $periodEnd->modify('+6 days'); // 7 days inclusive period
+
+            // Don't exceed lease end date
+            if ($periodEnd > $endDate) {
+                $periodEnd = clone $endDate;
+            }
+
+            LeasePaymentSchedule::create([
+                'lease_id' => $lease->id,
+                'due_date' => $currentDate->format('Y-m-d'),
+                'amount' => $lease->rent_amount,
+                'period_start' => $periodStart->format('Y-m-d'),
+                'period_end' => $periodEnd->format('Y-m-d'),
+                'description' => 'Weekly Rent - ' . $periodStart->format('M d') . ' to ' . $periodEnd->format('M d, Y'),
+            ]);
+
+            // Move to next week (same day of week, 7 days later)
+            $currentDate->modify('+7 days');
+        }
+    }
+
+    /**
+     * Helper: Get next occurrence of a specific day of week
+     * weekDay: 1=Monday, 2=Tuesday, ..., 7=Sunday (ISO-8601)
+     */
+    private function getNextOccurrenceOfDay(\DateTime $fromDate, int $targetDayOfWeek): \DateTime
+    {
+        $date = clone $fromDate;
+        
+        // Get current day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
+        $currentDay = (int)$date->format('w');
+        // Convert to ISO format: 1=Monday, 2=Tuesday, ..., 7=Sunday
+        $currentDay = $currentDay === 0 ? 7 : $currentDay;
+        
+        $daysToAdd = $targetDayOfWeek - $currentDay;
+        if ($daysToAdd <= 0) {
+            $daysToAdd += 7;
+        }
+        
+        $date->modify("+{$daysToAdd} days");
+        return $date;
+    }
+
     private function generatePaymentSchedule(Lease $lease, int $dueDay, ?string $firstInvoiceDate = null)
     {
         $startDate = new \DateTime($lease->start_date);
@@ -587,6 +667,75 @@ class LeaseController extends Controller
             // Move to next month
             $currentDate->modify('+1 month');
             $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
+        }
+    }
+
+    /**
+     * Generate weekly invoices for the lease
+     */
+    private function generateWeeklyInvoices(Lease $lease, int $tenantId, int $weeklyDueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false)
+    {
+        $startDate = new \DateTime($lease->start_date);
+        $endDate = new \DateTime($lease->end_date);
+        $isMonthToMonth = ($lease->start_date === $lease->end_date);
+
+        // Use first invoice date or calculate from start date
+        $currentDate = $firstInvoiceDate
+            ? new \DateTime($firstInvoiceDate)
+            : $this->getNextOccurrenceOfDay($startDate, $weeklyDueDay);
+
+        $invoiceNumber = 1;
+        $isFirstInvoice = true;
+
+        // For month-to-month, only create first invoice
+        $maxInvoices = $isMonthToMonth ? 1 : 999;
+        $invoiceCount = 0;
+
+        while (($isMonthToMonth || $currentDate <= $endDate) && $invoiceCount < $maxInvoices) {
+            $invoiceCount++;
+
+            // Calculate amount for this invoice
+            $amount = $lease->rent_amount;
+            $type = 'RENT';
+            // Generate unique invoice number
+            $invoiceNumberStr = 'INV-' . $lease->id . '-' . $tenantId . '-' . str_pad($invoiceNumber, 3, '0', STR_PAD_LEFT);
+
+            // If first invoice and deposit not collected, add deposit to first invoice
+            if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                Invoice::create([
+                    'lease_id' => $lease->id,
+                    'tenant_id' => $tenantId,
+                    'invoice_number' => $invoiceNumberStr,
+                    'amount' => $lease->deposit_amount,
+                    'total_amount' => $lease->deposit_amount,
+                    'balance_due' => $lease->deposit_amount,
+                    'due_date' => $currentDate->format('Y-m-d'),
+                    'type' => 'DEPOSIT',
+                    'status' => 'UNPAID',
+                    'issue_date' => now(),
+                    'includes_deposit' => $depositCollected,
+                ]);
+            }
+
+            Invoice::create([
+                'lease_id' => $lease->id,
+                'tenant_id' => $tenantId,
+                'invoice_number' => $invoiceNumberStr,
+                'amount' => $amount,
+                'total_amount' => $amount,
+                'balance_due' => $amount,
+                'due_date' => $currentDate->format('Y-m-d'),
+                'type' => $type,
+                'status' => 'UNPAID',
+                'issue_date' => now(),
+                'is_first_invoice' => $isFirstInvoice,
+            ]);
+
+            $isFirstInvoice = false;
+            $invoiceNumber++;
+
+            // Move to next week (7 days later)
+            $currentDate->modify('+7 days');
         }
     }
 
