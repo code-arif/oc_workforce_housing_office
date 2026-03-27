@@ -1783,4 +1783,13 @@ class LeaseController extends Controller
             ], 500);
         }
     }
+
+    public function terminateLease($leaseId)
+    {
+        // This method can be used to terminate a lease early, similar to closeLease but with different status and logic. 
+        //Terminate lease will update status, free up bed, disable invoice payment and status to cancelled, but keep the lease record for historical purposes, 
+        //while closeLease can be used for both natural end and manual closure with more detailed notes and optional notifications.
+        //Implement the logic here based on your specific requirements for lease termination, such as updating status to 'TERMINATED', setting end date to today, freeing up bed, and handling invoices.
+        
+    }
 }

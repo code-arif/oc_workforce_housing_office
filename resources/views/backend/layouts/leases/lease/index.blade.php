@@ -127,6 +127,11 @@
                                     <label class="form-label">Status</label>
                                     <select class="form-select select3" id="statusFilter">
                                         <option value="">All Statuses</option>
+                                        <option value="ACTIVE">Active</option>
+                                        <option value="PENDING_TENANT_SIGN">Pending Tenant Signature</option>
+                                        <option value="PENDING_ADMIN_SIGN">Pending Landlord Signature</option>
+                                        <option value="COMPLETED">COMPLETED</option>
+                                        <option value="INACTIVE">Inactive</option>
                                     </select>
                                 </div>
                                 <div class="col-md-1">

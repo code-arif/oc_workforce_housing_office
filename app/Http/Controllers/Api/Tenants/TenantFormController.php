@@ -57,6 +57,7 @@ class TenantFormController extends Controller
                 'sponsor_state' => $request->sponsor_state ?? null,
                 'sponsor_zipcode' => $request->sponsor_zipcode ?? null,
                 'sponsor_country' => $request->sponsor_country ?? null,
+                'sponsor_contact_name' => $request->sponsor_contact_name ?? null,
                 'sponsor_phone' => $request->sponsor_phone ?? null,
                 'sponsor_email' => $request->sponsor_email ?? null,
                 'sponsor_relationship' => $request->sponsor_relationship ?? null,

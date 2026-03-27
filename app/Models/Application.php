@@ -36,6 +36,7 @@ class Application extends Model
         'sponsor_state',
         'sponsor_zipcode',
         'sponsor_country',
+        'sponsor_contact_name',
         'sponsor_phone',
         'sponsor_email',
         'sponsor_relationship',

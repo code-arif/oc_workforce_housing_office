@@ -453,14 +453,7 @@
                                 <small class="text-muted d-block">Sponsor Name</small>
                                 <strong>${application.sponsor_name || 'N/A'}</strong>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <small class="text-muted d-block">Phone</small>
-                                <strong>${application.sponsor_phone || 'N/A'}</strong>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <small class="text-muted d-block">Email</small>
-                                <strong>${application.sponsor_email || 'N/A'}</strong>
-                            </div>
+                            
                             <div class="col-md-6 mb-3">
                                 <small class="text-muted d-block">Address</small>
                                 <strong>${[
@@ -470,12 +463,30 @@
                                     application.sponsor_country
                                 ].filter(Boolean).join(', ') || 'N/A'}</strong>
                             </div>
+                            
+                        </div>
+                        <h6 class="border-bottom pb-2 mb-3">
+                            <i class="fe fe-users text-info me-2"></i>Sponsor Contact Information
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Contact Name</small>
+                                <strong>${application.sponsor_contact_name || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Phone</small>
+                                <strong>${application.sponsor_phone || 'N/A'}</strong>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <small class="text-muted d-block">Email</small>
+                                <strong>${application.sponsor_email || 'N/A'}</strong>
+                            </div>
                             ${application.is_j1_sponsor ? `
-                                                <div class="col-md-12 mb-3">
-                                                    <small class="text-muted d-block">J-1 Sponsor</small>
-                                                    <span class="badge bg-info">${application.is_j1_sponsor}</span>
-                                                </div>
-                                            ` : ''}
+                                    <div class="col-md-12 mb-3">
+                                        <small class="text-muted d-block">J-1 Sponsor</small>
+                                        <span class="badge bg-info">${application.is_j1_sponsor}</span>
+                                    </div>
+                                ` : ''}
                         </div>
                     </div>
                 `;

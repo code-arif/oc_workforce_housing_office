@@ -82,6 +82,7 @@ class TenentApplicationRequest extends FormRequest
             'sponsor_state' => 'nullable|string|max:100',
             'sponsor_zipcode' => 'nullable|string|max:20',
             'sponsor_country' => 'nullable|string|max:100',
+            'sponsor_contact_name' => 'nullable|string|max:255',
             'sponsor_phone' => 'nullable|string|max:20',
             'sponsor_email' => 'nullable|email',
             'sponsor_relationship' => 'nullable|string|max:100',
@@ -116,6 +117,7 @@ class TenentApplicationRequest extends FormRequest
 
             'employment_histories.*.employer_contact_person_email.email' => 'Please provide a valid employer contact email.',
             'sponsor_email.email' => 'Please provide a valid sponsor email.',
+            'sponsor_contact_name.string' => 'Sponsor contact name must be a string.',
 
             'passport.mimes' => 'Passport must be a PDF, JPG, JPEG, or PNG file.',
             'visa.mimes' => 'Visa must be a PDF, JPG, JPEG, or PNG file.',

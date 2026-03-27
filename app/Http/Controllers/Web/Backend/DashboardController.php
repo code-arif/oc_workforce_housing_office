@@ -10,6 +10,7 @@ use App\Models\Property;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Models\Application;
 use App\Models\MaintenanceRequest;
 
 class DashboardController extends Controller
@@ -35,15 +36,20 @@ class DashboardController extends Controller
             });
 
         // Get pending applications (tenants with pending status)
-        $pendingApplications = Tenant::with('profile:id,tenant_id,first_name,last_name,avatar')
-            ->where('status', 'pending')
+        $pendingApplications = Application::where('status', 'pending')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
+        
+        // Tenant::with('profile:id,tenant_id,first_name,last_name,avatar')
+        //     ->where('status', 'pending')
+        //     ->orderBy('created_at', 'desc')
+        //     ->limit(5)
+        //     ->get();
 
         // Get unsigned leases (leases pending tenant signature)
         $unsignedLeases = Lease::with(['tenant.profile:id,tenant_id,first_name,last_name', 'property:id,name'])
-            ->where('status', 'PENDING_TENANT_SIGN')
+            ->where('status', '!=','ACTIVE')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
