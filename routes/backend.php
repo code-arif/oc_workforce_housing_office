@@ -360,6 +360,7 @@ Route::prefix('leases')->name('leases.')->group(function () {
     // Manual lease close routes
     Route::get('/{id}/close-data', [LeaseController::class, 'getCloseData'])->name('close.data');
     Route::post('/{id}/close', [LeaseController::class, 'closeLease'])->name('close');
+    Route::post('/{id}/terminate', [LeaseController::class, 'terminateLease'])->name('terminate');
 
     // Change bed assignment routes
     Route::get('/{id}/change-bed-data', [LeaseController::class, 'getChangeBedData'])->name('change.bed.data');
