@@ -36,8 +36,8 @@ class Lease extends Model
         'send_for_signature' => 'boolean',
         'send_welcome_email' => 'boolean',
         'bed_assignment_pending' => 'boolean',
-    ];    
-    
+    ];
+
     public function property()
     {
         return $this->belongsTo(Property::class);
@@ -147,8 +147,8 @@ class Lease extends Model
      */
     public function needsBedAssignment()
     {
-        return $this->bed_assignment_pending || 
-               !$this->assignments()->whereNotNull('bed_id')->where('is_current', true)->exists();
+        return $this->bed_assignment_pending ||
+            !$this->assignments()->whereNotNull('bed_id')->where('is_current', true)->exists();
     }
 
     /**
@@ -162,8 +162,19 @@ class Lease extends Model
     /**
      * Get current bed assignment
      */
+    // public function currentAssignment()
+    // {
+    //     return $this->assignments()->where('is_current', true)->first();
+    // }
+
     public function currentAssignment()
     {
-        return $this->assignments()->where('is_current', true)->first();
+        return $this->hasOne(LeaseAssignment::class)
+            ->where('is_current', true)
+            ->with([
+                'bed:id,room_id,bed_number,bed_label,base_rent',
+                'bed.room:id,unit_id,room_number,name,gender_designation',
+                'bed.room.unit:id,property_id,name,gender_designation',
+            ]);
     }
 }

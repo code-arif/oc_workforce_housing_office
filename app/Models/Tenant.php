@@ -239,4 +239,17 @@ class Tenant extends Authenticatable implements JWTSubject
         return $this->hasOne(Application::class, 'id', 'application_id');
     }
 
+    /**
+     * Tenant's active lease
+     */
+    public function activeLease()
+    {
+        return $this->hasOne(Lease::class)
+            ->whereIn('status', ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])
+            ->with([
+                'property:id,name,address',
+                'currentAssignment.bed.room.unit',
+            ])
+            ->latest();
+    }
 }

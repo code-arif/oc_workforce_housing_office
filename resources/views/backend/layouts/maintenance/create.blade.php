@@ -7,7 +7,6 @@
         <div class="side-app">
             <div class="main-container container-fluid">
 
-                <!-- Page Header -->
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Create Maintenance Request</h1>
@@ -30,8 +29,8 @@
                                     enctype="multipart/form-data">
                                     @csrf
 
+                                    {{-- Row 1: Title + Tenant --}}
                                     <div class="row mb-4">
-                                        <!-- Title -->
                                         <div class="col-md-6">
                                             <label class="form-label">Ticket Title <span
                                                     class="text-danger">*</span></label>
@@ -39,7 +38,6 @@
                                                 placeholder="Enter Ticket Title" required>
                                         </div>
 
-                                        <!-- Requested By -->
                                         <div class="col-md-6">
                                             <label class="form-label">Requested By <span
                                                     class="text-danger">*</span></label>
@@ -64,27 +62,36 @@
                                         </div>
                                     </div>
 
-                                    <!-- Property and Unit Selection -->
-                                    {{-- <div class="row mb-4">
+                                    {{-- Row 2: Property (loaded via AJAX) + Unit --}}
+                                    <div class="row mb-3" id="propertyRow" style="display: none !important;">
                                         <div class="col-md-6">
-                                            <label class="form-label">Property <span class="text-danger">*</span></label>
-                                            <select class="form-select" name="property_id" id="propertySelect" required>
-                                                <option value="">Select Property</option>
-                                                @foreach ($properties as $property)
-                                                    <option value="{{ $property->id }}">{{ $property->name }}</option>
-                                                @endforeach
+                                            <label class="form-label">Property</label>
+                                            <select class="form-select" name="property_id" id="propertySelect">
+                                                <option value="">-- Select Tenant First --</option>
                                             </select>
+                                            <div class="invalid-feedback" id="propertyError"></div>
                                         </div>
-
                                         <div class="col-md-6">
-                                            <label class="form-label">Units</label>
-                                            <select class="form-select" name="unit" id="unitSelect">
-                                                <option value="">Select Units</option>
-                                            </select>
+                                            <label class="form-label">Unit <span
+                                                    class="text-muted">(optional)</span></label>
+                                            <input type="text" class="form-control" name="unit" id="unitInput"
+                                                placeholder="e.g. Apt 201, Room 3B">
                                         </div>
-                                    </div> --}}
+                                    </div>
 
-                                    <!-- Category Selection -->
+                                    {{-- Lease Info Alert Box --}}
+                                    <div class="mb-4" id="leaseInfoBox" style="display: none;"></div>
+
+                                    {{-- No Lease Warning --}}
+                                    <div class="mb-4" id="noLeaseBox" style="display: none;">
+                                        <div class="alert alert-warning d-flex align-items-center mb-0">
+                                            <i class="fe fe-alert-triangle me-2"></i>
+                                            <span>This tenant has no active lease. The request will be saved without a
+                                                property.</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Category --}}
                                     <div class="mb-4">
                                         <label class="form-label">Category <span class="text-danger">*</span></label>
                                         <div class="row g-3">
@@ -92,98 +99,76 @@
                                                 <input type="radio" class="btn-check" name="category" id="category_ac"
                                                     value="ac" required>
                                                 <label class="category-card" for="category_ac">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-wind"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fe fe-wind"></i></div>
                                                     <div class="category-label">A/C</div>
                                                 </label>
                                             </div>
-
                                             <div class="col-md-2 col-sm-6">
                                                 <input type="radio" class="btn-check" name="category"
                                                     id="category_appliance" value="appliance">
                                                 <label class="category-card" for="category_appliance">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-box"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fe fe-box"></i></div>
                                                     <div class="category-label">Appliance</div>
                                                 </label>
                                             </div>
-
                                             <div class="col-md-2 col-sm-6">
                                                 <input type="radio" class="btn-check" name="category"
                                                     id="category_electrical" value="electrical">
                                                 <label class="category-card" for="category_electrical">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-zap"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fe fe-zap"></i></div>
                                                     <div class="category-label">Electrical</div>
                                                 </label>
                                             </div>
-
                                             <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category" id="category_heat"
-                                                    value="heat">
+                                                <input type="radio" class="btn-check" name="category"
+                                                    id="category_heat" value="heat">
                                                 <label class="category-card" for="category_heat">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-thermometer"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fe fe-thermometer"></i></div>
                                                     <div class="category-label">Heat</div>
                                                 </label>
                                             </div>
-
                                             <div class="col-md-2 col-sm-6">
                                                 <input type="radio" class="btn-check" name="category"
                                                     id="category_kitchen" value="kitchen">
                                                 <label class="category-card" for="category_kitchen">
-                                                    <div class="category-icon">
-                                                        <i class="fa-solid fa-mug-hot" style="font-size: 25px"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fa-solid fa-mug-hot"
+                                                            style="font-size:25px"></i></div>
                                                     <div class="category-label">Kitchen</div>
                                                 </label>
                                             </div>
-
                                             <div class="col-md-2 col-sm-6">
                                                 <input type="radio" class="btn-check" name="category"
                                                     id="category_plumbing" value="plumbing">
                                                 <label class="category-card" for="category_plumbing">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-droplet"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fe fe-droplet"></i></div>
                                                     <div class="category-label">Plumbing</div>
                                                 </label>
                                             </div>
-
                                             <div class="col-md-2 col-sm-6">
                                                 <input type="radio" class="btn-check" name="category"
                                                     id="category_other" value="other">
                                                 <label class="category-card" for="category_other">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-more-horizontal"></i>
-                                                    </div>
+                                                    <div class="category-icon"><i class="fe fe-more-horizontal"></i></div>
                                                     <div class="category-label">Other</div>
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Description -->
+                                    {{-- Description --}}
                                     <div class="mb-4">
                                         <label class="form-label">Description <span class="text-danger">*</span></label>
                                         <textarea class="form-control" name="description" id="description" rows="5" placeholder="Enter Description"
                                             required></textarea>
                                     </div>
 
-                                    <!-- Checkboxes -->
+                                    {{-- Checkboxes --}}
                                     <div class="mb-4">
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" name="is_urgent"
                                                 id="isUrgent" value="1">
-                                            <label class="form-check-label" for="isUrgent">
-                                                Mark as Urgent
-                                            </label>
+                                            <label class="form-check-label" for="isUrgent">Mark as Urgent</label>
                                         </div>
-
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="grant_permission"
                                                 id="grantPermission" value="1">
@@ -193,28 +178,28 @@
                                         </div>
                                     </div>
 
-                                    <!-- File Upload Section -->
+                                    {{-- File Upload --}}
                                     <div class="mb-4">
-                                        <label class="form-label">Upload Photos, Videos, and Documents <span
-                                                class="text-muted">(0/20)</span></label>
+                                        <label class="form-label">Upload Photos, Videos, and Documents
+                                            <span class="text-muted">(0/20)</span>
+                                        </label>
                                         <div class="upload-area" id="uploadArea">
                                             <div class="upload-placeholder">
                                                 <i class="fe fe-image upload-icon"></i>
                                                 <h6 class="mt-3">Drag & Drop</h6>
                                                 <p class="text-muted mb-1">or <span
                                                         class="text-primary browse-text">browse</span> photos</p>
-                                                <small class="text-muted">File Format supported .jpg .jpeg .png .pdf .bmp
-                                                    .jfif .mp4 .mov .webm .mpeg .m4v (max file size 20MB)</small>
+                                                <small class="text-muted">Supported: .jpg .jpeg .png .pdf .bmp .jfif .mp4
+                                                    .mov .webm .mpeg .m4v (max 20MB)</small>
                                             </div>
                                         </div>
                                         <input type="file" name="attachments[]" id="fileInput" multiple
                                             accept=".jpg,.jpeg,.png,.pdf,.bmp,.jfif,.mp4,.mov,.webm,.mpeg,.m4v"
                                             style="display: none;">
-
                                         <div id="filePreview" class="mt-3 row g-3"></div>
                                     </div>
 
-                                    <!-- Form Actions -->
+                                    {{-- Actions --}}
                                     <div class="d-flex gap-2 justify-content-end">
                                         <a href="{{ route('maintanance.index') }}" class="btn btn-light">Cancel</a>
                                         <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -235,21 +220,152 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+
+            /*===========================================
+             | TENANT → LEASE PROPERTIES AJAX LOADER
+             ===========================================*/
+            $('#tenantSelect').on('change', function() {
+                const tenantId = $(this).val();
+
+                // Reset UI
+                $('#propertySelect').html('<option value="">Loading...</option>').prop('disabled', true);
+                $('#leaseInfoBox').hide().html('');
+                $('#noLeaseBox').hide();
+                $('#propertyRow').hide();
+
+                if (!tenantId) return;
+
+                $.ajax({
+                    url: '{{ route('maintanance.tenant.lease.properties') }}',
+                    type: 'GET',
+                    data: {
+                        tenant_id: tenantId
+                    },
+                    success: function(res) {
+                        $('#propertyRow').show();
+                        $('#propertySelect').html(
+                            '<option value="">-- Select Property --</option>');
+
+                        if (res.success && res.leases.length > 0) {
+                            res.leases.forEach(function(lease) {
+                                $('#propertySelect').append(
+                                    `<option value="${lease.property_id}" data-lease='${JSON.stringify(lease)}'>
+                    ${lease.property_name}${lease.address ? ' — ' + lease.address : ''} (${lease.status})
+                </option>`
+                                );
+                            });
+
+                            $('#propertySelect').prop('disabled', false);
+
+                            const activeLease = res.leases.find(l => l.status === 'ACTIVE') ||
+                                res.leases[0];
+                            if (activeLease) {
+                                $('#propertySelect').val(activeLease.property_id).trigger(
+                                    'change');
+                            }
+
+                        } else {
+                            $('#propertySelect').html(
+                                '<option value="">No lease found</option>').prop('disabled',
+                                true);
+                            $('#noLeaseBox').show();
+                        }
+                    },
+                    error: function() {
+                        $('#propertyRow').show();
+                        $('#propertySelect').html(
+                            '<option value="">Error loading properties</option>').prop(
+                            'disabled', false);
+                        toastr.error('Failed to load tenant lease properties');
+                    }
+                });
+            });
+
+            // Show lease info card when property is selected
+            $('#propertySelect').on('change', function() {
+                const leaseData = $(this).find(':selected').data('lease');
+                $('#leaseInfoBox').hide().html('');
+
+                if (!leaseData) return;
+
+                const statusColor = getStatusColor(leaseData.status);
+                const startDate = formatDate(leaseData.start_date);
+                const endDate = formatDate(leaseData.end_date);
+
+                $('#leaseInfoBox').html(`
+            <div class="card border-0 bg-light mb-0">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fe fe-home text-primary me-2"></i>
+                        <strong class="me-2">Lease Details</strong>
+                        <span class="badge bg-${statusColor}">${leaseData.status}</span>
+                    </div>
+                    <div class="row g-2 text-sm">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Property</small>
+                            <span class="fw-semibold">${leaseData.property_name}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Address</small>
+                            <span>${leaseData.address || 'N/A'}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Start Date</small>
+                            <span>${startDate}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">End Date</small>
+                            <span>${endDate}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Rent</small>
+                            <span class="fw-semibold text-success">$${parseFloat(leaseData.rent_amount).toFixed(2)}/mo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).show();
+            });
+
+            // Helper: badge color based on lease status
+            function getStatusColor(status) {
+                const map = {
+                    'ACTIVE': 'success',
+                    'PENDING_TENANT_SIGN': 'warning',
+                    'PENDING_ADMIN_SIGN': 'info',
+                    'DRAFT': 'secondary',
+                    'TERMINATED': 'danger',
+                    'COMPLETED': 'primary',
+                };
+                return map[status] || 'secondary';
+            }
+
+            // Helper: format date string
+            function formatDate(dateStr) {
+                if (!dateStr) return 'N/A';
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
+
+            /*===========================================
+             | FILE UPLOAD HANDLER
+             ===========================================*/
             let selectedFiles = [];
             const maxFiles = 20;
 
-            // Update file counter
             function updateFileCounter() {
                 $('.upload-area').prev('label').find('span').text(`(${selectedFiles.length}/${maxFiles})`);
             }
 
-            // Upload area click handler
             $('#uploadArea').on('click', function(e) {
                 e.preventDefault();
                 $('#fileInput').click();
             });
 
-            // Prevent default drag behaviors
             $('#uploadArea').on('dragover dragenter', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -262,44 +378,31 @@
                 $(this).removeClass('drag-over');
             });
 
-            // Handle dropped files
             $('#uploadArea').on('drop', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
-
-                const files = e.originalEvent.dataTransfer.files;
-                handleFiles(files);
+                handleFiles(e.originalEvent.dataTransfer.files);
             });
 
-            // File input change
             $('#fileInput').on('change', function() {
                 handleFiles(this.files);
-                // Reset input so same file can be selected again
                 $(this).val('');
             });
 
             function handleFiles(files) {
-                if (selectedFiles.length >= maxFiles) {
-                    toastr.error(`Maximum ${maxFiles} files allowed`);
-                    return;
-                }
-
                 Array.from(files).forEach(file => {
                     if (selectedFiles.length >= maxFiles) {
                         toastr.error(`Maximum ${maxFiles} files allowed`);
                         return;
                     }
-
                     if (file.size > 20 * 1024 * 1024) {
-                        toastr.error(`File "${file.name}" exceeds 20MB limit`);
+                        toastr.error(`"${file.name}" exceeds 20MB limit`);
                         return;
                     }
-
                     selectedFiles.push(file);
                     displayFilePreview(file);
                 });
-
                 updateFileCounter();
             }
 
@@ -310,82 +413,66 @@
                 reader.onload = function(e) {
                     const fileType = file.type.split('/')[0];
                     const extension = file.name.split('.').pop().toUpperCase();
-                    let previewHTML = '';
+                    let html = '';
 
                     if (fileType === 'image') {
-                        previewHTML = `
-                            <div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                                <div class="file-preview-item">
-                                    <img src="${e.target.result}" alt="${file.name}">
-                                    <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                        <i class="fe fe-x"></i>
-                                    </button>
-                                </div>
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
+                            <div class="file-preview-item">
+                                <img src="${e.target.result}" alt="${file.name}">
+                                <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
+                                    <i class="fe fe-x"></i>
+                                </button>
                             </div>
-                        `;
+                        </div>`;
                     } else if (fileType === 'video') {
-                        previewHTML = `
-                            <div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                                <div class="file-preview-item">
-                                    <video style="width: 100%; height: 100%; object-fit: cover;">
-                                        <source src="${e.target.result}">
-                                    </video>
-                                    <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                        <i class="fe fe-x"></i>
-                                    </button>
-                                </div>
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
+                            <div class="file-preview-item">
+                                <video style="width:100%;height:100%;object-fit:cover;">
+                                    <source src="${e.target.result}">
+                                </video>
+                                <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
+                                    <i class="fe fe-x"></i>
+                                </button>
                             </div>
-                        `;
+                        </div>`;
                     } else {
-                        previewHTML = `
-                            <div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                                <div class="file-preview-item">
-                                    <div class="file-icon">
-                                        <i class="fe fe-file"></i>
-                                        <small class="mt-2">${extension}</small>
-                                    </div>
-                                    <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                        <i class="fe fe-x"></i>
-                                    </button>
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
+                            <div class="file-preview-item">
+                                <div class="file-icon">
+                                    <i class="fe fe-file"></i>
+                                    <small class="mt-2">${extension}</small>
                                 </div>
+                                <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
+                                    <i class="fe fe-x"></i>
+                                </button>
                             </div>
-                        `;
+                        </div>`;
                     }
-
-                    $('#filePreview').append(previewHTML);
+                    $('#filePreview').append(html);
                 };
 
                 reader.readAsDataURL(file);
             }
 
-            // Remove file function (global scope)
             window.removeFile = function(index) {
-                // Remove from array
                 selectedFiles.splice(index, 1);
-
-                // Remove preview
                 $(`.file-preview-col[data-file-index="${index}"]`).remove();
-
-                // Update remaining indices
                 $('.file-preview-col').each(function(i) {
                     $(this).attr('data-file-index', i);
                     $(this).find('.remove-file').attr('onclick', `removeFile(${i})`);
                 });
-
                 updateFileCounter();
             };
 
-            // Form submission
+            /*===========================================
+             | FORM SUBMIT
+             ===========================================*/
             $('#maintenanceForm').on('submit', function(e) {
                 e.preventDefault();
 
                 const formData = new FormData(this);
-
-                // Remove existing file inputs and append selected files
                 formData.delete('attachments[]');
-                selectedFiles.forEach(file => {
-                    formData.append('attachments[]', file);
-                });
+                selectedFiles.forEach(file => formData.append('attachments[]', file));
 
                 const submitBtn = $('#submitBtn');
                 const originalBtnText = submitBtn.html();
@@ -408,11 +495,9 @@
                     },
                     error: function(xhr) {
                         submitBtn.prop('disabled', false).html(originalBtnText);
-
-                        if (xhr.responseJSON && xhr.responseJSON.errors) {
-                            $.each(xhr.responseJSON.errors, function(key, value) {
-                                toastr.error(value[0]);
-                            });
+                        if (xhr.responseJSON?.errors) {
+                            $.each(xhr.responseJSON.errors, (key, value) => toastr.error(value[
+                                0]));
                         } else {
                             toastr.error('Something went wrong. Please try again.');
                         }
@@ -425,6 +510,7 @@
 
 @push('styles')
     <style>
+        /* ---- Category Cards ---- */
         .category-card {
             display: block;
             border: 2px solid #e9ecef;
@@ -462,6 +548,7 @@
             color: #2c3e50;
         }
 
+        /* ---- Upload Area ---- */
         .upload-area {
             border: 2px dashed #e9ecef;
             border-radius: 8px;
@@ -492,6 +579,7 @@
             pointer-events: none;
         }
 
+        /* ---- File Preview ---- */
         .file-preview-item {
             position: relative;
             border: 1px solid #e9ecef;
@@ -514,7 +602,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             text-align: center;
             padding: 20px;
         }
@@ -533,7 +620,7 @@
             position: absolute;
             top: 5px;
             right: 5px;
-            background: rgba(220, 53, 69, 0.9);
+            background: rgba(220, 53, 69, .9);
             color: white;
             border: none;
             border-radius: 50%;
@@ -549,6 +636,15 @@
 
         .remove-file:hover {
             background: #dc3545;
+        }
+
+        /* ---- Lease Info Card ---- */
+        #leaseInfoBox .card {
+            border-left: 4px solid #0d6efd !important;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
         }
     </style>
 @endpush

@@ -7,7 +7,6 @@
         <div class="side-app">
             <div class="main-container container-fluid">
 
-                <!-- Page Header -->
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Edit Maintenance Request</h1>
@@ -30,20 +29,14 @@
                                     method="POST" enctype="multipart/form-data">
                                     @csrf
 
-
-
-
+                                    {{-- Row 1: Title + Tenant --}}
                                     <div class="row mb-4">
-                                        <!-- Title -->
                                         <div class="col-md-6">
-
                                             <label class="form-label">Ticket Title <span
                                                     class="text-danger">*</span></label>
                                             <input type="text" class="form-control" name="title" id="title"
-                                                placeholder="Enter Ticket Title" value="{{ $maintenance->title }}" required>
+                                                value="{{ $maintenance->title }}" placeholder="Enter Ticket Title" required>
                                         </div>
-
-                                        {{-- Select  tenant--}}
                                         <div class="col-md-6">
                                             <label class="form-label">Requested By <span
                                                     class="text-danger">*</span></label>
@@ -71,160 +64,112 @@
                                         </div>
                                     </div>
 
-                                    {{-- <div class="row mb-4">
+                                    {{-- Row 2: Property (dynamic) + Unit --}}
+                                    <div class="row mb-3" id="propertyRow">
                                         <div class="col-md-6">
-                                            <label class="form-label">Property <span class="text-danger">*</span></label>
-                                            <select class="form-select" name="property_id" id="propertySelect" required>
-                                                <option value="">Select Property</option>
-                                                @foreach ($properties as $property)
-                                                    <option value="{{ $property->id }}"
-                                                        {{ $maintenance->property_id == $property->id ? 'selected' : '' }}>
-                                                        {{ $property->name }}
-                                                    </option>
-                                                @endforeach
+                                            <label class="form-label">Property</label>
+                                            {{-- Spinner shown while loading --}}
+                                            <div id="propertyLoading" class="d-flex align-items-center text-muted"
+                                                style="display:none !important;">
+                                                <span class="spinner-border spinner-border-sm me-2"></span> Loading lease
+                                                properties...
+                                            </div>
+                                            <select class="form-select" name="property_id" id="propertySelect">
+                                                <option value="">-- Loading... --</option>
                                             </select>
                                         </div>
-
                                         <div class="col-md-6">
-                                            <label class="form-label">Units</label>
-                                            <select class="form-select" name="unit" id="unitSelect">
-                                                <option value="">Select Units</option>
-                                                @if ($maintenance->unit)
-                                                    <option value="{{ $maintenance->unit }}" selected>
-                                                        {{ $maintenance->unit }}</option>
-                                                @endif
-                                            </select>
+                                            <label class="form-label">Unit <span
+                                                    class="text-muted">(optional)</span></label>
+                                            <input type="text" class="form-control" name="unit" id="unitInput"
+                                                value="{{ $maintenance->unit }}" placeholder="e.g. Apt 201, Room 3B">
                                         </div>
-                                    </div> --}}
+                                    </div>
 
-                                    <!-- Category Selection -->
+                                    {{-- Lease Info Alert Box --}}
+                                    <div class="mb-4" id="leaseInfoBox" style="display: none;"></div>
+
+                                    {{-- No Lease Warning --}}
+                                    <div class="mb-4" id="noLeaseBox" style="display: none;">
+                                        <div class="alert alert-warning d-flex align-items-center mb-0">
+                                            <i class="fe fe-alert-triangle me-2"></i>
+                                            <span>This tenant has no active lease. The request will be saved without a
+                                                property.</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Category --}}
                                     <div class="mb-4">
                                         <label class="form-label">Category <span class="text-danger">*</span></label>
                                         <div class="row g-3">
-                                            <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category" id="category_ac"
-                                                    value="ac" {{ $maintenance->category == 'ac' ? 'checked' : '' }}
-                                                    required>
-                                                <label class="category-card" for="category_ac">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-wind"></i>
-                                                    </div>
-                                                    <div class="category-label">A/C</div>
-                                                </label>
-                                            </div>
-
-                                            <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category"
-                                                    id="category_appliance" value="appliance"
-                                                    {{ $maintenance->category == 'appliance' ? 'checked' : '' }}>
-                                                <label class="category-card" for="category_appliance">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-box"></i>
-                                                    </div>
-                                                    <div class="category-label">Appliance</div>
-                                                </label>
-                                            </div>
-
-                                            <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category"
-                                                    id="category_electrical" value="electrical"
-                                                    {{ $maintenance->category == 'electrical' ? 'checked' : '' }}>
-                                                <label class="category-card" for="category_electrical">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-zap"></i>
-                                                    </div>
-                                                    <div class="category-label">Electrical</div>
-                                                </label>
-                                            </div>
-
-                                            <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category" id="category_heat"
-                                                    value="heat" {{ $maintenance->category == 'heat' ? 'checked' : '' }}>
-                                                <label class="category-card" for="category_heat">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-thermometer"></i>
-                                                    </div>
-                                                    <div class="category-label">Heat</div>
-                                                </label>
-                                            </div>
-
+                                            @foreach ([
+            'ac' => ['fe-wind', 'A/C'],
+            'appliance' => ['fe-box', 'Appliance'],
+            'electrical' => ['fe-zap', 'Electrical'],
+            'heat' => ['fe-thermometer', 'Heat'],
+            'plumbing' => ['fe-droplet', 'Plumbing'],
+            'other' => ['fe-more-horizontal', 'Other'],
+        ] as $value => [$icon, $label])
+                                                <div class="col-md-2 col-sm-6">
+                                                    <input type="radio" class="btn-check" name="category"
+                                                        id="category_{{ $value }}" value="{{ $value }}"
+                                                        {{ $maintenance->category == $value ? 'checked' : '' }} required>
+                                                    <label class="category-card" for="category_{{ $value }}">
+                                                        <div class="category-icon"><i class="fe {{ $icon }}"></i>
+                                                        </div>
+                                                        <div class="category-label">{{ $label }}</div>
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                            {{-- Kitchen has FA icon, handle separately --}}
                                             <div class="col-md-2 col-sm-6">
                                                 <input type="radio" class="btn-check" name="category"
                                                     id="category_kitchen" value="kitchen"
                                                     {{ $maintenance->category == 'kitchen' ? 'checked' : '' }}>
                                                 <label class="category-card" for="category_kitchen">
                                                     <div class="category-icon">
-                                                        <i class="fa-solid fa-mug-hot" style="font-size: 25px"></i>
+                                                        <i class="fa-solid fa-mug-hot" style="font-size:25px"></i>
                                                     </div>
                                                     <div class="category-label">Kitchen</div>
-                                                </label>
-                                            </div>
-
-                                            <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category"
-                                                    id="category_plumbing" value="plumbing"
-                                                    {{ $maintenance->category == 'plumbing' ? 'checked' : '' }}>
-                                                <label class="category-card" for="category_plumbing">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-droplet"></i>
-                                                    </div>
-                                                    <div class="category-label">Plumbing</div>
-                                                </label>
-                                            </div>
-
-                                            <div class="col-md-2 col-sm-6">
-                                                <input type="radio" class="btn-check" name="category"
-                                                    id="category_other" value="other"
-                                                    {{ $maintenance->category == 'other' ? 'checked' : '' }}>
-                                                <label class="category-card" for="category_other">
-                                                    <div class="category-icon">
-                                                        <i class="fe fe-more-horizontal"></i>
-                                                    </div>
-                                                    <div class="category-label">Other</div>
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <!-- Description -->
+                                    {{-- Description --}}
                                     <div class="mb-4">
                                         <label class="form-label">Description <span class="text-danger">*</span></label>
                                         <textarea class="form-control" name="description" id="description" rows="5" placeholder="Enter Description"
                                             required>{{ $maintenance->description }}</textarea>
                                     </div>
 
-                                    <!-- Status -->
+                                    {{-- Status --}}
                                     <div class="mb-4">
                                         <label class="form-label">Status <span class="text-danger">*</span></label>
                                         <select class="form-select" name="status" required>
-                                            <option value="pending"
-                                                {{ $maintenance->status == 'pending' ? 'selected' : '' }}>Open</option>
-                                            <option value="in_progress"
-                                                {{ $maintenance->status == 'in_progress' ? 'selected' : '' }}>In Progress
-                                            </option>
-                                            <option value="completed"
-                                                {{ $maintenance->status == 'completed' ? 'selected' : '' }}>Resolved
-                                            </option>
-                                            <option value="rejected"
-                                                {{ $maintenance->status == 'rejected' ? 'selected' : '' }}>Rejected
-                                            </option>
-                                            <option value="cancelled"
-                                                {{ $maintenance->status == 'cancelled' ? 'selected' : '' }}>Cancelled
-                                            </option>
+                                            @foreach ([
+            'pending' => 'Open',
+            'in_progress' => 'In Progress',
+            'completed' => 'Resolved',
+            'rejected' => 'Rejected',
+            'cancelled' => 'Cancelled',
+        ] as $value => $label)
+                                                <option value="{{ $value }}"
+                                                    {{ $maintenance->status == $value ? 'selected' : '' }}>
+                                                    {{ $label }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
 
-                                    <!-- Checkboxes -->
+                                    {{-- Checkboxes --}}
                                     <div class="mb-4">
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" name="is_urgent"
                                                 id="isUrgent" value="1"
                                                 {{ $maintenance->is_urgent ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="isUrgent">
-                                                Mark as Urgent
-                                            </label>
+                                            <label class="form-check-label" for="isUrgent">Mark as Urgent</label>
                                         </div>
-
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="grant_permission"
                                                 id="grantPermission" value="1"
@@ -235,50 +180,47 @@
                                         </div>
                                     </div>
 
-                                    <!-- Existing Attachments -->
+                                    {{-- Existing Attachments --}}
                                     @if ($maintenance->attachments->count() > 0)
                                         <div class="mb-4">
                                             <label class="form-label">Existing Attachments</label>
                                             <div class="row g-3">
                                                 @foreach ($maintenance->attachments as $attachment)
+                                                    @php
+                                                        $ext = pathinfo(
+                                                            $attachment->attachment_path,
+                                                            PATHINFO_EXTENSION,
+                                                        );
+                                                        $isImage = in_array(strtolower($ext), [
+                                                            'jpg',
+                                                            'jpeg',
+                                                            'png',
+                                                            'gif',
+                                                            'bmp',
+                                                            'jfif',
+                                                        ]);
+                                                        $isVideo = in_array(strtolower($ext), [
+                                                            'mp4',
+                                                            'mov',
+                                                            'webm',
+                                                            'mpeg',
+                                                            'm4v',
+                                                        ]);
+                                                    @endphp
                                                     <div class="col-md-3">
                                                         <div class="file-preview-item">
-                                                            @php
-                                                                $extension = pathinfo(
-                                                                    $attachment->attachment_path,
-                                                                    PATHINFO_EXTENSION,
-                                                                );
-                                                                $isImage = in_array(strtolower($extension), [
-                                                                    'jpg',
-                                                                    'jpeg',
-                                                                    'png',
-                                                                    'gif',
-                                                                    'bmp',
-                                                                    'jfif',
-                                                                ]);
-                                                                $isVideo = in_array(strtolower($extension), [
-                                                                    'mp4',
-                                                                    'mov',
-                                                                    'webm',
-                                                                    'mpeg',
-                                                                    'm4v',
-                                                                ]);
-                                                            @endphp
-
                                                             @if ($isImage)
                                                                 <img src="{{ asset('storage/' . $attachment->attachment_path) }}"
                                                                     alt="Attachment">
-                                                            @elseif($isVideo)
-                                                                <video
-                                                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                                            @elseif ($isVideo)
+                                                                <video style="width:100%;height:100%;object-fit:cover;">
                                                                     <source
                                                                         src="{{ asset('storage/' . $attachment->attachment_path) }}">
                                                                 </video>
                                                             @else
                                                                 <div class="file-icon">
                                                                     <i class="fe fe-file"></i>
-                                                                    <small
-                                                                        class="mt-2">{{ strtoupper($extension) }}</small>
+                                                                    <small class="mt-2">{{ strtoupper($ext) }}</small>
                                                                 </div>
                                                             @endif
                                                         </div>
@@ -288,28 +230,28 @@
                                         </div>
                                     @endif
 
-                                    <!-- File Upload Section -->
+                                    {{-- New File Upload --}}
                                     <div class="mb-4">
-                                        <label class="form-label">Add More Photos, Videos, and Documents <span
-                                                class="text-muted">(0/20)</span></label>
+                                        <label class="form-label">Add More Photos, Videos, and Documents
+                                            <span class="text-muted">(0/20)</span>
+                                        </label>
                                         <div class="upload-area" id="uploadArea">
                                             <div class="upload-placeholder">
                                                 <i class="fe fe-image upload-icon"></i>
                                                 <h6 class="mt-3">Drag & Drop</h6>
                                                 <p class="text-muted mb-1">or <span
                                                         class="text-primary browse-text">browse</span> photos</p>
-                                                <small class="text-muted">File Format supported .jpg .jpeg .png .pdf .bmp
-                                                    .jfif .mp4 .mov .webm .mpeg .m4v (max file size 20MB)</small>
+                                                <small class="text-muted">Supported: .jpg .jpeg .png .pdf .bmp .jfif .mp4
+                                                    .mov .webm .mpeg .m4v (max 20MB)</small>
                                             </div>
                                         </div>
                                         <input type="file" name="attachments[]" id="fileInput" multiple
                                             accept=".jpg,.jpeg,.png,.pdf,.bmp,.jfif,.mp4,.mov,.webm,.mpeg,.m4v"
                                             style="display: none;">
-
                                         <div id="filePreview" class="mt-3 row g-3"></div>
                                     </div>
 
-                                    <!-- Form Actions -->
+                                    {{-- Actions --}}
                                     <div class="d-flex gap-2 justify-content-end">
                                         <a href="{{ route('maintanance.index') }}" class="btn btn-light">Cancel</a>
                                         <button type="submit" class="btn btn-primary" id="submitBtn">
@@ -330,162 +272,256 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+
+            // Current maintenance data passed from controller
+            const currentPropertyId = {{ $maintenance->property_id ?? 'null' }};
+            const currentTenantId = {{ $maintenance->tenant_id ?? 'null' }};
+
+            /*===========================================
+             | TENANT → LEASE PROPERTIES LOADER
+             ===========================================*/
+            function loadLeaseProperties(tenantId, preSelectPropertyId) {
+                $('#propertySelect').html('<option value="">Loading...</option>').prop('disabled', true);
+                $('#leaseInfoBox').hide().html('');
+                $('#noLeaseBox').hide();
+
+                $.ajax({
+                    url: '{{ route('maintanance.tenant.lease.properties') }}',
+                    type: 'GET',
+                    data: {
+                        tenant_id: tenantId
+                    },
+                    success: function(res) {
+                        $('#propertySelect').html('<option value="">-- Select Property --</option>');
+
+                        if (res.success && res.leases.length > 0) {
+                            res.leases.forEach(function(lease) {
+                                $('#propertySelect').append(
+                                    `<option value="${lease.property_id}" data-lease='${JSON.stringify(lease)}'>
+                                ${lease.property_name}${lease.address ? ' — ' + lease.address : ''} (${lease.status})
+                            </option>`
+                                );
+                            });
+
+                            $('#propertySelect').prop('disabled', false);
+
+                            // Pre-select: existing property_id first, then first ACTIVE lease
+                            if (preSelectPropertyId) {
+                                $('#propertySelect').val(preSelectPropertyId);
+                            }
+
+                            if (!$('#propertySelect').val()) {
+                                const activeLease = res.leases.find(l => l.status === 'ACTIVE');
+                                if (activeLease) $('#propertySelect').val(activeLease.property_id);
+                            }
+
+                            $('#propertySelect').trigger('change');
+
+                        } else {
+                            $('#propertySelect').html('<option value="">No lease found</option>').prop(
+                                'disabled', true);
+                            $('#noLeaseBox').show();
+                        }
+                    },
+                    error: function() {
+                        $('#propertySelect').html('<option value="">Error loading</option>').prop(
+                            'disabled', false);
+                        toastr.error('Failed to load lease properties');
+                    }
+                });
+            }
+
+            // On page load, auto-load for existing tenant
+            if (currentTenantId) {
+                loadLeaseProperties(currentTenantId, currentPropertyId);
+            }
+
+            // When tenant is changed manually
+            $('#tenantSelect').on('change', function() {
+                const tenantId = $(this).val();
+                $('#leaseInfoBox').hide().html('');
+                $('#noLeaseBox').hide();
+
+                if (!tenantId) {
+                    $('#propertySelect').html('<option value="">-- Select Tenant First --</option>').prop(
+                        'disabled', true);
+                    return;
+                }
+
+                loadLeaseProperties(tenantId, null);
+            });
+
+            // Show lease info card when property is selected
+            $('#propertySelect').on('change', function() {
+                const leaseData = $(this).find(':selected').data('lease');
+                $('#leaseInfoBox').hide().html('');
+
+                if (!leaseData) return;
+
+                const statusColor = getStatusColor(leaseData.status);
+                const startDate = formatDate(leaseData.start_date);
+                const endDate = formatDate(leaseData.end_date);
+
+                $('#leaseInfoBox').html(`
+            <div class="card border-0 bg-light mb-0">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fe fe-home text-primary me-2"></i>
+                        <strong class="me-2">Lease Details</strong>
+                        <span class="badge bg-${statusColor}">${leaseData.status}</span>
+                    </div>
+                    <div class="row g-2 text-sm">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Property</small>
+                            <span class="fw-semibold">${leaseData.property_name}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Address</small>
+                            <span>${leaseData.address || 'N/A'}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Start Date</small>
+                            <span>${startDate}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">End Date</small>
+                            <span>${endDate}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Rent</small>
+                            <span class="fw-semibold text-success">$${parseFloat(leaseData.rent_amount).toFixed(2)}/mo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).show();
+            });
+
+            function getStatusColor(status) {
+                return {
+                    'ACTIVE': 'success',
+                    'PENDING_TENANT_SIGN': 'warning',
+                    'PENDING_ADMIN_SIGN': 'info',
+                    'DRAFT': 'secondary',
+                    'TERMINATED': 'danger',
+                    'COMPLETED': 'primary'
+                } [status] || 'secondary';
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return 'N/A';
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
+
+            /*===========================================
+             | FILE UPLOAD
+             ===========================================*/
             let selectedFiles = [];
             const maxFiles = 20;
 
-            // Update file counter
             function updateFileCounter() {
                 $('.upload-area').prev('label').find('span').text(`(${selectedFiles.length}/${maxFiles})`);
             }
 
-            // Upload area click handler
-            $('#uploadArea').on('click', function(e) {
+            $('#uploadArea').on('click', e => {
                 e.preventDefault();
                 $('#fileInput').click();
             });
 
-            // Prevent default drag behaviors
             $('#uploadArea').on('dragover dragenter', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).addClass('drag-over');
             });
-
             $('#uploadArea').on('dragleave dragend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
             });
-
-            // Handle dropped files
             $('#uploadArea').on('drop', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
-
-                const files = e.originalEvent.dataTransfer.files;
-                handleFiles(files);
+                handleFiles(e.originalEvent.dataTransfer.files);
             });
-
-            // File input change
             $('#fileInput').on('change', function() {
                 handleFiles(this.files);
-                // Reset input so same file can be selected again
                 $(this).val('');
             });
 
             function handleFiles(files) {
-                if (selectedFiles.length >= maxFiles) {
-                    toastr.error(`Maximum ${maxFiles} files allowed`);
-                    return;
-                }
-
                 Array.from(files).forEach(file => {
                     if (selectedFiles.length >= maxFiles) {
-                        toastr.error(`Maximum ${maxFiles} files allowed`);
+                        toastr.error(`Max ${maxFiles} files`);
                         return;
                     }
-
                     if (file.size > 20 * 1024 * 1024) {
-                        toastr.error(`File "${file.name}" exceeds 20MB limit`);
+                        toastr.error(`"${file.name}" exceeds 20MB`);
                         return;
                     }
-
                     selectedFiles.push(file);
                     displayFilePreview(file);
                 });
-
                 updateFileCounter();
             }
 
             function displayFilePreview(file) {
                 const reader = new FileReader();
-                const fileIndex = selectedFiles.length - 1;
-
+                const idx = selectedFiles.length - 1;
                 reader.onload = function(e) {
-                    const fileType = file.type.split('/')[0];
-                    const extension = file.name.split('.').pop().toUpperCase();
-                    let previewHTML = '';
-
-                    if (fileType === 'image') {
-                        previewHTML = `
-                            <div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                                <div class="file-preview-item">
-                                    <img src="${e.target.result}" alt="${file.name}">
-                                    <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                        <i class="fe fe-x"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    } else if (fileType === 'video') {
-                        previewHTML = `
-                            <div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                                <div class="file-preview-item">
-                                    <video style="width: 100%; height: 100%; object-fit: cover;">
-                                        <source src="${e.target.result}">
-                                    </video>
-                                    <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                        <i class="fe fe-x"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
+                    const type = file.type.split('/')[0];
+                    const ext = file.name.split('.').pop().toUpperCase();
+                    let html;
+                    if (type === 'image') {
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${idx}">
+                            <div class="file-preview-item">
+                                <img src="${e.target.result}" alt="">
+                                <button type="button" class="remove-file" onclick="removeFile(${idx})"><i class="fe fe-x"></i></button>
+                            </div></div>`;
+                    } else if (type === 'video') {
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${idx}">
+                            <div class="file-preview-item">
+                                <video style="width:100%;height:100%;object-fit:cover;"><source src="${e.target.result}"></video>
+                                <button type="button" class="remove-file" onclick="removeFile(${idx})"><i class="fe fe-x"></i></button>
+                            </div></div>`;
                     } else {
-                        previewHTML = `
-                            <div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                                <div class="file-preview-item">
-                                    <div class="file-icon">
-                                        <i class="fe fe-file"></i>
-                                        <small class="mt-2">${extension}</small>
-                                    </div>
-                                    <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                        <i class="fe fe-x"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${idx}">
+                            <div class="file-preview-item">
+                                <div class="file-icon"><i class="fe fe-file"></i><small class="mt-2">${ext}</small></div>
+                                <button type="button" class="remove-file" onclick="removeFile(${idx})"><i class="fe fe-x"></i></button>
+                            </div></div>`;
                     }
-
-                    $('#filePreview').append(previewHTML);
+                    $('#filePreview').append(html);
                 };
-
                 reader.readAsDataURL(file);
             }
 
-            // Remove file function (global scope)
             window.removeFile = function(index) {
-                // Remove from array
                 selectedFiles.splice(index, 1);
-
-                // Remove preview
                 $(`.file-preview-col[data-file-index="${index}"]`).remove();
-
-                // Update remaining indices
                 $('.file-preview-col').each(function(i) {
-                    $(this).attr('data-file-index', i);
-                    $(this).find('.remove-file').attr('onclick', `removeFile(${i})`);
+                    $(this).attr('data-file-index', i).find('.remove-file').attr('onclick',
+                        `removeFile(${i})`);
                 });
-
                 updateFileCounter();
             };
 
-            // Form submission
+            /*===========================================
+             | FORM SUBMIT
+             ===========================================*/
             $('#maintenanceForm').on('submit', function(e) {
                 e.preventDefault();
-
                 const formData = new FormData(this);
-
-                // Remove existing file inputs and append selected files
                 formData.delete('attachments[]');
-                selectedFiles.forEach(file => {
-                    formData.append('attachments[]', file);
-                });
+                selectedFiles.forEach(f => formData.append('attachments[]', f));
 
-                const submitBtn = $('#submitBtn');
-                const originalBtnText = submitBtn.html();
-                submitBtn.prop('disabled', true).html(
-                    '<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
+                const btn = $('#submitBtn'),
+                    orig = btn.html();
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
 
                 $.ajax({
                     url: $(this).attr('action'),
@@ -493,23 +529,20 @@
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
+                    success: function(res) {
+                        if (res.success) {
+                            toastr.success(res.message);
                             setTimeout(() => {
-                                window.location.href = response.redirect;
+                                window.location.href = res.redirect;
                             }, 1000);
                         }
                     },
                     error: function(xhr) {
-                        submitBtn.prop('disabled', false).html(originalBtnText);
-
-                        if (xhr.responseJSON && xhr.responseJSON.errors) {
-                            $.each(xhr.responseJSON.errors, function(key, value) {
-                                toastr.error(value[0]);
-                            });
+                        btn.prop('disabled', false).html(orig);
+                        if (xhr.responseJSON?.errors) {
+                            $.each(xhr.responseJSON.errors, (k, v) => toastr.error(v[0]));
                         } else {
-                            toastr.error('Something went wrong. Please try again.');
+                            toastr.error('Something went wrong.');
                         }
                     }
                 });
@@ -527,7 +560,7 @@
             padding: 10px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all .3s;
             background: #fff;
             height: 100%;
         }
@@ -563,7 +596,7 @@
             padding: 40px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all .3s;
             background: #fafbfc;
         }
 
@@ -609,7 +642,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             text-align: center;
             padding: 20px;
         }
@@ -628,7 +660,7 @@
             position: absolute;
             top: 5px;
             right: 5px;
-            background: rgba(220, 53, 69, 0.9);
+            background: rgba(220, 53, 69, .9);
             color: white;
             border: none;
             border-radius: 50%;
@@ -644,6 +676,14 @@
 
         .remove-file:hover {
             background: #dc3545;
+        }
+
+        #leaseInfoBox .card {
+            border-left: 4px solid #0d6efd !important;
+        }
+
+        .text-sm {
+            font-size: .875rem;
         }
     </style>
 @endpush
