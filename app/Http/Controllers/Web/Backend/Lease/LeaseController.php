@@ -297,6 +297,7 @@ class LeaseController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'rent_amount' => 'required|numeric|min:0',
             'deposit_amount' => 'required|numeric|min:0',
+            'deposit_due_date' => 'required|date',
             'payment_frequency' => 'required|in:WEEKLY,BIWEEKLY,MONTHLY,BIMONTHLY,SEMIANNUAL,CUSTOM',
             // Single tenant per lease - one bed = one tenant
             'tenant_ids' => 'required|array|size:1',
@@ -384,12 +385,13 @@ class LeaseController extends Controller
 
             // Handle payment schedule and invoices based on payment frequency
             $depositCollected = $request->boolean('deposit_collected');
+            $depositDueDate = $request->deposit_due_date;
 
             if ($request->payment_frequency === 'CUSTOM') {
                 // Custom payment schedule
                 $this->generateCustomPaymentSchedule($lease, $request->custom_payments);
                 // Generate custom invoices for the tenant
-                $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected);
+                $this->generateCustomInvoices($lease, $tenantId, $request->custom_payments, $depositCollected, $depositDueDate);
             } elseif ($request->payment_frequency === 'WEEKLY') {
                 // Weekly payment schedule
                 if ($request->end_date) {
@@ -409,7 +411,7 @@ class LeaseController extends Controller
                 }
 
                 // Generate invoices for weekly payment
-                $this->generateWeeklyInvoices($lease, $tenantId, $request->weekly_due_day ?? 5, $request->first_invoice_date, $depositCollected);
+                $this->generateWeeklyInvoices($lease, $tenantId, $request->weekly_due_day ?? 5, $request->first_invoice_date, $depositCollected, $depositDueDate);
             } else {
                 // Standard payment schedule (MONTHLY, BIWEEKLY, etc.)
                 if ($request->end_date) {
@@ -427,7 +429,7 @@ class LeaseController extends Controller
                 }
 
                 // Generate standard invoices for the tenant
-                $this->generateInvoices($lease, $tenantId, $request->due_day ?? 1, $request->first_invoice_date, $depositCollected);
+                $this->generateInvoices($lease, $tenantId, $request->due_day ?? 1, $request->first_invoice_date, $depositCollected, $depositDueDate);
             }
 
             Log::info('Invoices generated for lease ID: ' . $lease->id);
@@ -607,7 +609,7 @@ class LeaseController extends Controller
     /**
      * Generate invoices for the lease
      */
-    private function generateInvoices(Lease $lease, int $tenantId, int $dueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false)
+    private function generateInvoices(Lease $lease, int $tenantId, int $dueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false, ?string $depositDueDate = null)
     {
         $startDate = new \DateTime($lease->start_date);
         $endDate = new \DateTime($lease->end_date);
@@ -644,6 +646,7 @@ class LeaseController extends Controller
 
             // If first invoice and deposit not collected, add deposit to first invoice
             if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                $depositInvoiceDueDate = $depositDueDate ?: $currentDate->format('Y-m-d');
 
                 Invoice::create([
                     'lease_id' => $lease->id,
@@ -652,7 +655,7 @@ class LeaseController extends Controller
                     'amount' => $lease->deposit_amount,
                     'total_amount' => $lease->deposit_amount,
                     'balance_due' => $lease->deposit_amount,
-                    'due_date' => $currentDate->format('Y-m-d'),
+                    'due_date' => $depositInvoiceDueDate,
                     'type' => 'DEPOSIT',
                     'status' => 'UNPAID',
                     'issue_date' => now(),
@@ -687,7 +690,7 @@ class LeaseController extends Controller
     /**
      * Generate weekly invoices for the lease
      */
-    private function generateWeeklyInvoices(Lease $lease, int $tenantId, int $weeklyDueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false)
+    private function generateWeeklyInvoices(Lease $lease, int $tenantId, int $weeklyDueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false, ?string $depositDueDate = null)
     {
         $startDate = new \DateTime($lease->start_date);
         $endDate = new \DateTime($lease->end_date);
@@ -716,6 +719,7 @@ class LeaseController extends Controller
 
             // If first invoice and deposit not collected, add deposit to first invoice
             if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                $depositInvoiceDueDate = $depositDueDate ?: $currentDate->format('Y-m-d');
                 Invoice::create([
                     'lease_id' => $lease->id,
                     'tenant_id' => $tenantId,
@@ -723,7 +727,7 @@ class LeaseController extends Controller
                     'amount' => $lease->deposit_amount,
                     'total_amount' => $lease->deposit_amount,
                     'balance_due' => $lease->deposit_amount,
-                    'due_date' => $currentDate->format('Y-m-d'),
+                    'due_date' => $depositInvoiceDueDate,
                     'type' => 'DEPOSIT',
                     'status' => 'UNPAID',
                     'issue_date' => now(),
@@ -773,7 +777,7 @@ class LeaseController extends Controller
     /**
      * Generate custom invoices for the lease
      */
-    private function generateCustomInvoices(Lease $lease, int $tenantId, array $customPayments, bool $depositCollected = false)
+    private function generateCustomInvoices(Lease $lease, int $tenantId, array $customPayments, bool $depositCollected = false, ?string $depositDueDate = null)
     {
         // Sort payments by due date
         usort($customPayments, function ($a, $b) {
@@ -792,6 +796,7 @@ class LeaseController extends Controller
 
             // If first invoice and deposit not collected, add deposit to first invoice
             if ($isFirstInvoice && !$depositCollected && $lease->deposit_amount > 0) {
+                $depositInvoiceDueDate = $depositDueDate ?: $payment['due_date'];
 
                 Invoice::create([
                     'lease_id' => $lease->id,
@@ -800,7 +805,7 @@ class LeaseController extends Controller
                     'amount' => $lease->deposit_amount,
                     'total_amount' => $lease->deposit_amount,
                     'balance_due' => $lease->deposit_amount,
-                    'due_date' => $payment['due_date'],
+                    'due_date' => $depositInvoiceDueDate,
                     'type' => 'DEPOSIT',
                     'status' => 'UNPAID',
                     'issue_date' => now(),
