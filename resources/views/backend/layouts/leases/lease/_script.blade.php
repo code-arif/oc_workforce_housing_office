@@ -1207,6 +1207,7 @@
             end_date: leaseData.lease_type === 'month_to_month' ? null : leaseData.end_date,
             rent_amount: parseFloat($('#rent_amount').val()) || 0,
             deposit_amount: parseFloat($('#deposit_amount').val()) || 0,
+            deposit_due_date: getISOFromPicker('#deposit_due_date') || null,
             payment_frequency: paymentFrequency,
             due_day: isCustomPayment || isWeeklyPayment ? null : (parseInt($('#due_day').val()) || 1),
             weekly_due_day: isWeeklyPayment ? (parseInt($('#weekly_due_day').val()) || 5) : null,
@@ -1236,6 +1237,7 @@
         if (data.lease_type === 'fixed' && !data.end_date) errors.push(
             'Please select an end date for fixed term lease');
         if (!data.rent_amount || data.rent_amount <= 0) errors.push('Please enter a valid rent amount');
+        if (!data.deposit_due_date) errors.push('Please select a deposit due date');
         if (data.tenant_ids.length === 0) errors.push('Please select a tenant for this lease');
         if (data.payment_frequency === 'CUSTOM' && (!data.custom_payments || data.custom_payments.length === 0)) {
             errors.push('Please add at least one custom payment date');

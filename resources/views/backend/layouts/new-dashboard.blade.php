@@ -1015,7 +1015,7 @@
                                         · {{ $lease->created_at->format('M d') }}
                                     </div>
                                 </div>
-                                <span class="pill pill-red">Unsigned</span>
+                                <span class="pill pill-red">{{ $lease->status === 'PENDING_TENANT_SIGN' ? 'Waiting for Tenant Sign' : 'Waiting for Landlord Sign' }}</span>
                             </div>
                         @empty
                             <div class="mt-empty"><i class="bi bi-file-earmark-check"></i>
