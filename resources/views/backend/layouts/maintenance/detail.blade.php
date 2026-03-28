@@ -61,12 +61,39 @@
                                                 <span class="badge badge-sm bg-danger ms-2">Urgent</span>
                                             @endif
                                         </div>
+
+                                        @php
+                                            $reqLease = $req->tenant?->activeLease;
+                                            $reqProperty = $req->property ?? $reqLease?->property;
+                                            $reqAssignment = $reqLease?->currentAssignment;
+                                            $reqBed = $reqAssignment?->bed;
+                                            $reqRoom = $reqBed?->room;
+                                            $reqUnit = $reqRoom?->unit;
+                                        @endphp
+
                                         <div class="maintenance-property">
-                                            {{ $req->property ? $req->property->name : 'N/A' }}
-                                            @if ($req->unit)
-                                                | {{ $req->unit }}
+                                            @if ($reqProperty)
+                                                <i class="fe fe-home me-1"
+                                                    style="font-size:11px;"></i>{{ $reqProperty->name }}
+                                            @else
+                                                <span class="text-muted">No Property</span>
                                             @endif
                                         </div>
+                                        <div class="maintenance-tenant">
+                                            @if ($reqUnit)
+                                                <span class="me-1">{{ $reqUnit->name }}</span>
+                                            @endif
+                                            @if ($reqRoom)
+                                                <span class="me-1">· Rm {{ $reqRoom->room_number }}</span>
+                                            @endif
+                                            @if ($reqBed)
+                                                <span>· {{ $reqBed->bed_label ?? 'Bed ' . $reqBed->bed_number }}</span>
+                                            @endif
+                                            @if (!$reqUnit && !$reqRoom && !$reqBed)
+                                                {{ $reqTenantName }}
+                                            @endif
+                                        </div>
+
                                         <div class="maintenance-tenant">{{ $reqTenantName }}</div>
                                         <div class="maintenance-date">
                                             {{ date('M d, Y', strtotime($req->created_at)) }}
@@ -133,13 +160,13 @@
 
                                         @if ($maintenance->is_urgent)
                                             <span class="badge bg-danger-transparent text-danger">
-                                                 Urgent
+                                                Urgent
                                             </span>
                                         @endif
 
                                         @if ($maintenance->grant_permission)
                                             <span class="badge bg-success-transparent text-success ms-2">
-                                                 Granted
+                                                Granted
                                             </span>
                                         @endif
                                     </div>
@@ -178,21 +205,147 @@
                                                 Requested on {{ date('M d, Y', strtotime($maintenance->created_at)) }}
                                             </span>
                                         </div>
+
+                                        @php
+                                            $activeLease = $maintenance->tenant?->activeLease;
+                                            $property = $maintenance->property ?? $activeLease?->property;
+                                            $assignment = $activeLease?->currentAssignment;
+                                            $bed = $assignment?->bed;
+                                            $room = $bed?->room;
+                                            $unit = $room?->unit;
+                                        @endphp
+
                                         <div class="mt-3">
-                                            <h5 class="text-primary mb-2">
-                                                {{ $maintenance->property ? $maintenance->property->name : 'N/A' }}</h5>
-                                            @if ($maintenance->unit)
-                                                <p class="text-muted mb-0">Unit: {{ $maintenance->unit }}</p>
+                                            {{-- Property --}}
+                                            <div class="d-flex align-items-start mb-3">
+                                                <div class="location-icon-wrap me-2 mt-1">
+                                                    <i class="fe fe-home text-primary" style="font-size:18px;"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold text-primary fs-6">
+                                                        {{ $property?->name ?? 'No Property' }}
+                                                    </div>
+                                                    @if ($property?->address)
+                                                        <small class="text-muted">
+                                                            <i class="fe fe-map-pin me-1"></i>{{ $property->address }}
+                                                        </small>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            {{-- Unit → Room → Bed Hierarchy --}}
+                                            @if ($unit || $room || $bed)
+                                                <div class="location-hierarchy">
+
+                                                    {{-- Unit --}}
+                                                    @if ($unit)
+                                                        <div class="hierarchy-step">
+                                                            <div class="hierarchy-icon-box bg-info-transparent">
+                                                                <i class="fe fe-layers text-info"></i>
+                                                            </div>
+                                                            <div class="hierarchy-text">
+                                                                <div class="hierarchy-label">Unit</div>
+                                                                <div class="hierarchy-value">{{ $unit->name }}</div>
+                                                            </div>
+                                                        </div>
+                                                        @if ($room)
+                                                            <div class="hierarchy-connector">
+                                                                <i class="fe fe-chevron-right text-muted"></i>
+                                                            </div>
+                                                        @endif
+                                                    @endif
+
+                                                    {{-- Room --}}
+                                                    @if ($room)
+                                                        <div class="hierarchy-step">
+                                                            <div class="hierarchy-icon-box bg-warning-transparent">
+                                                                <i class="fe fe-grid text-warning"></i>
+                                                            </div>
+                                                            <div class="hierarchy-text">
+                                                                <div class="hierarchy-label">Room</div>
+                                                                <div class="hierarchy-value">
+                                                                    {{ $room->name ?? 'Room ' . $room->room_number }}
+                                                                    <small
+                                                                        class="text-muted">#{{ $room->room_number }}</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        @if ($bed)
+                                                            <div class="hierarchy-connector">
+                                                                <i class="fe fe-chevron-right text-muted"></i>
+                                                            </div>
+                                                        @endif
+                                                    @endif
+
+                                                    {{-- Bed --}}
+                                                    @if ($bed)
+                                                        <div class="hierarchy-step">
+                                                            <div class="hierarchy-icon-box bg-success-transparent">
+                                                                <i class="fe fe-moon text-success"></i>
+                                                            </div>
+                                                            <div class="hierarchy-text">
+                                                                <div class="hierarchy-label">Bed</div>
+                                                                <div class="hierarchy-value">
+                                                                    {{ $bed->bed_label ?? 'Bed ' . $bed->bed_number }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+
+                                                </div>
+
+                                                {{-- Move-in date if available --}}
+                                                @if ($assignment?->actual_move_in)
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">
+                                                            <i class="fe fe-log-in me-1"></i>
+                                                            Move-in:
+                                                            {{ \Carbon\Carbon::parse($assignment->actual_move_in)->format('M d, Y') }}
+                                                        </small>
+                                                    </div>
+                                                @endif
                                             @endif
-                                            @if ($maintenance->property)
-                                                <small class="text-muted">
-                                                    {{ $maintenance->property->address }},
-                                                    {{ $maintenance->property->city }},
-                                                    {{ $maintenance->property->state }}
-                                                    {{ $maintenance->property->zip_code }}
-                                                </small>
+
+                                            {{-- Lease Status Badge --}}
+                                            @if ($activeLease)
+                                                @php
+                                                    $leaseColors = [
+                                                        'ACTIVE' => ['bg' => 'success', 'label' => 'Active Lease'],
+                                                        'PENDING_TENANT_SIGN' => [
+                                                            'bg' => 'warning',
+                                                            'label' => 'Pending Tenant Sign',
+                                                        ],
+                                                        'PENDING_ADMIN_SIGN' => [
+                                                            'bg' => 'info',
+                                                            'label' => 'Pending Admin Sign',
+                                                        ],
+                                                        'DRAFT' => ['bg' => 'secondary', 'label' => 'Draft'],
+                                                        'TERMINATED' => ['bg' => 'danger', 'label' => 'Terminated'],
+                                                        'COMPLETED' => ['bg' => 'primary', 'label' => 'Completed'],
+                                                    ];
+                                                    $lc = $leaseColors[$activeLease->status] ?? [
+                                                        'bg' => 'secondary',
+                                                        'label' => $activeLease->status,
+                                                    ];
+                                                @endphp
+                                                <div class="mt-2 d-flex align-items-center flex-wrap gap-2">
+                                                    <span class="badge bg-{{ $lc['bg'] }}">
+                                                        <i class="fe fe-file-text me-1"></i>{{ $lc['label'] }}
+                                                    </span>
+                                                    <small class="text-muted">
+                                                        <i class="fe fe-calendar me-1"></i>
+                                                        {{ \Carbon\Carbon::parse($activeLease->start_date)->format('M d, Y') }}
+                                                        –
+                                                        {{ \Carbon\Carbon::parse($activeLease->end_date)->format('M d, Y') }}
+                                                    </small>
+                                                    <small class="text-success fw-semibold">
+                                                        <i class="fe fe-dollar-sign me-1"></i>
+                                                        ${{ number_format($activeLease->rent_amount, 2) }}/mo
+                                                    </small>
+                                                </div>
                                             @endif
                                         </div>
+
                                     </div>
                                     <div class="col-md-6">
                                         @php
@@ -795,6 +948,61 @@
             .content-header {
                 padding: 15px 20px;
             }
+        }
+
+        /* Location Hierarchy */
+        .location-hierarchy {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px 16px;
+            border: 1px solid #e9ecef;
+        }
+
+        .hierarchy-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hierarchy-icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .hierarchy-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hierarchy-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #adb5bd;
+            line-height: 1;
+        }
+
+        .hierarchy-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            line-height: 1.3;
+        }
+
+        .hierarchy-connector {
+            color: #dee2e6;
+            font-size: 16px;
+            padding: 0 2px;
         }
     </style>
 @endpush

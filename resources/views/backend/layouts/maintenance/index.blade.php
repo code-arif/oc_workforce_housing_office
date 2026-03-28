@@ -171,6 +171,7 @@
                                         <th>Status</th>
                                         <th>Request</th>
                                         <th>Property/Unit</th>
+                                        <th>Lease</th>
                                         <th>Requested by</th>
                                         <th>Issue Date</th>
                                         <th>Actions</th>
@@ -217,6 +218,12 @@
                         data: 'property_unit',
                         name: 'property',
                         orderable: false
+                    },
+                    {
+                        data: 'lease_info',
+                        name: 'lease_info',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'tenant_name',

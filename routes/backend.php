@@ -193,10 +193,10 @@ Route::prefix('cms')->name('cms.')->group(function () {
 
     Route::prefix('home/housing-option')->name('housing.option.')->group(function () {
         // Accordion CRUD
-        Route::post('/accordion/store',[HomePageHousingOptionController::class, 'storeAccordion'])->name('accordion.store');
-        Route::post('/accordion/update/{id}',[HomePageHousingOptionController::class, 'updateAccordion'])->name('accordion.update');
-        Route::delete('/accordion/{id}',[HomePageHousingOptionController::class, 'destroyAccordion'])->name('accordion.destroy');
-        Route::post('/accordion/update-order',[HomePageHousingOptionController::class, 'updateOrder'])->name('accordion.updateOrder');
+        Route::post('/accordion/store', [HomePageHousingOptionController::class, 'storeAccordion'])->name('accordion.store');
+        Route::post('/accordion/update/{id}', [HomePageHousingOptionController::class, 'updateAccordion'])->name('accordion.update');
+        Route::delete('/accordion/{id}', [HomePageHousingOptionController::class, 'destroyAccordion'])->name('accordion.destroy');
+        Route::post('/accordion/update-order', [HomePageHousingOptionController::class, 'updateOrder'])->name('accordion.updateOrder');
     });
 
     // Video Section Routes
@@ -414,8 +414,10 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
     Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit'])->name('edit'); // done
     Route::post('/update/{maintananceId}', [MaintananceController::class, 'update'])->name('update'); // done
     Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy'])->name('delete'); //done
-    Route::get('/maintanance/{id}', [MaintananceController::class, 'show'])->name('show'); // done
+    Route::get('/details/{id}', [MaintananceController::class, 'show'])->name('show'); // done
     Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
+    Route::get('/tenant-lease-properties', [MaintananceController::class, 'getTenantLeaseProperties'])
+        ->name('tenant.lease.properties');
 });
 
 /*
