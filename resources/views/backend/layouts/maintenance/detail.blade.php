@@ -140,10 +140,7 @@
                         </div>
 
                         <div class="maintenance-detail-content">
-
-
                             <div class="maintenance-header">
-
                                 @php
                                     $statusColors = [
                                         'pending' => 'primary',
@@ -173,7 +170,7 @@
                                     $statusLabel = $statusLabels[$maintenance->status] ?? $maintenance->status;
                                     $categoryIcon = $categoryIcons[$maintenance->category] ?? 'fe-tool';
 
-                                    // ── Location data ──────────────────────────────────────────
+                                    // Location data
                                     // Priority 1: Direct FKs on maintenance_requests
                                     $property = $maintenance->property;
                                     $unit = $maintenance->unitModel;
@@ -215,16 +212,22 @@ $avatar =
 
                                 {{-- Top row: badges + actions --}}
                                 <div class="d-flex align-items-start justify-content-between flex-wrap mb-3">
+
                                     <div class="d-flex align-items-center flex-wrap gap-2">
-                                        <span class="badge bg-{{ $statusColor }} fs-6 maintenance-status-badge">
+                                        <span class="badge bg-{{ $statusColor }} badge-fixed">
                                             {{ $statusLabel }}
                                         </span>
+
                                         @if ($maintenance->is_urgent)
-                                            <span class="badge bg-danger-transparent text-danger">Urgent</span>
+                                            <span class="badge bg-danger-transparent text-danger badge-fixed">
+                                                Urgent
+                                            </span>
                                         @endif
+
                                         @if ($maintenance->grant_permission)
-                                            <span class="badge bg-success-transparent text-success">
-                                                <i class="fe fe-check me-1"></i>Permission Granted
+                                            <span class="badge bg-success-transparent text-success badge-fixed">
+                                                <i class="fe fe-check"></i>
+                                                Permission Granted
                                             </span>
                                         @endif
                                     </div>
@@ -232,9 +235,11 @@ $avatar =
                                     <div class="d-flex align-items-center gap-2">
                                         {{-- Quick status change --}}
                                         <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                            <button
+                                                class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
                                                 data-bs-toggle="dropdown">
-                                                <i class="fe fe-refresh-cw me-1"></i> Change Status
+                                                <i class="fe fe-refresh-cw"></i>
+                                                <span>Change Status</span>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 @foreach ([
@@ -262,12 +267,16 @@ $avatar =
                                         </div>
 
                                         @if ($maintenance->status !== 'completed')
-                                            <button class="btn btn-sm btn-success" onclick="markAsResolved()">
-                                                <i class="fe fe-check me-1"></i> Mark Resolved
+                                            <button class="btn btn-sm btn-success d-flex align-items-center gap-1"
+                                                onclick="markAsResolved()">
+                                                <i class="fe fe-check"></i>
+                                                <span>Mark Resolved</span>
                                             </button>
                                         @else
-                                            <button class="btn btn-sm btn-secondary" disabled>
-                                                <i class="fe fe-check me-1"></i> Resolved
+                                            <button class="btn btn-sm btn-secondary d-flex align-items-center gap-1"
+                                                disabled>
+                                                <i class="fe fe-check"></i>
+                                                <span>Resolved</span>
                                             </button>
                                         @endif
 
@@ -294,8 +303,8 @@ $avatar =
                                 </div>
 
                                 {{-- Title + date --}}
-                                <h3 class="mb-1">
-                                    <i class="fe {{ $categoryIcon }} me-2 text-primary"></i>
+                                <h3 class="mb-2">
+                                    <i class="fa-solid fa-house fs-5"></i>
                                     {{ $maintenance->title }}
                                 </h3>
                                 <div class="text-muted mb-4">
@@ -426,8 +435,10 @@ $avatar =
                                                 @endphp
                                                 <div
                                                     class="mt-3 pt-3 border-top d-flex flex-wrap align-items-center gap-2">
-                                                    <span class="badge bg-{{ $lc['bg'] }}">
-                                                        <i class="fe fe-file-text me-1"></i>{{ $lc['label'] }}
+                                                    <span
+                                                        class="badge p-2 bg-{{ $lc['bg'] }} d-inline-flex align-items-center gap-1">
+                                                        <i class="fe fe-file-text"></i>
+                                                        {{ $lc['label'] }}
                                                     </span>
                                                     <small class="text-muted">
                                                         <i class="fe fe-calendar me-1"></i>
@@ -519,8 +530,7 @@ $avatar =
                                                         onclick="viewImage('{{ asset('/' . $attachment->attachment_path) }}')">
                                                 @elseif ($isVideo)
                                                     <video controls class="w-100" style="max-height:200px;">
-                                                        <source
-                                                            src="{{ asset('/' . $attachment->attachment_path) }}">
+                                                        <source src="{{ asset('/' . $attachment->attachment_path) }}">
                                                     </video>
                                                 @else
                                                     <div class="file-preview">
@@ -1186,6 +1196,19 @@ $avatar =
             .content-header {
                 padding: 15px 20px;
             }
+        }
+
+        .badge-fixed {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            line-height: 1;
+            padding: 6px 10px;
+        }
+
+        .badge-fixed i {
+            font-size: 12px;
+            line-height: 1;
         }
     </style>
 @endpush
