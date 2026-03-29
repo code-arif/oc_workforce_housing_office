@@ -63,19 +63,58 @@
                                     </div>
 
                                     {{-- Row 2: Property (loaded via AJAX) + Unit --}}
-                                    <div class="row mb-3" id="propertyRow" style="display: none !important;">
-                                        <div class="col-md-6">
-                                            <label class="form-label">Property</label>
-                                            <select class="form-select" name="property_id" id="propertySelect">
-                                                <option value="">-- Select Tenant First --</option>
-                                            </select>
-                                            <div class="invalid-feedback" id="propertyError"></div>
+                                    <div id="locationSection" style="display: none;">
+
+                                        {{-- Property + Unit Row --}}
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">
+                                                    <i class="fe fe-home me-1 text-primary"></i>Property
+                                                </label>
+                                                <select class="form-select" name="property_id" id="propertySelect">
+                                                    <option value="">-- Select Tenant First --</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6" id="unitCol" style="display:none;">
+                                                <label class="form-label">
+                                                    <i class="fe fe-layers me-1 text-info"></i>Unit
+                                                </label>
+                                                <select class="form-select" name="unit_id" id="unitSelect">
+                                                    <option value="">-- Select Unit --</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Unit <span
-                                                    class="text-muted">(optional)</span></label>
-                                            <input type="text" class="form-control" name="unit" id="unitInput"
-                                                placeholder="e.g. Apt 201, Room 3B">
+
+                                        {{-- Room + Bed Row --}}
+                                        <div class="row mb-3">
+                                            <div class="col-md-6" id="roomCol" style="display:none;">
+                                                <label class="form-label">
+                                                    <i class="fe fe-grid me-1 text-warning"></i>Room
+                                                </label>
+                                                <select class="form-select" name="room_id" id="roomSelect">
+                                                    <option value="">-- Select Room --</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6" id="bedCol" style="display:none;">
+                                                <label class="form-label">
+                                                    <i class="fe fe-moon me-1 text-success"></i>Bed
+                                                </label>
+                                                <select class="form-select" name="bed_id" id="bedSelect">
+                                                    <option value="">-- Select Bed --</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {{-- Lease Info Card --}}
+                                        <div class="mb-4" id="leaseInfoBox" style="display: none;"></div>
+
+                                        {{-- No Lease Warning --}}
+                                        <div class="mb-4" id="noLeaseBox" style="display: none;">
+                                            <div class="alert alert-warning d-flex align-items-center mb-0">
+                                                <i class="fe fe-alert-triangle me-2"></i>
+                                                <span>This tenant has no active lease. Request will be saved without
+                                                    property info.</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -221,115 +260,233 @@
     <script>
         $(document).ready(function() {
 
-            /*===========================================
-             | TENANT → LEASE PROPERTIES AJAX LOADER
-             ===========================================*/
+            const ROUTES = {
+                leaseProperties: '{{ route('maintanance.tenant.lease.properties') }}',
+                propertyUnits: '{{ route('maintanance.property.units') }}',
+                unitRooms: '{{ route('maintanance.unit.rooms') }}',
+                roomBeds: '{{ route('maintanance.room.beds') }}',
+            };
+
+            /*==============================================
+             | STEP 1 — Tenant select → load lease data
+             ==============================================*/
             $('#tenantSelect').on('change', function() {
                 const tenantId = $(this).val();
 
-                // Reset UI
-                $('#propertySelect').html('<option value="">Loading...</option>').prop('disabled', true);
+                // UI reset
+                resetFrom('property');
+                $('#locationSection').hide();
                 $('#leaseInfoBox').hide().html('');
                 $('#noLeaseBox').hide();
-                $('#propertyRow').hide();
 
                 if (!tenantId) return;
 
-                $.ajax({
-                    url: '{{ route('maintanance.tenant.lease.properties') }}',
-                    type: 'GET',
-                    data: {
+                $('#locationSection').show();
+                $('#propertySelect')
+                    .html('<option value="">Loading...</option>')
+                    .prop('disabled', true);
+
+                $.get(ROUTES.leaseProperties, {
                         tenant_id: tenantId
-                    },
-                    success: function(res) {
-                        $('#propertyRow').show();
-                        $('#propertySelect').html(
-                            '<option value="">-- Select Property --</option>');
+                    })
+                    .done(function(res) {
+                        $('#propertySelect').html('<option value="">-- Select Property --</option>');
 
                         if (res.success && res.leases.length > 0) {
                             res.leases.forEach(function(lease) {
                                 $('#propertySelect').append(
-                                    `<option value="${lease.property_id}" data-lease='${JSON.stringify(lease)}'>
-                    ${lease.property_name}${lease.address ? ' — ' + lease.address : ''} (${lease.status})
-                </option>`
+                                    `<option value="${lease.property_id}"
+                                data-lease='${JSON.stringify(lease)}'>
+                                ${lease.property_name}
+                                ${lease.address ? '· ' + lease.address : ''}
+                            </option>`
                                 );
                             });
-
                             $('#propertySelect').prop('disabled', false);
 
-                            const activeLease = res.leases.find(l => l.status === 'ACTIVE') ||
-                                res.leases[0];
-                            if (activeLease) {
-                                $('#propertySelect').val(activeLease.property_id).trigger(
-                                    'change');
+                            // Auto-select: ACTIVE lease first, otherwise first one
+                            const best = res.leases.find(l => l.status === 'ACTIVE') || res.leases[0];
+                            if (best) {
+                                $('#propertySelect').val(best.property_id).trigger('change');
                             }
-
                         } else {
-                            $('#propertySelect').html(
-                                '<option value="">No lease found</option>').prop('disabled',
-                                true);
+                            $('#propertySelect')
+                                .html('<option value="">No leased property found</option>')
+                                .prop('disabled', true);
                             $('#noLeaseBox').show();
                         }
-                    },
-                    error: function() {
-                        $('#propertyRow').show();
-                        $('#propertySelect').html(
-                            '<option value="">Error loading properties</option>').prop(
-                            'disabled', false);
-                        toastr.error('Failed to load tenant lease properties');
-                    }
-                });
+                    })
+                    .fail(function() {
+                        toastr.error('Failed to load lease properties');
+                        $('#propertySelect').prop('disabled', false);
+                    });
             });
 
-            // Show lease info card when property is selected
+            /*==============================================
+             | STEP 2 — Property select → load units
+             ==============================================*/
             $('#propertySelect').on('change', function() {
+                const propertyId = $(this).val();
                 const leaseData = $(this).find(':selected').data('lease');
+
+                // Reset downstream
+                resetFrom('unit');
                 $('#leaseInfoBox').hide().html('');
 
-                if (!leaseData) return;
+                if (!propertyId) return;
 
-                const statusColor = getStatusColor(leaseData.status);
-                const startDate = formatDate(leaseData.start_date);
-                const endDate = formatDate(leaseData.end_date);
+                // Show lease info card
+                if (leaseData) renderLeaseInfoCard(leaseData);
 
-                $('#leaseInfoBox').html(`
-            <div class="card border-0 bg-light mb-0">
-                <div class="card-body py-3">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fe fe-home text-primary me-2"></i>
-                        <strong class="me-2">Lease Details</strong>
-                        <span class="badge bg-${statusColor}">${leaseData.status}</span>
-                    </div>
-                    <div class="row g-2 text-sm">
-                        <div class="col-md-3">
-                            <small class="text-muted d-block">Property</small>
-                            <span class="fw-semibold">${leaseData.property_name}</span>
-                        </div>
-                        <div class="col-md-3">
-                            <small class="text-muted d-block">Address</small>
-                            <span>${leaseData.address || 'N/A'}</span>
-                        </div>
-                        <div class="col-md-2">
-                            <small class="text-muted d-block">Start Date</small>
-                            <span>${startDate}</span>
-                        </div>
-                        <div class="col-md-2">
-                            <small class="text-muted d-block">End Date</small>
-                            <span>${endDate}</span>
-                        </div>
-                        <div class="col-md-2">
-                            <small class="text-muted d-block">Rent</small>
-                            <span class="fw-semibold text-success">$${parseFloat(leaseData.rent_amount).toFixed(2)}/mo</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).show();
+                $('#unitCol').show();
+                $('#unitSelect')
+                    .html('<option value="">Loading units...</option>')
+                    .prop('disabled', true);
+
+                $.get(ROUTES.propertyUnits, {
+                        property_id: propertyId
+                    })
+                    .done(function(res) {
+                        $('#unitSelect').html('<option value="">-- Select Unit --</option>');
+
+                        if (res.units && res.units.length > 0) {
+                            res.units.forEach(u => {
+                                $('#unitSelect').append(
+                                    `<option value="${u.id}">${u.name}</option>`
+                                );
+                            });
+                            $('#unitSelect').prop('disabled', false);
+
+                            // Auto-select from lease data
+                            if (leaseData?.unit_id) {
+                                $('#unitSelect').val(leaseData.unit_id).trigger('change');
+                            }
+                        } else {
+                            $('#unitSelect')
+                                .html('<option value="">No units found</option>')
+                                .prop('disabled', true);
+                        }
+                    })
+                    .fail(() => toastr.error('Failed to load units'));
             });
 
-            // Helper: badge color based on lease status
-            function getStatusColor(status) {
-                const map = {
+            /*==============================================
+             | STEP 3 — Unit select → load rooms
+             ==============================================*/
+            $('#unitSelect').on('change', function() {
+                const unitId = $(this).val();
+                const leaseData = $('#propertySelect').find(':selected').data('lease');
+
+                resetFrom('room');
+
+                if (!unitId) return;
+
+                $('#roomCol').show();
+                $('#roomSelect')
+                    .html('<option value="">Loading rooms...</option>')
+                    .prop('disabled', true);
+
+                $.get(ROUTES.unitRooms, {
+                        unit_id: unitId
+                    })
+                    .done(function(res) {
+                        $('#roomSelect').html('<option value="">-- Select Room --</option>');
+
+                        if (res.rooms && res.rooms.length > 0) {
+                            res.rooms.forEach(r => {
+                                $('#roomSelect').append(
+                                    `<option value="${r.id}">${r.name}</option>`
+                                );
+                            });
+                            $('#roomSelect').prop('disabled', false);
+
+                            // Auto-select from lease data
+                            if (leaseData?.room_id) {
+                                $('#roomSelect').val(leaseData.room_id).trigger('change');
+                            }
+                        } else {
+                            $('#roomSelect')
+                                .html('<option value="">No rooms found</option>')
+                                .prop('disabled', true);
+                        }
+                    })
+                    .fail(() => toastr.error('Failed to load rooms'));
+            });
+
+            /*==============================================
+             | STEP 4 — Room select → load beds
+             ==============================================*/
+            $('#roomSelect').on('change', function() {
+                const roomId = $(this).val();
+                const leaseData = $('#propertySelect').find(':selected').data('lease');
+
+                resetFrom('bed');
+
+                if (!roomId) return;
+
+                $('#bedCol').show();
+                $('#bedSelect')
+                    .html('<option value="">Loading beds...</option>')
+                    .prop('disabled', true);
+
+                $.get(ROUTES.roomBeds, {
+                        room_id: roomId
+                    })
+                    .done(function(res) {
+                        $('#bedSelect').html('<option value="">-- Select Bed --</option>');
+
+                        if (res.beds && res.beds.length > 0) {
+                            res.beds.forEach(b => {
+                                const occupiedText = b.is_occupied ? ' (Occupied)' : '';
+                                const rentText = b.base_rent > 0 ?
+                                    ` · $${parseFloat(b.base_rent).toFixed(2)}` : '';
+                                $('#bedSelect').append(
+                                    `<option value="${b.id}"
+                                ${b.is_occupied ? 'class="text-muted"' : ''}>
+                                ${b.label}${rentText}${occupiedText}
+                            </option>`
+                                );
+                            });
+                            $('#bedSelect').prop('disabled', false);
+
+                            // Auto-select from lease data
+                            if (leaseData?.bed_id) {
+                                $('#bedSelect').val(leaseData.bed_id);
+                            }
+                        } else {
+                            $('#bedSelect')
+                                .html('<option value="">No beds found</option>')
+                                .prop('disabled', true);
+                        }
+                    })
+                    .fail(() => toastr.error('Failed to load beds'));
+            });
+
+            /*==============================================
+             | HELPERS
+             ==============================================*/
+
+            // downstream reset করে
+            function resetFrom(level) {
+                const levels = ['unit', 'room', 'bed'];
+                const start = levels.indexOf(level);
+                if (start === -1) return;
+
+                levels.slice(start).forEach(function(l) {
+                    $(`#${l}Col`).hide();
+                    $(`#${l}Select`)
+                        .html(`<option value="">-- Select ${capitalize(l)} --</option>`)
+                        .prop('disabled', false);
+                });
+            }
+
+            function capitalize(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            // Lease info card render
+            function renderLeaseInfoCard(lease) {
+                const statusColors = {
                     'ACTIVE': 'success',
                     'PENDING_TENANT_SIGN': 'warning',
                     'PENDING_ADMIN_SIGN': 'info',
@@ -337,23 +494,72 @@
                     'TERMINATED': 'danger',
                     'COMPLETED': 'primary',
                 };
-                return map[status] || 'secondary';
+                const color = statusColors[lease.status] || 'secondary';
+                const parts = [];
+
+                if (lease.unit_name) parts.push(
+                    `<span class="hier-chip chip-unit"><i class="fe fe-layers me-1"></i>${lease.unit_name}</span>`
+                );
+                if (lease.room_name) parts.push(
+                    `<span class="hier-chip chip-room"><i class="fe fe-grid me-1"></i>${lease.room_name}</span>`
+                );
+                if (lease.bed_label || lease.bed_number) {
+                    const bedText = lease.bed_label ?? ('Bed ' + lease.bed_number);
+                    parts.push(`<span class="hier-chip chip-bed"><i class="fe fe-moon me-1"></i>${bedText}</span>`);
+                }
+
+                $('#leaseInfoBox').html(`
+            <div class="lease-info-card">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fe fe-file-text text-primary fs-5"></i>
+                        <strong>Lease Details</strong>
+                    </div>
+                    <span class="badge bg-${color}">${lease.status.replace(/_/g, ' ')}</span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-4">
+                        <div class="lease-info-item">
+                            <small class="text-muted d-block"><i class="fe fe-home me-1"></i>Property</small>
+                            <span class="fw-semibold">${lease.property_name}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="lease-info-item">
+                            <small class="text-muted d-block"><i class="fe fe-calendar me-1"></i>Period</small>
+                            <span>${formatDate(lease.start_date)} – ${formatDate(lease.end_date)}</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="lease-info-item">
+                            <small class="text-muted d-block"><i class="fe fe-dollar-sign me-1"></i>Rent</small>
+                            <span class="fw-semibold text-success">$${parseFloat(lease.rent_amount).toFixed(2)}/mo</span>
+                        </div>
+                    </div>
+                </div>
+
+                ${parts.length > 0 ? `
+                        <div class="hierarchy-chips">
+                            <small class="text-muted me-2">Assignment:</small>
+                            ${parts.join('<i class="fe fe-chevron-right text-muted mx-1"></i>')}
+                        </div>` : ''}
+            </div>
+        `).show();
             }
 
-            // Helper: format date string
             function formatDate(dateStr) {
                 if (!dateStr) return 'N/A';
-                const d = new Date(dateStr);
-                return d.toLocaleDateString('en-US', {
+                return new Date(dateStr).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric'
                 });
             }
 
-            /*===========================================
-             | FILE UPLOAD HANDLER
-             ===========================================*/
+            /*==============================================
+             | FILE UPLOAD (unchanged)
+             ==============================================*/
             let selectedFiles = [];
             const maxFiles = 20;
 
@@ -361,30 +567,26 @@
                 $('.upload-area').prev('label').find('span').text(`(${selectedFiles.length}/${maxFiles})`);
             }
 
-            $('#uploadArea').on('click', function(e) {
+            $('#uploadArea').on('click', e => {
                 e.preventDefault();
                 $('#fileInput').click();
             });
-
             $('#uploadArea').on('dragover dragenter', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).addClass('drag-over');
             });
-
             $('#uploadArea').on('dragleave dragend', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
             });
-
             $('#uploadArea').on('drop', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
                 handleFiles(e.originalEvent.dataTransfer.files);
             });
-
             $('#fileInput').on('change', function() {
                 handleFiles(this.files);
                 $(this).val('');
@@ -393,11 +595,11 @@
             function handleFiles(files) {
                 Array.from(files).forEach(file => {
                     if (selectedFiles.length >= maxFiles) {
-                        toastr.error(`Maximum ${maxFiles} files allowed`);
+                        toastr.error(`Max ${maxFiles} files`);
                         return;
                     }
                     if (file.size > 20 * 1024 * 1024) {
-                        toastr.error(`"${file.name}" exceeds 20MB limit`);
+                        toastr.error(`"${file.name}" exceeds 20MB`);
                         return;
                     }
                     selectedFiles.push(file);
@@ -408,49 +610,29 @@
 
             function displayFilePreview(file) {
                 const reader = new FileReader();
-                const fileIndex = selectedFiles.length - 1;
-
+                const idx = selectedFiles.length - 1;
                 reader.onload = function(e) {
-                    const fileType = file.type.split('/')[0];
-                    const extension = file.name.split('.').pop().toUpperCase();
-                    let html = '';
-
-                    if (fileType === 'image') {
-                        html = `<div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                            <div class="file-preview-item">
-                                <img src="${e.target.result}" alt="${file.name}">
-                                <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                    <i class="fe fe-x"></i>
-                                </button>
-                            </div>
-                        </div>`;
-                    } else if (fileType === 'video') {
-                        html = `<div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                            <div class="file-preview-item">
-                                <video style="width:100%;height:100%;object-fit:cover;">
-                                    <source src="${e.target.result}">
-                                </video>
-                                <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                    <i class="fe fe-x"></i>
-                                </button>
-                            </div>
-                        </div>`;
+                    const type = file.type.split('/')[0];
+                    const ext = file.name.split('.').pop().toUpperCase();
+                    let html;
+                    if (type === 'image') {
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${idx}">
+                            <div class="file-preview-item"><img src="${e.target.result}" alt="">
+                            <button type="button" class="remove-file" onclick="removeFile(${idx})"><i class="fe fe-x"></i></button>
+                            </div></div>`;
+                    } else if (type === 'video') {
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${idx}">
+                            <div class="file-preview-item"><video style="width:100%;height:100%;object-fit:cover;"><source src="${e.target.result}"></video>
+                            <button type="button" class="remove-file" onclick="removeFile(${idx})"><i class="fe fe-x"></i></button>
+                            </div></div>`;
                     } else {
-                        html = `<div class="col-md-3 file-preview-col" data-file-index="${fileIndex}">
-                            <div class="file-preview-item">
-                                <div class="file-icon">
-                                    <i class="fe fe-file"></i>
-                                    <small class="mt-2">${extension}</small>
-                                </div>
-                                <button type="button" class="remove-file" onclick="removeFile(${fileIndex})">
-                                    <i class="fe fe-x"></i>
-                                </button>
-                            </div>
-                        </div>`;
+                        html = `<div class="col-md-3 file-preview-col" data-file-index="${idx}">
+                            <div class="file-preview-item"><div class="file-icon"><i class="fe fe-file"></i><small class="mt-2">${ext}</small></div>
+                            <button type="button" class="remove-file" onclick="removeFile(${idx})"><i class="fe fe-x"></i></button>
+                            </div></div>`;
                     }
                     $('#filePreview').append(html);
                 };
-
                 reader.readAsDataURL(file);
             }
 
@@ -458,26 +640,24 @@
                 selectedFiles.splice(index, 1);
                 $(`.file-preview-col[data-file-index="${index}"]`).remove();
                 $('.file-preview-col').each(function(i) {
-                    $(this).attr('data-file-index', i);
-                    $(this).find('.remove-file').attr('onclick', `removeFile(${i})`);
+                    $(this).attr('data-file-index', i).find('.remove-file').attr('onclick',
+                        `removeFile(${i})`);
                 });
                 updateFileCounter();
             };
 
-            /*===========================================
+            /*==============================================
              | FORM SUBMIT
-             ===========================================*/
+             ==============================================*/
             $('#maintenanceForm').on('submit', function(e) {
                 e.preventDefault();
-
                 const formData = new FormData(this);
                 formData.delete('attachments[]');
-                selectedFiles.forEach(file => formData.append('attachments[]', file));
+                selectedFiles.forEach(f => formData.append('attachments[]', f));
 
-                const submitBtn = $('#submitBtn');
-                const originalBtnText = submitBtn.html();
-                submitBtn.prop('disabled', true).html(
-                    '<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
+                const btn = $('#submitBtn'),
+                    orig = btn.html();
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin me-1"></i> Processing...');
 
                 $.ajax({
                     url: $(this).attr('action'),
@@ -485,22 +665,17 @@
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            setTimeout(() => {
-                                window.location.href = response.redirect;
-                            }, 1000);
+                    success: function(res) {
+                        if (res.success) {
+                            toastr.success(res.message);
+                            setTimeout(() => window.location.href = res.redirect, 1000);
                         }
                     },
                     error: function(xhr) {
-                        submitBtn.prop('disabled', false).html(originalBtnText);
-                        if (xhr.responseJSON?.errors) {
-                            $.each(xhr.responseJSON.errors, (key, value) => toastr.error(value[
-                                0]));
-                        } else {
-                            toastr.error('Something went wrong. Please try again.');
-                        }
+                        btn.prop('disabled', false).html(orig);
+                        if (xhr.responseJSON?.errors) $.each(xhr.responseJSON.errors, (k, v) =>
+                            toastr.error(v[0]));
+                        else toastr.error('Something went wrong.');
                     }
                 });
             });
@@ -645,6 +820,56 @@
 
         .text-sm {
             font-size: 0.875rem;
+        }
+
+        /* Lease Info Card */
+        .lease-info-card {
+            background: #f8f9fc;
+            border: 1px solid #e3e8f0;
+            border-left: 4px solid #0d6efd;
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+
+        .lease-info-item {
+            background: #fff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            border: 1px solid #e9ecef;
+            height: 100%;
+        }
+
+        /* Hierarchy chips */
+        .hierarchy-chips {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .hier-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .chip-unit {
+            background: #e3f6fc;
+            color: #0891b2;
+        }
+
+        .chip-room {
+            background: #fef9e7;
+            color: #d97706;
+        }
+
+        .chip-bed {
+            background: #f0fdf4;
+            color: #16a34a;
         }
     </style>
 @endpush

@@ -7,10 +7,8 @@
         <div class="side-app">
             <div class="main-container container-fluid p-0">
 
-                <!-- Maintenance Detail Container -->
                 <div class="maintenance-detail-container">
 
-                    <!-- Left Sidebar - Request List -->
                     <div class="maintenance-sidebar">
                         <div class="sidebar-header">
                             <div class="d-flex justify-content-between align-items-center">
@@ -28,7 +26,7 @@
                         <div class="maintenance-list">
                             @foreach ($maintenanceRequests as $req)
                                 @php
-                                    $reqProfile = $req->tenant ? $req->tenant->profile : null;
+                                    $reqProfile = $req->tenant?->profile;
                                     $reqTenantName = $reqProfile
                                         ? trim(
                                             $reqProfile->first_name .
@@ -46,55 +44,78 @@
                                         'rejected' => 'danger',
                                         'cancelled' => 'secondary',
                                     ];
+                                    $reqStatusColor = $statusColors[$req->status] ?? 'secondary';
 
-                                    $statusColor = $statusColors[$req->status] ?? 'secondary';
-                                    $statusLabel = ucwords(str_replace('_', ' ', $req->status));
+                                    // Priority 1: Direct FK on maintenance_request
+                                    $reqProperty = $req->property;
+                                    $reqUnit = $req->unitModel;
+                                    $reqRoom = $req->room;
+                                    $reqBed = $req->bed;
+
+                                    // Priority 2: Fallback to lease assignment
+                                    if (!$reqProperty) {
+                                        $reqLease = $req->tenant?->activeLease;
+                                        $reqProperty = $reqLease?->property;
+                                        $reqAssignment = $reqLease?->currentAssignment;
+                                        $reqBed = $reqBed ?? $reqAssignment?->bed;
+                                        $reqRoom = $reqRoom ?? $reqBed?->room;
+                                        $reqUnit = $reqUnit ?? $reqRoom?->unit;
+                                    }
                                 @endphp
+
                                 <div class="maintenance-item {{ $req->id == $maintenance->id ? 'active' : '' }}"
                                     data-maintenance-id="{{ $req->id }}"
                                     onclick="loadMaintenanceDetails({{ $req->id }})">
-                                    <div class="maintenance-status-indicator bg-{{ $statusColor }}"></div>
+
+                                    <div class="maintenance-status-indicator bg-{{ $reqStatusColor }}"></div>
+
                                     <div class="maintenance-info">
+                                        {{-- Title --}}
                                         <div class="maintenance-title">
                                             <strong>{{ $req->title }}</strong>
                                             @if ($req->is_urgent)
-                                                <span class="badge badge-sm bg-danger ms-2">Urgent</span>
+                                                <span class="badge badge-sm bg-danger ms-1">Urgent</span>
                                             @endif
                                         </div>
 
-                                        @php
-                                            $reqLease = $req->tenant?->activeLease;
-                                            $reqProperty = $req->property ?? $reqLease?->property;
-                                            $reqAssignment = $reqLease?->currentAssignment;
-                                            $reqBed = $reqAssignment?->bed;
-                                            $reqRoom = $reqBed?->room;
-                                            $reqUnit = $reqRoom?->unit;
-                                        @endphp
-
+                                        {{-- Property --}}
                                         <div class="maintenance-property">
                                             @if ($reqProperty)
-                                                <i class="fe fe-home me-1"
-                                                    style="font-size:11px;"></i>{{ $reqProperty->name }}
+                                                <i class="fe fe-home me-1" style="font-size:11px;"></i>
+                                                {{ $reqProperty->name }}
                                             @else
                                                 <span class="text-muted">No Property</span>
                                             @endif
                                         </div>
+
+                                        {{-- Unit · Room · Bed --}}
                                         <div class="maintenance-tenant">
-                                            @if ($reqUnit)
-                                                <span class="me-1">{{ $reqUnit->name }}</span>
-                                            @endif
-                                            @if ($reqRoom)
-                                                <span class="me-1">· Rm {{ $reqRoom->room_number }}</span>
-                                            @endif
-                                            @if ($reqBed)
-                                                <span>· {{ $reqBed->bed_label ?? 'Bed ' . $reqBed->bed_number }}</span>
-                                            @endif
-                                            @if (!$reqUnit && !$reqRoom && !$reqBed)
+                                            @if ($reqUnit || $reqRoom || $reqBed)
+                                                @if ($reqUnit)
+                                                    <span>{{ $reqUnit->name }}</span>
+                                                @endif
+                                                @if ($reqRoom)
+                                                    <span class="{{ $reqUnit ? 'ms-1' : '' }}">
+                                                        {{ $reqUnit ? '·' : '' }} Rm {{ $reqRoom->room_number }}
+                                                    </span>
+                                                @endif
+                                                @if ($reqBed)
+                                                    <span class="ms-1">
+                                                        · {{ $reqBed->bed_label ?? 'Bed ' . $reqBed->bed_number }}
+                                                    </span>
+                                                @endif
+                                            @else
                                                 {{ $reqTenantName }}
                                             @endif
                                         </div>
 
-                                        <div class="maintenance-tenant">{{ $reqTenantName }}</div>
+                                        {{-- Tenant name always --}}
+                                        <div class="maintenance-tenant text-muted">
+                                            <i class="fe fe-user me-1" style="font-size:10px;"></i>
+                                            {{ $reqTenantName }}
+                                        </div>
+
+                                        {{-- Date --}}
                                         <div class="maintenance-date">
                                             {{ date('M d, Y', strtotime($req->created_at)) }}
                                         </div>
@@ -104,7 +125,7 @@
                         </div>
                     </div>
 
-                    <!-- Right Content - Maintenance Details -->
+
                     <div class="maintenance-content">
                         <div class="content-header">
                             <button class="btn btn-light mobile-sidebar-toggle d-lg-none" onclick="toggleSidebar()">
@@ -118,112 +139,198 @@
                             </div>
                         </div>
 
-                        <div class="maintenance-detail-content" id="maintenanceDetailContent">
-                            <!-- Maintenance Header -->
+                        <div class="maintenance-detail-content">
                             <div class="maintenance-header">
-                                <div class="d-flex align-items-start justify-content-between flex-wrap">
-                                    <div class="d-flex align-items-center mb-3">
-                                        @php
-                                            $statusColors = [
-                                                'pending' => 'primary',
-                                                'in_progress' => 'warning',
-                                                'completed' => 'success',
-                                                'rejected' => 'danger',
-                                                'cancelled' => 'secondary',
-                                            ];
+                                @php
+                                    $statusColors = [
+                                        'pending' => 'primary',
+                                        'in_progress' => 'warning',
+                                        'completed' => 'success',
+                                        'rejected' => 'danger',
+                                        'cancelled' => 'secondary',
+                                    ];
+                                    $statusLabels = [
+                                        'pending' => 'Open',
+                                        'in_progress' => 'In Progress',
+                                        'completed' => 'Resolved',
+                                        'rejected' => 'Rejected',
+                                        'cancelled' => 'Cancelled',
+                                    ];
+                                    $categoryIcons = [
+                                        'ac' => 'fe-wind',
+                                        'appliance' => 'fe-box',
+                                        'electrical' => 'fe-zap',
+                                        'heat' => 'fe-thermometer',
+                                        'kitchen' => 'fe-coffee',
+                                        'plumbing' => 'fe-droplet',
+                                        'other' => 'fe-more-horizontal',
+                                    ];
 
-                                            $statusLabels = [
-                                                'pending' => 'Open',
-                                                'in_progress' => 'In Progress',
-                                                'completed' => 'Resolved',
-                                                'rejected' => 'Rejected',
-                                                'cancelled' => 'Cancelled',
-                                            ];
+                                    $statusColor = $statusColors[$maintenance->status] ?? 'secondary';
+                                    $statusLabel = $statusLabels[$maintenance->status] ?? $maintenance->status;
+                                    $categoryIcon = $categoryIcons[$maintenance->category] ?? 'fe-tool';
 
-                                            $statusColor = $statusColors[$maintenance->status] ?? 'secondary';
-                                            $statusLabel = $statusLabels[$maintenance->status] ?? $maintenance->status;
+                                    // Location data
+                                    // Priority 1: Direct FKs on maintenance_requests
+                                    $property = $maintenance->property;
+                                    $unit = $maintenance->unitModel;
+                                    $room = $maintenance->room;
+                                    $bed = $maintenance->bed;
 
-                                            $categoryIcons = [
-                                                'ac' => 'fe-wind',
-                                                'appliance' => 'fe-box',
-                                                'electrical' => 'fe-zap',
-                                                'heat' => 'fe-thermometer',
-                                                'kitchen' => 'fe-coffee',
-                                                'plumbing' => 'fe-droplet',
-                                                'other' => 'fe-more-horizontal',
-                                            ];
+                                    // Priority 2: Tenant's active lease assignment (fallback)
+$activeLease = $maintenance->tenant?->activeLease;
+if (!$property) {
+    $property = $activeLease?->property;
+}
+if (!$unit || !$room || !$bed) {
+    $assignment = $activeLease?->currentAssignment;
+    $leaseBed = $assignment?->bed;
+    $leaseRoom = $leaseBed?->room;
+    $leaseUnit = $leaseRoom?->unit;
+    $bed = $bed ?? $leaseBed;
+    $room = $room ?? $leaseRoom;
+    $unit = $unit ?? $leaseUnit;
+}
 
-                                            $categoryIcon = $categoryIcons[$maintenance->category] ?? 'fe-tool';
-                                        @endphp
-                                        <span
-                                            class="badge bg-{{ $statusColor }} me-3 fs-6 maintenance-status-badge">{{ $statusLabel }}</span>
+$profile = $maintenance->tenant?->profile;
+$fullName = $profile
+    ? trim(
+        $profile->first_name .
+            ' ' .
+            ($profile->middle_name ?? '') .
+            ' ' .
+            ($profile->last_name ?? ''),
+    )
+    : 'No Tenant';
+$avatar =
+    $profile && $profile->avatar
+        ? asset($profile->avatar)
+        : 'https://ui-avatars.com/api/?name=' .
+            urlencode($fullName) .
+            '&background=random';
+                                @endphp
+
+                                {{-- Top row: badges + actions --}}
+                                <div class="d-flex align-items-start justify-content-between flex-wrap mb-3">
+
+                                    <div class="d-flex align-items-center flex-wrap gap-2">
+                                        <span class="badge bg-{{ $statusColor }} badge-fixed">
+                                            {{ $statusLabel }}
+                                        </span>
 
                                         @if ($maintenance->is_urgent)
-                                            <span class="badge bg-danger-transparent text-danger">
+                                            <span class="badge bg-danger-transparent text-danger badge-fixed">
                                                 Urgent
                                             </span>
                                         @endif
 
                                         @if ($maintenance->grant_permission)
-                                            <span class="badge bg-success-transparent text-success ms-2">
-                                                Granted
+                                            <span class="badge bg-success-transparent text-success badge-fixed">
+                                                <i class="fe fe-check"></i>
+                                                Permission Granted
                                             </span>
                                         @endif
                                     </div>
-                                    <div class="text-end mb-3">
-                                        <button class="btn btn-sm btn-success me-2" onclick="markAsResolved()">
-                                            <i class="fe fe-check me-1" style="font-size:8px"></i> Mark as Resolved
-                                        </button>
 
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm" data-bs-toggle="dropdown">
+                                    <div class="d-flex align-items-center gap-2">
+                                        {{-- Quick status change --}}
+                                        <div class="dropdown">
+                                            <button
+                                                class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
+                                                data-bs-toggle="dropdown">
+                                                <i class="fe fe-refresh-cw"></i>
+                                                <span>Change Status</span>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                @foreach ([
+            'pending' => ['Open', 'primary'],
+            'in_progress' => ['In Progress', 'warning'],
+            'completed' => ['Resolved', 'success'],
+            'rejected' => ['Rejected', 'danger'],
+            'cancelled' => ['Cancelled', 'secondary'],
+        ] as $val => [$lbl, $col])
+                                                    <li>
+                                                        <a class="dropdown-item d-flex align-items-center gap-2
+                                                            {{ $maintenance->status == $val ? 'active' : '' }}"
+                                                            href="#"
+                                                            onclick="changeStatus('{{ $val }}'); return false;">
+                                                            <span class="badge bg-{{ $col }}"
+                                                                style="width:10px;height:10px;padding:0;border-radius:50%;"></span>
+                                                            {{ $lbl }}
+                                                            @if ($maintenance->status == $val)
+                                                                <i class="fe fe-check ms-auto"></i>
+                                                            @endif
+                                                        </a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+
+                                        @if ($maintenance->status !== 'completed')
+                                            <button class="btn btn-sm btn-success d-flex align-items-center gap-1"
+                                                onclick="markAsResolved()">
+                                                <i class="fe fe-check"></i>
+                                                <span>Mark Resolved</span>
+                                            </button>
+                                        @else
+                                            <button class="btn btn-sm btn-secondary d-flex align-items-center gap-1"
+                                                disabled>
+                                                <i class="fe fe-check"></i>
+                                                <span>Resolved</span>
+                                            </button>
+                                        @endif
+
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
                                                 <i class="fe fe-more-vertical"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
-                                                <li><a class="dropdown-item"
+                                                <li>
+                                                    <a class="dropdown-item"
                                                         href="{{ route('maintanance.edit', $maintenance->id) }}">
                                                         <i class="fe fe-edit me-2"></i> Edit
-                                                    </a></li>
-                                                <li><a class="dropdown-item text-danger"
-                                                        onclick="deleteRequest({{ $maintenance->id }})">
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="#"
+                                                        onclick="deleteRequest({{ $maintenance->id }}); return false;">
                                                         <i class="fe fe-trash me-2"></i> Delete
-                                                    </a></li>
+                                                    </a>
+                                                </li>
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="row">
+                                {{-- Title + date --}}
+                                <h3 class="mb-2">
+                                    <i class="fa-solid fa-house fs-5"></i>
+                                    {{ $maintenance->title }}
+                                </h3>
+                                <div class="text-muted mb-4">
+                                    <i class="fe fe-calendar me-1"></i>
+                                    Requested on {{ date('M d, Y \a\t g:i A', strtotime($maintenance->created_at)) }}
+                                </div>
+
+                                {{-- Two column: Location + Tenant --}}
+                                <div class="row g-4">
+
+                                    {{-- Left: Location --}}
                                     <div class="col-md-6">
-                                        <h3 class="mb-1 maintenance-title-header">
-                                            <i class="fe {{ $categoryIcon }} me-2 text-primary"></i>
-                                            {{ $maintenance->title }}
-                                        </h3>
-                                        <div class="maintenance-meta">
-                                            <span class="text-muted">
-                                                <i class="fe fe-calendar me-1"></i>
-                                                Requested on {{ date('M d, Y', strtotime($maintenance->created_at)) }}
-                                            </span>
-                                        </div>
+                                        <div class="detail-info-card">
+                                            <div class="detail-info-header">
+                                                <i class="fe fe-map-pin text-primary me-2"></i>
+                                                <strong>Location</strong>
+                                            </div>
 
-                                        @php
-                                            $activeLease = $maintenance->tenant?->activeLease;
-                                            $property = $maintenance->property ?? $activeLease?->property;
-                                            $assignment = $activeLease?->currentAssignment;
-                                            $bed = $assignment?->bed;
-                                            $room = $bed?->room;
-                                            $unit = $room?->unit;
-                                        @endphp
-
-                                        <div class="mt-3">
                                             {{-- Property --}}
-                                            <div class="d-flex align-items-start mb-3">
-                                                <div class="location-icon-wrap me-2 mt-1">
-                                                    <i class="fe fe-home text-primary" style="font-size:18px;"></i>
+                                            <div class="d-flex align-items-start mt-3 mb-3">
+                                                <div class="loc-icon-wrap me-2">
+                                                    <i class="fe fe-home text-primary fs-5"></i>
                                                 </div>
                                                 <div>
-                                                    <div class="fw-bold text-primary fs-6">
-                                                        {{ $property?->name ?? 'No Property' }}
+                                                    <div class="fw-bold text-primary">
+                                                        {{ $property?->name ?? 'No Property Assigned' }}
                                                     </div>
                                                     @if ($property?->address)
                                                         <small class="text-muted">
@@ -233,11 +340,9 @@
                                                 </div>
                                             </div>
 
-                                            {{-- Unit → Room → Bed Hierarchy --}}
+                                            {{-- Unit → Room → Bed hierarchy --}}
                                             @if ($unit || $room || $bed)
                                                 <div class="location-hierarchy">
-
-                                                    {{-- Unit --}}
                                                     @if ($unit)
                                                         <div class="hierarchy-step">
                                                             <div class="hierarchy-icon-box bg-info-transparent">
@@ -250,12 +355,11 @@
                                                         </div>
                                                         @if ($room)
                                                             <div class="hierarchy-connector">
-                                                                <i class="fe fe-chevron-right text-muted"></i>
+                                                                <i class="fe fe-chevron-right"></i>
                                                             </div>
                                                         @endif
                                                     @endif
 
-                                                    {{-- Room --}}
                                                     @if ($room)
                                                         <div class="hierarchy-step">
                                                             <div class="hierarchy-icon-box bg-warning-transparent">
@@ -272,12 +376,11 @@
                                                         </div>
                                                         @if ($bed)
                                                             <div class="hierarchy-connector">
-                                                                <i class="fe fe-chevron-right text-muted"></i>
+                                                                <i class="fe fe-chevron-right"></i>
                                                             </div>
                                                         @endif
                                                     @endif
 
-                                                    {{-- Bed --}}
                                                     @if ($bed)
                                                         <div class="hierarchy-step">
                                                             <div class="hierarchy-icon-box bg-success-transparent">
@@ -291,11 +394,9 @@
                                                             </div>
                                                         </div>
                                                     @endif
-
                                                 </div>
 
-                                                {{-- Move-in date if available --}}
-                                                @if ($assignment?->actual_move_in)
+                                                @if (isset($assignment) && $assignment?->actual_move_in)
                                                     <div class="mt-2">
                                                         <small class="text-muted">
                                                             <i class="fe fe-log-in me-1"></i>
@@ -304,9 +405,13 @@
                                                         </small>
                                                     </div>
                                                 @endif
+                                            @else
+                                                <div class="text-muted small">
+                                                    <i class="fe fe-info me-1"></i>No unit/room/bed assigned
+                                                </div>
                                             @endif
 
-                                            {{-- Lease Status Badge --}}
+                                            {{-- Lease badge --}}
                                             @if ($activeLease)
                                                 @php
                                                     $leaseColors = [
@@ -328,9 +433,12 @@
                                                         'label' => $activeLease->status,
                                                     ];
                                                 @endphp
-                                                <div class="mt-2 d-flex align-items-center flex-wrap gap-2">
-                                                    <span class="badge bg-{{ $lc['bg'] }}">
-                                                        <i class="fe fe-file-text me-1"></i>{{ $lc['label'] }}
+                                                <div
+                                                    class="mt-3 pt-3 border-top d-flex flex-wrap align-items-center gap-2">
+                                                    <span
+                                                        class="badge p-2 bg-{{ $lc['bg'] }} d-inline-flex align-items-center gap-1">
+                                                        <i class="fe fe-file-text"></i>
+                                                        {{ $lc['label'] }}
                                                     </span>
                                                     <small class="text-muted">
                                                         <i class="fe fe-calendar me-1"></i>
@@ -338,85 +446,68 @@
                                                         –
                                                         {{ \Carbon\Carbon::parse($activeLease->end_date)->format('M d, Y') }}
                                                     </small>
-                                                    <small class="text-success fw-semibold">
+                                                    <small class="fw-semibold text-success">
                                                         <i class="fe fe-dollar-sign me-1"></i>
                                                         ${{ number_format($activeLease->rent_amount, 2) }}/mo
                                                     </small>
                                                 </div>
                                             @endif
                                         </div>
-
                                     </div>
+
+                                    {{-- Right: Tenant --}}
                                     <div class="col-md-6">
-                                        @php
-                                            $profile = $maintenance->tenant ? $maintenance->tenant->profile : null;
-                                            $fullName = $profile
-                                                ? trim(
-                                                    $profile->first_name .
-                                                        ' ' .
-                                                        ($profile->middle_name ?? '') .
-                                                        ' ' .
-                                                        ($profile->last_name ?? ''),
-                                                )
-                                                : 'No Tenant';
-                                            $avatar =
-                                                $profile && $profile->avatar
-                                                    ? asset($profile->avatar)
-                                                    : 'https://ui-avatars.com/api/?name=' .
-                                                        urlencode($fullName) .
-                                                        '&background=random';
-                                        @endphp
-                                        <div class="d-flex align-items-center justify-content-md-end mb-3">
-                                            <img src="{{ $avatar }}" alt="avatar"
-                                                class="rounded-circle me-3 tenant-avatar" width="60" height="60"
-                                                style="object-fit: cover;">
-                                            <div>
-                                                <div class="fw-semibold fs-6 tenant-name">{{ $fullName }}</div>
-                                                <small class="text-muted d-block tenant-contact">
-                                                    <i class="fe fe-phone me-1"></i>
-                                                    {{ $profile ? $profile->phone : 'N/A' }}
-                                                </small>
-                                                <small class="text-muted d-block tenant-email">
-                                                    <i class="fe fe-mail me-1"></i>
-                                                    {{ $maintenance->tenant ? $maintenance->tenant->email : 'N/A' }}
-                                                </small>
+                                        <div class="detail-info-card">
+                                            <div class="detail-info-header">
+                                                <i class="fe fe-user text-primary me-2"></i>
+                                                <strong>Tenant</strong>
+                                            </div>
+                                            <div class="d-flex align-items-center mt-3">
+                                                <img src="{{ $avatar }}" alt="avatar"
+                                                    class="rounded-circle me-3" width="56" height="56"
+                                                    style="object-fit:cover;border:2px solid #e9ecef;">
+                                                <div>
+                                                    <div class="fw-semibold fs-6">{{ $fullName }}</div>
+                                                    <small class="text-muted d-flex align-items-center mt-1">
+                                                        <i class="fe fe-phone me-1"></i>
+                                                        {{ $profile?->phone ?? 'N/A' }}
+                                                    </small>
+                                                    <small class="text-muted d-flex align-items-center mt-1">
+                                                        <i class="fe fe-mail me-1"></i>
+                                                        {{ $maintenance->tenant?->email ?? 'N/A' }}
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Description Section -->
                             <div class="detail-section">
                                 <h5 class="section-title mb-3">
                                     <i class="fe fe-file-text me-2"></i> Description
                                 </h5>
                                 <div class="description-content">
-                                    <p class="maintenance-description">{{ $maintenance->description }}</p>
+                                    <p class="mb-0">{{ $maintenance->description }}</p>
                                 </div>
                             </div>
 
-                            <!-- Photos Section -->
+                            {{-- ===== ATTACHMENTS ===== --}}
                             @if ($maintenance->attachments->count() > 0)
                                 <div class="detail-section">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="section-title mb-0">
-                                            <i class="fe fe-image me-2"></i> Photos
-                                            <span
-                                                class="badge bg-secondary ms-2">{{ $maintenance->attachments->count() }}</span>
+                                            <i class="fe fe-image me-2"></i> Attachments
+                                            <span class="badge bg-secondary ms-2">
+                                                {{ $maintenance->attachments->count() }}
+                                            </span>
                                         </h5>
-                                        <button class="btn btn-sm btn-primary" onclick="$('#addFilesInput').click()">
-                                            <i class="fe fe-plus me-1"></i> Add Files
-                                        </button>
-                                        <input type="file" id="addFilesInput" multiple accept="image/*,video/*,.pdf"
-                                            style="display: none;">
                                     </div>
-
                                     <div class="photos-grid">
                                         @foreach ($maintenance->attachments as $attachment)
                                             @php
-                                                $extension = pathinfo($attachment->attachment_path, PATHINFO_EXTENSION);
-                                                $isImage = in_array(strtolower($extension), [
+                                                $ext = pathinfo($attachment->attachment_path, PATHINFO_EXTENSION);
+                                                $isImage = in_array(strtolower($ext), [
                                                     'jpg',
                                                     'jpeg',
                                                     'png',
@@ -424,7 +515,7 @@
                                                     'bmp',
                                                     'jfif',
                                                 ]);
-                                                $isVideo = in_array(strtolower($extension), [
+                                                $isVideo = in_array(strtolower($ext), [
                                                     'mp4',
                                                     'mov',
                                                     'webm',
@@ -432,22 +523,20 @@
                                                     'm4v',
                                                 ]);
                                             @endphp
-
                                             <div class="photo-item">
                                                 @if ($isImage)
-                                                    <img src="{{ asset('storage/' . $attachment->attachment_path) }}"
+                                                    <img src="{{ asset('/' . $attachment->attachment_path) }}"
                                                         alt="Attachment"
-                                                        onclick="viewImage('{{ asset('storage/' . $attachment->attachment_path) }}')">
-                                                @elseif($isVideo)
-                                                    <video controls class="w-100" style="max-height: 200px;">
-                                                        <source
-                                                            src="{{ asset('storage/' . $attachment->attachment_path) }}">
+                                                        onclick="viewImage('{{ asset('/' . $attachment->attachment_path) }}')">
+                                                @elseif ($isVideo)
+                                                    <video controls class="w-100" style="max-height:200px;">
+                                                        <source src="{{ asset('/' . $attachment->attachment_path) }}">
                                                     </video>
                                                 @else
                                                     <div class="file-preview">
                                                         <i class="fe fe-file"></i>
-                                                        <small>{{ strtoupper($extension) }}</small>
-                                                        <a href="{{ asset('storage/' . $attachment->attachment_path) }}"
+                                                        <small>{{ strtoupper($ext) }}</small>
+                                                        <a href="{{ asset('/' . $attachment->attachment_path) }}"
                                                             target="_blank" class="btn btn-sm btn-primary mt-2">
                                                             <i class="fe fe-download"></i> Download
                                                         </a>
@@ -459,44 +548,11 @@
                                 </div>
                             @endif
 
-                            <!-- Comments/Notes Section -->
+                            {{-- ===== ACTIVITY TIMELINE ===== --}}
                             <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0">
-                                        <i class="fe fe-message-square me-2"></i> Comments
-                                        <small class="text-muted">(Only visible to your Team Members)</small>
-                                    </h5>
-                                    <button class="btn btn-sm btn-primary" onclick="toggleCommentForm()">
-                                        <i class="fe fe-plus me-1"></i> Add Notes
-                                    </button>
-                                </div>
-
-                                <div class="comment-form mb-3" id="commentForm" style="display: none;">
-                                    <textarea class="form-control mb-2" rows="3" placeholder="Write your comment..."></textarea>
-                                    <div class="d-flex justify-content-end gap-2">
-                                        <button class="btn btn-sm btn-light" onclick="toggleCommentForm()">Cancel</button>
-                                        <button class="btn btn-sm btn-primary">Post Comment</button>
-                                    </div>
-                                </div>
-
-                                <div class="comments-list">
-                                    <div class="empty-state-small">
-                                        <div class="empty-icon">
-                                            <i class="fe fe-message-square"></i>
-                                        </div>
-                                        <p class="text-muted mb-0">No comments yet</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Activity Timeline -->
-                            <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 class="section-title mb-0">
-                                        <i class="fe fe-clock me-2"></i> Activity Timeline
-                                    </h5>
-                                </div>
-
+                                <h5 class="section-title mb-3">
+                                    <i class="fe fe-clock me-2"></i> Activity Timeline
+                                </h5>
                                 <div class="timeline-section">
                                     <div class="timeline-item">
                                         <div class="timeline-icon bg-primary">
@@ -507,36 +563,56 @@
                                                 <div>
                                                     <h6 class="mb-1">Request Created</h6>
                                                     <p class="text-muted mb-0 small">
-                                                        Maintenance request was submitted by {{ $fullName }}
+                                                        Submitted by <strong>{{ $fullName }}</strong>
                                                     </p>
                                                 </div>
-                                                <span class="text-muted small">
+                                                <span class="text-muted small text-nowrap ms-3">
                                                     {{ date('M d, Y g:i A', strtotime($maintenance->created_at)) }}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
+
+                                    @if ($maintenance->status === 'completed')
+                                        <div class="timeline-item">
+                                            <div class="timeline-icon bg-success">
+                                                <i class="fe fe-check"></i>
+                                            </div>
+                                            <div class="timeline-content">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h6 class="mb-1">Marked as Resolved</h6>
+                                                        <p class="text-muted mb-0 small">
+                                                            Request has been resolved.
+                                                        </p>
+                                                    </div>
+                                                    <span class="text-muted small text-nowrap ms-3">
+                                                        {{ date('M d, Y', strtotime($maintenance->updated_at)) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
                         </div>
                     </div>
-
                 </div>
 
             </div>
         </div>
     </div>
 
-    <!-- Image Modal -->
+    {{-- Image Modal --}}
     <div class="modal fade" id="imageModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">&times;</button>
                 </div>
-                <div class="modal-body text-center">
-                    <img src="" id="modalImage" class="img-fluid">
+                <div class="modal-body text-center pt-0">
+                    <img src="" id="modalImage" class="img-fluid rounded-1">
                 </div>
             </div>
         </div>
@@ -545,38 +621,36 @@
 
 @push('scripts')
     <script>
-        // Search functionality
+        const MAINTENANCE_ID = {{ $maintenance->id }};
+        const CSRF_TOKEN = '{{ csrf_token() }}';
+
+        /*========================================
+         | SEARCH
+         ========================================*/
         $('#maintenanceSearch').on('keyup', function() {
-            const value = $(this).val().toLowerCase();
-            $('.maintenance-item').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            const val = $(this).val().toLowerCase();
+            $('.maintenance-item').each(function() {
+                $(this).toggle($(this).text().toLowerCase().includes(val));
             });
         });
 
-        // Load maintenance details via AJAX
-        function loadMaintenanceDetails(maintenanceId) {
-            NProgress.start();
-
-            // Update active state in sidebar
+        /*========================================
+         | SIDEBAR NAVIGATION
+         ========================================*/
+        function loadMaintenanceDetails(id) {
             $('.maintenance-item').removeClass('active');
-            $(`.maintenance-item[data-maintenance-id="${maintenanceId}"]`).addClass('active');
-
-            // Update URL without page reload
-            const newUrl = `{{ route('maintanance.show', '') }}/${maintenanceId}`;
+            $(`.maintenance-item[data-maintenance-id="${id}"]`).addClass('active');
+            const url = `{{ route('maintanance.show', '') }}/${id}`;
             window.history.pushState({
-                maintenanceId: maintenanceId
-            }, '', newUrl);
-
-            // Fetch maintenance details (you would implement the AJAX call)
-            window.location.href = newUrl;
+                maintenanceId: id
+            }, '', url);
+            window.location.href = url;
         }
 
-        // Toggle sidebar on mobile
         function toggleSidebar() {
             $('.maintenance-sidebar').toggleClass('show');
         }
 
-        // Close sidebar when clicking outside on mobile
         $(document).on('click', function(e) {
             if ($(window).width() < 992) {
                 if (!$(e.target).closest('.maintenance-sidebar, .mobile-sidebar-toggle').length) {
@@ -585,23 +659,30 @@
             }
         });
 
-        // View image in modal
+        window.addEventListener('popstate', function(e) {
+            if (e.state?.maintenanceId) loadMaintenanceDetails(e.state.maintenanceId);
+            else window.location.href = '{{ route('maintanance.index') }}';
+        });
+
+        window.history.replaceState({
+            maintenanceId: MAINTENANCE_ID
+        }, '', window.location.href);
+
+        /*========================================
+         | IMAGE MODAL
+         ========================================*/
         function viewImage(src) {
             $('#modalImage').attr('src', src);
-            const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
-            imageModal.show();
+            new bootstrap.Modal(document.getElementById('imageModal')).show();
         }
 
-        // Toggle comment form
-        function toggleCommentForm() {
-            $('#commentForm').slideToggle();
-        }
-
-        // Mark as resolved
+        /*========================================
+         | MARK AS RESOLVED
+         ========================================*/
         function markAsResolved() {
             Swal.fire({
                 title: 'Mark as Resolved?',
-                text: "This will change the status to resolved.",
+                text: 'This will change the status to Resolved.',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#28a745',
@@ -609,14 +690,130 @@
                 confirmButtonText: 'Yes, mark as resolved'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Implement AJAX call to update status
-                    toastr.success('Marked as resolved successfully');
+                    const url = "{{ route('maintanance.markResolved', ':id') }}".replace(':id', MAINTENANCE_ID);
+                    $.post(url, {
+                            _token: CSRF_TOKEN
+                        })
+                        .done(function(res) {
+                            if (res.success) {
+                                // Badge update
+                                $('.maintenance-status-badge')
+                                    .removeClass()
+                                    .addClass(`badge bg-${res.color} fs-6 maintenance-status-badge`)
+                                    .text(res.label);
+
+                                // Button swap
+                                $('button[onclick="markAsResolved()"]')
+                                    .prop('disabled', true)
+                                    .html('<i class="fe fe-check me-1"></i> Resolved')
+                                    .removeClass('btn-success').addClass('btn-secondary');
+
+                                // Add timeline entry
+                                addTimelineEntry('Marked as Resolved', 'Request has been resolved.', 'success',
+                                    'check');
+
+                                toastr.success(res.message);
+                            }
+                        })
+                        .fail(() => toastr.error('Failed to update status'));
                 }
             });
         }
 
+        /*========================================
+         | QUICK STATUS CHANGE (dropdown)
+         ========================================*/
+        function changeStatus(status) {
+            const labels = {
+                pending: {
+                    label: 'Open',
+                    color: 'primary'
+                },
+                in_progress: {
+                    label: 'In Progress',
+                    color: 'warning'
+                },
+                completed: {
+                    label: 'Resolved',
+                    color: 'success'
+                },
+                rejected: {
+                    label: 'Rejected',
+                    color: 'danger'
+                },
+                cancelled: {
+                    label: 'Cancelled',
+                    color: 'secondary'
+                },
+            };
 
-        // Delete request
+            Swal.fire({
+                title: `Change to "${labels[status].label}"?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Yes, update'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const url = "{{ route('maintanance.updateStatus', ':id') }}".replace(':id', MAINTENANCE_ID);
+                    $.post(url, {
+                            _token: CSRF_TOKEN,
+                            status
+                        })
+                        .done(function(res) {
+                            if (res.success) {
+                                // Badge
+                                $('.maintenance-status-badge')
+                                    .removeClass()
+                                    .addClass(`badge bg-${res.color} fs-6 maintenance-status-badge`)
+                                    .text(res.label);
+
+                                // Timeline
+                                addTimelineEntry(`Status changed to "${res.label}"`, '', res.color,
+                                    'refresh-cw');
+
+                                toastr.success(res.message);
+
+                                // Reload page after short delay to refresh dropdown active state
+                                setTimeout(() => window.location.reload(), 1200);
+                            }
+                        })
+                        .fail(() => toastr.error('Failed to update status'));
+                }
+            });
+        }
+
+        /*========================================
+         | ADD TIMELINE ENTRY DYNAMICALLY
+         ========================================*/
+        function addTimelineEntry(title, desc, color, icon) {
+            const now = new Date();
+            const time = now.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            const html = `
+            <div class="timeline-item">
+                <div class="timeline-icon bg-${color}">
+                    <i class="fe fe-${icon}"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">${title}</h6>
+                            ${desc ? `<p class="text-muted mb-0 small">${desc}</p>` : ''}
+                        </div>
+                        <span class="text-muted small text-nowrap ms-3">${time}</span>
+                    </div>
+                </div>
+            </div>`;
+            $('.timeline-section').append(html);
+        }
+
+        /*========================================
+         | DELETE
+         ========================================*/
         function deleteRequest(id) {
             Swal.fire({
                 title: 'Are you sure?',
@@ -632,35 +829,20 @@
                         url: '{{ route('maintanance.delete', '') }}/' + id,
                         type: 'DELETE',
                         data: {
-                            _token: '{{ csrf_token() }}'
+                            _token: CSRF_TOKEN
                         },
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire('Deleted!', response.message, 'success');
-                                window.location.href = '{{ route('maintanance.index') }}';
+                        success: function(res) {
+                            if (res.success) {
+                                Swal.fire('Deleted!', res.message, 'success')
+                                    .then(() => window.location.href =
+                                        '{{ route('maintanance.index') }}');
                             }
                         },
-                        error: function() {
-                            Swal.fire('Error!', 'Failed to delete request', 'error');
-                        }
+                        error: () => Swal.fire('Error!', 'Failed to delete request', 'error')
                     });
                 }
             });
         }
-
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', function(event) {
-            if (event.state && event.state.maintenanceId) {
-                loadMaintenanceDetails(event.state.maintenanceId);
-            } else {
-                window.location.href = '{{ route('maintanance.index') }}';
-            }
-        });
-
-        // Initialize state for current page
-        window.history.replaceState({
-            maintenanceId: {{ $maintenance->id }}
-        }, '', window.location.href);
     </script>
 @endpush
 
@@ -670,16 +852,17 @@
             display: flex;
             height: calc(100vh - 70px);
             background: #fff;
-            margin: 15px 0px;
+            margin: 15px 0;
         }
 
-        /* Left Sidebar */
+        /* Sidebar */
         .maintenance-sidebar {
             width: 350px;
             border-right: 1px solid #e9ecef;
             display: flex;
             flex-direction: column;
             background: #fff;
+            flex-shrink: 0;
         }
 
         .sidebar-header {
@@ -707,11 +890,9 @@
         .maintenance-item {
             display: flex;
             align-items: stretch;
-            padding: 0;
             cursor: pointer;
             border-bottom: 1px solid #f8f9fa;
-            transition: all 0.2s;
-            position: relative;
+            transition: all .2s;
         }
 
         .maintenance-item:hover {
@@ -724,7 +905,7 @@
 
         .maintenance-status-indicator {
             width: 4px;
-            min-height: 100%;
+            flex-shrink: 0;
         }
 
         .maintenance-info {
@@ -755,7 +936,7 @@
             color: #adb5bd;
         }
 
-        /* Right Content */
+        /* Right content */
         .maintenance-content {
             flex: 1;
             display: flex;
@@ -788,20 +969,39 @@
             padding: 30px;
         }
 
+        /* Header card */
         .maintenance-header {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 25px;
             border-radius: 12px;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             border: 1px solid #e9ecef;
         }
 
+        /* Detail info cards */
+        .detail-info-card {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 18px;
+            height: 100%;
+        }
+
+        .detail-info-header {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* Sections */
         .detail-section {
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             background: #fff;
             border: 1px solid #e9ecef;
             border-radius: 12px;
-            padding: 25px;
+            padding: 24px;
         }
 
         .section-title {
@@ -812,14 +1012,78 @@
 
         .description-content {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 16px 20px;
             border-radius: 8px;
         }
 
+        /* Location hierarchy */
+        .location-hierarchy {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px 14px;
+            border: 1px solid #e9ecef;
+            margin-bottom: 8px;
+        }
+
+        .hierarchy-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hierarchy-icon-box {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .hierarchy-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hierarchy-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: #adb5bd;
+            line-height: 1;
+        }
+
+        .hierarchy-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            line-height: 1.3;
+        }
+
+        .hierarchy-connector {
+            color: #dee2e6;
+            font-size: 14px;
+            padding: 0 2px;
+        }
+
+        .loc-icon-wrap {
+            width: 28px;
+            display: flex;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Photos */
         .photos-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
         }
 
         .photo-item {
@@ -827,17 +1091,18 @@
             border-radius: 8px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform .2s;
         }
 
         .photo-item:hover {
-            transform: scale(1.05);
+            transform: scale(1.04);
         }
 
         .photo-item img {
             width: 100%;
-            height: 200px;
+            height: 180px;
             object-fit: cover;
+            display: block;
         }
 
         .file-preview {
@@ -845,17 +1110,18 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px;
+            padding: 30px;
             background: #f8f9fa;
-            height: 200px;
+            height: 180px;
         }
 
         .file-preview i {
-            font-size: 48px;
+            font-size: 40px;
             color: #6c757d;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
+        /* Timeline */
         .timeline-section {
             position: relative;
             padding-left: 40px;
@@ -863,7 +1129,7 @@
 
         .timeline-item {
             position: relative;
-            padding-bottom: 30px;
+            padding-bottom: 24px;
         }
 
         .timeline-item:last-child {
@@ -897,25 +1163,7 @@
         .timeline-content {
             background: #f8f9fa;
             border-radius: 8px;
-            padding: 15px;
-        }
-
-        .empty-state-small {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .empty-icon {
-            width: 60px;
-            height: 60px;
-            background: #f8f9fa;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            color: #6c757d;
-            font-size: 28px;
+            padding: 14px;
         }
 
         /* Responsive */
@@ -926,7 +1174,7 @@
                 top: 0;
                 height: 100vh;
                 z-index: 1050;
-                transition: left 0.3s;
+                transition: left .3s;
             }
 
             .maintenance-sidebar.show {
@@ -942,7 +1190,7 @@
             }
 
             .maintenance-detail-content {
-                padding: 20px;
+                padding: 16px;
             }
 
             .content-header {
@@ -950,59 +1198,17 @@
             }
         }
 
-        /* Location Hierarchy */
-        .location-hierarchy {
-            display: flex;
+        .badge-fixed {
+            display: inline-flex;
             align-items: center;
-            flex-wrap: wrap;
             gap: 4px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 12px 16px;
-            border: 1px solid #e9ecef;
-        }
-
-        .hierarchy-step {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .hierarchy-icon-box {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            flex-shrink: 0;
-        }
-
-        .hierarchy-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .hierarchy-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #adb5bd;
             line-height: 1;
+            padding: 6px 10px;
         }
 
-        .hierarchy-value {
-            font-size: 13px;
-            font-weight: 600;
-            color: #2c3e50;
-            line-height: 1.3;
-        }
-
-        .hierarchy-connector {
-            color: #dee2e6;
-            font-size: 16px;
-            padding: 0 2px;
+        .badge-fixed i {
+            font-size: 12px;
+            line-height: 1;
         }
     </style>
 @endpush
