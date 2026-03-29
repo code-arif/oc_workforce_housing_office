@@ -415,8 +415,14 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
     Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy'])->name('delete'); //done
     Route::get('/details/{id}', [MaintananceController::class, 'show'])->name('show'); // done
     Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
-    Route::get('/tenant-lease-properties', [MaintananceController::class, 'getTenantLeaseProperties'])
-        ->name('tenant.lease.properties');
+
+    Route::post('/{id}/mark-resolved', [MaintananceController::class, 'markAsResolved'])->name('markResolved');
+    Route::post('/{id}/update-status', [MaintananceController::class, 'updateStatus'])->name('updateStatus');
+
+    Route::get('/tenant-lease-properties', [MaintananceController::class, 'getTenantLeaseProperties'])->name('tenant.lease.properties');
+    Route::get('property-units', [MaintananceController::class, 'getPropertyUnits'])->name('property.units');
+    Route::get('unit-rooms', [MaintananceController::class, 'getUnitRooms'])->name('unit.rooms');
+    Route::get('room-beds', [MaintananceController::class, 'getRoomBeds'])->name('room.beds');
 });
 
 /*

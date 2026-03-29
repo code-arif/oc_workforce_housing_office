@@ -352,6 +352,51 @@
                 }
             });
         }
+
+        // Quick status change modal
+        function quickStatus(id) {
+            Swal.fire({
+                title: 'Change Status',
+                input: 'select',
+                inputOptions: {
+                    'pending': 'Open',
+                    'in_progress': 'In Progress',
+                    'completed': 'Resolved',
+                    'rejected': 'Rejected',
+                    'cancelled': 'Cancelled',
+                },
+                inputPlaceholder: 'Select a status',
+                showCancelButton: true,
+                confirmButtonText: 'Update',
+                confirmButtonColor: '#0d6efd',
+                inputValidator: (value) => {
+                    if (!value) return 'Please select a status';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let updateStatusUrl = "{{ route('maintanance.updateStatus', ':id') }}";
+                    updateStatusUrl = updateStatusUrl.replace(':id', id);
+
+                    $.ajax({
+                        url: updateStatusUrl,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            status: result.value
+                        },
+                        success: function(res) {
+                            if (res.success) {
+                                toastr.success(res.message);
+                                $('#maintenanceTable').DataTable().ajax.reload(null, false);
+                            }
+                        },
+                        error: function() {
+                            toastr.error('Failed to update status');
+                        }
+                    });
+                }
+            });
+        }
     </script>
 @endpush
 
@@ -400,6 +445,32 @@
 
         .btn-group .btn {
             padding: 4px 8px;
+        }
+
+        /* Hierarchy mini chips in datatable */
+        .hier-mini {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .chip-unit {
+            background: #e3f6fc;
+            color: #0891b2;
+        }
+
+        .chip-room {
+            background: #fef9e7;
+            color: #d97706;
+        }
+
+        .chip-bed {
+            background: #f0fdf4;
+            color: #16a34a;
         }
     </style>
 @endpush
