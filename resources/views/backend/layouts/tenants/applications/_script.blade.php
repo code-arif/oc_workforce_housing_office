@@ -867,6 +867,95 @@
             });
         }
 
+        // Delete Single Email Application (superadmin only)
+        function deleteApplication(id) {
+            Swal.fire({
+                title: 'Delete Application?',
+                text: 'This will permanently remove this application.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Delete!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                $.ajax({
+                    url: `/admin/applications/${id}`,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
+                        $('#singleEmailModal').modal('hide');
+                        singleEmailTable.ajax.reload(null, false);
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed!',
+                            text: xhr.responseJSON?.message || 'Failed to delete application.'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Delete Reservation Application (superadmin only)
+        function deleteReservation(id) {
+            Swal.fire({
+                title: 'Delete Reservation Application?',
+                text: 'This will permanently remove this reservation application.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Delete!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                $.ajax({
+                    url: `/admin/reservation-requests/${id}`,
+                    type: 'DELETE',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: response.message,
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+
+                        if ($('#reservationModal').hasClass('show') && currentReservationId === id) {
+                            $('#reservationModal').modal('hide');
+                        }
+
+                        reservationTable.ajax.reload(null, false);
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed!',
+                            text: xhr.responseJSON?.message || 'Failed to delete reservation application.'
+                        });
+                    }
+                });
+            });
+        }
+
         // Show Invitation Modal
         function showInviteModal() {
             $('#inviteEmail').val('').removeClass('is-invalid');

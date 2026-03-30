@@ -12,8 +12,10 @@ use App\Models\TenantDocument;
 use App\Models\TenantEmergencyContact;
 use App\Models\TenantEmploymentHistory;
 use App\Models\TenantProfile;
+use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +41,7 @@ class ApplicationController extends Controller
     public function getData(Request $request)
     {
         if ($request->ajax() && $request->wantsJson()) {
+            $isSuperAdmin = $this->isSuperAdmin();
 
             $query = Application::query()
                 ->select([
@@ -108,7 +111,7 @@ class ApplicationController extends Controller
                                 <small class="text-muted">' . $data->created_at->format('h:i A') . '</small>
                             </div>';
                 })
-                ->addColumn('action', function ($data) {
+                ->addColumn('action', function ($data) use ($isSuperAdmin) {
                     $btn = '<div class="btn-group" role="group">';
 
                     // Single email - view details button always visible
@@ -125,6 +128,12 @@ class ApplicationController extends Controller
                         // Reject button
                         $btn .= '<button type="button" onclick="rejectApplication(' . $data->id . ')" class="btn btn-sm btn-danger d-inline-flex align-items-center" title="Reject">
                                     <i class="fe fe-x"></i>
+                                </button>';
+                    }
+
+                    if ($isSuperAdmin) {
+                        $btn .= '<button type="button" onclick="deleteApplication(' . $data->id . ')" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center" title="Delete Application">
+                                    <i class="fe fe-trash-2"></i>
                                 </button>';
                     }
 
@@ -145,6 +154,7 @@ class ApplicationController extends Controller
     public function getReservationData(Request $request)
     {
         if ($request->ajax() && $request->wantsJson()) {
+            $isSuperAdmin = $this->isSuperAdmin();
 
             $query = ReservationRequest::query()
                 ->select(['reservation_requests.*'])
@@ -212,7 +222,7 @@ class ApplicationController extends Controller
                                 <small class="text-muted">' . $data->created_at->format('h:i A') . '</small>
                             </div>';
                 })
-                ->addColumn('action', function ($data) {
+                ->addColumn('action', function ($data) use ($isSuperAdmin) {
                     $btn = '<div class="d-flex gap-1">';
 
                     // View button — always visible
@@ -240,6 +250,13 @@ class ApplicationController extends Controller
                     }
 
                     $btn .= '</ul></div>';
+
+                    if ($isSuperAdmin) {
+                        $btn .= '<button type="button" onclick="deleteReservation(' . $data->id . ')" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center" title="Delete Application">
+                                    <i class="fe fe-trash-2"></i>
+                                </button>';
+                    }
+
                     $btn .= '</div>';
                     return $btn;
                 })
@@ -387,6 +404,49 @@ class ApplicationController extends Controller
     }
 
     /**
+     * Delete single application (superadmin only)
+     */
+    public function destroy($id)
+    {
+        if (!$this->isSuperAdmin()) {
+            return response()->json(['message' => 'Only superadmin can delete applications.'], 403);
+        }
+
+        try {
+
+            $application = Application::findOrFail($id);
+            $application->delete();
+
+            DB::table('application_tokens')->where('email', $application->email)->delete();
+
+            return response()->json(['message' => 'Application deleted successfully.']);
+        } catch (Exception $e) {
+            Log::error('Application delete failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete application.'], 500);
+        }
+    }
+
+    /**
+     * Delete reservation request (superadmin only)
+     */
+    public function destroyReservation($id)
+    {
+        if (!$this->isSuperAdmin()) {
+            return response()->json(['message' => 'Only superadmin can delete applications.'], 403);
+        }
+
+        try {
+            $reservation = ReservationRequest::findOrFail($id);
+            $reservation->delete();
+
+            return response()->json(['message' => 'Reservation application deleted successfully.']);
+        } catch (Exception $e) {
+            Log::error('Reservation delete failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete reservation application.'], 500);
+        }
+    }
+
+    /**
      * Show application details
      */
     public function show(Request $request, $id)
@@ -501,5 +561,21 @@ class ApplicationController extends Controller
             'success' => true,
             'data' => $invitations,
         ]);
+    }
+
+    private function isSuperAdmin(): bool
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return User::query()
+            ->whereKey($user->id)
+            ->whereHas('roles', function ($query) {
+                $query->where('name', '	super admin');
+            })
+            ->exists();
     }
 }
