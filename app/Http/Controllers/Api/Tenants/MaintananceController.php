@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
-use Exception;
+use App\Helper\Helper;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\Maintanace\MaintenanceRequestResource;
 use App\Models\Bed;
+use App\Models\Lease;
+use App\Models\MaintenanceRequest;
+use App\Models\MaintenanceRequestAttachment;
+use App\Models\Property;
 use App\Models\Room;
 use App\Models\Unit;
-use App\Models\Lease;
-use App\Helper\Helper;
 use App\Traits\ApiResponse;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use App\Models\MaintenanceRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
-use App\Models\MaintenanceRequestAttachment;
-use App\Http\Resources\Maintanace\MaintenanceRequestResource;
 
 class MaintananceController extends Controller
 {
@@ -529,6 +530,79 @@ class MaintananceController extends Controller
             DB::rollBack();
             Log::error('Maintenance delete error: ' . $e->getMessage());
             return $this->error([], 'Failed to delete maintenance request', 500);
+        }
+    }
+
+    public function getPropertyDetails(Request $request, $propertyId)
+    {
+        try {
+            $tenant = auth('api')->user();
+
+            // Verify: Does this property have a tenant lease?
+            $hasLease = Lease::where('tenant_id', $tenant->id)
+                ->where('property_id', $propertyId)
+                ->whereIn('status', ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])
+                ->exists();
+
+            if (!$hasLease) {
+                return $this->error([], 'You do not have access to this property.', 403);
+            }
+
+            $property = Property::with([
+                'units' => function ($q) {
+                    $q->where('is_active', true)
+                        ->select('id', 'property_id', 'name', 'gender_designation')
+                        ->with([
+                            'rooms' => function ($q) {
+                                $q->where('is_active', true)
+                                    ->select('id', 'unit_id', 'room_number', 'name', 'gender_designation')
+                                    ->with([
+                                        'beds' => function ($q) {
+                                            $q->select('id', 'room_id', 'bed_number', 'bed_label', 'base_rent', 'is_occupied');
+                                        }
+                                    ]);
+                            }
+                        ]);
+                }
+            ])
+                ->select('id', 'name', 'address', 'image_path')
+                ->findOrFail($propertyId);
+
+            $data = [
+                'id'         => $property->id,
+                'name'       => $property->name,
+                'address'    => $property->address,
+                'image'      => $property->image_path ? asset($property->image_path) : null,
+                'units'      => $property->units->map(function ($unit) {
+                    return [
+                        'id'                 => $unit->id,
+                        'name'               => $unit->name,
+                        'gender_designation' => $unit->gender_designation,
+                        'rooms'              => $unit->rooms->map(function ($room) {
+                            return [
+                                'id'                 => $room->id,
+                                'name'               => $room->name ?? 'Room ' . $room->room_number,
+                                'room_number'        => $room->room_number,
+                                'gender_designation' => $room->gender_designation,
+                                'beds'               => $room->beds->map(function ($bed) {
+                                    return [
+                                        'id'          => $bed->id,
+                                        'bed_number'  => $bed->bed_number,
+                                        'bed_label'   => $bed->bed_label ?? 'Bed ' . $bed->bed_number,
+                                        'base_rent'   => $bed->base_rent,
+                                        'is_occupied' => (bool) $bed->is_occupied,
+                                    ];
+                                })->values(),
+                            ];
+                        })->values(),
+                    ];
+                })->values(),
+            ];
+
+            return $this->success($data, 'Property details fetched successfully', 200);
+        } catch (Exception $e) {
+            Log::error('getPropertyDetails error: ' . $e->getMessage());
+            return $this->error([], 'Failed to load property details', 500);
         }
     }
 }

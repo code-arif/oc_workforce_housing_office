@@ -155,16 +155,19 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::prefix('/maintanance')->group(function () {
             // Tenant's lease hierarchy (property → unit → room → bed)
             Route::get('/my-leases', [MaintananceController::class, 'myLeases']);
-            Route::get('/lease/{leaseId}/units',[MaintananceController::class, 'getUnits']);
+            Route::get('/lease/{leaseId}/units', [MaintananceController::class, 'getUnits']);
             Route::get('/unit/{unitId}/rooms', [MaintananceController::class, 'getRooms']);
-            Route::get('/room/{roomId}/beds',[MaintananceController::class, 'getBeds']);
+            Route::get('/room/{roomId}/beds', [MaintananceController::class, 'getBeds']);
 
             // CRUD
-            Route::get('/list',[MaintananceController::class, 'index']);
+            Route::get('/list', [MaintananceController::class, 'index']);
             Route::post('/store', [MaintananceController::class, 'store']);
-            Route::get('/edit/{maintananceId}',[MaintananceController::class, 'edit']);
-            Route::post('/update/{maintananceId}',[MaintananceController::class, 'update']);
-            Route::delete('/delete/{maintananceId}',[MaintananceController::class, 'destroy']);
+            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
+            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
+            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
+
+            // Property details
+            Route::get('/property/{propertyId}/details', [MaintananceController::class, 'getPropertyDetails']);
         });
     });
 
