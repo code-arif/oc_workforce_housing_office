@@ -33,7 +33,7 @@
                         <a href="{{ route('invoices.download.pdf', $invoice->id) }}" class="btn btn-outline-primary">
                             <i class="fe fe-download me-2"></i>Download PDF
                         </a>
-                        @if($invoice->status !== 'CANCELLED')
+                        @if($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED')
                         <button class="btn btn-outline-warning" onclick="showEditForm()" title="Edit invoice details">
                             <i class="fe fe-edit me-2"></i>Edit Invoice
                         </button>
@@ -41,14 +41,14 @@
                             <i class="fe fe-slash me-2"></i>Void Invoice
                         </button>
                         @endif
-                        @if($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED' && $canMakePayment)
+                        @if($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED' )
                         <button class="btn btn-success" onclick="showPaymentForm()">
                             <i class="fe fe-dollar-sign me-2"></i>Make Payment
                         </button>
-                        @elseif($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED' && !$canMakePayment)
+                        {{-- @elseif($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED' && !$canMakePayment)
                         <button class="btn btn-secondary" disabled title="Previous invoice must be paid first">
                             <i class="fe fe-lock me-2"></i>Pay Previous Invoice First
-                        </button>
+                        </button> --}}
                         @endif
                     </div>
                 </div>

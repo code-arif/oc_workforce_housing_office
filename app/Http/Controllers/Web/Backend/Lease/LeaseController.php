@@ -1467,7 +1467,7 @@ class LeaseController extends Controller
             if ($currentAssignment) {
                 $currentAssignment->update([
                     'is_current' => false,
-                    'actual_move_out' => $request->effective_date,
+                    'actual_move_out' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('Y-m-d'),
                 ]);
             }
 
@@ -1481,8 +1481,8 @@ class LeaseController extends Controller
             $newAssignment = LeaseAssignment::create([
                 'lease_id' => $lease->id,
                 'bed_id' => $newBed->id,
-                'assigned_at' => $request->effective_date,
-                'actual_move_in' => $request->effective_date,
+                'assigned_at' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('Y-m-d'),
+                'actual_move_in' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('Y-m-d'),
                 'is_current' => true,
             ]);
 
@@ -1495,7 +1495,7 @@ class LeaseController extends Controller
             $changeNote = "\n\n--- Bed Change (" . now()->format('M d, Y H:i') . ") ---\n";
             $changeNote .= "From: " . ($oldBed?->bed_label ?? 'N/A') . "\n";
             $changeNote .= "To: " . $newBed->bed_label . "\n";
-            $changeNote .= "Effective: " . date('M d, Y', strtotime($request->effective_date)) . "\n";
+            $changeNote .= "Effective: " . \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('M d, Y') . "\n";
             if ($request->notes) {
                 $changeNote .= "Notes: " . $request->notes;
             }
@@ -1657,14 +1657,14 @@ class LeaseController extends Controller
                 $currentAssignment->update([
                     'bed_id' => $bed->id,
                     'assigned_at' => now(),
-                    'actual_move_in' => $request->move_in_date,
+                    'actual_move_in' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->move_in_date)->format('Y-m-d'),
                 ]);
             } else {
                 LeaseAssignment::create([
                     'lease_id' => $lease->id,
                     'bed_id' => $bed->id,
                     'assigned_at' => now(),
-                    'actual_move_in' => $request->move_in_date,
+                    'actual_move_in' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->move_in_date)->format('Y-m-d'),
                     'is_current' => true,
                 ]);
             }
@@ -1677,7 +1677,7 @@ class LeaseController extends Controller
             $notes = $lease->notes ?? '';
             $assignNote = "\n\n--- Bed Assigned (" . now()->format('M d, Y H:i') . ") ---\n";
             $assignNote .= "Bed: " . $bed->bed_label . "\n";
-            $assignNote .= "Move-in Date: " . date('M d, Y', strtotime($request->move_in_date)) . "\n";
+            $assignNote .= "Move-in Date: " . \Carbon\Carbon::createFromFormat('m/d/Y', $request->move_in_date)->format('M d, Y') . "\n";
             if ($request->notes) {
                 $assignNote .= "Notes: " . $request->notes;
             }
