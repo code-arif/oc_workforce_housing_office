@@ -569,24 +569,24 @@ class MaintananceController extends Controller
                 ->findOrFail($propertyId);
 
             $data = [
-                'id'         => $property->id,
+                'property_id'         => $property->id,
                 'name'       => $property->name,
                 'address'    => $property->address,
                 'image'      => $property->image_path ? asset($property->image_path) : null,
                 'units'      => $property->units->map(function ($unit) {
                     return [
-                        'id'                 => $unit->id,
+                        'unit_id'                 => $unit->id,
                         'name'               => $unit->name,
                         'gender_designation' => $unit->gender_designation,
                         'rooms'              => $unit->rooms->map(function ($room) {
                             return [
-                                'id'                 => $room->id,
+                                'room_id'                 => $room->id,
                                 'name'               => $room->name ?? 'Room ' . $room->room_number,
                                 'room_number'        => $room->room_number,
                                 'gender_designation' => $room->gender_designation,
                                 'beds'               => $room->beds->map(function ($bed) {
                                     return [
-                                        'id'          => $bed->id,
+                                        'bed_id'         => $bed->id,
                                         'bed_number'  => $bed->bed_number,
                                         'bed_label'   => $bed->bed_label ?? 'Bed ' . $bed->bed_number,
                                         'base_rent'   => $bed->base_rent,
