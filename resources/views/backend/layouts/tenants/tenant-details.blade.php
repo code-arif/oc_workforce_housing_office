@@ -850,7 +850,7 @@
     $(document).ready(function() {
         // Initialize datepicker
         $('.datepicker2').datepicker({
-            format: 'yyyy-mm-dd',
+            format: 'mm/dd/yyyy',
             autoclose: true,
             todayHighlight: true,
         });
@@ -890,7 +890,11 @@
                     $('#changeBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString('en-US', {minimumFractionDigits: 2}));
 
                     // Set default effective date to today
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = new Date().toLocaleDateString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                });
                     $('#effectiveDate').val(today);
 
                     // Populate available beds dropdown
@@ -1017,7 +1021,13 @@
                     $('#assignBedStatus').text(lease.status).removeClass().addClass('badge ' + statusClass);
 
                     // Set default move-in date to today
-                    const today = new Date().toISOString().split('T')[0];
+                    const today = new Date().toLocaleDateString('en-US', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                });
+                    console.log(today);
+                    
                     $('#moveInDate').val(today);
 
                     // Populate available beds dropdown

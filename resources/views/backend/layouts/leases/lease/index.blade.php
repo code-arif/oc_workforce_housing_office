@@ -295,7 +295,7 @@
 
             // Row click to view details
             $('#leasesTable tbody').on('click', 'tr', function(e) {
-                if ($(e.target).closest('.delete-lease-btn').length) return; // <-- ADD THIS LINE
+                if ($(e.target).closest('.delete-lease-btn, .terminate-lease-btn').length) return;
                 const data = table.row(this).data();
                 if (data) {
                     window.location.href = '{{ route('leases.show', '') }}/' + data.id;
@@ -386,6 +386,49 @@
                             error: function(xhr) {
                                 const msg = xhr.responseJSON?.message ||
                                     'Failed to delete lease.';
+                                toastr.error(msg);
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Lease terminate
+            $(document).on('click', '.terminate-lease-btn', function(e) {
+                e.stopPropagation();
+                const leaseId = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Terminate this Lease?',
+                    text: 'This will set lease status to TERMINATED, set end date to today, free assigned bed, and cancel unpaid invoices.',
+                    icon: 'warning',
+                    input: 'text',
+                    inputLabel: 'Reason (optional)',
+                    inputPlaceholder: 'e.g. Tenant requested early move-out',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f0ad4e',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, terminate lease'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/admin/leases/' + leaseId + '/terminate',
+                            method: 'POST',
+                            data: {
+                                _token: $('meta[name="csrf-token"]').attr('content'),
+                                reason: result.value || ''
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    toastr.success(response.message);
+                                    table.ajax.reload(null, false);
+                                } else {
+                                    toastr.error(response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                const msg = xhr.responseJSON?.message ||
+                                    'Failed to terminate lease.';
                                 toastr.error(msg);
                             }
                         });
