@@ -533,6 +533,10 @@ class MaintananceController extends Controller
         }
     }
 
+    /**
+     * Get property details with units/rooms/beds for a lease
+     * GET /api/maintanance/property/{propertyId}/details
+     */
     public function getPropertyDetails(Request $request, $propertyId)
     {
         try {
