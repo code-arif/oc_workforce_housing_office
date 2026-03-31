@@ -6,6 +6,13 @@
 <div class="app-content main-content mt-0">
     <div class="side-app">
         <div class="main-container container-fluid">
+            @php
+                $hasAdminSignatureSlot = collect($signatures ?? [])->contains(function ($signature) {
+                    $label = strtolower($signature['label'] ?? '');
+
+                    return $label !== '' && !str_contains($label, 'tenant');
+                });
+            @endphp
             <!-- PAGE HEADER -->
             <div class="page-header">
                 <div>
@@ -18,6 +25,11 @@
                     <a href="{{ route('leases.show', $lease->id) }}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left"></i> Back to Lease
                     </a>
+                    @if($document && !$document->admin_signed_at && $hasAdminSignatureSlot)
+                        <button type="button" class="btn btn-success" onclick="openSignatureModal('admin', 'Admin Signature')">
+                            <i class="fas fa-pen-fancy"></i> Quick Admin Sign
+                        </button>
+                    @endif
                     @if($document)
                         <a href="{{ route('lease-documents.download-pdf', $document->id) }}" class="btn btn-primary" target="_blank">
                             <i class="fas fa-download"></i> Download PDF
@@ -346,6 +358,7 @@
             tenantSignature: @json($document->tenant_signature ?? null),
             adminSignature: @json($document->admin_signature ?? null)
         };
+        const autoOpenAdminSign = @json(request()->boolean('quick_admin_sign'));
         
         // Separate text input fields from regular placeholders
         const placeholders = allPlaceholders.filter(p => p.type !== 'text_input');
@@ -898,6 +911,12 @@
 
         // Initial render
         renderPdf();
+
+        if (autoOpenAdminSign && !documentData.adminSigned && typeof openSignatureModal === 'function') {
+            setTimeout(() => {
+                openSignatureModal('admin', 'Admin Signature');
+            }, 700);
+        }
     });
 </script>
 @endpush

@@ -35,7 +35,12 @@ class LeaseDocumentController extends Controller
 
         // Get the document - either specific one or first available
         if ($documentId) {
-            $document = $lease->documents()->with('leaseTemplate')->findOrFail($documentId);
+            $document = $lease->documents()->with('leaseTemplate')->where('id', $documentId)->first();
+            
+            // If document not found or doesn't belong to this lease, return 404
+            if (!$document) {
+                abort(404, 'Document not found or does not belong to this lease');
+            }
         } else {
             $document = $lease->documents()->with('leaseTemplate')->first();
         }

@@ -86,6 +86,12 @@
 
                     <!-- Right Content - Lease Details -->
                     <div class="lease-content">
+                        @php
+                            $quickSignDocument = $lease->documents->firstWhere('admin_signed_at', null);
+                            $openLeaseDocuments = $lease->documents->filter(function ($document) {
+                                return !$document->tenant_signed_at || !$document->admin_signed_at;
+                            });
+                        @endphp
                         <div class="content-header">
                             <button class="btn btn-light mobile-sidebar-toggle d-lg-none" onclick="toggleSidebar()">
                                 <i class="fe fe-menu"></i>
@@ -95,6 +101,13 @@
                                 onclick="window.location='{{ route('leases.index') }}'">
                                 <i class="fe fe-x"></i>
                             </button>
+                            @if($quickSignDocument)
+                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $quickSignDocument->id, 'quick_admin_sign' => 1]) }}"
+                                    class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1">
+                                    <i class="fe fe-edit-3"></i>
+                                    <span>Quick Admin Sign</span>
+                                </a>
+                            @endif
                         </div>
 
                         <div class="lease-detail-content" id="leaseDetailContent">
@@ -360,9 +373,8 @@
                                 </div>
 
                                 <div class="collapse show" id="openDocsSection">
-                                    @if ($lease->tenant->leaseDocuments->where('tenant_signed_at', null)->count() > 0)
-                                        @foreach ($lease->tenant->leaseDocuments as $doc)
-                                            @if (!$doc->tenant_signed_at || !$doc->admin_signed_at)
+                                    @if ($openLeaseDocuments->count() > 0)
+                                        @foreach ($openLeaseDocuments as $doc)
                                                 <div class="document-card">
                                                     <div class="d-flex align-items-center">
                                                         <div class="document-icon">
@@ -389,11 +401,17 @@
                                                                 <i class="fe fe-eye"></i>
                                                                 <span>Sign Document</span>
                                                             </a>
-                                                            {{-- <button class="btn btn-sm btn-primary"></button> --}}
+                                                            @if(!$doc->admin_signed_at)
+                                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id, 'quick_admin_sign' => 1]) }}"
+                                                                    class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+                                                                    title="Open preview with admin signature pad">
+                                                                    <i class="fe fe-edit-3"></i>
+                                                                    <span>Quick Admin Sign</span>
+                                                                </a>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endif
                                         @endforeach
                                     @else
                                         <div class="empty-state">
@@ -568,43 +586,43 @@
                                 <div class="collapse" id="completedDocsSection">
                                     <div class="document-section">
                                         @if ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() > 0)
-                                            <div class="completed-docs-list">
-                                                @foreach ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null) as $doc)
-<div class="completed-doc-item">
-                                                        <div class="d-flex align-items-center justify-content-between">
-                                                            <div class="d-flex align-items-center">
-                                                                <i class="fe fe-file-text text-success me-2"></i>
-                                                                <div>
-                                                                    <div class="fw-semibold">{{ $doc->template ? $doc->template->name : 'Lease Agreement' }}</div>
-                                                                    <small class="text-muted">
-                                                                        Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
-                                                                    </small>
+                                        <div class="completed-docs-list">
+                                            @foreach ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null) as $doc)
+                                                <div class="completed-doc-item">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fe fe-file-text text-success me-2"></i>
+                                                            <div>
+                                                                <div class="fw-semibold">{{ $doc->template ? $doc->template->name : 'Lease Agreement' }}</div>
+                                                                <small class="text-muted">
+                                                                    Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-3">
+                                                            <div class="text-end">
+                                                                <div class="text-muted small">
+                                                                    {{ date('M d, Y | g:i A', strtotime($doc->admin_signed_at)) }}
                                                                 </div>
                                                             </div>
-                                                            <div class="d-flex align-items-center gap-3">
-                                                                <div class="text-end">
-                                                                    <div class="text-muted small">
-                                                                        {{ date('M d, Y | g:i A', strtotime($doc->admin_signed_at)) }}
-                                                                    </div>
-                                                                </div>
-                                                                <div class="d-flex gap-2">
-                                                                    <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview">
-                                                                        <i class="fe fe-eye"></i>
-                                                                    </a>
-                                                                    <a href="{{ route('lease-documents.download-pdf', $doc->id) }}" class="btn btn-sm btn-outline-success" target="_blank" title="Download">
-                                                                        <i class="fe fe-download"></i>
-                                                                    </a>
-                                                                </div>
+                                                            <div class="d-flex gap-2">
+                                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview">
+                                                                    <i class="fe fe-eye"></i>
+                                                                </a>
+                                                                <a href="{{ route('lease-documents.download-pdf', $doc->id) }}" class="btn btn-sm btn-outline-success" target="_blank" title="Download">
+                                                                    <i class="fe fe-download"></i>
+                                                                </a>
                                                             </div>
                                                         </div>
                                                     </div>
-@endforeach
-                                            </div>
-@else
-<div class="empty-state-small">
-                                                <p class="text-muted mb-0">No completed documents</p>
-                                            </div>
-@endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                        @else
+                                        <div class="empty-state-small">
+                                            <p class="text-muted mb-0">No completed documents</p>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

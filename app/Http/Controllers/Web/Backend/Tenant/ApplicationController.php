@@ -574,7 +574,7 @@ class ApplicationController extends Controller
         return User::query()
             ->whereKey($user->id)
             ->whereHas('roles', function ($query) {
-                $query->where('name', '	super admin');
+                $query->where('name', 'superadmin');
             })
             ->exists();
     }
