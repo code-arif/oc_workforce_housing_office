@@ -168,6 +168,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
             // Property details
             Route::get('/property/{propertyId}/details', [MaintananceController::class, 'getPropertyDetails']);
+
+            Route::get('/properties', [MaintananceController::class, 'getProperties']);
         });
     });
 
