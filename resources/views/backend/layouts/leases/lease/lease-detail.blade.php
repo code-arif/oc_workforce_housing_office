@@ -2004,4 +2004,4 @@
                     }
                 }
             </style>
-@endpush)
+@endpush

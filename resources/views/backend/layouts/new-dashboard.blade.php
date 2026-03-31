@@ -1804,5 +1804,65 @@
                 $('#rejectFromModalBtn').addClass('d-none');
             }
         }
+
+                // Approve Single Email
+        function approveSingleEmail(id) {
+            Swal.fire({
+                title: 'Approve Application?',
+                text: "This will approve the application and ready for processing.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Approve!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loader
+                    Swal.fire({
+                        title: 'Processing...',
+                        html: 'Approving application and sending email.<br><small class="text-muted">This may take a moment.</small>',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: `/admin/applications/${id}/approve-single`,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            const fallbackRedirectUrl = `{{ route('leases.create') }}?tenant_id=${response.tenant_id}`;
+                            const redirectUrl = response.redirect_url || fallbackRedirectUrl;
+
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Approved!',
+                                html: `${response.message}<br><small class="text-muted">Redirecting to lease creation...</small>`,
+                                confirmButtonColor: '#28a745',
+                                timer: 1200,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = redirectUrl;
+                            });
+                            singleEmailTable.ajax.reload();
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Failed!',
+                                text: xhr.responseJSON?.message || 'An error occurred',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
+                    });
+                }
+            });
+        }
     </script>
 @endpush

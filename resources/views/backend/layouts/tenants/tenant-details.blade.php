@@ -334,8 +334,8 @@
                                         <div class="d-flex justify-content-md-end">
                                             <div class="text-md-end">
                                                 <h3 class="text-primary mb-0">${{ number_format($activeLease->rent_amount, 2) }}</h3>
-                                                <small class="text-muted">Monthly Rent</small>
-                                            </div>
+                                                <small class="text-muted">Seasonal Rent</small>
+                                            </div> 
                                         </div>
                                     </div>
                                 </div>
