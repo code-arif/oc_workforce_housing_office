@@ -320,10 +320,12 @@ Route::group([], function () {
 
     // View specific application details
     Route::get('/applications/{id}', [ApplicationController::class, 'show'])->name('tenants.applications.show');
+    Route::delete('/applications/{id}', [ApplicationController::class, 'destroy'])->name('tenants.applications.destroy');
 
     // Reservation request detail & status update
     Route::get('/reservation-requests/{id}', [ApplicationController::class, 'showReservation'])->name('tenants.reservation.show');
     Route::post('/reservation-requests/{id}/status', [ApplicationController::class, 'updateReservationStatus'])->name('tenants.reservation.update.status');
+    Route::delete('/reservation-requests/{id}', [ApplicationController::class, 'destroyReservation'])->name('tenants.reservation.destroy');
 
     // Approve single email application
     Route::post('/applications/{id}/approve-single', [ApplicationController::class, 'approveSingleEmail'])->name('tenants.applications.approve.single');
@@ -360,6 +362,7 @@ Route::prefix('leases')->name('leases.')->group(function () {
     // Manual lease close routes
     Route::get('/{id}/close-data', [LeaseController::class, 'getCloseData'])->name('close.data');
     Route::post('/{id}/close', [LeaseController::class, 'closeLease'])->name('close');
+    Route::post('/{id}/terminate', [LeaseController::class, 'terminateLease'])->name('terminate');
 
     // Change bed assignment routes
     Route::get('/{id}/change-bed-data', [LeaseController::class, 'getChangeBedData'])->name('change.bed.data');

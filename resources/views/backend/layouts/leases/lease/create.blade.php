@@ -198,14 +198,14 @@
                                                             class="text-danger">*</span></label>
                                                     <input type="text" class="form-control datepicker2"
                                                         id="start_date" name="start_date" required>
-                                                    <small class="text-muted" id="startDateHint"></small>
+                                                    {{-- <small class="text-muted" id="startDateHint"></small> --}}
                                                 </div>
                                                 <div class="col-md-6" id="endDateField">
                                                     <label class="form-label">Lease End Date <span class="text-danger"
                                                             id="endDateRequired">*</span></label>
                                                     <input type="text" class="form-control datepicker2" id="end_date"
                                                         name="end_date">
-                                                    <small class="text-muted" id="endDateHint"></small>
+                                                    {{-- <small class="text-muted" id="endDateHint"></small> --}}
                                                 </div>
                                             </div>
 

@@ -217,17 +217,31 @@ class LeaseController extends Controller
                 })
                 // Add this column after signature_status column
                 ->addColumn('actions', function ($data) {
-                    if (!in_array($data->status, ['PENDING_TENANT_SIGN', 'DRAFT'])) {
+                    $actions = [];
+
+                    if (in_array($data->status, ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])) {
+                        $actions[] = '<button type="button"
+                            class="btn btn-sm btn-warning terminate-lease-btn"
+                            data-id="' . $data->id . '"
+                            title="Terminate Lease">
+                            <i class="fe fe-x-circle"></i>
+                        </button>';
+                    }
+
+                    if (in_array($data->status, ['PENDING_TENANT_SIGN', 'DRAFT'])) {
+                        $actions[] = '<button type="button"
+                            class="btn btn-sm btn-danger delete-lease-btn"
+                            data-id="' . $data->id . '"
+                            title="Delete Lease">
+                            <i class="fe fe-trash-2"></i>
+                        </button>';
+                    }
+
+                    if (empty($actions)) {
                         return '<span class="text-muted">-</span>';
                     }
-                    return '<div class="d-flex justify-content-center">
-                    <button type="button"
-                        class="btn btn-sm btn-danger delete-lease-btn"
-                        data-id="' . $data->id . '"
-                        title="Delete Lease">
-                        <i class="fe fe-trash-2"></i>
-                    </button>
-                </div>';
+
+                    return '<div class="d-flex justify-content-center gap-1">' . implode('', $actions) . '</div>';
                 })
                 ->rawColumns(['status_badge', 'property_unit', 'address', 'tenant_name', 'dates', 'rent', 'signature_status', 'actions'])
                 ->make(true);
@@ -1453,7 +1467,7 @@ class LeaseController extends Controller
             if ($currentAssignment) {
                 $currentAssignment->update([
                     'is_current' => false,
-                    'actual_move_out' => $request->effective_date,
+                    'actual_move_out' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('Y-m-d'),
                 ]);
             }
 
@@ -1467,8 +1481,8 @@ class LeaseController extends Controller
             $newAssignment = LeaseAssignment::create([
                 'lease_id' => $lease->id,
                 'bed_id' => $newBed->id,
-                'assigned_at' => $request->effective_date,
-                'actual_move_in' => $request->effective_date,
+                'assigned_at' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('Y-m-d'),
+                'actual_move_in' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('Y-m-d'),
                 'is_current' => true,
             ]);
 
@@ -1481,7 +1495,7 @@ class LeaseController extends Controller
             $changeNote = "\n\n--- Bed Change (" . now()->format('M d, Y H:i') . ") ---\n";
             $changeNote .= "From: " . ($oldBed?->bed_label ?? 'N/A') . "\n";
             $changeNote .= "To: " . $newBed->bed_label . "\n";
-            $changeNote .= "Effective: " . date('M d, Y', strtotime($request->effective_date)) . "\n";
+            $changeNote .= "Effective: " . \Carbon\Carbon::createFromFormat('m/d/Y', $request->effective_date)->format('M d, Y') . "\n";
             if ($request->notes) {
                 $changeNote .= "Notes: " . $request->notes;
             }
@@ -1643,14 +1657,14 @@ class LeaseController extends Controller
                 $currentAssignment->update([
                     'bed_id' => $bed->id,
                     'assigned_at' => now(),
-                    'actual_move_in' => $request->move_in_date,
+                    'actual_move_in' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->move_in_date)->format('Y-m-d'),
                 ]);
             } else {
                 LeaseAssignment::create([
                     'lease_id' => $lease->id,
                     'bed_id' => $bed->id,
                     'assigned_at' => now(),
-                    'actual_move_in' => $request->move_in_date,
+                    'actual_move_in' => \Carbon\Carbon::createFromFormat('m/d/Y', $request->move_in_date)->format('Y-m-d'),
                     'is_current' => true,
                 ]);
             }
@@ -1663,7 +1677,7 @@ class LeaseController extends Controller
             $notes = $lease->notes ?? '';
             $assignNote = "\n\n--- Bed Assigned (" . now()->format('M d, Y H:i') . ") ---\n";
             $assignNote .= "Bed: " . $bed->bed_label . "\n";
-            $assignNote .= "Move-in Date: " . date('M d, Y', strtotime($request->move_in_date)) . "\n";
+            $assignNote .= "Move-in Date: " . \Carbon\Carbon::createFromFormat('m/d/Y', $request->move_in_date)->format('M d, Y') . "\n";
             if ($request->notes) {
                 $assignNote .= "Notes: " . $request->notes;
             }
@@ -1789,12 +1803,107 @@ class LeaseController extends Controller
         }
     }
 
-    public function terminateLease($leaseId)
+    public function terminateLease(Request $request, $leaseId)
     {
-        // This method can be used to terminate a lease early, similar to closeLease but with different status and logic. 
-        //Terminate lease will update status, free up bed, disable invoice payment and status to cancelled, but keep the lease record for historical purposes, 
-        //while closeLease can be used for both natural end and manual closure with more detailed notes and optional notifications.
-        //Implement the logic here based on your specific requirements for lease termination, such as updating status to 'TERMINATED', setting end date to today, freeing up bed, and handling invoices.
-        
+        $request->validate([
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $lease = Lease::with([
+                'assignments' => function ($q) {
+                    $q->where('is_current', true)->with('bed');
+                },
+                'invoices' => function ($q) {
+                    $q->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
+                },
+                'documents',
+            ])->findOrFail($leaseId);
+
+            // Termination is only applicable for leases currently running or in signing stage.
+            if (!in_array($lease->status, ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only active or pending leases can be terminated.'
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            $now = now();
+            $today = $now->toDateString();
+
+            // 1. Update lease status and end date.
+            $oldEndDate = $lease->end_date ? $lease->end_date->format('Y-m-d') : null;
+            $terminationReason = $request->filled('reason')
+                ? $request->reason
+                : 'Lease terminated early by admin';
+
+            $updatedNotes = $lease->notes ?? '';
+            $updatedNotes .= "\n\n--- Lease Terminated (" . $now->format('M d, Y H:i') . ") ---\n";
+            $updatedNotes .= "Termination Date: " . $now->format('M d, Y') . "\n";
+            if ($oldEndDate) {
+                $updatedNotes .= "Previous End Date: " . date('M d, Y', strtotime($oldEndDate)) . "\n";
+            }
+            $updatedNotes .= "Reason: " . $terminationReason;
+
+            $lease->update([
+                'status' => 'TERMINATED',
+                'end_date' => $today,
+                'bed_assignment_pending' => false,
+                'notes' => trim($updatedNotes),
+            ]);
+
+            // 2. Update lease assignments and free beds.
+            $lease->assignments()->where('is_current', true)->update([
+                'is_current' => false,
+                'actual_move_out' => $today,
+            ]);
+
+            $bedIds = $lease->assignments->pluck('bed_id')->filter()->toArray();
+            if (!empty($bedIds)) {
+                Bed::whereIn('id', $bedIds)->update([
+                    'is_occupied' => false,
+                ]);
+                Log::info("Beds marked as unoccupied on lease termination #{$lease->id}: " . implode(', ', $bedIds));
+            }
+
+            // 3. Cancel open invoices so further payments are blocked.
+            $cancelledInvoices = 0;
+            if ($lease->invoices->count() > 0) {
+                foreach ($lease->invoices as $invoice) {
+                    $invoice->update([
+                        'status' => 'CANCELLED',
+                        'cancelled_reason' => $terminationReason,
+                        'cancelled_by' => auth()->id(),
+                        'cancelled_at' => $now,
+                    ]);
+                    $cancelledInvoices++;
+                }
+            }
+
+            // 4. Cancel any unsigned lease documents.
+            $lease->documents()
+                ->whereIn('status', ['draft', 'pending_signatures'])
+                ->update(['status' => 'cancelled']);
+
+            DB::commit();
+
+            Log::info("Lease #{$lease->id} terminated. Cancelled invoices: {$cancelledInvoices}");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Lease terminated successfully.',
+                'cancelled_invoices' => $cancelledInvoices,
+            ]);
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to terminate lease: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to terminate lease: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
