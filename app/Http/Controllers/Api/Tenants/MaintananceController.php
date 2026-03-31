@@ -609,4 +609,85 @@ class MaintananceController extends Controller
             return $this->error([], 'Failed to load property details', 500);
         }
     }
+
+    /**
+     * GET /api/maintanance/properties
+     */
+    public function getProperties(Request $request)
+    {
+        try {
+            $tenant = auth('api')->user();
+
+            $propertyIds = Lease::where('tenant_id', $tenant->id)
+                ->whereIn('status', ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])
+                ->pluck('property_id')
+                ->unique()
+                ->filter()
+                ->values();
+
+            if ($propertyIds->isEmpty()) {
+                return $this->success([], 'No leased properties found', 200);
+            }
+
+            $properties = Property::whereIn('id', $propertyIds)
+                ->where('is_active', true)
+                ->with([
+                    'units' => function ($q) {
+                        $q->where('is_active', true)
+                            ->select('id', 'property_id', 'name', 'gender_designation')
+                            ->with([
+                                'rooms' => function ($q) {
+                                    $q->where('is_active', true)
+                                        ->select('id', 'unit_id', 'room_number', 'name', 'gender_designation')
+                                        ->with([
+                                            'beds' => function ($q) {
+                                                $q->select('id', 'room_id', 'bed_number', 'bed_label', 'base_rent', 'is_occupied');
+                                            }
+                                        ]);
+                                }
+                            ]);
+                    }
+                ])
+                ->select('id', 'name', 'address', 'image_path')
+                ->get();
+
+            $data = $properties->map(function ($property) {
+                return [
+                    'property_id'      => $property->id,
+                    'name'    => $property->name,
+                    'address' => $property->address,
+                    'image'   => $property->image_path ? asset($property->image_path) : null,
+                    'units'   => $property->units->map(function ($unit) {
+                        return [
+                            'unit_id'            => $unit->id,
+                            'name'               => $unit->name,
+                            'gender_designation' => $unit->gender_designation,
+                            'rooms'              => $unit->rooms->map(function ($room) {
+                                return [
+                                    'room_id'            => $room->id,
+                                    'name'               => $room->name ?? 'Room ' . $room->room_number,
+                                    'room_number'        => $room->room_number,
+                                    'gender_designation' => $room->gender_designation,
+                                    'beds'               => $room->beds->map(function ($bed) {
+                                        return [
+                                            'bed_id'          => $bed->id,
+                                            'bed_number'  => $bed->bed_number,
+                                            'bed_label'   => $bed->bed_label ?? 'Bed ' . $bed->bed_number,
+                                            'base_rent'   => $bed->base_rent,
+                                            'is_occupied' => (bool) $bed->is_occupied,
+                                        ];
+                                    })->values(),
+                                ];
+                            })->values(),
+                        ];
+                    })->values(),
+                ];
+            })->values();
+
+            return $this->success($data, 'Properties fetched successfully', 200);
+        } catch (Exception $e) {
+            Log::error('getProperties error: ' . $e->getMessage());
+            return $this->error([], 'Failed to load properties', 500);
+        }
+    }
 }
