@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+use App\Models\Lease\LeaseDocument;
 use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class Tenant extends Authenticatable implements JWTSubject
@@ -12,6 +13,7 @@ class Tenant extends Authenticatable implements JWTSubject
     use HasFactory;
 
     protected $fillable = [
+        'application_id',
         'application_source',
         'status',
         'move_in_date',
@@ -225,5 +227,29 @@ class Tenant extends Authenticatable implements JWTSubject
     public function leases()
     {
         return $this->hasMany(Lease::class);
+    }
+
+    public function leaseDocuments()
+    {
+        return $this->hasManyThrough(LeaseDocument::class, Lease::class);
+    }
+
+    public function application()
+    {
+        return $this->hasOne(Application::class, 'id', 'application_id');
+    }
+
+    /**
+     * Tenant's active lease
+     */
+    public function activeLease()
+    {
+        return $this->hasOne(Lease::class)
+            ->whereIn('status', ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])
+            ->with([
+                'property:id,name,address',
+                'currentAssignment.bed.room.unit',
+            ])
+            ->latest();
     }
 }

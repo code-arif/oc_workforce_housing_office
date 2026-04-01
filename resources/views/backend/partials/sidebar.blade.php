@@ -36,21 +36,29 @@
                 </li>
 
                 @can('property.list')
-                {{-- Properties --}}
+                    {{-- Properties --}}
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('property.index') ? 'has-link' : '' }}"
+                            href="{{ route('property.index') }}">
+                            <i class="fa-solid fa-bed-pulse"></i>
+                            <span class="side-menu__label">Manage Property</span>
+                        </a>
+                    </li>
+                @endcan
+
+                {{-- Applications --}}
+                @can('applications.list')
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('property.index') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
-                        <i class="fa-solid fa-bed-pulse"></i>
-                        <span class="side-menu__label">Manage Property</span>
-                        <i class="angle fa fa-angle-right ms-auto"></i>
+                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        href="{{ route('tenants.applications.index') }}">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                        <span class="side-menu__label">Applications</span>
                     </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('property.index') }}" class="slide-item">Properties</a></li>
-                    </ul>
                 </li>
                 @endcan
 
-
                 {{-- Tenants --}}
+                @can('tenant.list')
                 <li class="slide">
                     <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
                         href="{{ route('tenants.index') }}">
@@ -58,128 +66,151 @@
                         <span class="side-menu__label">Tenants</span>
                     </a>
                 </li>
-
-                {{-- Applications --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-clipboard-list"></i>
-                        <span class="side-menu__label">Applications</span>
-                    </a>
-                </li>
+                @endcan               
 
                 {{-- Leases and files --}}
+                @canany(['lease.list', 'lease.template.list', 'seasons.list'])
                 <li class="slide">
-
-                    <a class="side-menu__item {{ request()->routeIs('seasons.list') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
-                       <i class="fa-solid fa-file"></i>
+                    <a class="side-menu__item {{ request()->routeIs('seasons.*','leases.*','lease-templates.*') ? 'has-link' : '' }}"
+                    data-bs-toggle="slide" href="#">
+                        <i class="fa-solid fa-file"></i>
                         <span class="side-menu__label">Manage Leases & Files</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
+
                     <ul class="slide-menu">
                         @can('seasons.list')
-                        <li><a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a></li>
+                            <li>
+                                <a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a>
+                            </li>
                         @endcan
+
                         @can('lease.template.list')
-                        <li><a href="{{route('lease-templates.index')}}" class="slide-item">Lease Templates</a></li>
+                            <li>
+                                <a href="{{ route('lease-templates.index') }}" class="slide-item">Lease Templates</a>
+                            </li>
                         @endcan
+
                         @can('lease.list')
-                        <li><a href="{{route('leases.index')}}" class="slide-item">Leases</a></li>
+                            <li>
+                                <a href="{{ route('leases.index') }}" class="slide-item">Leases</a>
+                            </li>
                         @endcan
                     </ul>
                 </li>
+                @endcanany
+
 
                 {{-- Income --}}
+                @can('income')
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
+                    <a class="side-menu__item {{ request()->routeIs('invoices.index') ? 'has-link' : '' }}"
+                        href="{{ route('invoices.index') }}">
                         <i class="fa-solid fa-chart-line"></i>
                         <span class="side-menu__label">Income</span>
                     </a>
                 </li>
-
-                {{-- Expence --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-explosion"></i>
-                        <span class="side-menu__label">Expence</span>
-                    </a>
-                </li>
-
-                {{-- Maintanence --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"
-                        href="{{ route('maintanance.index') }}">
-                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                        <span class="side-menu__label">Maintanence</span>
-                    </a>
-                </li>
-
-                {{-- Messaging --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-message"></i>
-                        <span class="side-menu__label">Messaging</span>
-                    </a>
-                </li>
-
-                {{-- Listing --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="">
-                        <i class="fa-solid fa-clipboard-list"></i>
-                        <span class="side-menu__label">Listing</span>
-                    </a>
-                </li>
-
-                @can('cms.view')
-                {{-- Frontend --}}
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('cms.index') ? 'has-link' : '' }}" href="{{ route('cms.index') }}">
-                        <i class="fa-solid fa-layer-group"></i>
-                        <span class="side-menu__label">Platform</span>
-                    </a>
-                </li>
                 @endcan
 
-                @can('user-management.users.list' )
-                {{-- User Management --}}
+                
+
+                @can('cms.view')
+                    {{-- Frontend --}}
+                    <li class="slide">
+
+                        <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span class="side-menu__label">Platforms</span>
+                            <i class="angle fa fa-angle-right ms-auto"></i>
+                        </a>
+                        <ul class="slide-menu">
+                            <li><a href="{{ route('cms.index') }}"
+                                    class="slide-item {{ request()->routeIs('cms.index') ? 'has-link' : '' }}">CMS</a></li>
+                            <li><a href="{{ route('messaging.index') }}"
+                                    class="slide-item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}">Messaging</a>
+                            </li>
+                            {{-- Maintanence --}}
+                            <li>
+                                <a class="slide-item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"href="{{ route('maintanance.index') }}">
+                                Maintanence
+                                </a>
+                            </li>
+                            {{-- Items & FAQ --}}
+                            <li><a href="{{ route('items.index') }}"
+                                    class="slide-item {{ request()->routeIs('items.*') ? 'has-link' : '' }}">Item Lists</a>
+                            </li>
+                            <li><a href="{{ route('faq.index') }}"
+                                    class="slide-item {{ request()->routeIs('faq.*') ? 'has-link' : '' }}">FAQ</a></li>
+                        </ul>
+                    </li>
+                @endcan
+
+
+                {{-- Reports --}}
+                @can('reports.list')
                 <li class="slide">
                     <a class="side-menu__item" data-bs-toggle="slide" href="#">
-                        <i class="fa-solid fa-users-gear"></i>
-                        <span class="side-menu__label">User Management</span>
+                        <i class="fa-solid fa-explosion"></i>
+                        <span class="side-menu__label">Reports</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
-                        @can('user-management.users.list')
-                        <li><a href="{{ route('user-management.users.index') }}" class="slide-item">Users</a></li>
-                        @endcan
-                        @can('user-management.roles.list')
-                        <li><a href="{{ route('user-management.roles.index') }}" class="slide-item">Roles</a></li>
-                        @endcan
-                        @can('user-management.permissions.list')
-                        <li><a href="{{ route('user-management.permissions.index') }}" class="slide-item">Permissions</a></li>
-                        @endcan
+                        <li><a href="{{ route('reports.property.index') }}"
+                                class="slide-item {{ request()->routeIs('reports.property.*') ? 'active' : '' }}">Property
+                                Reports</a></li>
+                        <li><a href="{{ route('reports.rent.index') }}"
+                                class="slide-item {{ request()->routeIs('reports.rent.*') ? 'active' : '' }}">Rent
+                                Reports</a></li>
+                        <li><a href="{{ route('reports.rent-collection.index') }}"
+                                class="slide-item {{ request()->routeIs('reports.rent-collection.*') ? 'active' : '' }}">Rent
+                                Collection</a></li>
+                        <li><a href="{{ route('reports.tenant.index') }}" class="slide-item">Tenant Reports</a></li>
+                        <li><a href="#" class="slide-item">Lease Reports</a></li>
                     </ul>
                 </li>
                 @endcan
+                @canany(['user-management.users.list', 'user-management.roles.list', 'user-management.permissions.list'])
+                    {{-- User Management --}}
+                    <li class="slide">
+                        <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                            <i class="fa-solid fa-users-gear"></i>
+                            <span class="side-menu__label">User Management</span>
+                            <i class="angle fa fa-angle-right ms-auto"></i>
+                        </a>
+                        <ul class="slide-menu">
+                            @can('user-management.users.list')
+                                <li><a href="{{ route('user-management.users.index') }}" class="slide-item">Users</a></li>
+                            @endcan
+                            @can('user-management.roles.list')
+                                <li><a href="{{ route('user-management.roles.index') }}" class="slide-item">Roles</a></li>
+                            @endcan
+                            @can('user-management.permissions.list')
+                                <li><a href="{{ route('user-management.permissions.index') }}"
+                                        class="slide-item">Permissions</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                @endcan
                 {{-- Settings --}}
+                @can('settings')
+                    
                 <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                    <a class="side-menu__item {{ request()->routeIs('setting.*', 'social.profile.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                         <i class="fa fa-cog"></i>
                         <span class="side-menu__label">Settings</span>
                         <i class="angle fa fa-angle-right ms-auto"></i>
                     </a>
                     <ul class="slide-menu">
-                        <li><a href="{{ route('setting.general.index') }}" class="slide-item">General Settings</a>
+                        <li><a href="{{ route('setting.general.index') }}" class="slide-item {{ request()->routeIs('setting.general.*') ? 'active' : '' }}">General Settings</a>
                         </li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item">Profile Settings</a>
+                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item {{ request()->routeIs('setting.profile.*') ? 'active' : '' }}">Profile Settings</a>
                         </li>
-                        <li><a href="{{ route('social.profile.index') }}" class="slide-item">Social Profile</a></li>
+                        <li><a href="{{ route('social.profile.index') }}" class="slide-item {{ request()->routeIs('social.profile.*') ? 'active' : '' }}">Social Profile</a></li>
+                        <li><a href="{{ route('setting.mail-templates.index') }}" class="slide-item {{ request()->routeIs('setting.mail-templates.*') ? 'active' : '' }}">Mail Templates</a></li>
+                        <li><a href="{{ route('system-monitor.index') }}" class="slide-item {{ request()->routeIs('system-monitor.*') ? 'active' : '' }}">System Monitor</a></li>
                     </ul>
                 </li>
+                @endcan
             </ul>
 
 

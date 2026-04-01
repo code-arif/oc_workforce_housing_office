@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class TenantPasswordRestLinkMail extends Mailable
+class TenantPasswordRestLinkMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -32,7 +32,7 @@ class TenantPasswordRestLinkMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tenant Form Link Mail',
+            subject: 'Setup Your Password - OC Workforce Housing',
         );
     }
 

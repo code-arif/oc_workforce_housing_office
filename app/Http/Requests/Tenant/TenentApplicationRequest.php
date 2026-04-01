@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Tenant;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class TenentApplicationRequest extends FormRequest
 {
@@ -15,6 +17,19 @@ class TenentApplicationRequest extends FormRequest
     }
 
     /**
+     * Handle a failed validation attempt.
+     * Returns JSON response for API requests.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(response()->json([
+            'success' => false,
+            'message' => 'Validation failed.',
+            'errors' => $validator->errors()
+        ], 422));
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -22,63 +37,56 @@ class TenentApplicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Profile
+            // Applicant Profile
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'phone' => 'required|string|max:20',
-            'country_code' => 'nullable|string|max:10',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'gender' => 'nullable|string|max:20',
+            'country_of_origin' => 'nullable|string|max:100',
             'date_of_birth' => 'required|date|before:today',
-            'gender' => 'required|in:male,female,other',
-
-            // Address
-            'address' => 'required|string|max:500',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'zip' => 'nullable|string|max:20',
-            'country' => 'nullable|string|max:100',
 
             // Dates
-            'move_in_date' => 'nullable|date',
             'arrival_date' => 'nullable|date',
+            'departure_date' => 'nullable|date|after_or_equal:arrival_date',
 
-            // Employment (Single - Backward compatibility)
-            'employment_status' => 'nullable|string|in:employed,student,unemployed,self-employed',
-            'employer' => 'nullable|string|max:255',
-            'title' => 'nullable|string|max:255',
-            'contact_person_name' => 'nullable|string|max:255',
-            'contact_email' => 'nullable|email',
-            'contact_phone' => 'nullable|string|max:20',
-            'is_current_working' => 'nullable|boolean',
-            'school' => 'nullable|string|max:255',
-            'start_date' => 'nullable|date',
-            'graduation_date' => 'nullable|date|after:start_date',
+            // Property preference
+            'property_id' => 'nullable|integer|exists:properties,id',
 
-            // Employment (Multiple - Array support)
+            // Notes
+            'notes' => 'nullable|string|max:2000',
+
+            // Employer Information (Single - Backward compatibility)
+            // 'company_name' => 'nullable|string|max:255',
+            // 'company_address' => 'nullable|string|max:500',
+            // 'industry' => 'nullable|string|max:255',
+            // 'job_title' => 'nullable|string|max:255',
+            // 'employer_contact_person_name' => 'nullable|string|max:255',
+            // 'employer_contact_person_phone' => 'nullable|string|max:20',
+            // 'employer_contact_person_email' => 'nullable|email',
+
+            // Employer Information (Multiple - Array support)
             'employment_histories' => 'nullable|array',
-            'employment_histories.*.employment_status' => 'required|string|in:employed,student,unemployed,self-employed',
-            'employment_histories.*.employer' => 'nullable|string|max:255',
-            'employment_histories.*.title' => 'nullable|string|max:255',
-            'employment_histories.*.contact_person_name' => 'nullable|string|max:255',
-            'employment_histories.*.contact_email' => 'nullable|email',
-            'employment_histories.*.contact_phone' => 'nullable|string|max:20',
-            'employment_histories.*.is_current_working' => 'nullable|boolean',
-            'employment_histories.*.school' => 'nullable|string|max:255',
-            'employment_histories.*.start_date' => 'nullable|date',
-            'employment_histories.*.graduation_date' => 'nullable|date|after:employment_histories.*.start_date',
+            'employment_histories.*.company_name' => 'nullable|string|max:255',
+            'employment_histories.*.company_address' => 'nullable|string|max:500',
+            'employment_histories.*.industry' => 'nullable|string|max:255',
+            'employment_histories.*.job_title' => 'nullable|string|max:255',
+            'employment_histories.*.employer_contact_person_name' => 'nullable|string|max:255',
+            'employment_histories.*.employer_contact_person_phone' => 'nullable|string|max:20',
+            'employment_histories.*.employer_contact_person_email' => 'nullable|email',
 
-            // Emergency Contact (Single - Backward compatibility)
-            'emergency_name' => 'nullable|string|max:255',
-            'emergency_phone' => 'nullable|string|max:20',
-            'emergency_email' => 'nullable|email',
-            'emergency_relationship' => 'nullable|string|max:100',
-
-            // Emergency Contacts (Multiple - Array support)
-            'emergency_contacts' => 'nullable|array',
-            'emergency_contacts.*.name' => 'required|string|max:255',
-            'emergency_contacts.*.phone' => 'required|string|max:20',
-            'emergency_contacts.*.email' => 'nullable|email',
-            'emergency_contacts.*.relationship' => 'nullable|string|max:100',
+            // Sponsor Information
+            'sponsor_name' => 'nullable|string|max:255',
+            'sponsor_city' => 'nullable|string|max:100',
+            'sponsor_state' => 'nullable|string|max:100',
+            'sponsor_zipcode' => 'nullable|string|max:20',
+            'sponsor_country' => 'nullable|string|max:100',
+            'sponsor_contact_name' => 'nullable|string|max:255',
+            'sponsor_phone' => 'nullable|string|max:20',
+            'sponsor_email' => 'nullable|email',
+            'sponsor_relationship' => 'nullable|string|max:100',
+            'is_j1_sponsor' => 'nullable|string|in:yes,no',
 
             // Documents
             'passport' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
@@ -99,17 +107,17 @@ class TenentApplicationRequest extends FormRequest
     {
         return [
             'first_name.required' => 'First name is required.',
+            'email.required' => 'Email address is required.',
+            'email.email' => 'Please provide a valid email address.',
+            'phone.required' => 'Phone number is required.',
             'date_of_birth.required' => 'Date of birth is required.',
             'date_of_birth.before' => 'Date of birth must be in the past.',
-            'gender.required' => 'Gender is required.',
-            'address.required' => 'Address is required.',
-            'phone.required' => 'Phone number is required.',
+            'departure_date.after_or_equal' => 'Departure date must be on or after arrival date.',
+            'property_id.exists' => 'Selected property does not exist.',
 
-            'employment_histories.*.employment_status.required' => 'Employment status is required for each employment history.',
-            'employment_histories.*.graduation_date.after' => 'Graduation date must be after start date.',
-
-            'emergency_contacts.*.name.required' => 'Emergency contact name is required.',
-            'emergency_contacts.*.phone.required' => 'Emergency contact phone is required.',
+            'employment_histories.*.employer_contact_person_email.email' => 'Please provide a valid employer contact email.',
+            'sponsor_email.email' => 'Please provide a valid sponsor email.',
+            'sponsor_contact_name.string' => 'Sponsor contact name must be a string.',
 
             'passport.mimes' => 'Passport must be a PDF, JPG, JPEG, or PNG file.',
             'visa.mimes' => 'Visa must be a PDF, JPG, JPEG, or PNG file.',
@@ -126,23 +134,13 @@ class TenentApplicationRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        // Convert is_current_working to boolean if present
-        if ($this->has('is_current_working')) {
-            $this->merge([
-                'is_current_working' => filter_var($this->is_current_working, FILTER_VALIDATE_BOOLEAN)
-            ]);
-        }
-
-        // Handle employment histories array
-        if ($this->has('employment_histories')) {
-            $histories = $this->employment_histories;
-            if (is_array($histories)) {
-                foreach ($histories as $key => $history) {
-                    if (isset($history['is_current_working'])) {
-                        $histories[$key]['is_current_working'] = filter_var($history['is_current_working'], FILTER_VALIDATE_BOOLEAN);
-                    }
-                }
-                $this->merge(['employment_histories' => $histories]);
+        // Normalize is_j1_sponsor to string
+        if ($this->has('is_j1_sponsor')) {
+            $value = $this->is_j1_sponsor;
+            if (is_bool($value)) {
+                $this->merge([
+                    'is_j1_sponsor' => $value ? 'yes' : 'no'
+                ]);
             }
         }
     }

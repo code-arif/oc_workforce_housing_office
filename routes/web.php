@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Tenants\TenantPaymentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
@@ -102,6 +103,7 @@ Route::get('/mail-test', function(){
 });
 
 
-
+// Handle webhook
+Route::post('/stripe/webhook', [TenantPaymentController::class, 'handleWebhook']);
 
 require __DIR__ . '/auth.php';

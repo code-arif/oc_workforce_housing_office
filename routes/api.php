@@ -1,17 +1,21 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\FaqApiController;
 use App\Http\Controllers\Api\CMS\CmsController;
+use App\Http\Controllers\Api\ContactFormController;
 use App\Http\Controllers\Api\Tenants\LandingController;
 use App\Http\Controllers\Api\Tenants\TenantAuthController;
 use App\Http\Controllers\Api\Tenants\TenantFormController;
-use App\Http\Controllers\Api\Auth\AuthenticationController;
+use App\Http\Controllers\Api\Tenants\ApplicationController;
 use App\Http\Controllers\Api\Tenants\MaintananceController;
-use App\Http\Controllers\Api\Tenants\PasswordResetController;
-use App\Http\Controllers\Api\Tenants\TenantDashboardController;
-use App\Http\Controllers\Api\Tenants\TenantPasswordController;
-use App\Http\Controllers\Api\Tenants\TenantProfileController;
+use App\Http\Controllers\Api\Tenants\TenantPaymentController;
 
+use App\Http\Controllers\Api\Tenants\TenantProfileController;
+use App\Http\Controllers\Api\Tenants\TenantPasswordController;
+use App\Http\Controllers\Api\Tenants\TenantDashboardController;
+use App\Http\Controllers\Api\Tenants\TenantLeaseSignController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
 //health-check
 Route::get('/health', function () {
     return response()->json([
@@ -23,61 +27,42 @@ Route::get('/health', function () {
 
 //Guest user routes
 Route::group(['middleware' => 'guest:api'], function () {
-
-    // Property Creation - Unit/Room/Bed API
-    Route::get('/unit/{unitId}/rooms', function ($unitId) {
-        $unit = \App\Models\Unit::with('rooms')->find($unitId);
-        if (!$unit) {
-            return response()->json(['rooms' => []]);
-        }
-        return response()->json(['rooms' => $unit->rooms]);
-    })->name('api.unit.rooms');
-
-    Route::post('/rooms/beds', function (\Illuminate\Http\Request $request) {
-        $roomId = $request->input('room_id');
-        if (empty($roomId)) {
-            return response()->json(['beds' => []]);
-        }
-        $beds = \App\Models\Bed::where('room_id', $roomId)->with('room')->get();
-        return response()->json(['beds' => $beds]);
-    })->name('api.rooms.beds');
-
     /*
     |--------------------------------------------------------------------------
     | Cms Routes
     |--------------------------------------------------------------------------
     */
-    // cms route gorup
     Route::group(['prefix' => 'cms'], function () {
         Route::get('/home', [CmsController::class, 'home']); // cms home page data
         Route::get('/properties', [CmsController::class, 'properties']); // cms properties page data
         Route::get('/about-us', [CmsController::class, 'aboutUs']); // cms about us page data
         Route::get('/amenities', [CmsController::class, 'amenities']); // cms amenities page data
         Route::get('/pricing', [CmsController::class, 'pricing']); // cms pricing page data
+        Route::get('/reservation', [CmsController::class, 'reservation']); // cms reservation page data
+        Route::get('/navigation', [CmsController::class, 'navigation']); // cms navigation data
     });
 
+    // Contact Form submission
+    Route::post('/submit-contact', [ContactFormController::class, 'submitContact']);
 
     /*
     |--------------------------------------------------------------------------
-    | Tenent Management Routes
+    | Tenent Routes
     |--------------------------------------------------------------------------
     */
     // Public Routes
     Route::prefix('v1')->group(function () {
 
-        // Landing - Tenant Email Submission
-        Route::post('/tenant/apply', [LandingController::class, 'submitEmail']); // done
-
-        // Admin Actions
-        Route::prefix('admin')->group(function () {
-            Route::post('/tenant/proceed/email', [LandingController::class, 'adminEmailProceed']); // only for developemnt purpose
-            Route::post('/tenant/proceed/application', [LandingController::class, 'adminApplicationProceed']); // only for developemnt purpose
+        // Application Routes - New workflow
+        Route::prefix('tenant/applications')->group(function () {
+            // Single email submission (from landing page)
+            Route::post('/submit-email', [ApplicationController::class, 'submitSingleEmail']);
+            Route::post('/submit-reservation', [ApplicationController::class, 'submitReservation']);
         });
 
         // Tenant Form (Token-based)
-        Route::prefix('tenant/form')->group(function () {
-            Route::get('/{token}', [TenantFormController::class, 'show']);
-            Route::post('/{token}', [TenantFormController::class, 'submit']); // done
+        Route::prefix('/tenant/application/form')->group(function () {
+            Route::post('/{token}', [TenantFormController::class, 'submitApplication']);
         });
 
         // Tenant Authentication
@@ -85,27 +70,19 @@ Route::group(['middleware' => 'guest:api'], function () {
             Route::post('/login', [TenantAuthController::class, 'login']);
         });
 
-
         // Tenant Password Management
         Route::prefix('tenant/password')->group(function () {
             // First time password setup (after approval)
             Route::post('/setup', [TenantPasswordController::class, 'setPasswordAfterApproval']); // done
 
             // Forgot password flow (OTP-based)
-            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // done
-            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // done
-            Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // done
+            Route::post('/forgot/send-otp', [TenantPasswordController::class, 'sendForgotPasswordOTP']); // DONE: Send forget passowrd otp
+            Route::post('/forgot/verify-otp', [TenantPasswordController::class, 'verifyOTP']); // DONE: Verify otp
+            Route::post('/reset', [TenantPasswordController::class, 'resetPasswordWithToken']); // DEONE: Set new password
         });
 
-
-        // Maintance routes
-        Route::prefix('tenant/maintanance')->group(function () {
-            Route::get('/list', [MaintananceController::class, 'index']);
-            Route::post('/store', [MaintananceController::class, 'store']);
-            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
-            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
-            Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
-        });
+        // Get Properties for application form dropdowns
+        Route::get('/properties', [LandingController::class, 'propertiesForForms']);
     });
 });
 
@@ -116,23 +93,86 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/profile', [TenantProfileController::class, 'profile']); // done
         Route::put('/update-profile', [TenantProfileController::class, 'updateProfile']); // done
         Route::post('/update-avatar', [TenantProfileController::class, 'updateAvatar']); // done
+        Route::post('/change-password', [TenantProfileController::class, 'changePassword']); // done
+        Route::delete('/delete-profile', [TenantProfileController::class, 'destroy']); // done
 
         Route::post('/logout', [TenantAuthController::class, 'logout']); // done
+
+        // Active lease check
+        Route::get('/has-active-lease', [TenantDashboardController::class, 'hasActiveLease']); // done
 
 
         // Tenant dashbaord routes
         Route::get('/dashboard', [TenantDashboardController::class, 'dashboard']); // done
         Route::get('/documents', [TenantDashboardController::class, 'documents']); // done
-        Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+        // Route::post('/documents/upload', [TenantDashboardController::class, 'uploadDocument']);
+        Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
 
+
+        // Lease Routes
+        Route::prefix('leases')->name('leases.')->group(function () {
+            Route::get('/', [TenantDashboardController::class, 'leases']); // done
+            Route::get('/{leaseId}', [TenantDashboardController::class, 'leaseDetails']); // done
+        });
+
+        // Invoice Routes
+        Route::prefix('invoices')->name('invoices.')->group(function () {
+            Route::get('/', [TenantDashboardController::class, 'invoices']); // done
+            Route::get('/{invoiceId}', [TenantDashboardController::class, 'invoiceDetails']); // done
+        });
+
+        // Payment History & Transactions
+        Route::get('/payments', [TenantDashboardController::class, 'paymentHistory']); // ISSUE
+        Route::get('/transactions', [TenantDashboardController::class, 'transactions']); // ISSUE
+
+
+        // Lease Signing Routes
+        Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
+            Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']); // done
+            Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease']); // done
+            Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']); // done
+            Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']); // done
+            Route::get('/{leaseId}/download', [TenantLeaseSignController::class, 'downloadDocument'])->name('download'); // done
+            Route::post('/{leaseId}/custom-fields', [TenantLeaseSignController::class, 'updateCustomFields']); // Save custom text input fields
+        });
+
+        // Payment Routes (Stripe)
+        Route::prefix('payments')->name('payments.')->group(function () {
+            Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails']); // done
+            Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession']); // ISSUE
+            Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
+        });
 
         // Maintance routes
+        // Route::prefix('/maintanance')->group(function () {
+        //     Route::get('/list', [MaintananceController::class, 'index']); // done
+        //     Route::post('/store', [MaintananceController::class, 'store']); // done
+        //     Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']); // done
+        //     Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']); // done
+        //     Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
+        // });
+
         Route::prefix('/maintanance')->group(function () {
+            // Tenant's lease hierarchy (property → unit → room → bed)
+            Route::get('/my-leases', [MaintananceController::class, 'myLeases']);
+            Route::get('/lease/{leaseId}/units', [MaintananceController::class, 'getUnits']);
+            Route::get('/unit/{unitId}/rooms', [MaintananceController::class, 'getRooms']);
+            Route::get('/room/{roomId}/beds', [MaintananceController::class, 'getBeds']);
+
+            // CRUD
             Route::get('/list', [MaintananceController::class, 'index']);
-            Route::post('/store', [MaintananceController::class, 'store']); // done
-            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']); // done
-            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']); // done
+            Route::post('/store', [MaintananceController::class, 'store']);
+            Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit']);
+            Route::post('/update/{maintananceId}', [MaintananceController::class, 'update']);
             Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy']);
+
+            // Property details
+            Route::get('/property/{propertyId}/details', [MaintananceController::class, 'getPropertyDetails']);
+
+            Route::get('/properties', [MaintananceController::class, 'getProperties']);
         });
     });
+
+    //Get all faq
+    Route::get('/faqs', [FaqApiController::class, 'activeFaqs']);
 });

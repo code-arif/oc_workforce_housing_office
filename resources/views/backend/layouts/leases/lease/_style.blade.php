@@ -455,7 +455,7 @@
 
     .tenant-card .badge {
         font-size: 11px;
-        padding: 4px 8px;
+        padding: 10px;
     }
 
     .selected-tenants-section {
@@ -597,5 +597,58 @@
 
     #saveDraftBtn {
         min-width: 120px;
+    }
+
+    /* Custom Payment Section */
+    .custom-payment-section .card-header {
+        padding: 12px 16px;
+    }
+
+    .custom-payment-section .bg-primary-light {
+        background-color: #e3f2fd;
+        border-bottom: 1px solid #bbdefb;
+    }
+
+    .custom-payment-section .card-header h6 {
+        color: #1565c0;
+        font-weight: 600;
+    }
+
+    .custom-payment-entry {
+        padding: 10px 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+
+    .custom-payment-entry:hover {
+        background: #fff;
+        border-color: #2196F3;
+        box-shadow: 0 2px 4px rgba(33, 150, 243, 0.1);
+    }
+
+    .custom-payment-entry .input-group-text {
+        background: #fff;
+        font-size: 12px;
+    }
+
+    .custom-payment-entry .form-control {
+        font-size: 13px;
+    }
+
+    .custom-payments-summary {
+        background: #f8f9fa;
+        padding: 12px 16px;
+        border-radius: 6px;
+    }
+
+    .custom-payments-summary strong {
+        color: #2c3e50;
+    }
+
+    #customPaymentsTotal {
+        color: #28a745;
+        font-weight: 700;
     }
 </style>

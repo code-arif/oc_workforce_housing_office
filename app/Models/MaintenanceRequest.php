@@ -12,6 +12,9 @@ class MaintenanceRequest extends Model
     protected $fillable = [
         'tenant_id',
         'property_id',
+        'unit_id',
+        'room_id',
+        'bed_id',
         'unit',
         'title',
         'category',
@@ -43,6 +46,24 @@ class MaintenanceRequest extends Model
     public function property()
     {
         return $this->belongsTo(Property::class);
+    }
+
+    // RELATION: with unit model
+    public function unitModel()
+    {
+        return $this->belongsTo(Unit::class, 'unit_id');
+    }
+
+    // RELATION: with room model
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    // RELATION: with bed model
+    public function bed()
+    {
+        return $this->belongsTo(Bed::class);
     }
 
     // Admin / Owner who created it

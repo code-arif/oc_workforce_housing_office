@@ -20,7 +20,7 @@ class RoomController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $rooms = Room::with('beds')->latest()->get();
+            $rooms = Room::with('beds', 'unit')->orderBy('unit_id')->orderBy('room_number')->get();
             // dd($rooms);
             return DataTables::of($rooms)
                 ->addIndexColumn()
@@ -34,18 +34,25 @@ class RoomController extends Controller
                 })
                 ->addColumn('unit', fn($item) => $item->unit->name ?? '---')
                 ->addColumn('beds_count', function ($item) {
+                    $totalBeds = $item->beds->count();
+                    $occupiedBeds = $item->beds->where('is_occupied', true)->count();
+                    $availableBeds = $totalBeds - $occupiedBeds;
+                    
                     $bedsData = $item->beds->map(function($bed) {
                         return [
                             'room' => $bed->room->room_number ?? '---',
                             'number' => $bed->bed_number ?? '---',
-                            'is_active' => $bed->is_active
+                            'is_occupied' => $bed->is_occupied
                         ];
                     })->toArray();
                     
                     $bedsJson = htmlspecialchars(json_encode($bedsData), ENT_QUOTES, 'UTF-8');
                     
-                    return '<span class="badge bg-info beds-badge cursor-pointer" data-beds="' . $bedsJson . '" title="Hover for bed details">' 
-                        . $item->beds->count() . ' Beds</span>';
+                    return '<div class="d-flex gap-1 align-items-center" data-beds="' . $bedsJson . '" title="Hover for bed details">
+                        <span class="badge bg-primary">' . $totalBeds . ' </span>
+                        <span class="badge bg-success">' . $availableBeds . '</span>
+                        <span class="badge bg-danger">' . $occupiedBeds . ' </span>
+                    </div>';
                 })
                 ->addColumn('status', function ($item) {
                     $status = $item->is_active 
@@ -56,7 +63,7 @@ class RoomController extends Controller
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        <a href="' . route('rooms.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
+                        
                         <button class="btn btn-sm btn-warning me-1" onclick="editRoom(' . $item->id . ')" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -123,7 +130,7 @@ class RoomController extends Controller
             $room = Room::create([
                 'unit_id' => $validated['unit_id'],
                 'room_number' => $validated['room_number'],
-                'gender_designation' => $validated['gender_designation'],
+                'gender_designation' => $validated['gender_designation'] ?? 'male',
                 'name' => $validated['name'],
                 'is_active' => true,
             ]);
@@ -214,7 +221,7 @@ class RoomController extends Controller
                 'unit_id' => $validated['unit_id'],
                 'room_number' => $validated['room_number'],
                 'name' => $validated['name'],
-                'gender_designation' => $validated['gender_designation'],
+                'gender_designation' => $validated['gender_designation'] ?? 'male',
             ]);
 
             // Handle beds update

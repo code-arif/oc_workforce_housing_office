@@ -7,7 +7,7 @@
         <p>A new tenant email has been submitted and requires your action.</p>
 
         <div class="highlight-box">
-            <h3 style="color: #D9A600; margin-bottom: 20px;">Application Summary</h3>
+            <h3 style="color: #ba9779; margin-bottom: 20px;">Application Summary</h3>
 
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <tr>
@@ -27,7 +27,7 @@
                 <tr>
                     <td style="padding: 8px 0;"><strong>Current Status:</strong></td>
                     <td style="padding: 8px 0;"><span
-                            style="color: #D9A600; font-weight: 600;">{{ ucfirst($tenant->status) }}</span></td>
+                            style="color: #ba9779; font-weight: 600;">{{ ucfirst($tenant->status) }}</span></td>
                 </tr>
             </table>
         </div>

@@ -23,27 +23,9 @@ class PropertyTypeSeeder extends Seeder
         ]);
 
         PropertyType::create([
-            'name' => 'Commercial',
-            'slug' => 'commercial',
-            'description' => 'Commercial properties including offices and retail spaces',
-            'is_active' => true,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        PropertyType::create([
-            'name' => 'Hostel',
-            'slug' => 'hostel',
-            'description' => 'Hostel and accommodation properties',
-            'is_active' => true,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        PropertyType::create([
-            'name' => 'Industrial',
-            'slug' => 'industrial',
-            'description' => 'Industrial and warehouse properties',
+            'name' => 'Dorm Style Housing',
+            'slug' => 'dorm-style-housing',
+            'description' => '4 Person & 6 Person Rooms, Shared Bathrooms, and Laundry Facilities',
             'is_active' => true,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),

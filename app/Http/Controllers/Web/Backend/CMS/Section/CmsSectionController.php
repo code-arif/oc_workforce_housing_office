@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Backend\CMS\Section;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\HomeVideo;
 use App\Models\PricingPlan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -65,7 +66,21 @@ class CmsSectionController extends Controller
                         ->where('name', 'item')
                         ->first();
 
-                    return view('backend.layouts.cms.home.housing-option', compact('data'))->render();
+                    $accordions = CMS::where('page', 'home')
+                        ->where('section', 'housing-options')
+                        ->where('name', 'accordion')
+                        ->get();
+
+                    return view('backend.layouts.cms.home.housing-option', compact('data', 'accordions'))->render();
+
+                    // who we are.
+                case 'who-we-are':
+                    $data = CMS::where('page', 'home')
+                        ->where('section', 'who-we-are')
+                        ->where('name', 'item')
+                        ->first();
+
+                    return view('backend.layouts.cms.home.who-we-are', compact('data'))->render();
 
 
                     // home page how it works section
@@ -145,13 +160,18 @@ class CmsSectionController extends Controller
                     $galleries = Gallery::latest()->get();
                     return view('backend.layouts.cms.home.gallery', compact('galleries'))->render();
 
-                    // Property page - propert banner section
-                case 'property-banner':
+                    // home page - video section
+                case 'video-section':
+                    $videos = HomeVideo::orderBy('order')->get();
+                    return view('backend.layouts.cms.home.video-section', compact('videos'))->render();
+
+                    // Property page - propert one banner section
+                case 'property-one-banner':
                     $data = CMS::where('page', 'properties')
-                        ->where('section', 'hero')
+                        ->where('section', 'property-banner-one')
                         ->where('name', 'item')
                         ->first();
-                    return view('backend.layouts.cms.properties.properties-banner', compact('data'))->render();
+                    return view('backend.layouts.cms.property.property-one-banner', compact('data'))->render();
 
                     // property page - our offer section
                 case 'property-our-offer':
@@ -159,7 +179,7 @@ class CmsSectionController extends Controller
                         ->where('section', 'our-offer')
                         ->where('name', 'item')
                         ->first();
-                    return view('backend.layouts.cms.properties.our-offer', compact('data'))->render();
+                    return view('backend.layouts.cms.property.our-offer', compact('data'))->render();
 
                     // property page - property one section
                 case 'property-one':
@@ -167,7 +187,15 @@ class CmsSectionController extends Controller
                         ->where('section', 'property-one')
                         ->where('name', 'item')
                         ->first();
-                    return view('backend.layouts.cms.properties.property-one', compact('data'))->render();
+                    return view('backend.layouts.cms.property.property-one', compact('data'))->render();
+
+                    // Property page - propert two banner section
+                case 'property-two-banner':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-banner-two')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.property.property-two-banner', compact('data'))->render();
 
                     // property page - property two section
                 case 'property-two':
@@ -175,15 +203,22 @@ class CmsSectionController extends Controller
                         ->where('section', 'property-two')
                         ->where('name', 'item')
                         ->first();
-                    return view('backend.layouts.cms.properties.property-two', compact('data'))->render();
+                    return view('backend.layouts.cms.property.property-two', compact('data'))->render();
 
+                    // Property page - propert two banner section
+                case 'property-three-banner':
+                    $data = CMS::where('page', 'properties')
+                        ->where('section', 'property-banner-three')
+                        ->where('name', 'item')
+                        ->first();
+                    return view('backend.layouts.cms.property.property-three-banner', compact('data'))->render();
                     // property page - property three section
                 case 'property-three':
                     $data = CMS::where('page', 'properties')
                         ->where('section', 'property-three')
                         ->where('name', 'item')
                         ->first();
-                    return view('backend.layouts.cms.properties.property-three', compact('data'))->render();
+                    return view('backend.layouts.cms.property.property-three', compact('data'))->render();
 
                     // about page - about us breadcrumb section
                 case 'about-us-breadcrumb':

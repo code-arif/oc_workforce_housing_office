@@ -17,8 +17,10 @@
                         </ol>
                     </div>
                     <div class="ms-auto">
-                        <a href="{{ route('maintanance.create') }}" class="btn btn-primary">
-                            <i class="fe fe-plus me-2"></i> New Maintenance
+                        <a href="{{ route('maintanance.create') }}"
+                            class="btn btn-primary d-inline-flex align-items-center">
+                            <i class="fe fe-plus me-1"></i>
+                            New Maintenance
                         </a>
                     </div>
                 </div>
@@ -103,11 +105,14 @@
                     <div class="card-header border-bottom">
                         <h3 class="card-title">All Maintenance Requests</h3>
                         <div class="ms-auto">
-                            <button class="btn btn-sm btn-light me-2" id="exportBtn">
-                                <i class="fe fe-download me-1"></i> Export
-                            </button>
-                            <button class="btn btn-sm btn-light" id="filterBtn">
-                                <i class="fe fe-filter me-1"></i> Filter
+                            {{-- <button class="btn btn-sm btn-light me-2 d-inline-flex align-items-center" id="exportBtn">
+                                <i class="fe fe-download me-1"></i>
+                                Export
+                            </button> --}}
+
+                            <button class="btn btn-sm btn-light d-inline-flex align-items-center" id="filterBtn">
+                                <i class="fe fe-filter me-1"></i>
+                                Filter
                             </button>
                         </div>
                     </div>
@@ -166,6 +171,7 @@
                                         <th>Status</th>
                                         <th>Request</th>
                                         <th>Property/Unit</th>
+                                        <th>Lease</th>
                                         <th>Requested by</th>
                                         <th>Issue Date</th>
                                         <th>Actions</th>
@@ -212,6 +218,12 @@
                         data: 'property_unit',
                         name: 'property',
                         orderable: false
+                    },
+                    {
+                        data: 'lease_info',
+                        name: 'lease_info',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'tenant_name',
@@ -340,6 +352,51 @@
                 }
             });
         }
+
+        // Quick status change modal
+        function quickStatus(id) {
+            Swal.fire({
+                title: 'Change Status',
+                input: 'select',
+                inputOptions: {
+                    'pending': 'Open',
+                    'in_progress': 'In Progress',
+                    'completed': 'Resolved',
+                    'rejected': 'Rejected',
+                    'cancelled': 'Cancelled',
+                },
+                inputPlaceholder: 'Select a status',
+                showCancelButton: true,
+                confirmButtonText: 'Update',
+                confirmButtonColor: '#0d6efd',
+                inputValidator: (value) => {
+                    if (!value) return 'Please select a status';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let updateStatusUrl = "{{ route('maintanance.updateStatus', ':id') }}";
+                    updateStatusUrl = updateStatusUrl.replace(':id', id);
+
+                    $.ajax({
+                        url: updateStatusUrl,
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            status: result.value
+                        },
+                        success: function(res) {
+                            if (res.success) {
+                                toastr.success(res.message);
+                                $('#maintenanceTable').DataTable().ajax.reload(null, false);
+                            }
+                        },
+                        error: function() {
+                            toastr.error('Failed to update status');
+                        }
+                    });
+                }
+            });
+        }
     </script>
 @endpush
 
@@ -388,6 +445,32 @@
 
         .btn-group .btn {
             padding: 4px 8px;
+        }
+
+        /* Hierarchy mini chips in datatable */
+        .hier-mini {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        .chip-unit {
+            background: #e3f6fc;
+            color: #0891b2;
+        }
+
+        .chip-room {
+            background: #fef9e7;
+            color: #d97706;
+        }
+
+        .chip-bed {
+            background: #f0fdf4;
+            color: #16a34a;
         }
     </style>
 @endpush

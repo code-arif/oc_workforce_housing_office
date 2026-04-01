@@ -4,8 +4,9 @@
         <div class="card box-shadow-0">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h4 class="card-title">Units</h4>
-                <button class="btn btn-primary btn-sm" id="addUnitBtn">
-                    <i class="fe fe-plus me-1"></i> Add Unit
+                <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="addUnitBtn">
+                    <i class="fe fe-plus"></i>
+                    <span>Add Unit</span>
                 </button>
             </div>
 
@@ -45,7 +46,8 @@
                 <div class="modal-body">
                     <div class="form-group mb-3">
                         <label for="unit_name" class="form-label">Unit Name</label>
-                        <input type="text" class="form-control" name="name" id="unit_name" placeholder="Enter unit name">
+                        <input type="text" class="form-control" name="name" id="unit_name"
+                            placeholder="Enter unit name">
                         <div class="invalid-feedback"></div>
                     </div>
 
@@ -53,7 +55,7 @@
                         <label for="property_id" class="form-label">Property</label>
                         <select class="form-control" name="property_id" id="property_id">
                             <option value="">Select Property</option>
-                            @foreach(App\Models\Property::where('is_active', true)->get() as $property)
+                            @foreach (App\Models\Property::where('is_active', true)->get() as $property)
                                 <option value="{{ $property->id }}">{{ $property->name }}</option>
                             @endforeach
                         </select>
@@ -99,14 +101,35 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('units.list') }}",
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false },
-                    { data: 'name', name: 'name' },
-                    { data: 'property', name: 'property', orderable: false },
-                    { data: 'status', name: 'is_active', orderable: false },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false
+                    },
+                    {
+                        data: 'name',
+                        name: 'name'
+                    },
+                    {
+                        data: 'property',
+                        name: 'property',
+                        orderable: false
+                    },
+                    {
+                        data: 'status',
+                        name: 'is_active',
+                        orderable: false
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
-                order: [[0, 'asc']],
+                order: [
+                    [0, 'asc']
+                ],
                 pageLength: 10,
                 responsive: true
             });
@@ -139,14 +162,15 @@
 
                     try {
                         const formData = new FormData(this);
-                        const url = isEditMode 
-                            ? "{{ route('units.update', '') }}/" + editingId
-                            : "{{ route('units.store') }}";
+                        const url = isEditMode ?
+                            "{{ route('units.update', '') }}/" + editingId :
+                            "{{ route('units.store') }}";
 
                         const response = await axios.post(url, formData);
 
                         if (response.data.success) {
-                            window.showToast('success', response.data.message || 'Saved successfully!');
+                            window.showToast('success', response.data.message ||
+                                'Saved successfully!');
                             table.draw();
                             if (unitModal) unitModal.hide();
                             resetForm();
@@ -160,7 +184,8 @@
                                 const input = this.querySelector(`[name="${field}"]`);
                                 if (input) {
                                     input.classList.add('is-invalid');
-                                    const feedback = input.parentElement.querySelector('.invalid-feedback');
+                                    const feedback = input.parentElement.querySelector(
+                                        '.invalid-feedback');
                                     if (feedback) {
                                         feedback.textContent = errors[field][0];
                                     }
@@ -168,7 +193,8 @@
                             });
                             window.showToast('error', Object.values(errors).flat()[0]);
                         } else {
-                            window.showToast('error', error.response?.data?.message || 'Something went wrong!');
+                            window.showToast('error', error.response?.data?.message ||
+                                'Something went wrong!');
                         }
                     } finally {
                         submitBtn.disabled = false;
@@ -213,14 +239,16 @@
                             editingId = id;
                             document.getElementById('unitId').value = response.data.id;
                             document.getElementById('unit_name').value = response.data.name;
-                            document.getElementById('property_id').value = response.data.property_id;
+                            document.getElementById('property_id').value = response.data
+                                .property_id;
                             document.getElementById('unitModalLabel').textContent = 'Edit Unit';
                             document.getElementById('submitBtnText').textContent = 'Update';
                             if (unitModal) unitModal.show();
                         }
                     },
                     error: function(xhr) {
-                        window.showToast('error', xhr.responseJSON?.message || 'Error loading unit');
+                        window.showToast('error', xhr.responseJSON?.message ||
+                            'Error loading unit');
                     }
                 });
             };
@@ -255,7 +283,8 @@
                         table.draw();
                     },
                     error: function(error) {
-                        window.showToast('error', error.responseJSON?.message || 'Error deleting unit');
+                        window.showToast('error', error.responseJSON?.message ||
+                            'Error deleting unit');
                     }
                 });
             };
@@ -285,7 +314,8 @@
                                 }
                             },
                             error: function(xhr) {
-                                window.showToast('error', xhr.responseJSON?.message || 'Error toggling status');
+                                window.showToast('error', xhr.responseJSON?.message ||
+                                    'Error toggling status');
                             }
                         });
                     }

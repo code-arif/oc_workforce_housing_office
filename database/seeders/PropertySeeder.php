@@ -15,14 +15,14 @@ class PropertySeeder extends Seeder
     {
         // Residential Properties
         Property::create([
-            'name' => 'Downtown Residence',
-            'slug' => 'downtown-residence',
-            'description' => 'A premium residential property in downtown area',
-            'address' => '123 Main Street, City Center',
+            'name' => 'Phillips House',
+            'slug' => 'phillips-house',
+            'description' => 'Home of the Original Phillips Crab House To Modern Workforce Housing.',
+            'address' => '2004 Philadelphia Ave Ocean City, MD 21842, USA',
             'property_type_id' => 1,
             'image_path' => '/images/property1.jpg',
-            'latitude' => 40.7128,
-            'longitude' => -74.0060,
+            'latitude' => 38.350001,
+            'longitude' => -75.078288,
             'is_active' => true,
             'created_by' => 1,
             'updated_by' => 1,
@@ -31,14 +31,14 @@ class PropertySeeder extends Seeder
         ]);
 
         Property::create([
-            'name' => 'Suburban Villa',
-            'slug' => 'suburban-villa',
-            'description' => 'Spacious villa in peaceful suburban area',
-            'address' => '456 Oak Avenue, Suburbs',
+            'name' => 'Phillips Plaza',
+            'slug' => 'phillips-plaza',
+            'description' => 'The Phillips Plaza To Classic Dorm-Style Living',
+            'address' => '2004 Philadelphia Ave Ocean City, MD 21842, USA',
             'property_type_id' => 1,
             'image_path' => '/images/property2.jpg',
-            'latitude' => 40.7580,
-            'longitude' => -73.9855,
+            'latitude' => 38.350001,
+            'longitude' => -75.078288,
             'is_active' => true,
             'created_by' => 1,
             'updated_by' => 1,
@@ -48,14 +48,14 @@ class PropertySeeder extends Seeder
 
         // Commercial Properties
         Property::create([
-            'name' => 'Business Plaza',
-            'slug' => 'business-plaza',
-            'description' => 'Modern commercial space for offices',
-            'address' => '789 Commerce Street, Business District',
+            'name' => 'Phillips Plaza Suites',
+            'slug' => 'phillips-plaza-suites',
+            'description' => 'The Phillips Plaza Suites To Modern Workforce Housing.',
+            'address' => '2004 Philadelphia Ave Ocean City, MD 21842, USA',
             'property_type_id' => 2,
             'image_path' => '/images/property3.jpg',
-            'latitude' => 40.7489,
-            'longitude' => -73.9680,
+            'latitude' => 38.350001,
+            'longitude' => -75.078288,
             'is_active' => true,
             'created_by' => 1,
             'updated_by' => 1,
@@ -63,54 +63,5 @@ class PropertySeeder extends Seeder
             'updated_at' => Carbon::now(),
         ]);
 
-        // Hostel Properties
-        Property::create([
-            'name' => 'City Hostel',
-            'slug' => 'city-hostel',
-            'description' => 'Budget-friendly hostel with dormitory and private rooms',
-            'address' => '321 Travel Road, Tourist Area',
-            'property_type_id' => 3,
-            'image_path' => '/images/property4.jpg',
-            'latitude' => 40.7614,
-            'longitude' => -73.9776,
-            'is_active' => true,
-            'created_by' => 1,
-            'updated_by' => 1,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        Property::create([
-            'name' => 'Student Housing Complex',
-            'slug' => 'student-housing-complex',
-            'description' => 'Modern housing complex designed for students',
-            'address' => '654 University Lane, Education Zone',
-            'property_type_id' => 3,
-            'image_path' => '/images/property5.jpg',
-            'latitude' => 40.8075,
-            'longitude' => -73.9626,
-            'is_active' => true,
-            'created_by' => 1,
-            'updated_by' => 1,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
-
-        // Industrial Properties
-        Property::create([
-            'name' => 'Industrial Warehouse',
-            'slug' => 'industrial-warehouse',
-            'description' => 'Large warehouse facility for storage and operations',
-            'address' => '987 Factory Lane, Industrial Zone',
-            'property_type_id' => 4,
-            'image_path' => '/images/property6.jpg',
-            'latitude' => 40.6892,
-            'longitude' => -73.9760,
-            'is_active' => true,
-            'created_by' => 1,
-            'updated_by' => 1,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
     }
 }

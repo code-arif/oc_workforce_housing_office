@@ -73,14 +73,14 @@ class HomePageController extends Controller
     /**
      * Update housing option section
      **/
-    public function housingOptionupdate(CmsRequest $request)
+    public function whoWeAreUpdate(CmsRequest $request)
     {
         try {
             $validated_data = $request->validated();
 
             // get the existing record
             $existing = CMS::where('page', 'home')
-                ->where('section', 'housing-options')
+                ->where('section', 'who-we-are')
                 ->where('name', 'item')
                 ->first();
 
@@ -90,19 +90,19 @@ class HomePageController extends Controller
                     Helper::deleteImage($existing->image);
                 }
 
-                $image_path = Helper::uploadImage($request->file('image'), 'cms/home/housing-options');
+                $image_path = Helper::uploadImage($request->file('image'), 'cms/home/who-we-are');
                 $validated_data['image'] = $image_path;
             }
 
             // Add additional data
             $validated_data['page'] = 'home';
-            $validated_data['section'] = 'housing-options';
+            $validated_data['section'] = 'who-we-are';
             $validated_data['name'] = 'item';
 
             CMS::updateOrCreate(
                 [
                     'page' => 'home',
-                    'section' => 'housing-options',
+                    'section' => 'who-we-are',
                     'name' => 'item'
                 ],
                 $validated_data

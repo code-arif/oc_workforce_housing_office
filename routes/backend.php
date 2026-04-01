@@ -1,44 +1,58 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Web\Backend\BedController;
-use App\Http\Controllers\Web\Backend\RoomController;
-use App\Http\Controllers\Web\Backend\UnitController;
-use App\Http\Controllers\Web\Backend\SeasonController;
 use App\Http\Controllers\Web\Backend\AmenityController;
-use App\Http\Controllers\Web\Backend\PropertyController;
-use App\Http\Controllers\Web\Backend\DashboardController;
-use App\Http\Controllers\Web\Backend\Lease\LeaseController;
-use App\Http\Controllers\Web\Backend\PropertyTypeController;
-use App\Http\Controllers\Web\Backend\Settings\ProfileController;
-use App\Http\Controllers\Web\Backend\Settings\SettingController;
-use App\Http\Controllers\Api\Backend\Lease\LeaseManageController;
-use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
-use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
+use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
+use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Gallery\GalleryController;
-use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
-use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
-use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
-use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
-use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
-use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
-use App\Http\Controllers\Web\Backend\UserManagement\UserController;
+use App\Http\Controllers\Web\Backend\CMS\Home\ApartmentController;
 use App\Http\Controllers\Web\Backend\CMS\Home\EmpAndSponsorController;
-use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomePageController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomePageHousingOptionController;
 use App\Http\Controllers\Web\Backend\CMS\Home\HomePageSliderController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HomeVideoController;
+use App\Http\Controllers\Web\Backend\CMS\Home\HowItWorksController;
+use App\Http\Controllers\Web\Backend\CMS\Home\PrimeLocationController;
 use App\Http\Controllers\Web\Backend\CMS\Pricing\PricingPageController;
 use App\Http\Controllers\Web\Backend\CMS\Property\PropertyPageController;
-use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
-use App\Http\Controllers\Web\Backend\CMS\Amenities\AmenitiesPageController;
 use App\Http\Controllers\Web\Backend\CMS\Reservation\ReservationPageController;
-use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
 use App\Http\Controllers\Web\Backend\CMS\Section\CmsSectionController as SectionCmsSectionController;
+use App\Http\Controllers\Web\Backend\DashboardController;
+use App\Http\Controllers\Web\Backend\FaqController;
+use App\Http\Controllers\Web\Backend\Income\IncomeController;
+use App\Http\Controllers\Web\Backend\ItemController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
+use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
+use App\Http\Controllers\Web\Backend\Messaging\MessagingController;
+use App\Http\Controllers\Web\Backend\PropertyController;
+use App\Http\Controllers\Web\Backend\PropertySection\PropertySectionController;
+use App\Http\Controllers\Web\Backend\PropertyTypeController;
+use App\Http\Controllers\Web\Backend\Reports\PropertyReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentCollectionReportController;
+use App\Http\Controllers\Web\Backend\Reports\RentReportController;
+use App\Http\Controllers\Web\Backend\Reports\TenantReportController;
+use App\Http\Controllers\Web\Backend\RoomController;
+use App\Http\Controllers\Web\Backend\SeasonController;
+use App\Http\Controllers\Web\Backend\Settings\MailTemplateController;
+use App\Http\Controllers\Web\Backend\Settings\ProfileController;
+use App\Http\Controllers\Web\Backend\Settings\SettingController;
+use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
+use App\Http\Controllers\Web\Backend\Stripe\StripeConnectController;
+use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
+use App\Http\Controllers\Web\Backend\Tenant\PaymentManageController;
+use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
+use App\Http\Controllers\Web\Backend\UnitController;
+use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
+use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
+use App\Http\Controllers\Web\Backend\UserManagement\UserController;
+use App\Http\Controllers\Web\Backend\SystemMonitorController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // working
+    Route::get('dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data'); // DONE
 });
 
 // property type manage
@@ -111,6 +125,21 @@ Route::prefix('property')->name('property.')->group(function () {
     Route::delete('/delete/{id}', [PropertyController::class, 'destroy'])->name('delete');
 
     Route::get('/toggle-status/{id}', [PropertyController::class, 'toggleStatus'])->name('toggle.status');
+
+    // Trash management routes
+    Route::get('/trash/data', [PropertyController::class, 'getTrashData'])->name('trash.data');
+    Route::post('/{id}/restore', [PropertyController::class, 'restore'])->name('restore');
+    Route::delete('/{id}/force-delete', [PropertyController::class, 'forceDelete'])->name('force-delete');
+
+    // Stripe Connect routes
+    Route::prefix('{id}/stripe')->name('stripe.connect.')->group(function () {
+        Route::get('/connect', [StripeConnectController::class, 'connect'])->name('connect');
+        Route::get('/return', [StripeConnectController::class, 'handleReturn'])->name('return');
+        Route::get('/refresh', [StripeConnectController::class, 'handleRefresh'])->name('refresh');
+        Route::get('/sync', [StripeConnectController::class, 'syncStatus'])->name('sync');
+        Route::get('/dashboard', [StripeConnectController::class, 'dashboard'])->name('dashboard');
+        Route::delete('/disconnect', [StripeConnectController::class, 'disconnect'])->name('disconnect');
+    });
 });
 
 
@@ -150,8 +179,8 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Home Hero Section
     Route::post('/home/hero/update', [HomePageController::class, 'update'])->name('home.hero.section.update');
 
-    // Home housing option section
-    Route::post('/home/housing-option/update', [HomePageController::class, 'housingOptionupdate'])->name('home.housing.option.section.update');
+    // Home who we are section
+    Route::post('/home/who-we-are/update', [HomePageController::class, 'whoWeAreUpdate'])->name('home.who.we.are.section.update');
 
     // Slider Management Routes
     Route::prefix('home/slider')->name('slider.')->group(function () {
@@ -160,6 +189,23 @@ Route::prefix('cms')->name('cms.')->group(function () {
         Route::post('/{id}/status', [HomePageSliderController::class, 'updateStatus'])->name('status');
         Route::delete('/{id}', [HomePageSliderController::class, 'destroy'])->name('destroy');
         Route::post('/update-order', [HomePageSliderController::class, 'updateOrder'])->name('updateOrder');
+    });
+
+    Route::prefix('home/housing-option')->name('housing.option.')->group(function () {
+        // Accordion CRUD
+        Route::post('/accordion/store', [HomePageHousingOptionController::class, 'storeAccordion'])->name('accordion.store');
+        Route::post('/accordion/update/{id}', [HomePageHousingOptionController::class, 'updateAccordion'])->name('accordion.update');
+        Route::delete('/accordion/{id}', [HomePageHousingOptionController::class, 'destroyAccordion'])->name('accordion.destroy');
+        Route::post('/accordion/update-order', [HomePageHousingOptionController::class, 'updateOrder'])->name('accordion.updateOrder');
+    });
+
+    // Video Section Routes
+    Route::prefix('home/video')->name('video.')->group(function () {
+        Route::post('/store', [HomeVideoController::class, 'store'])->name('store');
+        Route::post('/update/{id}', [HomeVideoController::class, 'update'])->name('update');
+        Route::post('/{id}/status', [HomeVideoController::class, 'updateStatus'])->name('status');
+        Route::delete('/{id}', [HomeVideoController::class, 'destroy'])->name('destroy');
+        Route::post('/update-order', [HomeVideoController::class, 'updateOrder'])->name('updateOrder');
     });
 
     // How it works
@@ -179,12 +225,14 @@ Route::prefix('cms')->name('cms.')->group(function () {
     // Apartment section update
     Route::post('/home/apartment/update', [ApartmentController::class, 'update'])->name('home.apartment.section.update');
 
-    // Upload gallery image
+    // Upload gallery page
     Route::post('/gallery/update', [GalleryController::class, 'store'])->name('gallery.section.update');
     Route::delete('/gallery/item/delete/{id}', [GalleryController::class, 'destroy'])->name('gallery.item.delete');
 
     // Property page
-    Route::post('/property/banner/update', [PropertyPageController::class, 'update'])->name('property.banner.update');
+    Route::post('/property/banner-one/update', [PropertyPageController::class, 'updatePropertyBannerOne'])->name('property.banner-one.update');
+    Route::post('/property/banner-two/update', [PropertyPageController::class, 'updatePropertyBannerTwo'])->name('property.banner-two.update');
+    Route::post('/property/banner-three/update', [PropertyPageController::class, 'updatePropertyBannerThree'])->name('property.banner-three.update');
     Route::post('/property/our-offer/update', [PropertyPageController::class, 'updateOurOffer'])->name('property.our-offer.update');
 
     // Property one
@@ -227,15 +275,71 @@ Route::prefix('cms')->name('cms.')->group(function () {
 */
 Route::group([], function () {
     Route::get('/tenants', [TenantManageController::class, 'index'])->name('tenants.index');
+    Route::get('/tenants/data', [TenantManageController::class, 'getData'])->name('tenants.get.data');
+    Route::get('/tenants/edit/{id}', [TenantManageController::class, 'edit'])->name('tenants.edit');
     Route::get('/tenants/{id}', [TenantManageController::class, 'show'])->name('tenants.show');
     Route::get('/details/{id}', [TenantManageController::class, 'getTenantDetails'])->name('tenants.details');
     Route::delete('/tenants/{id}', [TenantManageController::class, 'destroy'])->name('tenants.destroy');
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
+    Route::post('/tenants/update/{id}', [TenantManageController::class, 'update'])->name('tenants.update');
+    Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
+
+    Route::get('/tenants/export/excel', [TenantManageController::class, 'export'])->name('tenants.export'); // DONE: Tenant Export in excel
+    Route::post('/tenants/{id}/approve', [TenantManageController::class, 'approveStatus'])->name('tenants.approve'); // DONE: Tenant approval
 
     // Tenant API routes for lease creation
     Route::get('/tenants/0/active', [TenantManageController::class, 'getActiveTenants'])->name('tenants.active');
     Route::post('/tenants/quick-create', [TenantManageController::class, 'quickCreate'])->name('tenants.quick-create');
+
+    // Payment & Transaction History Routes
+    Route::get('/tenants/{id}/payments/history', [PaymentManageController::class, 'getPaymentHistory'])
+        ->name('tenants.payments.history');
+
+    Route::get('/tenants/{id}/transactions/history', [PaymentManageController::class, 'getTransactionHistory'])
+        ->name('tenants.transactions.history');
+
+    Route::get('/tenants/payments/{id}/details', [PaymentManageController::class, 'getPaymentDetails'])
+        ->name('tenants.payments.details');
+
+    Route::post('/tenants/payments/{id}/review', [PaymentManageController::class, 'updatePaymentReview'])
+        ->name('tenants.payments.review');
+
+    Route::get('/tenants/{id}/payments/export', [PaymentManageController::class, 'exportPaymentHistory'])
+        ->name('tenants.payments.export');
 });
+
+
+Route::group([], function () {
+    // View applications page with tabs
+    Route::get('/applications', [ApplicationController::class, 'index'])->name('tenants.applications.index');
+
+    // Get DataTables data (supports type: single | reservation)
+    Route::get('/applications/data', [ApplicationController::class, 'getData'])->name('tenants.applications.get.data');
+    Route::get('/applications/reservation/data', [ApplicationController::class, 'getReservationData'])->name('tenants.applications.get.reservation.data');
+    Route::get('/applications/invitations', [ApplicationController::class, 'getInvitationData'])->name('tenants.applications.invitations');
+
+    // View specific application details
+    Route::get('/applications/{id}', [ApplicationController::class, 'show'])->name('tenants.applications.show');
+    Route::delete('/applications/{id}', [ApplicationController::class, 'destroy'])->name('tenants.applications.destroy');
+
+    // Reservation request detail & status update
+    Route::get('/reservation-requests/{id}', [ApplicationController::class, 'showReservation'])->name('tenants.reservation.show');
+    Route::post('/reservation-requests/{id}/status', [ApplicationController::class, 'updateReservationStatus'])->name('tenants.reservation.update.status');
+    Route::delete('/reservation-requests/{id}', [ApplicationController::class, 'destroyReservation'])->name('tenants.reservation.destroy');
+
+    // Approve single email application
+    Route::post('/applications/{id}/approve-single', [ApplicationController::class, 'approveSingleEmail'])->name('tenants.applications.approve.single');
+
+    // Approve reservation application
+    // Route::post('/applications/{id}/approve-reservation', [ApplicationController::class, 'approveReservation'])->name('tenants.applications.approve.reservation');
+
+    // Reject any application
+    Route::post('/applications/{id}/reject', [ApplicationController::class, 'reject'])->name('tenants.applications.reject');
+
+    // Send Invitation
+    Route::post('/applications/send-invitation', [ApplicationController::class, 'sendInvitation'])->name('tenants.applications.invite');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -252,7 +356,52 @@ Route::prefix('leases')->name('leases.')->group(function () {
     Route::post('/store', [LeaseController::class, 'store'])->name('store');
     Route::put('/{id}/update', [LeaseController::class, 'update'])->name('update');
     Route::delete('/{id}/delete', [LeaseController::class, 'destroy'])->name('destroy');
+    Route::post('/{id}/collect-deposit', [LeaseController::class, 'collectDeposit'])->name('collect.deposit');
+    Route::post('/{id}/resend-for-signature', [LeaseController::class, 'resendForSignature'])->name('resend.signature');
+
+    // Manual lease close routes
+    Route::get('/{id}/close-data', [LeaseController::class, 'getCloseData'])->name('close.data');
+    Route::post('/{id}/close', [LeaseController::class, 'closeLease'])->name('close');
+    Route::post('/{id}/terminate', [LeaseController::class, 'terminateLease'])->name('terminate');
+
+    // Change bed assignment routes
+    Route::get('/{id}/change-bed-data', [LeaseController::class, 'getChangeBedData'])->name('change.bed.data');
+    Route::post('/{id}/change-bed', [LeaseController::class, 'changeBed'])->name('change.bed');
+
+    // Initial bed assignment routes (for leases created without bed)
+    Route::get('/{id}/assign-bed-data', [LeaseController::class, 'getAssignBedData'])->name('assign.bed.data');
+    Route::post('/{id}/assign-bed', [LeaseController::class, 'assignBed'])->name('assign.bed');
+    Route::get('/tenant/{tenantId}/pending-bed-assignments', [LeaseController::class, 'getPendingBedAssignments'])->name('pending.bed.assignments');
+
+    Route::get('/property/{id}/beds', [LeaseController::class, 'getBedsByProperty'])->name('property.beds');
 });
+
+// Invoice Routes
+Route::prefix('invoices')->name('invoices.')->group(function () {
+    Route::get('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'show'])->name('show');
+    Route::get('/{id}/download-pdf', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'downloadPdf'])->name('download.pdf');
+    Route::put('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'update'])->name('update');
+    Route::post('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'storePayment'])->name('payments.store');
+    Route::get('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'getPayments'])->name('payments.index');
+    Route::post('/{id}/mark-paid', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'markPaid'])->name('mark.paid');
+    Route::post('/{id}/cancel', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancel'])->name('cancel');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Income Routes
+|--------------------------------------------------------------------------
+*/
+// Invoice Routes
+Route::prefix('incomes')->name('invoices.')->group(function () {
+    Route::get('/', [IncomeController::class, 'index'])->name('index');
+    Route::get('/get-data', [IncomeController::class, 'getData'])->name('get.data');
+    Route::get('/create', [IncomeController::class, 'create'])->name('create');
+    Route::post('/store', [IncomeController::class, 'store'])->name('store');
+    // Route::get('/{id}', [IncomeController::class, 'show'])->name('show');
+    Route::get('/tenant/{tenantId}/info', [IncomeController::class, 'getTenantInfo'])->name('tenant.info');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -267,9 +416,50 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
     Route::get('/edit/{maintananceId}', [MaintananceController::class, 'edit'])->name('edit'); // done
     Route::post('/update/{maintananceId}', [MaintananceController::class, 'update'])->name('update'); // done
     Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy'])->name('delete'); //done
-    Route::get('/maintanance/{id}', [MaintananceController::class, 'show'])->name('show'); // done
+    Route::get('/details/{id}', [MaintananceController::class, 'show'])->name('show'); // done
     Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
+
+    Route::post('/{id}/mark-resolved', [MaintananceController::class, 'markAsResolved'])->name('markResolved');
+    Route::post('/{id}/update-status', [MaintananceController::class, 'updateStatus'])->name('updateStatus');
+
+    Route::get('/tenant-lease-properties', [MaintananceController::class, 'getTenantLeaseProperties'])->name('tenant.lease.properties');
+    Route::get('property-units', [MaintananceController::class, 'getPropertyUnits'])->name('property.units');
+    Route::get('unit-rooms', [MaintananceController::class, 'getUnitRooms'])->name('unit.rooms');
+    Route::get('room-beds', [MaintananceController::class, 'getRoomBeds'])->name('room.beds');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Messaging/Mailing Routes
+|--------------------------------------------------------------------------
+*/
+// routes/web.php or your backend routes file
+
+Route::prefix('/messaging')->name('messaging.')->middleware(['auth'])->group(function () {
+    Route::get('/', [MessagingController::class, 'index'])->name('index');
+    Route::get('/compose', [MessagingController::class, 'compose'])->name('compose');
+    Route::get('/read/{id}', [MessagingController::class, 'read'])->name('read');
+
+    // AJAX Routes
+    Route::post('/sync', [MessagingController::class, 'sync'])->name('sync');
+    Route::get('/messages', [MessagingController::class, 'getMessages'])->name('messages');
+    Route::post('/send', [MessagingController::class, 'send'])->name('send');
+    Route::post('/draft', [MessagingController::class, 'saveDraft'])->name('draft.save');
+    Route::post('/{id}/toggle-read', [MessagingController::class, 'toggleRead'])->name('toggle.read');
+    Route::post('/{id}/toggle-star', [MessagingController::class, 'toggleStar'])->name('toggle.star');
+    Route::post('/{id}/move', [MessagingController::class, 'moveToFolder'])->name('move');
+    Route::delete('/{id}', [MessagingController::class, 'delete'])->name('delete');
+    Route::post('/bulk-action', [MessagingController::class, 'bulkAction'])->name('bulk.action');
+    Route::get('/attachment/{id}', [MessagingController::class, 'downloadAttachment'])->name('attachment.download');
+    Route::get('/tenants/search', [MessagingController::class, 'searchTenants'])->name('tenants.search');
+
+    // Location-based tenant fetching
+    Route::get('/units', [MessagingController::class, 'getUnits'])->name('units');
+    Route::get('/rooms', [MessagingController::class, 'getRooms'])->name('rooms');
+    Route::get('/tenants-by-location', [MessagingController::class, 'getTenantsByLocation'])->name('tenants.by-location');
+    Route::get('/mail-template', [MessagingController::class, 'getMailTemplate'])->name('mail-template');
+});
+
 
 //! Route for Profile Settings
 Route::controller(ProfileController::class)->group(function () {
@@ -295,6 +485,19 @@ Route::prefix('social')->name('social.profile.')->group(function () {
     Route::post('/update/{id}', [SocialLinkController::class, 'update'])->name('update');
     Route::delete('/delete/{id}', [SocialLinkController::class, 'destroy'])->name('destroy');
     Route::get('/status/{id}', [SocialLinkController::class, 'status'])->name('status');
+});
+
+/**
+ * Mail Templates routes
+ */
+Route::prefix('setting/mail-templates')->name('setting.mail-templates.')->group(function () {
+    Route::get('/', [MailTemplateController::class, 'index'])->name('index');
+    Route::get('/create', [MailTemplateController::class, 'create'])->name('create');
+    Route::post('/', [MailTemplateController::class, 'store'])->name('store');
+    Route::get('/{mailTemplate}/edit', [MailTemplateController::class, 'edit'])->name('edit');
+    Route::put('/{mailTemplate}', [MailTemplateController::class, 'update'])->name('update');
+    Route::delete('/{mailTemplate}', [MailTemplateController::class, 'destroy'])->name('destroy');
+    Route::patch('/{mailTemplate}/toggle-status', [MailTemplateController::class, 'toggleStatus'])->name('toggle-status');
 });
 
 /**
@@ -371,36 +574,103 @@ Route::prefix('lease-documents')->name('lease-documents.')->group(function () {
     Route::put('/0/{id}', [LeaseDocumentController::class, 'update'])->name('update');
     Route::post('/0/{id}/sign-admin', [LeaseDocumentController::class, 'signAdmin'])->name('sign-admin');
     Route::post('/0/{id}/sign-tenant', [LeaseDocumentController::class, 'signTenant'])->name('sign-tenant');
+    Route::post('/0/{id}/update-custom-fields', [LeaseDocumentController::class, 'updateCustomFields'])->name('update-custom-fields');
     Route::get('/0/{id}/download-pdf', [LeaseDocumentController::class, 'downloadPdf'])->name('download-pdf');
+
+    // Preview document for a lease
+    Route::get('/lease/{leaseId}/preview/{documentId?}', [LeaseDocumentController::class, 'previewForLease'])->name('preview-for-lease');
 });
 
 
 // Hierarchical Property API Routes for Lease Creation
 Route::middleware(['auth', 'admin'])->group(function () {
     // Get units by property
-    Route::get('/properties/{property}/units', function ($propertyId) {
-        $property = \App\Models\Property::with('units')->find($propertyId);
-        if (!$property) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Property not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $property->units]);
-    })->name('backend.properties.units');
+    Route::get('/properties/{property}/units', [LeaseController::class, 'getUnits'])->name('backend.properties.units');
+    Route::get('/units/{unit}/rooms', [LeaseController::class, 'getRooms'])->name('backend.units.rooms');
+    Route::get('/rooms/{room}/beds', [LeaseController::class, 'getBeds'])->name('backend.rooms.beds');
 
-    // Get rooms by unit
-    Route::get('/units/{unit}/rooms', function ($unitId) {
-        $unit = \App\Models\Unit::with('rooms')->find($unitId);
-        if (!$unit) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Unit not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $unit->rooms]);
-    })->name('backend.units.rooms');
+    //faqq sectionn  rayyhannn
+    Route::prefix('faq')->name('faq.')->group(function () {
 
-    // Get beds by room
-    Route::get('/rooms/{room}/beds', function ($roomId) {
-        $room = \App\Models\Room::with('beds')->find($roomId);
-        if (!$room) {
-            return response()->json(['success' => false, 'data' => [], 'message' => 'Room not found'], 404);
-        }
-        return response()->json(['success' => true, 'data' => $room->beds]);
-    })->name('backend.rooms.beds');
+        Route::get('/', [FaqController::class, 'index'])->name('index');
+        Route::post('/store', [FaqController::class, 'store'])->name('store');
+        Route::post('/update/{id}', [FaqController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [FaqController::class, 'destroy'])->name('delete');
+
+        // STATUS TOGGLE (POST)
+        Route::post('/status/{id}', [FaqController::class, 'status'])->name('status');
+    });
+
+    // item sectionn
+
+    Route::prefix('items')->name('items.')->group(function () {
+
+        // LIST
+        Route::get('/', [ItemController::class, 'index'])->name('index');
+
+        // CREATE
+        Route::post('/store', [ItemController::class, 'store'])->name('store');
+
+        // UPDATE
+        Route::post('/update/{id}', [ItemController::class, 'update'])->name('update');
+
+        // DELETE
+        Route::delete('/delete/{id}', [ItemController::class, 'destroy'])->name('delete');
+
+        // STATUS TOGGLE (ACTIVE / INACTIVE)
+        Route::post('/status/{id}', [ItemController::class, 'status'])->name('status');
+        //active data show
+        Route::get('/items/active', [ItemController::class, 'activeItems']);
+    });
+});
+
+// Reports Routes
+Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin'])->group(function () {
+    // Property Report
+    Route::get('/property', [PropertyReportController::class, 'index'])->name('property.index');
+    Route::get('/property/data', [PropertyReportController::class, 'getData'])->name('property.data');
+    Route::get('/property/export-pdf', [PropertyReportController::class, 'exportPdf'])->name('property.export.pdf');
+    Route::get('/property/export-excel', [PropertyReportController::class, 'exportExcel'])->name('property.export.excel');
+
+    // Rent Report
+    Route::get('/rent', [RentReportController::class, 'index'])->name('rent.index');
+    Route::get('/rent/data', [RentReportController::class, 'getData'])->name('rent.data');
+    Route::get('/rent/export-pdf', [RentReportController::class, 'exportPdf'])->name('rent.export.pdf');
+    Route::get('/rent/export-excel', [RentReportController::class, 'exportExcel'])->name('rent.export.excel');
+
+    // Rent Collection Report (with Review/Confirmation)
+    Route::get('/rent-collection', [RentCollectionReportController::class, 'index'])->name('rent-collection.index');
+    Route::get('/rent-collection/data', [RentCollectionReportController::class, 'getData'])->name('rent-collection.data');
+    Route::get('/rent-collection/summary', [RentCollectionReportController::class, 'getSummary'])->name('rent-collection.summary');
+    Route::post('/rent-collection/{id}/review', [RentCollectionReportController::class, 'updateReviewStatus'])->name('rent-collection.review');
+    Route::post('/rent-collection/bulk-update', [RentCollectionReportController::class, 'bulkUpdateStatus'])->name('rent-collection.bulk-update');
+    Route::get('/rent-collection/export-pdf', [RentCollectionReportController::class, 'exportPdf'])->name('rent-collection.export.pdf');
+    Route::get('/rent-collection/export-excel', [RentCollectionReportController::class, 'exportExcel'])->name('rent-collection.export.excel');
+
+    // Tenant Report
+    Route::get('/tenant', [TenantReportController::class, 'index'])->name('tenant.index');
+    Route::get('/tenant/data', [TenantReportController::class, 'getData'])->name('tenant.data');
+    Route::get('/tenant/export-pdf', [TenantReportController::class, 'exportPdf'])->name('tenant.export.pdf');
+    Route::get('/tenant/export-excel', [TenantReportController::class, 'exportExcel'])->name('tenant.export.excel');
+});
+
+// System Monitoring Routes (Superadmin Only)
+Route::prefix('system-monitor')->name('system-monitor.')->group(function () {
+    // Web Views
+    Route::get('/', [SystemMonitorController::class, 'index'])->name('index');
+    Route::get('/health', [SystemMonitorController::class, 'health'])->name('health');
+    Route::get('/resources', [SystemMonitorController::class, 'resources'])->name('resources');
+    Route::get('/database', [SystemMonitorController::class, 'database'])->name('database');
+    Route::get('/applications', [SystemMonitorController::class, 'applications'])->name('applications');
+    Route::get('/activity', [SystemMonitorController::class, 'activity'])->name('activity');
+    Route::get('/security', [SystemMonitorController::class, 'security'])->name('security');
+    Route::get('/errors', [SystemMonitorController::class, 'errors'])->name('errors');
+
+    // API Endpoints (JSON)
+    // Route::get('/api/overview', [SystemMonitorController::class, 'getOverview'])->name('api.overview');
+    // Route::get('/api/health', [SystemMonitorController::class, 'getHealthStatus'])->name('api.health');
+    // Route::get('/api/resources', [SystemMonitorController::class, 'getResources'])->name('api.resources');
+    // Route::get('/api/database', [SystemMonitorController::class, 'getDatabaseInfo'])->name('api.database');
+    // Route::get('/api/stats', [SystemMonitorController::class, 'getApplicationStats'])->name('api.stats');
+    // Route::get('/api/activity', [SystemMonitorController::class, 'getUserActivity'])->name('api.activity');
 });

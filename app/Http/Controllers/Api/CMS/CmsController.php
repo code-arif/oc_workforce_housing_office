@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\CMS;
 use App\Models\CMS;
 use App\Models\Slider;
 use App\Models\Gallery;
+use App\Models\Setting;
+use App\Models\HomeVideo;
 use App\Models\PricingPlan;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -31,6 +33,29 @@ class CmsController extends Controller
 
         $housingOptions = CMS::where('page', 'home')
             ->where('section', 'housing-options')
+            ->where('name', 'accordion')
+            ->orderBy('order', 'asc')
+            ->get()
+            ->map(function ($item) {
+                $cards = collect($item->metadata['cards'] ?? [])->map(function ($card) {
+                    return [
+                        'image'         => $card['image'] ? asset($card['image']) : null,
+                        'price'         => $card['price'],
+                        'property_type' => $card['property_type'],
+                    ];
+                });
+
+                return [
+                    'id'          => $item->id,
+                    'title'       => $item->title,
+                    'order'       => $item->order,
+                    'bottom_text' => $item->metadata['bottom_text'] ?? '',
+                    'cards'       => $cards,
+                ];
+            });
+
+        $whoWeAre = CMS::where('page', 'home')
+            ->where('section', 'who-we-are')
             ->where('name', 'item')
             ->get();
 
@@ -61,6 +86,8 @@ class CmsController extends Controller
 
         $gallery = Gallery::get();
 
+        $videos = HomeVideo::orderBy('order')->get();
+
         $gallery = $gallery->map(function ($item) {
             return [
                 'id' => $item->id,
@@ -73,13 +100,15 @@ class CmsController extends Controller
             'home' => [
                 'hero' => CMSResource::collection($hero),
                 'sliders' => SliderResource::collection($sliders),
-                'housing_options' => CMSResource::collection($housingOptions),
+                'housing_options' => $housingOptions,
+                'who_we_are' => CMSResource::collection($whoWeAre),
                 'how_it_works' => CMSResource::collection($howItWorks),
                 'how_it_works_item' => CMSResource::collection($howItWorksItem),
                 'employee_and_sponsor' => CMSResource::collection($employeeAndSponsor),
                 'prime_location' => CMSResource::collection($primeLocation),
                 'appartment' => CMSResource::collection($appartment),
-                'gallery' => $gallery
+                'gallery' => $gallery,
+                'videos' => $videos
             ]
         ], 'Home page data retrieved successfully');
     }
@@ -89,8 +118,17 @@ class CmsController extends Controller
      */
     public function properties()
     {
-        $hero = CMS::where('page', 'properties')
-            ->where('section', 'hero')
+        $propertyOneBaner = CMS::where('page', 'properties')
+            ->where('section', 'property-banner-one')
+            ->where('name', 'item')
+            ->get();
+
+        $propertyTwoBaner = CMS::where('page', 'properties')
+            ->where('section', 'property-banner-two')
+            ->where('name', 'item')
+            ->get();
+        $propertyThreeBaner = CMS::where('page', 'properties')
+            ->where('section', 'property-banner-three')
             ->where('name', 'item')
             ->get();
 
@@ -126,11 +164,13 @@ class CmsController extends Controller
 
         return $this->success([
             'properties' => [
-                'hero' => CMSResource::collection($hero),
+                'property_one_banner' => CMSResource::collection($propertyOneBaner),
                 'our_offer' => CMSResource::collection($ourOffer),
                 'property_one' => CMSResource::collection($propertyOne),
-                'gallery' => $gallery,
+                'property_two_banner' => CMSResource::collection($propertyTwoBaner),
                 'property_two' => CMSResource::collection($propertyTwo),
+                'property_three_banner' => CMSResource::collection($propertyThreeBaner),
+                // 'gallery' => $gallery,
                 'property_three' => CMSResource::collection($propertyThree),
             ]
         ], 'Properties page data retrieved successfully');
@@ -249,5 +289,31 @@ class CmsController extends Controller
                 'plans' => $formattedPlans
             ]
         ], 'Pricing page data retrieved successfully');
+    }
+
+    /**
+     * CMS Reservation page data
+     */
+    public function reservation()
+    {
+        $hero = CMS::where('page', 'reservation')
+            ->where('section', 'hero')
+            ->where('name', 'item')
+            ->get();
+
+        return $this->success([
+            'pricing' => [
+                'hero' => CMSResource::collection($hero),
+            ]
+        ], 'Reservation page data retrieved successfully');
+    }
+
+    /**
+     * Navigation data
+     */
+    public function navigation()
+    {
+        $navigation = Setting::first();
+        return $this->success($navigation, 'Topbar data retrieved successfully');
     }
 }

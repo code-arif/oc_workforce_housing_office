@@ -1,5 +1,5 @@
 @extends('backend.app')
-
+@section('title', 'Edit Lease Template: ' . $template->name)
 @section('content')
 <div class="app-content main-content mt-0">
     <div class="side-app">
@@ -69,8 +69,11 @@
                                         <div class="draggable-field" draggable="true" data-field="property_type" data-label="Property Type" data-type="text">
                                             <i class="fas fa-grip-vertical"></i> Property Type
                                         </div>
-                                        <div class="draggable-field" draggable="true" data-field="room_number" data-label="Room/Unit #" data-type="text">
-                                            <i class="fas fa-grip-vertical"></i> Room/Unit #
+                                        <div class="draggable-field" draggable="true" data-field="unit_assigned_at_checkin" data-label="Unit to Be Assigned at Check-in" data-type="text">
+                                            <i class="fas fa-grip-vertical"></i> Unit to Be Assigned at Check-in
+                                        </div>
+                                        <div class="draggable-field" draggable="true" data-field="bed_label" data-label="Bed #" data-type="text">
+                                            <i class="fas fa-grip-vertical"></i> Apartment / Unit Number
                                         </div>
                                     </div>
                                 </div>
@@ -93,6 +96,9 @@
                                         </div>
                                         <div class="draggable-field" draggable="true" data-field="monthly_rent" data-label="Monthly Rent" data-type="currency">
                                             <i class="fas fa-grip-vertical"></i> Monthly Rent
+                                        </div>
+                                        <div class="draggable-field" draggable="true" data-field="total_rent" data-label="Total Rent" data-type="currency">
+                                            <i class="fas fa-grip-vertical"></i> Total Rent
                                         </div>
                                         <div class="draggable-field" draggable="true" data-field="security_deposit" data-label="Security Deposit" data-type="currency">
                                             <i class="fas fa-grip-vertical"></i> Security Deposit
@@ -126,11 +132,15 @@
                                         <div class="draggable-field signature-field" draggable="true" data-field="landlord_signature" data-label="Landlord Signature" data-type="signature">
                                             <i class="fas fa-grip-vertical"></i> Landlord Signature
                                         </div>
+                                        <div class="draggable-field" draggable="true" data-field="landlord_date_signed" data-label="Landlord Date Signed" data-type="date">
+                                            <i class="fas fa-grip-vertical"></i> Landlord Date Signed
+                                        </div>
                                         <div class="draggable-field signature-field" draggable="true" data-field="tenant_signature" data-label="Tenant Signature" data-type="signature">
                                             <i class="fas fa-grip-vertical"></i> Tenant Signature
                                         </div>
-                                        <div class="draggable-field" draggable="true" data-field="date_signed" data-label="Date Signed" data-type="date">
-                                            <i class="fas fa-grip-vertical"></i> Date Signed
+                                        
+                                        <div class="draggable-field" draggable="true" data-field="tenant_date_signed" data-label="Tenant Date Signed" data-type="date">
+                                            <i class="fas fa-grip-vertical"></i> Tenant Date Signed
                                         </div>
                                     </div>
                                 </div>
@@ -144,6 +154,19 @@
                                     <div class="collapse show" id="otherFields">
                                         <div class="draggable-field" draggable="true" data-field="current_date" data-label="Current Date" data-type="date">
                                             <i class="fas fa-grip-vertical"></i> Current Date
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Fields -->
+                                <div class="field-group">
+                                    <div class="field-group-header" data-bs-toggle="collapse" data-bs-target="#customFields">
+                                        <i class="fas fa-pen"></i> Custom Fields
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </div>
+                                    <div class="collapse show" id="customFields">
+                                        <div class="draggable-field custom-text-field" draggable="true" data-field="custom_text" data-label="Custom Text Input" data-type="text_input">
+                                            <i class="fas fa-grip-vertical"></i> Custom Text Input
                                         </div>
                                     </div>
                                 </div>
@@ -235,6 +258,11 @@
                     <label class="form-label">Field Label</label>
                     <input type="text" class="form-control form-control-sm" id="fieldLabel" readonly>
                 </div>
+                <div class="mb-3" id="customLabelGroup" style="display: none;">
+                    <label class="form-label">Custom Label (for Text Input)</label>
+                    <input type="text" class="form-control form-control-sm" id="customLabel" placeholder="Enter custom label">
+                    <small class="text-muted">This label will be shown when filling out the lease</small>
+                </div>
                 <div class="mb-3">
                     <label class="form-label">Width (px)</label>
                     <input type="number" class="form-control form-control-sm" id="fieldWidth" min="50" max="500">
@@ -323,6 +351,14 @@
         background: #fde68a;
     }
 
+    .draggable-field.custom-text-field {
+        background: #dbeafe;
+    }
+
+    .draggable-field.custom-text-field:hover {
+        background: #bfdbfe;
+    }
+
     /* Document Container */
     .document-container {
         position: relative;
@@ -396,6 +432,15 @@
         color: #f59e0b;
         min-width: 150px;
         min-height: 50px;
+    }
+
+    .placed-placeholder.text-input {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+        color: #1e40af;
+        min-width: 150px;
+        min-height: 30px;
+        font-style: italic;
     }
 
     .placed-placeholder.active {
@@ -499,7 +544,11 @@ $(document).ready(function() {
     let scale = 1.0;
     let placedFields = @json($template->placeholders ?? []);
     let selectedField = null;
-    let fieldIdCounter = placedFields.length;
+    // Initialize counter from the highest numeric id in saved fields to avoid collisions
+    let fieldIdCounter = placedFields.reduce((max, f) => {
+        const num = parseInt((f.id || '').replace('field_', '')) || 0;
+        return Math.max(max, num);
+    }, 0);
 
     // Initialize
     loadPDF();
@@ -598,19 +647,32 @@ $(document).ready(function() {
         fieldIdCounter++;
         const fieldId = `field_${fieldIdCounter}`;
         const isSignature = data.type === 'signature';
+        const isTextInput = data.type === 'text_input';
         
-        const width = isSignature ? 180 : 120;
-        const height = isSignature ? 60 : 26;
+        let width, height;
+        if (isSignature) {
+            width = 180;
+            height = 60;
+        } else if (isTextInput) {
+            width = 200;
+            height = 35;
+        } else {
+            width = 120;
+            height = 26;
+        }
+
+        const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
+        const displayLabel = isTextInput ? '[Text Input Area]' : data.label;
 
         const placeholder = $(`
-            <div class="placed-placeholder ${isSignature ? 'signature' : ''}" 
+            <div class="placed-placeholder ${extraClass}" 
                  id="${fieldId}"
                  data-field="${data.field}"
                  data-label="${data.label}"
                  data-type="${data.type}"
                  data-page="${pageNum}"
                  style="left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;">
-                <span class="field-label">${data.label}</span>
+                <span class="field-label">${displayLabel}</span>
                 <button class="delete-btn" title="Remove"><i class="fas fa-times"></i></button>
                 <div class="resize-handle"></div>
             </div>
@@ -628,6 +690,7 @@ $(document).ready(function() {
         // Delete button
         placeholder.find('.delete-btn').on('click', function(e) {
             e.stopPropagation();
+            placedFields = placedFields.filter(f => f.id !== fieldId);
             placeholder.remove();
             updatePlacedFieldsList();
         });
@@ -654,34 +717,19 @@ $(document).ready(function() {
         updatePlacedFieldsList();
     }
 
-    // Make placeholder draggable
-    function makeDraggable(element, container) {
-        let isDragging = false;
-        let startX, startY, origX, origY;
+    // Single shared drag/resize state (prevents stacking handlers)
+    let dragState = null;
+    let resizeState = null;
 
-        element.on('mousedown', function(e) {
-            if ($(e.target).hasClass('resize-handle') || $(e.target).hasClass('delete-btn')) return;
-            
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            origX = parseInt(element.css('left'));
-            origY = parseInt(element.css('top'));
-            
-            element.addClass('active');
-            selectedField = element;
-        });
-
-        $(document).on('mousemove', function(e) {
-            if (!isDragging) return;
-
+    $(document).on('mousemove', function(e) {
+        if (dragState) {
+            const { element, container, startX, startY, origX, origY } = dragState;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
 
             let newX = origX + dx;
             let newY = origY + dy;
 
-            // Bounds checking
             const containerWidth = container.width();
             const containerHeight = container.height();
             const elemWidth = element.outerWidth();
@@ -691,49 +739,66 @@ $(document).ready(function() {
             newY = Math.max(0, Math.min(newY, containerHeight - elemHeight));
 
             element.css({ left: newX, top: newY });
-        });
+        }
 
-        $(document).on('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                element.removeClass('active');
-                updateFieldPosition(element);
-            }
+        if (resizeState) {
+            const { element, startX, startY, origW, origH } = resizeState;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            element.css({
+                width: Math.max(60, origW + dx),
+                height: Math.max(20, origH + dy)
+            });
+        }
+    });
+
+    $(document).on('mouseup', function() {
+        if (dragState) {
+            dragState.element.removeClass('active');
+            updateFieldPosition(dragState.element);
+            dragState = null;
+        }
+        if (resizeState) {
+            updateFieldPosition(resizeState.element);
+            resizeState = null;
+        }
+    });
+
+    // Make placeholder draggable
+    function makeDraggable(element, container) {
+        element.on('mousedown', function(e) {
+            if ($(e.target).hasClass('resize-handle') || $(e.target).hasClass('delete-btn')) return;
+            e.preventDefault();
+
+            dragState = {
+                element: element,
+                container: container,
+                startX: e.clientX,
+                startY: e.clientY,
+                origX: parseInt(element.css('left')) || 0,
+                origY: parseInt(element.css('top')) || 0
+            };
+
+            element.addClass('active');
+            selectedField = element;
         });
     }
 
     // Make placeholder resizable
     function makeResizable(element) {
         const handle = element.find('.resize-handle');
-        let isResizing = false;
-        let startX, startY, origW, origH;
 
         handle.on('mousedown', function(e) {
             e.stopPropagation();
-            isResizing = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            origW = element.width();
-            origH = element.height();
-        });
+            e.preventDefault();
 
-        $(document).on('mousemove', function(e) {
-            if (!isResizing) return;
-
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            element.css({
-                width: Math.max(60, origW + dx),
-                height: Math.max(20, origH + dy)
-            });
-        });
-
-        $(document).on('mouseup', function() {
-            if (isResizing) {
-                isResizing = false;
-                updateFieldPosition(element);
-            }
+            resizeState = {
+                element: element,
+                startX: e.clientX,
+                startY: e.clientY,
+                origW: element.width(),
+                origH: element.height()
+            };
         });
     }
 
@@ -742,8 +807,8 @@ $(document).ready(function() {
         const fieldId = element.attr('id');
         const field = placedFields.find(f => f.id === fieldId);
         if (field) {
-            field.x = parseInt(element.css('left'));
-            field.y = parseInt(element.css('top'));
+            field.x = parseInt(element.css('left')) || 0;
+            field.y = parseInt(element.css('top')) || 0;
             field.width = element.width();
             field.height = element.height();
         }
@@ -760,6 +825,15 @@ $(document).ready(function() {
             $('#fieldWidth').val(field.width);
             $('#fieldHeight').val(field.height);
             $('#fieldFontSize').val(field.fontSize || 12);
+            
+            // Show custom label input for text_input fields
+            if (field.type === 'text_input') {
+                $('#customLabelGroup').show();
+                $('#customLabel').val(field.customLabel || '');
+            } else {
+                $('#customLabelGroup').hide();
+            }
+            
             $('#fieldPropertiesModal').modal('show');
         }
     }
@@ -780,9 +854,17 @@ $(document).ready(function() {
             field.width = width;
             field.height = height;
             field.fontSize = fontSize;
+            
+            // Save custom label for text input fields
+            if (field.type === 'text_input') {
+                const customLabel = $('#customLabel').val();
+                field.customLabel = customLabel;
+                field.label = customLabel || 'Custom Text Input';
+            }
         }
 
         $('#fieldPropertiesModal').modal('hide');
+        updatePlacedFieldsList();
     });
 
     // Delete field from modal
@@ -828,21 +910,27 @@ $(document).ready(function() {
 
     // Restore placed fields from saved data
     function restorePlacedFields() {
+        // Remove any existing placed placeholders before re-rendering
+        $('.placed-placeholder').remove();
+
         placedFields.forEach(field => {
             const pageWrapper = $(`.pdf-page-wrapper[data-page="${field.page}"]`);
             if (!pageWrapper.length) return;
 
             const isSignature = field.type === 'signature';
+            const isTextInput = field.type === 'text_input';
+            const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
+            const displayLabel = isTextInput ? (field.customLabel || '[Text Input Area]') : field.label;
             
             const placeholder = $(`
-                <div class="placed-placeholder ${isSignature ? 'signature' : ''}" 
+                <div class="placed-placeholder ${extraClass}" 
                      id="${field.id}"
                      data-field="${field.field}"
                      data-label="${field.label}"
                      data-type="${field.type}"
                      data-page="${field.page}"
                      style="left: ${field.x}px; top: ${field.y}px; width: ${field.width}px; height: ${field.height}px;">
-                    <span class="field-label">${field.label}</span>
+                    <span class="field-label">${displayLabel}</span>
                     <button class="delete-btn" title="Remove"><i class="fas fa-times"></i></button>
                     <div class="resize-handle"></div>
                 </div>

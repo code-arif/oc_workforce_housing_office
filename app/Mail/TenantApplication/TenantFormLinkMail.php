@@ -3,27 +3,29 @@
 namespace App\Mail\TenantApplication;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TenantFormLinkMail extends Mailable
+class TenantFormLinkMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $tenant;
+    public $email;
     public $formUrl;
 
 
     /**
      * Create a new message instance.
      */
-    public function __construct($tenant, $formUrl)
+    public function __construct($email, $formUrl)
     {
-        $this->tenant = $tenant;
+        $this->email = $email;
         $this->formUrl = $formUrl;
+        Log::info('TenantFormLinkMail initialized and form URL: ' . $formUrl);
     }
 
     /**
@@ -32,7 +34,7 @@ class TenantFormLinkMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Tenant Application Form Link Mail',
+            subject: 'Submit Your Tenant Application - OC Workforce Housing',
         );
     }
 
@@ -54,13 +56,13 @@ class TenantFormLinkMail extends Mailable
         return $this
             ->from(config('mail.from.address'), config('mail.from.name'))
             ->with([
-                'tenant' => $this->tenant,
+                'email' => $this->email,
                 'formUrl' => $this->formUrl,
                 'companyName' => config('app.name', 'OC Workforce Housing'),
                 'currentDate' => now()->format('F d, Y \a\t h:i A'),
-                'applicationId' => $this->tenant->id,
-                'tenantEmail' => $this->tenant->email,
-                'tenantStatus' => ucfirst($this->tenant->status),
+                'applicationId' => null,
+                'tenantEmail' => $this->email,
+                'tenantStatus' => null,
             ]);
     }
 

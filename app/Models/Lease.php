@@ -16,12 +16,12 @@ class Lease extends Model
         'property_id',
         'season_id',
         'status',
+        'bed_assignment_pending',
         'start_date',
         'end_date',
         'rent_amount',
         'deposit_amount',
         'payment_frequency',
-
         'deposit_collected',
         'send_for_signature',
         'send_welcome_email',
@@ -29,7 +29,14 @@ class Lease extends Model
         'created_by',
     ];
 
-    
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'deposit_collected' => 'boolean',
+        'send_for_signature' => 'boolean',
+        'send_welcome_email' => 'boolean',
+        'bed_assignment_pending' => 'boolean',
+    ];
 
     public function property()
     {
@@ -43,7 +50,7 @@ class Lease extends Model
 
     public function assignments()
     {
-        return $this->hasMany(LeaseAssignment::class);
+        return $this->hasMany(LeaseAssignment::class, 'lease_id');
     }
 
     public function documents()
@@ -133,5 +140,41 @@ class Lease extends Model
     {
         return $query->where('status', 'ACTIVE')
             ->whereBetween('end_date', [now(), now()->addDays($days)]);
+    }
+
+    /**
+     * Check if lease needs bed assignment
+     */
+    public function needsBedAssignment()
+    {
+        return $this->bed_assignment_pending ||
+            !$this->assignments()->whereNotNull('bed_id')->where('is_current', true)->exists();
+    }
+
+    /**
+     * Scope for leases pending bed assignment
+     */
+    public function scopePendingBedAssignment($query)
+    {
+        return $query->where('bed_assignment_pending', true);
+    }
+
+    /**
+     * Get current bed assignment
+     */
+    // public function currentAssignment()
+    // {
+    //     return $this->assignments()->where('is_current', true)->first();
+    // }
+
+    public function currentAssignment()
+    {
+        return $this->hasOne(LeaseAssignment::class)
+            ->where('is_current', true)
+            ->with([
+                'bed:id,room_id,bed_number,bed_label,base_rent',
+                'bed.room:id,unit_id,room_number,name,gender_designation',
+                'bed.room.unit:id,property_id,name,gender_designation',
+            ]);
     }
 }

@@ -40,7 +40,7 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h3 class="card-title mb-0">Hero Section - Right Image Carousel ({{ count($sliders ?? []) }})</h3>
                 <button type="button" class="btn btn-primary" id="addSliderBtn">
-                    <i class="fe fe-plus me-2"></i> Add New Slider
+                    <i class="fe fe-plus me-1"></i> Add New Slider
                 </button>
             </div>
             <div class="card-body">
@@ -116,7 +116,7 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title text-white">Add New Slider</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">&times;</button>
             </div>
             <form id="sliderForm" enctype="multipart/form-data">
                 @csrf

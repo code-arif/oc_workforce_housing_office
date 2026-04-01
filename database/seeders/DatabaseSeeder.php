@@ -24,8 +24,9 @@ class DatabaseSeeder extends Seeder
             TenantSeeder::class,
             TenantProfileSeeder::class,
             SeasonSeeder::class,
-            LeaseSeeder::class,
-            LeaseAssignmentSeeder::class,
+            // LeaseSeeder::class,
+            // LeaseAssignmentSeeder::class,
+            AmenitySeeder::class,
         ]);
     }
 }

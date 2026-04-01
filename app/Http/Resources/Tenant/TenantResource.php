@@ -13,9 +13,9 @@ class TenantResource extends JsonResource
             'id' => $this->id,
             'application_source' => $this->application_source,
             'status' => $this->status,
-            'move_in_date' => $this->move_in_date->format('Y-m-d'),
-            'arrival_date' => $this->arrival_date->format('Y-m-d'),
-            'date_of_birth' => $this->date_of_birth->format('Y-m-d'),
+            'move_in_date' => $this->move_in_date?->format('Y-m-d'),
+            'arrival_date' => $this->arrival_date?->format('Y-m-d'),
+            'date_of_birth' => $this->date_of_birth?->format('Y-m-d'),
             'gender' => $this->gender,
             'email' => $this->email,
 

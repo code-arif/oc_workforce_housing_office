@@ -2,27 +2,28 @@
 
 namespace App\Mail\TenantApplication;
 
+use App\Models\Application;
 use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\SerializesModels;
 
-class TenantFormSubmissionSuccessMail extends Mailable
+class TenantFormSubmissionSuccessMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $tenant;
+    public $application;
     public $supportUrl;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Tenant $tenant)
+    public function __construct(Application $application)
     {
-        $this->tenant = $tenant;
+        $this->application = $application;
     }
 
     /**
@@ -54,13 +55,13 @@ class TenantFormSubmissionSuccessMail extends Mailable
             ->from(config('mail.from.address'), config('mail.from.name'))
             ->replyTo(config('mail.admin_email'), 'Application Support')
             ->with([
-                'tenant' => $this->tenant,
+                'application' => $this->application,
                 'supportUrl' => config('app.frontend_url') . '/contact',
                 'companyName' => config('app.name', 'OC Workforce Housing'),
                 'companyEmail' => config('mail.admin_email'),
                 'companyPhone' => config('app.phone', '(443) 336-5182'),
-                'tenantEmail' => $this->tenant->email,
-                'applicationId' => $this->tenant->id,
+                'tenantEmail' => $this->application->email,
+                'applicationNumber' => $this->application->application_number,
                 'currentYear' => now()->year,
             ]);
     }

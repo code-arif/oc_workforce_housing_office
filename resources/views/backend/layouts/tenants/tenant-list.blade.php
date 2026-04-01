@@ -89,55 +89,60 @@
                     </div>
                 </div>
 
+                <!-- TABS -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <ul class="nav nav-tabs nav-tabs-custom" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="all-tenants-tab" data-tab="all" href="#" role="tab">
+                                    <i class="fe fe-users me-2"></i>All Tenants
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="under-review-tab" data-tab="under_review" href="#" role="tab">
+                                    <i class="fe fe-clock me-2"></i>Under Review
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- FILTERS -->
                 <div class="row">
                     <div class="col-12">
                         <div class="filter-card">
                             <div class="row align-items-end g-3">
                                 <div class="col-md-3">
-                                    <label class="form-label">Tenant Status</label>
-                                    <select class="form-select" id="statusFilter">
-                                        <option value="">All Status</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="processing">Processing</option>
-                                        <option value="under_review">Under Review</option>
-                                        <option value="approved">Approved</option>
-                                        <option value="rejected">Rejected</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                                    <label class="form-label">Tenant </label>
+                                    <input type="text" name="tenantFilter" id="tenantFilter" class="form-control"
+                                        placeholder="Search by name, email...">
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Account Status</label>
-                                    <select class="form-select" id="accountStatusFilter">
-                                        <option value="">All Accounts</option>
-                                        <option value="active">Active Lease</option>
-                                        <option value="inactive">No Active Lease</option>
+                                <div class="col-md-2">
+                                    <label class="form-label">Property</label>
+                                    <select class="form-select select3" id="propertyFilter">
+                                        <option value="">Select Property</option>
+                                        @foreach ($properties as $property)
+                                            <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label">Application Source</label>
-                                    <select class="form-select" id="sourceFilter">
-                                        <option value="">All Sources</option>
-                                        <option value="admin">Admin Created</option>
-                                        <option value="self">Self Registration</option>
-                                    </select>
+                                    <label class="form-label">Beds</label>
+                                    <select class="form-select select3" id="bedsFilter"></select>
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Date From</label>
-                                    <input type="date" class="form-control" id="dateFrom">
+                                    <input type="text" class="form-control datepicker2" id="dateFrom"
+                                        placeholder="Search by tenant created from...">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Date To</label>
-                                    <input type="date" class="form-control" id="dateTo">
+                                    <input type="text" class="form-control datepicker2" id="dateTo"
+                                        placeholder="Search by tenant created to...">
                                 </div>
-                            </div>
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
-                                        <i class="fe fe-filter me-1"></i> Apply Filters
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                <div class="col-md-1 mb-1">
+                                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center"
+                                        id="resetFilter">
                                         <i class="fe fe-refresh-cw me-1"></i> Reset
                                     </button>
                                 </div>
@@ -180,7 +185,7 @@
                                                 <th class="bg-transparent border-bottom-0" style="width: 180px;">Address
                                                 </th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
-                                                    style="width: 120px;">Account Status</th>
+                                                    style="width: 120px;">Has Active Lease</th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
                                                     style="width: 100px;">Status</th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
@@ -208,7 +213,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="tenantModalLabel">Add Tenant</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times</button>
                 </div>
                 <form id="tenantForm">
                     <input type="hidden" id="tenant_id" name="tenant_id">
@@ -254,8 +259,10 @@
 @endsection
 
 @push('scripts')
+    <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
     <script>
         let dataTable;
+        let currentTab = 'all';
 
         $(document).ready(function() {
             $.ajaxSetup({
@@ -265,8 +272,34 @@
                 }
             });
 
+            $('.datepicker2').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true
+            });
+
             initializeDataTable();
+            initializeSelect2();
+            initializeTabs();
         });
+
+        // Handle tab switching
+        function initializeTabs() {
+            $('.nav-link[data-tab]').on('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                $('.nav-link[data-tab]').removeClass('active');
+                
+                // Add active class to clicked tab
+                $(this).addClass('active');
+                
+                // Update current tab
+                currentTab = $(this).data('tab');
+                
+                // Reload table with new filter
+                dataTable.ajax.reload();
+            });
+        }
 
         function initializeDataTable() {
             if ($.fn.DataTable.isDataTable('#datatable')) {
@@ -282,7 +315,6 @@
                     [20, 50, 100, 200]
                 ],
                 processing: true,
-                responsive: true,
                 serverSide: true,
                 language: {
                     processing: `<div class="text-center">
@@ -292,15 +324,19 @@
                 pagingType: "full_numbers",
                 dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
                 ajax: {
-                    url: "{{ route('tenants.index') }}",
+                    url: "{{ route('tenants.get.data') }}",
                     type: "GET",
                     dataType: 'json', // Important for back/forward fix
                     data: function(d) {
+                        d.tenant = $('#tenantFilter').val();
+                        d.property_id = $('#propertyFilter').val();
+                        d.bed_id = $('#bedsFilter').val();
                         d.status = $('#statusFilter').val();
                         d.account_status = $('#accountStatusFilter').val();
                         d.source = $('#sourceFilter').val();
                         d.date_from = $('#dateFrom').val();
                         d.date_to = $('#dateTo').val();
+                        d.tab = currentTab; // Add current tab to filter
                     }
                 },
                 columns: [{
@@ -328,8 +364,8 @@
                         searchable: false
                     },
                     {
-                        data: 'account_status',
-                        name: 'account_status',
+                        data: 'has_active_lease',
+                        name: 'has_active_lease',
                         orderable: false,
                         searchable: false,
                         className: 'text-center'
@@ -358,6 +394,47 @@
                     }
                 ]
             });
+
+            // Reset filters
+            $('#resetFilter').click(function() {
+                // $('#filterForm')[0].reset();
+                $('#propertyFilter, #bedsFilter, #tenantFilter, #statusFilter, #dateFrom, #dateTo').val(null)
+                    .trigger('change');
+                $('#tenantFilter').val('');
+                dataTable.ajax.reload();
+            });
+
+            $('#propertyFilter, #bedsFilter, #statusFilter, #dateFrom, #dateTo').change(function() {
+                dataTable.ajax.reload();
+            })
+
+            $('#tenantFilter').on('keyup', function() {
+                dataTable.ajax.reload();
+            });
+
+            $('#propertyFilter').change(function() {
+                const propertyId = $(this).val();
+                $('#bedsFilter').empty().append('<option value="">All Beds</option>');
+                if (propertyId) {
+                    $.ajax({
+                        url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
+                        type: 'GET',
+                        success: function(response) {
+                            console.log(response);
+
+                            response.data.forEach(function(bed) {
+                                $('#bedsFilter').append(
+                                    `<option value="${bed.id}">${bed.bed_label}</option>`
+                                );
+                            });
+                            $('#bedsFilter').val(null).trigger('change');
+                        },
+                        error: function() {
+                            toastr.error('Failed to fetch beds for the selected property.');
+                        }
+                    });
+                }
+            });
         }
 
         function applyFilters() {
@@ -365,7 +442,7 @@
         }
 
         function resetFilters() {
-            $('#statusFilter, #accountStatusFilter, #sourceFilter, #dateFrom, #dateTo').val('');
+            $('#statusFilter, #tenantFilter, #sourceFilter, #dateFrom, #dateTo').val('');
             dataTable.ajax.reload();
         }
 
@@ -399,6 +476,8 @@
                 type: 'GET',
                 success: function(response) {
                     NProgress.done();
+                    console.log(response);
+
                     if (response.success) {
                         $('#tenantModalLabel').text('Edit Tenant');
                         $('#tenant_id').val(response.tenant.id);
@@ -426,7 +505,7 @@
             const url = tenantId ?
                 "{{ route('tenants.update', ':id') }}".replace(':id', tenantId) :
                 "{{ route('tenants.store') }}";
-            const method = tenantId ? 'PUT' : 'POST';
+            const method = tenantId ? 'POST' : 'POST';
 
             $('.invalid-feedback').text('').parent().removeClass('is-invalid');
             $('#submitBtn').prop('disabled', true);
@@ -489,6 +568,7 @@
             });
         }
 
+        // Delete tenant
         function deleteTenant(id) {
             NProgress.start();
             $.ajax({
@@ -510,8 +590,90 @@
             });
         }
 
+        // Export tenant
         function exportTenants() {
-            toastr.info('Export functionality coming soon!');
+            // Collect current active filters
+            const params = new URLSearchParams({
+                tenant: $('#tenantFilter').val() || '',
+                property_id: $('#propertyFilter').val() || '',
+                bed_id: $('#bedsFilter').val() || '',
+                status: $('#statusFilter').val() || '',
+                account_status: $('#accountStatusFilter').val() || '',
+                source: $('#sourceFilter').val() || '',
+                date_from: $('#dateFrom').val() || '',
+                date_to: $('#dateTo').val() || '',
+                tab: currentTab || 'all',
+            });
+
+            // Remove empty params
+            for (const [key, value] of [...params.entries()]) {
+                if (!value) params.delete(key);
+            }
+
+            const url = "{{ route('tenants.export') }}" + '?' + params.toString();
+
+            // Trigger download
+            window.location.href = url;
+            toastr.info('Preparing export, download will start shortly...');
+        }
+
+        // Approve tenant
+        function approveTenant(id, currentStatus = 'pending') {
+            Swal.fire({
+                title: 'Approve Tenant?',
+                text: 'This will approve the tenant and send a password setup email.',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: '#28a745',
+                denyButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fe fe-check"></i> Approve',
+                denyButtonText: '<i class="fe fe-x"></i> Reject',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    sendApprovalRequest(id, 'approved');
+                } else if (result.isDenied) {
+                    sendApprovalRequest(id, 'rejected');
+                }
+            });
+        }
+
+        function sendApprovalRequest(id, status) {
+            NProgress.start();
+
+            $.ajax({
+                url: "{{ route('tenants.approve', ':id') }}".replace(':id', id),
+                type: 'POST',
+                data: {
+                    status: status
+                },
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        toastr.success(response.message);
+                        dataTable.ajax.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    NProgress.done();
+                    toastr.error(xhr.responseJSON?.message || 'Failed to update tenant status!');
+                }
+            });
+        }
+
+        // Initialize select field
+        function initializeSelect2() {
+            if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
+                $('.select3').select2({
+                    placeholder: 'Select an option',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
         }
     </script>
 @endpush
@@ -519,6 +681,37 @@
 @push('styles')
     <link href="{{ asset('default/datatable.css') }}" rel="stylesheet" />
     <style>
+        .select2-container {
+            width: 100% !important;
+        }
+
+        /* Tab Styles */
+        .nav-tabs-custom {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 0;
+        }
+
+        .nav-tabs-custom .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #D9A600;
+            font-weight: 600;
+            padding: 12px 24px;
+            transition: all 0.3s ease;
+            background: transparent
+        }
+
+        .nav-tabs-custom .nav-link:hover {
+            color: #D9A600;
+            border-color: transparent;
+        }
+
+        .nav-tabs-custom .nav-link.active {
+            color: #ffffff !important;
+            border-bottom-color: #D9A600 !important;
+            background: var(--primary-bg-color);;
+        }
+
         .filter-card {
             background: #f8f9fa;
             border-radius: 8px;

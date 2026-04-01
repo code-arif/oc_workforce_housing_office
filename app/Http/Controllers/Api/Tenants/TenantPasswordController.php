@@ -8,12 +8,11 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Mail\Tenant\PasswordReset\TenantPasswordResetOTPMail as PasswordResetTenantPasswordResetOTPMail;
+use App\Mail\Tenant\PasswordReset\TenantPasswordResetOTPMail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use App\Mail\TenantApplication\TenantPasswordResetOTPMail;
 
 class TenantPasswordController extends Controller
 {
@@ -23,12 +22,94 @@ class TenantPasswordController extends Controller
      * Set password after approval (First time setup)
      * Uses approval_token from approval email
      */
+    // public function setPasswordAfterApproval(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'email' => 'required|email|exists:tenants,email',
+    //         'approval_token' => 'required|string',
+    //         'password' => 'required|string|min:8|confirmed', // password_confirmation required
+    //     ], [
+    //         'password.confirmed' => 'Password and confirm password do not match.',
+    //         'password.min' => 'Password must be at least 8 characters.',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return $this->validationError(
+    //             $validator->errors()->toArray(),
+    //             'Validation failed',
+    //             422
+    //         );
+    //     }
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         // Find tenant by email
+    //         $tenant = Tenant::where('email', $request->email)->first();
+
+    //         if (!$tenant) {
+    //             return $this->error([], 'Tenant not found.', 404);
+    //         }
+
+    //         // Verify approval token
+    //         if ($tenant->approval_token !== $request->approval_token) {
+    //             return $this->error([], 'Invalid approval token.', 403);
+    //         }
+
+    //         // Check if token expired
+    //         if ($tenant->approval_token_expires_at && now()->isAfter($tenant->approval_token_expires_at)) {
+    //             return $this->error([], 'Approval token has expired. Please contact support.', 403);
+    //         }
+
+    //         // Check if tenant is approved
+    //         if ($tenant->status !== 'approved') {
+    //             return $this->error([
+    //                 'status' => $tenant->status
+    //             ], 'Your application is not approved yet. Current status: ' . $tenant->status, 400);
+    //         }
+
+    //         // Set password
+    //         $tenant->password = Hash::make($request->password);
+    //         $tenant->status = 'active'; // Change status to active after password set
+
+    //         // Clear approval token (one-time use)
+    //         $tenant->approval_token = null;
+    //         $tenant->approval_token_expires_at = null;
+
+    //         $tenant->save();
+
+    //         // Generate JWT token
+    //         $token = auth('api')->login($tenant);
+
+    //         DB::commit();
+
+    //         return $this->success([
+    //             'tenant' => [
+    //                 'id' => $tenant->id,
+    //                 'email' => $tenant->email,
+    //                 'status' => $tenant->status,
+    //                 'profile' => $tenant->profile,
+    //             ],
+    //             'token' => $token,
+    //             'token_type' => 'bearer',
+    //             'expires_in' => auth('api')->factory()->getTTL() * 60
+    //         ], 'Password set successfully. You are now logged in.', 200);
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Password setup failed: ' . $e->getMessage(), [
+    //             'email' => $request->email,
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
+    //         return $this->error([], 'Failed to set password. Please try again.', 500);
+    //     }
+    // }
+
+
     public function setPasswordAfterApproval(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:tenants,email',
             'approval_token' => 'required|string',
-            'password' => 'required|string|min:8|confirmed', // password_confirmation required
+            'password' => 'required|string|min:8|confirmed',
         ], [
             'password.confirmed' => 'Password and confirm password do not match.',
             'password.min' => 'Password must be at least 8 characters.',
@@ -45,41 +126,39 @@ class TenantPasswordController extends Controller
         try {
             DB::beginTransaction();
 
-            // Find tenant by email
-            $tenant = Tenant::where('email', $request->email)->first();
+            // 🔹 Find tenant by approval token
+            $tenant = Tenant::where('approval_token', $request->approval_token)->first();
 
             if (!$tenant) {
-                return $this->error([], 'Tenant not found.', 404);
+                return $this->error([], 'Invalid or already used approval token.', 404);
             }
 
-            // Verify approval token
-            if ($tenant->approval_token !== $request->approval_token) {
-                return $this->error([], 'Invalid approval token.', 403);
-            }
-
-            // Check if token expired
-            if ($tenant->approval_token_expires_at && now()->isAfter($tenant->approval_token_expires_at)) {
+            // 🔹 Check token expiry
+            if (
+                $tenant->approval_token_expires_at &&
+                now()->isAfter($tenant->approval_token_expires_at)
+            ) {
                 return $this->error([], 'Approval token has expired. Please contact support.', 403);
             }
 
-            // Check if tenant is approved
-            if ($tenant->status !== 'approved') {
+            // 🔹 Check approval status
+            if ($tenant->status == 'approved') {
                 return $this->error([
                     'status' => $tenant->status
-                ], 'Your application is not approved yet. Current status: ' . $tenant->status, 400);
+                ], 'Your application is already approved.', 400);
             }
 
-            // Set password
+            // 🔹 Set password & activate account
             $tenant->password = Hash::make($request->password);
-            $tenant->status = 'active'; // Change status to active after password set
 
-            // Clear approval token (one-time use)
+            // 🔹 Invalidate token (one-time use)
             $tenant->approval_token = null;
             $tenant->approval_token_expires_at = null;
+            $tenant->status = 'approved'; // Change status to approved after password set
 
             $tenant->save();
 
-            // Generate JWT token
+            // 🔹 Auto login (JWT)
             $token = auth('api')->login($tenant);
 
             DB::commit();
@@ -97,13 +176,16 @@ class TenantPasswordController extends Controller
             ], 'Password set successfully. You are now logged in.', 200);
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error('Password setup failed: ' . $e->getMessage(), [
-                'email' => $request->email,
-                'trace' => $e->getTraceAsString()
+
+            Log::error('Password setup failed', [
+                'token' => $request->approval_token,
+                'error' => $e->getMessage(),
             ]);
+
             return $this->error([], 'Failed to set password. Please try again.', 500);
         }
     }
+
 
     /**
      * Send OTP for forgot password (After first time setup)
@@ -139,23 +221,23 @@ class TenantPasswordController extends Controller
             }
 
             // Check if account is active
-            if (!in_array($tenant->status, ['approved', 'active'])) {
+            if (!in_array($tenant->status, ['approved'])) {
                 return $this->error([
                     'status' => $tenant->status
-                ], 'Your account is not active. Current status: ' . $tenant->status, 400);
+                ], 'Your account is not approved. Current status: ' . $tenant->status, 400);
             }
 
             // Generate OTP
             $tenant->generateOTP();
 
             // Send OTP email
-            // try {
-            //     Mail::to($tenant->email)->send(new PasswordResetTenantPasswordResetOTPMail($tenant));
-            // } catch (Exception $mailError) {
-            //     Log::error('Failed to send OTP email: ' . $mailError->getMessage());
-            //     DB::rollBack();
-            //     return $this->error([], 'Failed to send OTP. Please try again.', 500);
-            // }
+            try {
+                Mail::to($tenant->email)->send(new TenantPasswordResetOTPMail($tenant));
+            } catch (Exception $mailError) {
+                Log::error('Failed to send OTP email: ' . $mailError->getMessage());
+                DB::rollBack();
+                return $this->error([], 'Failed to send OTP. Please try again.', 500);
+            }
 
             DB::commit();
 

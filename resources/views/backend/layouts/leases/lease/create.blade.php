@@ -1,8 +1,8 @@
 @extends('backend.app', ['title' => 'Add Lease'])
-
+@section('title', 'Create New Leases')
 @section('content')
     <div class="app-content main-content mt-0">
-        <div class="side-app">
+        <div class="side-app" style="margin-bottom: 50px">
             <div class="main-container container-fluid">
 
                 <!-- PAGE HEADER -->
@@ -68,42 +68,69 @@
                                             <!-- Hierarchical Property Selection -->
                                             <div class="row mb-3">
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Property <span class="text-danger">*</span></label>
-                                                    <select class="form-select select3" id="property_id" name="property_id" required>
+                                                    <label class="form-label">Property <span
+                                                            class="text-danger">*</span></label>
+                                                    <select class="form-select select3" id="property_id" name="property_id"
+                                                        required>
                                                         <option value="">Select Property</option>
                                                         @forelse ($properties as $property)
-                                                        <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                                            <option value="{{ $property->id }}">{{ $property->name }}
+                                                            </option>
                                                         @empty
-                                                        <option value="">No Property Found</option>
+                                                            <option value="">No Property Found</option>
                                                         @endforelse
                                                     </select>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <label class="form-label">Unit <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="unit_id" name="unit_id" required disabled>
+                                                <div class="col-md-6" id="unitFieldContainer">
+                                                    <label class="form-label">Unit <span
+                                                            class="text-danger bed-required-marker">*</span></label>
+                                                    <select class="form-select" id="unit_id" name="unit_id" disabled>
                                                         <option value="">Select Property First</option>
                                                     </select>
                                                 </div>
                                             </div>
 
-                                            <div class="row mb-4">
+                                            <div class="row mb-4" id="roomBedFieldContainer">
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Room <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="room_id" name="room_id" required disabled>
+                                                    <label class="form-label">Room <span
+                                                            class="text-danger bed-required-marker">*</span></label>
+                                                    <select class="form-select" id="room_id" name="room_id" disabled>
                                                         <option value="">Select Unit First</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Bed <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="bed_id" name="bed_id" required disabled>
+                                                    <label class="form-label">Bed <span
+                                                            class="text-danger bed-required-marker">*</span></label>
+                                                    <select class="form-select" id="bed_id" name="bed_id" disabled>
                                                         <option value="">Select Room First</option>
                                                     </select>
                                                 </div>
                                             </div>
 
+                                            <!-- Assign Bed Later Option -->
+                                            <div class="form-check mb-3" id="assignBedLaterSection">
+                                                <input class="form-check-input" type="checkbox" id="assign_bed_later"
+                                                    name="assign_bed_later">
+                                                <label class="form-check-label" for="assign_bed_later">
+                                                    <strong>Assign bed later</strong> - Create and sign lease without
+                                                    specifying a bed now.
+                                                    <small class="text-muted d-block">Bed can be assigned from tenant
+                                                        profile when tenant arrives.</small>
+                                                </label>
+                                            </div>
+
                                             <!-- Selected Property Info -->
                                             <div class="alert alert-info" id="selectedPropertyInfo" style="display: none;">
                                                 <strong>Selected:</strong> <span id="fullPropertyPath"></span>
+                                            </div>
+
+                                            <!-- Pending Bed Assignment Alert -->
+                                            <div class="alert alert-warning" id="pendingBedAssignmentInfo"
+                                                style="display: none;">
+                                                <i class="fe fe-alert-triangle me-2"></i>
+                                                <strong>Note:</strong> Bed will be assigned later from the tenant's profile.
+                                                The lease can still be signed and the tenant can move in once a bed is
+                                                assigned.
                                             </div>
 
                                             <hr class="my-4">
@@ -112,31 +139,46 @@
                                             <h5 class="mb-4">SELECT LEASE TERM</h5>
                                             <div class="row mb-4">
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Lease Term Type <span class="text-danger">*</span></label>
-                                                    <select class="form-select" id="lease_term_type" name="lease_term_type" required>
+                                                    <label class="form-label">Lease Term Type <span
+                                                            class="text-danger">*</span></label>
+                                                    <select class="form-select" id="lease_term_type" name="lease_term_type"
+                                                        required>
                                                         <option value="">Select Lease Term</option>
                                                         @foreach ($terms as $term)
-                                                            <option value="{{$term->id}}" data-type="{{$term->term_type ?? 'fixed'}}"
-                                                                data-start="{{$term->blanket_start_date ?? ''}}" data-end="{{$term->blanket_end_date ?? ''}}">{{$term->name}}</option>
+                                                            <option value="{{ $term->id }}"
+                                                                data-type="{{ $term->term_type ?? 'fixed' }}"
+                                                                data-start="{{ $term->blanket_start_date ?? '' }}"
+                                                                data-end="{{ $term->blanket_end_date ?? '' }}">
+                                                                {{ $term->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
                                             </div>
 
                                             <!-- Lease Type Visual Display -->
-                                            <div class="lease-type-selection" id="leaseTypeDisplay" style="display: none;">
+                                            <div class="lease-type-selection" id="leaseTypeDisplay"
+                                                style="display: none;">
                                                 <div class="row">
                                                     <div class="col-md-6">
-                                                        <div class="lease-type-card" id="fixedTermCard" data-type="fixed">
+                                                        <div class="lease-type-card" id="fixedTermCard"
+                                                            data-type="fixed">
                                                             <div class="lease-type-header">
                                                                 <i class="fe fe-calendar"></i>
-                                                                <div class="badge bg-primary">SELECTED</div>
+                                                                <div class="badge bg-primary p-3">SELECTED</div>
                                                             </div>
                                                             <h6>FIXED TERM LEASE</h6>
-                                                            <p class="text-muted">This lease has a fixed start date and will expire after a fixed end date.</p>
+                                                            <p class="text-muted">This lease has a fixed start date and
+                                                                will expire after a fixed end date.</p>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
+                                                        <label class="form-label">Expected Move in Date <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control datepicker2"
+                                                            id="actual_move_in" name="actual_move_in" required>
+                                                        <small class="text-muted"></small>
+                                                    </div>
+                                                    {{-- <div class="col-md-6">
                                                         <div class="lease-type-card" id="monthToMonthCard" data-type="month">
                                                             <div class="lease-type-header">
                                                                 <i class="fe fe-calendar"></i>
@@ -145,21 +187,25 @@
                                                             <h6>MONTH-TO-MONTH LEASE</h6>
                                                             <p class="text-muted">This lease has a start date but no fixed end date. It automatically renews each month.</p>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
                                                 </div>
                                             </div>
 
                                             <!-- Date Selection -->
                                             <div class="row mt-4" id="dateSelectionSection" style="display: none;">
                                                 <div class="col-md-6">
-                                                    <label class="form-label">Lease Begin Date <span class="text-danger">*</span></label>
-                                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
-                                                    <small class="text-muted" id="startDateHint"></small>
+                                                    <label class="form-label">Lease Begin Date <span
+                                                            class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control datepicker2"
+                                                        id="start_date" name="start_date" required>
+                                                    {{-- <small class="text-muted" id="startDateHint"></small> --}}
                                                 </div>
                                                 <div class="col-md-6" id="endDateField">
-                                                    <label class="form-label">Lease End Date <span class="text-danger" id="endDateRequired">*</span></label>
-                                                    <input type="date" class="form-control" id="end_date" name="end_date">
-                                                    <small class="text-muted" id="endDateHint"></small>
+                                                    <label class="form-label">Lease End Date <span class="text-danger"
+                                                            id="endDateRequired">*</span></label>
+                                                    <input type="text" class="form-control datepicker2" id="end_date"
+                                                        name="end_date">
+                                                    {{-- <small class="text-muted" id="endDateHint"></small> --}}
                                                 </div>
                                             </div>
 
@@ -171,7 +217,9 @@
                                             </div> --}}
 
                                             <div class="d-flex justify-content-end mt-4">
-                                                <button type="button" class="btn btn-primary" id="step1NextBtn" onclick="validateAndNextStep(2)" disabled>Next: Set Rental Terms</button>
+                                                <button type="button" class="btn btn-primary" id="step1NextBtn"
+                                                    onclick="validateAndNextStep(2)" disabled>Next: Set Rental
+                                                    Terms</button>
                                             </div>
                                         </div>
                                     </div>
@@ -202,19 +250,25 @@
                                                 <h5 class="section-title">Deposit</h5>
                                                 <div class="row">
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Deposit Amount <span class="text-danger">*</span></label>
+                                                        <label class="form-label">Deposit Amount <span
+                                                                class="text-danger">*</span></label>
                                                         <div class="input-group">
                                                             <span class="input-group-text">$</span>
-                                                            <input type="number" class="form-control" id="deposit_amount" name="deposit_amount" value="0" min="0" step="0.01" required>
+                                                            <input type="number" class="form-control"
+                                                                id="deposit_amount" name="deposit_amount" value="0"
+                                                                min="0" step="0.01" required>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Deposit Due Date <span class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control" id="deposit_due_date" name="deposit_due_date" required>
+                                                        <label class="form-label">Deposit Due Date <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control datepicker2"
+                                                            id="deposit_due_date" name="deposit_due_date" required>
                                                     </div>
                                                 </div>
                                                 <div class="form-check mt-3">
-                                                    <input class="form-check-input" type="checkbox" id="deposit_collected" name="deposit_collected">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        id="deposit_collected" name="deposit_collected">
                                                     <label class="form-check-label" for="depositCollected">
                                                         I have already collected the deposit, mark as paid
                                                     </label>
@@ -226,28 +280,36 @@
                                                 <h5 class="section-title">Rent</h5>
                                                 <div class="row mb-3">
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Payment Frequency <span class="text-danger">*</span></label>
-                                                        <select class="form-select" id="payment_frequency" name="payment_frequency" required>
+                                                        <label class="form-label">Payment Frequency <span
+                                                                class="text-danger">*</span></label>
+                                                        <select class="form-select" id="payment_frequency"
+                                                            name="payment_frequency" required>
                                                             <option value="WEEKLY">Weekly</option>
                                                             <option value="MONTHLY" selected>Monthly</option>
-                                                            <option value="YEARLY">Yearly</option>
-                                                            {{-- <option value="CUSTOM">Custom</option> --}}
+                                                            <option value="CUSTOM">Custom</option>
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Rent Amount <span class="text-danger">*</span></label>
+                                                        <label class="form-label">Rent Amount <span
+                                                                class="text-danger">*</span></label>
                                                         <div class="input-group">
                                                             <span class="input-group-text">$</span>
-                                                            <input type="number" class="form-control" id="rent_amount" name="rent_amount" value="0" min="0" step="0.01" required>
+                                                            <input type="number" class="form-control" id="rent_amount"
+                                                                name="rent_amount" value="0" min="0"
+                                                                step="0.01" required>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                <div class="row mb-3">
+                                                <!-- Monthly Due Day -->
+                                                <div class="row mb-3" id="monthlyDueDayRow">
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Rent Due on the <span class="text-danger">*</span></label>
-                                                        <div class="d-flex align-items-center">
-                                                            <select class="form-select" id="due_day" name="due_day" required>
+                                                        <label class="form-label">Rent Due on the <span
+                                                                class="text-danger">*</span></label>
+                                                        <div class="d-flex align-items-center"
+                                                            id="standardDueDayContainer">
+                                                            <select class="form-select" id="due_day" name="due_day"
+                                                                required>
                                                                 <option value="1" selected>1st</option>
                                                                 <option value="5">5th</option>
                                                                 <option value="10">10th</option>
@@ -260,26 +322,106 @@
                                                             <span class="ms-2 text-muted">of every month</span>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">First Rental Invoice Due <span class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control" id="first_invoice_date" name="first_invoice_date" required>
-                                                        <small class="text-muted">First invoice will be created with this due date</small>
+                                                    <div class="col-md-6" id="standardFirstInvoiceContainer">
+                                                        <label class="form-label">First Rental Invoice Due <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control datepicker2"
+                                                            id="first_invoice_date" name="first_invoice_date" required>
+                                                        <small class="text-muted">First invoice will be created with this
+                                                            due date</small>
                                                     </div>
                                                 </div>
 
-                                                <div class="additional-fee-btn">
+                                                <!-- Weekly Due Day -->
+                                                <div class="row mb-3" id="weeklyDueDayRow" style="display: none;">
+                                                    <div class="col-md-6">
+                                                        <label class="form-label">Rent Due on <span
+                                                                class="text-danger">*</span></label>
+                                                        <div class="d-flex align-items-center"
+                                                            id="weeklyDueDayContainer">
+                                                            <select class="form-select" id="weekly_due_day" name="weekly_due_day">
+                                                                <option value="1">Monday</option>
+                                                                <option value="2">Tuesday</option>
+                                                                <option value="3">Wednesday</option>
+                                                                <option value="4">Thursday</option>
+                                                                <option value="5" selected>Friday</option>
+                                                                <option value="6">Saturday</option>
+                                                                <option value="7">Sunday</option>
+                                                            </select>
+                                                            <span class="ms-2 text-muted">every week</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6" id="weeklyFirstInvoiceContainer">
+                                                        <label class="form-label">First Rental Invoice Due <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control datepicker2"
+                                                            id="weekly_first_invoice_date" name="weekly_first_invoice_date">
+                                                        <small class="text-muted">First invoice will be created with this
+                                                            due date</small>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Custom Payment Dates Section -->
+                                                <div class="custom-payment-section" id="customPaymentSection"
+                                                    style="display: none;">
+                                                    <div class="card border-primary mb-3">
+                                                        <div
+                                                            class="card-header bg-primary-light d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0"><i class="fe fe-calendar me-2"></i>Custom
+                                                                Payment Schedule</h6>
+                                                            <button type="button" class="btn btn-sm btn-primary"
+                                                                id="addCustomPaymentBtn">
+                                                                <i class="fe fe-plus me-1"></i> Add Payment Date
+                                                            </button>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <p class="text-muted small mb-3">
+                                                                <i class="fe fe-info me-1"></i> Define custom payment dates
+                                                                with individual amounts. Each entry will generate a separate
+                                                                invoice.
+                                                            </p>
+
+                                                            <div id="customPaymentsList">
+                                                                <!-- Custom payment entries will be added here -->
+                                                            </div>
+
+                                                            <div class="alert alert-info mt-3" id="noCustomPaymentsAlert">
+                                                                <i class="fe fe-info me-2"></i>No custom payment dates
+                                                                added. Click "Add Payment Date" to create a custom schedule.
+                                                            </div>
+
+                                                            <div class="custom-payments-summary mt-3 pt-3 border-top"
+                                                                id="customPaymentsSummary" style="display: none;">
+                                                                <div class="d-flex justify-content-between">
+                                                                    <span><strong>Total Payments:</strong> <span
+                                                                            id="customPaymentsCount">0</span></span>
+                                                                    <span><strong>Total Amount:</strong> $<span
+                                                                            id="customPaymentsTotal">0.00</span></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- <div class="additional-fee-btn">
                                                     <button type="button" class="btn btn-link text-primary p-0">
                                                         <i class="fe fe-plus-circle me-1"></i> Add Additional Fee (Optional)
                                                     </button>
-                                                </div>
+                                                </div> --}}
                                             </div>
 
                                             <div class="d-flex justify-content-between mt-4">
-                                                <button type="button" class="btn btn-light" onclick="previousStep(1)">
-                                                    <i class="fe fe-chevron-left me-1"></i> Back to Property Details
+                                                <button type="button"
+                                                    class="btn btn-light d-inline-flex align-items-center"
+                                                    onclick="previousStep(1)">
+                                                    <i class="fe fe-chevron-left me-1"></i>
+                                                    Back to Property Details
                                                 </button>
-                                                <button type="button" class="btn btn-primary" id="step2NextBtn" onclick="validateAndNextStep(3)">
-                                                    Next: Add Tenants <i class="fe fe-chevron-right ms-1"></i>
+                                                <button type="button"
+                                                    class="btn btn-primary d-inline-flex align-items-center"
+                                                    id="step2NextBtn" onclick="validateAndNextStep(3)">
+                                                    Next: Add Tenants
+                                                    <i class="fe fe-chevron-right ms-1"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -294,8 +436,8 @@
                                         <div class="step-sidebar">
                                             <div class="step-number">3</div>
                                             <div class="step-info">
-                                                <h6>Add Tenants</h6>
-                                                <p>Select Tenants from the list or add a new tenant</p>
+                                                <h6>Select Tenant</h6>
+                                                <p>Select the tenant for this lease (one tenant per bed)</p>
                                             </div>
                                         </div>
 
@@ -303,10 +445,21 @@
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <h6 class="mb-0" id="unitNameInfo">Select property first</h6>
                                                 <div class="text-end" id="unitPriceInfo">
-                                                    <span class="me-3"><i class="fe fe-dollar-sign text-success"></i> <span id="rentDepositDisplay">$0.00 Rent/$0.00 Deposit</span></span>
-                                                    <span><i class="fe fe-users text-primary"></i> <span id="tenantCount">0</span> Tenant(s)</span>
+                                                    <span class="me-3"><i class="fe fe-dollar-sign text-success"></i>
+                                                        <span id="rentDepositDisplay">$0.00 Rent/$0.00
+                                                            Deposit</span></span>
+                                                    <span><i class="fe fe-user text-primary"></i> <span
+                                                            id="tenantCount">0</span> Tenant</span>
                                                 </div>
                                             </div>
+                                        </div>
+
+                                        <!-- Info about roommates -->
+                                        <div class="alert alert-info-transparent border-info mb-4">
+                                            <i class="fe fe-info me-2"></i>
+                                            <strong>Note:</strong> Each lease is for one tenant and one bed. For roommates
+                                            sharing a room, create separate leases for each tenant with different beds in
+                                            the same room.
                                         </div>
 
                                         <!-- Add Tenant Section -->
@@ -315,30 +468,26 @@
                                                 <div class="col-md-6">
                                                     <div class="card border">
                                                         <div class="card-header bg-light">
-                                                            <h6 class="mb-0"><i class="fe fe-user-check me-2"></i>Select Existing Tenant</h6>
+                                                            <h6 class="mb-0"><i
+                                                                    class="fe fe-user-check me-2"></i>Existing Applicant
+                                                            </h6>
                                                         </div>
                                                         <div class="card-body">
                                                             <div class="mb-3">
-                                                                <label class="form-label">Active Tenants</label>
-                                                                <select class="form-select select3" id="existingTenantSelect">
+                                                                <label class="form-label">Existing Applicant</label>
+                                                                <select class="form-select select3"
+                                                                    id="existingTenantSelect">
                                                                     <option value="">Select a tenant...</option>
-                                                                    @forelse ($tenants as $tenant)
-                                                                        <option value="{{ $tenant->id }}"
-                                                                            data-firstname="{{ $tenant->profile->first_name }}"
-                                                                            data-lastname="{{ $tenant->profile->last_name }}"
-                                                                            data-email="{{ $tenant->email }}"
-                                                                            data-phone="{{ $tenant->profile->phone }}"
-                                                                            data-status="{{ $tenant->status }}">
-                                                                            {{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}
-                                                                        </option>
-                                                                    @empty
-                                                                        <option value="">No Active Tenants Found</option>
-                                                                    @endforelse
+
                                                                 </select>
-                                                                <small class="text-muted">Select from existing active tenants</small>
+                                                                <small class="text-muted">Select from existing active
+                                                                    tenants</small>
                                                             </div>
-                                                            <button type="button" class="btn btn-primary btn-sm w-100" id="addExistingTenantBtn">
-                                                                <i class="fe fe-plus me-1"></i> Add Selected Tenant
+                                                            <button type="button"
+                                                                class="btn btn-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-1"
+                                                                id="addExistingTenantBtn">
+                                                                <i class="fe fe-plus"></i>
+                                                                <span>Add Selected Tenant</span>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -347,25 +496,36 @@
                                                 <div class="col-md-6">
                                                     <div class="card border">
                                                         <div class="card-header bg-light">
-                                                            <h6 class="mb-0"><i class="fe fe-user-plus me-2"></i>Create New Tenant</h6>
+                                                            <h6 class="mb-0"><i class="fe fe-user-plus me-2"></i>Create
+                                                                New Tenant</h6>
                                                         </div>
                                                         <div class="card-body">
                                                             <div class="row mb-2">
                                                                 <div class="col-md-6">
-                                                                    <input type="text" class="form-control form-control-sm" id="newTenantFirstName" placeholder="First Name *">
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        id="newTenantFirstName"
+                                                                        placeholder="First Name *">
                                                                 </div>
                                                                 <div class="col-md-6">
-                                                                    <input type="text" class="form-control form-control-sm" id="newTenantLastName" placeholder="Last Name *">
+                                                                    <input type="text"
+                                                                        class="form-control form-control-sm"
+                                                                        id="newTenantLastName" placeholder="Last Name *">
                                                                 </div>
                                                             </div>
                                                             <div class="mb-2">
-                                                                <input type="email" class="form-control form-control-sm" id="newTenantEmail" placeholder="Email *">
+                                                                <input type="email" class="form-control form-control-sm"
+                                                                    id="newTenantEmail" placeholder="Email *">
                                                             </div>
                                                             <div class="mb-3">
-                                                                <input type="tel" class="form-control form-control-sm" id="newTenantPhone" placeholder="Phone Number *">
+                                                                <input type="tel" class="form-control form-control-sm"
+                                                                    id="newTenantPhone" placeholder="Phone Number *">
                                                             </div>
-                                                            <button type="button" class="btn btn-success btn-sm w-100" id="createNewTenantBtn">
-                                                                <i class="fe fe-save me-1"></i> Save & Add Tenant
+                                                            <button type="button"
+                                                                class="btn btn-success btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-1"
+                                                                id="createNewTenantBtn">
+                                                                <i class="fe fe-save"></i>
+                                                                <span>Save & Add Tenant</span>
                                                             </button>
                                                         </div>
                                                     </div>
@@ -373,14 +533,15 @@
                                             </div>
                                         </div>
 
-                                        <!-- Selected Tenants List -->
+                                        <!-- Selected Tenant -->
                                         <div class="selected-tenants-section">
-                                            <h6 class="mb-3">Selected Tenants for this Lease</h6>
+                                            <h6 class="mb-3">Selected Tenant for this Lease</h6>
                                             <div class="alert alert-info" id="noTenantsAlert">
-                                                <i class="fe fe-info me-2"></i>No tenants added yet. Please select an existing tenant or create a new one above.
+                                                <i class="fe fe-info me-2"></i>No tenant selected yet. Please select an
+                                                existing tenant or create a new one above.
                                             </div>
                                             <div id="selectedTenantsList" class="row" style="display: none;">
-                                                <!-- Tenant cards will be dynamically added here -->
+                                                <!-- Tenant card will be dynamically added here -->
                                             </div>
                                         </div>
 
@@ -523,7 +684,7 @@
                                         </div> --}}
 
                                         <!-- Partial Payment Toggle -->
-                                        <div class="partial-payment-section mt-4">
+                                        {{-- <div class="partial-payment-section mt-4">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <strong>Partial Payment</strong>
@@ -536,12 +697,12 @@
                                                     </label>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </div> --}}
                                     </div>
                                 </div>
                             </div>
 
-                            
+
                             <!-- STEP 4: FINALIZE LEASE -->
                             <div class="step-content" id="step-4">
                                 <div class="card">
@@ -559,7 +720,8 @@
                                             <div class="finalize-section mb-4">
                                                 <div class="section-header">
                                                     <h6><i class="fe fe-home me-2"></i>Property Details</h6>
-                                                    <button type="button" class="btn btn-sm btn-link" onclick="previousStep(1)">Edit</button>
+                                                    <button type="button" class="btn btn-sm btn-link"
+                                                        onclick="previousStep(1)">Edit</button>
                                                 </div>
                                                 <div class="section-content">
                                                     <div class="row">
@@ -594,12 +756,13 @@
                                             <!-- Tenant Summary -->
                                             <div class="finalize-section mb-4">
                                                 <div class="section-header">
-                                                    <h6><i class="fe fe-users me-2"></i>Tenants (<span id="finalTenantCount">0</span>)</h6>
-                                                    <button type="button" class="btn btn-sm btn-link" onclick="previousStep(3)">Edit</button>
+                                                    <h6><i class="fe fe-user me-2"></i>Tenant</h6>
+                                                    <button type="button" class="btn btn-sm btn-link"
+                                                        onclick="previousStep(3)">Edit</button>
                                                 </div>
                                                 <div class="section-content">
                                                     <div id="finalTenantsList" class="tenant-list">
-                                                        <p class="text-muted mb-0">No tenants added</p>
+                                                        <p class="text-muted mb-0">No tenant selected</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -608,14 +771,16 @@
                                             <div class="finalize-section mb-4">
                                                 <div class="section-header">
                                                     <h6><i class="fe fe-dollar-sign me-2"></i>Rent & Deposit</h6>
-                                                    <button type="button" class="btn btn-sm btn-link" onclick="previousStep(2)">Edit</button>
+                                                    <button type="button" class="btn btn-sm btn-link"
+                                                        onclick="previousStep(2)">Edit</button>
                                                 </div>
                                                 <div class="section-content">
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="info-item">
                                                                 <span class="label">Monthly Rent</span>
-                                                                <span class="value text-success" id="finalRentAmount">$0.00</span>
+                                                                <span class="value text-success"
+                                                                    id="finalRentAmount">$0.00</span>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -627,7 +792,8 @@
                                                         <div class="col-md-4">
                                                             <div class="info-item">
                                                                 <span class="label">Payment Frequency</span>
-                                                                <span class="value" id="finalPaymentFrequency">Monthly</span>
+                                                                <span class="value"
+                                                                    id="finalPaymentFrequency">Monthly</span>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -642,12 +808,13 @@
                                                                 <span class="value" id="finalFirstInvoice">-</span>
                                                             </div>
                                                         </div>
-                                                        <div class="col-md-4">
+                                                        {{-- <div class="col-md-4">
                                                             <div class="info-item">
                                                                 <span class="label">Partial Payment</span>
-                                                                <span class="value" id="finalPartialPayment">Allowed</span>
+                                                                <span class="value"
+                                                                    id="finalPartialPayment">Allowed</span>
                                                             </div>
-                                                        </div>
+                                                        </div> --}}
                                                     </div>
                                                 </div>
                                             </div>
@@ -659,28 +826,35 @@
                                                 </div>
                                                 <div class="section-content">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Select Lease Template <span class="text-danger">*</span></label>
-                                                        <select class="form-select" id="lease_template_id" name="lease_template_id" required>
+                                                        <label class="form-label">Select Lease Template <span
+                                                                class="text-danger">*</span></label>
+                                                        <select class="form-select" id="lease_template_id"
+                                                            name="lease_template_id" required>
                                                             <option value="">Choose a template...</option>
-                                                            @if(isset($leaseTemplates) && count($leaseTemplates) > 0)
-                                                                @foreach($leaseTemplates as $template)
-                                                                    <option value="{{ $template->id }}">{{ $template->name }}</option>
+                                                            @if (isset($leaseTemplates) && count($leaseTemplates) > 0)
+                                                                @foreach ($leaseTemplates as $template)
+                                                                    <option value="{{ $template->id }}">
+                                                                        {{ $template->name }}</option>
                                                                 @endforeach
                                                             @else
-                                                                <option value="" disabled>No templates available</option>
+                                                                <option value="" disabled>No templates available
+                                                                </option>
                                                             @endif
                                                         </select>
-                                                        <small class="text-muted">This template will be used to generate the lease agreement for signing</small>
+                                                        <small class="text-muted">This template will be used to generate
+                                                            the lease agreement for signing</small>
                                                     </div>
-                                                    
+
                                                     <div class="form-check mb-2">
-                                                        <input class="form-check-input" type="checkbox" id="sendForSignature" name="send_for_signature" checked>
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="sendForSignature" name="send_for_signature" checked>
                                                         <label class="form-check-label" for="sendForSignature">
                                                             Send lease to tenant(s) for electronic signature
                                                         </label>
                                                     </div>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="sendWelcomeEmail" name="send_welcome_email" checked>
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="sendWelcomeEmail" name="send_welcome_email" checked>
                                                         <label class="form-check-label" for="sendWelcomeEmail">
                                                             Send welcome email to tenant(s)
                                                         </label>
@@ -690,15 +864,23 @@
 
                                             <!-- Action Buttons -->
                                             <div class="d-flex justify-content-between mt-4 pt-3 border-top">
-                                                <button type="button" class="btn btn-light" onclick="previousStep(3)">
+                                                <button type="button"
+                                                    class="btn btn-light d-inline-flex align-items-center"
+                                                    onclick="previousStep(3)">
                                                     <i class="fe fe-chevron-left me-1"></i> Back
                                                 </button>
                                                 <div>
-                                                    <button type="button" class="btn btn-outline-secondary me-2" id="saveDraftBtn">
-                                                        <i class="fe fe-save me-1"></i> Save as Draft
+                                                    <button type="button"
+                                                        class="btn btn-outline-secondary me-2 d-inline-flex align-items-center gap-1"
+                                                        id="saveDraftBtn">
+                                                        <i class="fe fe-save"></i>
+                                                        <span>Save as Draft</span>
                                                     </button>
-                                                    <button type="button" class="btn btn-primary" id="createLeaseBtn">
-                                                        <i class="fe fe-check me-1"></i> Create Lease
+                                                    <button type="button"
+                                                        class="btn btn-primary d-inline-flex align-items-center gap-1"
+                                                        id="createLeaseBtn">
+                                                        <i class="fe fe-check"></i>
+                                                        <span>Create Lease</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -720,7 +902,8 @@
                                     <div class="summary-amount text-center mb-4">
                                         <h2 class="text-primary mb-2">$0.00</h2>
                                         <p class="text-muted mb-1">Total rent from lease</p>
-                                        <p class="text-muted small" id="leaseDuration">for Oops! Could not calculate duration!</p>
+                                        <p class="text-muted small" id="leaseDuration">for Oops! Could not calculate
+                                            duration!</p>
                                     </div>
 
                                     <div class="summary-details">
@@ -749,7 +932,8 @@
                                             <strong id="summaryRent">N/A</strong>
                                         </div>
 
-                                        <div class="detail-item mb-3" id="summaryDepositContainer" style="display: none;">
+                                        <div class="detail-item mb-3" id="summaryDepositContainer"
+                                            style="display: none;">
                                             <span class="text-muted">Deposit</span>
                                             <strong id="summaryDeposit">N/A</strong>
                                         </div>
@@ -766,9 +950,7 @@
                                         </div>
                                     </div>
 
-                                    <button type="button" class="btn btn-outline-primary w-100 mt-4">
-                                        View/Edit Rent Schedule
-                                    </button>
+
                                 </div>
                             </div>
                         </div>
@@ -777,11 +959,13 @@
 
                 <!-- BOTTOM NAVIGATION -->
                 <div class="form-navigation">
-                    <button type="button" class="btn btn-light" onclick="window.location='{{ route('tenants.index') }}'">
+                    <button type="button" class="btn btn-light"
+                        onclick="window.location='{{ route('tenants.index') }}'">
                         Cancel
                     </button>
                     <div>
-                        <button type="button" class="btn btn-light me-2" id="backBtn" onclick="previousStep()" style="display: none;">
+                        <button type="button" class="btn btn-light me-2" id="backBtn" onclick="previousStep()"
+                            style="display: none;">
                             Back
                         </button>
                         <button type="button" class="btn btn-secondary me-2" id="saveBtn" style="display: none;">
@@ -802,6 +986,8 @@
 @endsection
 
 @push('scripts')
+    <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
+
     @include('backend.layouts.leases.lease._script')
 @endpush
 

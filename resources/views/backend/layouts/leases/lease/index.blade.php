@@ -16,11 +16,7 @@
                             <li class="breadcrumb-item active" aria-current="page">Leases</li>
                         </ol>
                     </div>
-                    <div class="ms-auto">
-                        <a href="{{ route('leases.create') }}" class="btn btn-primary">
-                            <i class="fe fe-plus me-2"></i> New Lease
-                        </a>
-                    </div>
+
                 </div>
 
                 <!-- Statistics Cards -->
@@ -97,18 +93,75 @@
                         </div>
                     </div>
                 </div>
-
+                <!-- FILTERS -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="filter-card">
+                            <div class="row align-items-end g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Property</label>
+                                    <select class="form-select select3" id="propertyFilter">
+                                        <option value="">Select Property</option>
+                                        @foreach ($properties as $property)
+                                            <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Bed</label>
+                                    <select class="form-select select3" id="bedFilter">
+                                        <option value="">All Beds</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Tenant</label>
+                                    <select class="form-select select3" id="tenantFilter">
+                                        <option value="">Select Tenant</option>
+                                        @foreach ($tenants as $tenant)
+                                            <option value="{{ $tenant->id }}">{{ $tenant?->profile?->first_name }}
+                                                {{ $tenant?->profile?->last_name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select select3" id="statusFilter">
+                                        <option value="">All Statuses</option>
+                                        <option value="ACTIVE">Active</option>
+                                        <option value="PENDING_TENANT_SIGN">Pending Tenant Signature</option>
+                                        <option value="PENDING_ADMIN_SIGN">Pending Landlord Signature</option>
+                                        <option value="COMPLETED">COMPLETED</option>
+                                        <option value="INACTIVE">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                        <i class="fe fe-refresh-cw me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div>
+                            {{-- <div class="row mt-3">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
+                                        <i class="fe fe-filter me-1"></i> Apply Filters
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                                        <i class="fe fe-refresh-cw me-1"></i> Reset
+                                    </button>
+                                </div>
+                            </div> --}}
+                        </div>
+                    </div>
+                </div>
                 <!-- Leases Table -->
                 <div class="card">
                     <div class="card-header border-bottom">
                         <h3 class="card-title">All Leases</h3>
                         <div class="ms-auto">
-                            <button class="btn btn-sm btn-light me-2" id="exportBtn">
-                                <i class="fe fe-download me-1"></i> Export
-                            </button>
-                            <button class="btn btn-sm btn-light" id="filterBtn">
-                                <i class="fe fe-filter me-1"></i> Filter
-                            </button>
+                            <a href="{{ route('leases.create') }}"
+                                class="btn btn-primary d-inline-flex align-items-center">
+                                <i class="fe fe-plus me-1"></i> New Lease
+                            </a>
                         </div>
                     </div>
 
@@ -117,15 +170,8 @@
                         <form id="filterForm" class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label">Status</label>
-                                <select class="form-select" name="status" id="statusFilter">
-                                    <option value="">All Statuses</option>
-                                    <option value="ACTIVE">Active</option>
-                                    <option value="DRAFT">Draft</option>
-                                    <option value="PENDING_TENANT_SIGN">Pending Tenant</option>
-                                    <option value="PENDING_ADMIN_SIGN">Pending Admin</option>
-                                    <option value="TERMINATED">Terminated</option>
-                                    <option value="COMPLETED">Completed</option>
-                                </select>
+                                <input type="text" class="form-control select3" name="status" id="statusFilter"
+                                    data-placeholder="Select Status">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Date From</label>
@@ -153,13 +199,11 @@
                                     <tr>
                                         <th>Status</th>
                                         <th>Property</th>
-                                        <th>Unit</th>
-                                        <th>Address</th>
                                         <th>Tenant</th>
-                                        <th>Start</th>
-                                        <th>End</th>
+                                        <th>Lease Duration</th>
                                         <th>Rent</th>
                                         <th>Signatures</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                             </table>
@@ -182,9 +226,10 @@
                 ajax: {
                     url: '{{ route('leases.get.data') }}',
                     data: function(d) {
+                        d.property_id = $('#propertyFilter').val();
+                        d.bed_id = $('#bedFilter').val();
+                        d.tenant_id = $('#tenantFilter').val();
                         d.status = $('#statusFilter').val();
-                        d.date_from = $('#dateFrom').val();
-                        d.date_to = $('#dateTo').val();
                     }
                 },
                 columns: [{
@@ -199,34 +244,14 @@
                         orderable: false
                     },
                     {
-                        data: 'property_unit',
-                        name: 'unit',
-                        orderable: false,
-                        visible: false
-                    },
-                    {
-                        data: 'address',
-                        name: 'address',
-                        orderable: false
-                    },
-                    {
                         data: 'tenant_name',
                         name: 'tenant',
                         orderable: false
                     },
                     {
-                        data: 'start_date',
-                        name: 'start_date',
-                        render: function(data) {
-                            return moment(data).format('MMM DD, YYYY');
-                        }
-                    },
-                    {
-                        data: 'end_date',
-                        name: 'end_date',
-                        render: function(data) {
-                            return moment(data).format('MMM DD, YYYY');
-                        }
+                        data: 'dates',
+                        name: 'dates',
+                        orderable: true
                     },
                     {
                         data: 'rent',
@@ -238,12 +263,18 @@
                         name: 'signature_status',
                         orderable: false,
                         searchable: false
-                    }
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    },
                 ],
                 order: [
                     [0, 'desc']
                 ],
-                pageLength: 25,
+                pageLength: 10,
                 dom: '<"d-flex justify-content-between align-items-center mb-3"<"showing-info">f>rtip',
                 language: {
                     search: "",
@@ -263,7 +294,8 @@
             });
 
             // Row click to view details
-            $('#leasesTable tbody').on('click', 'tr', function() {
+            $('#leasesTable tbody').on('click', 'tr', function(e) {
+                if ($(e.target).closest('.delete-lease-btn, .terminate-lease-btn').length) return;
                 const data = table.row(this).data();
                 if (data) {
                     window.location.href = '{{ route('leases.show', '') }}/' + data.id;
@@ -283,20 +315,166 @@
 
             // Reset filters
             $('#resetFilter').click(function() {
-                $('#filterForm')[0].reset();
+                // $('#filterForm')[0].reset();
+                $('#propertyFilter, #bedFilter, #tenantFilter, #statusFilter').val(null).trigger('change');
                 table.ajax.reload();
+            });
+            $('#propertyFilter, #bedFilter, #tenantFilter, #statusFilter').change(function() {
+                table.ajax.reload();
+            })
+
+            $('#propertyFilter').change(function() {
+                const propertyId = $(this).val();
+                $('#bedFilter').empty().append('<option value="">All Beds</option>');
+                if (propertyId) {
+                    $.ajax({
+                        url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
+                        type: 'GET',
+                        success: function(response) {
+                            console.log(response);
+
+                            response.data.forEach(function(bed) {
+                                $('#bedFilter').append(
+                                    `<option value="${bed.id}">${bed.bed_label}</option>`
+                                );
+                            });
+                            $('#bedFilter').val(null).trigger('change');
+                        },
+                        error: function() {
+                            toastr.error('Failed to fetch beds for the selected property.');
+                        }
+                    });
+                }
             });
 
             // Export functionality
             $('#exportBtn').click(function() {
                 toastr.info('Export functionality coming soon');
             });
+            initializeSelect2();
+
+
+            // Lease delete
+            $(document).on('click', '.delete-lease-btn', function(e) {
+                e.stopPropagation();
+                const leaseId = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Delete this Lease?',
+                    text: 'This will permanently delete the lease, all invoices, payment schedules, and free up the bed. This cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/admin/leases/' + leaseId + '/delete',
+                            method: 'DELETE',
+                            data: {
+                                _token: $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    toastr.success(response.message);
+                                    table.ajax.reload(null, false);
+                                } else {
+                                    toastr.error(response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                const msg = xhr.responseJSON?.message ||
+                                    'Failed to delete lease.';
+                                toastr.error(msg);
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Lease terminate
+            $(document).on('click', '.terminate-lease-btn', function(e) {
+                e.stopPropagation();
+                const leaseId = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Terminate this Lease?',
+                    text: 'This will set lease status to TERMINATED, set end date to today, free assigned bed, and cancel unpaid invoices.',
+                    icon: 'warning',
+                    input: 'text',
+                    inputLabel: 'Reason (optional)',
+                    inputPlaceholder: 'e.g. Tenant requested early move-out',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f0ad4e',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, terminate lease'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '/admin/leases/' + leaseId + '/terminate',
+                            method: 'POST',
+                            data: {
+                                _token: $('meta[name="csrf-token"]').attr('content'),
+                                reason: result.value || ''
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    toastr.success(response.message);
+                                    table.ajax.reload(null, false);
+                                } else {
+                                    toastr.error(response.message);
+                                }
+                            },
+                            error: function(xhr) {
+                                const msg = xhr.responseJSON?.message ||
+                                    'Failed to terminate lease.';
+                                toastr.error(msg);
+                            }
+                        });
+                    }
+                });
+            });
         });
+
+        function resetFilters() {
+            $('#propertyFilter, #bedFilter, #tenantFilter, #statusFilter').val(null).trigger('change');
+            $('#leasesTable').DataTable().ajax.reload();
+        }
+
+        function initializeSelect2() {
+            if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
+                $('.select3').select2({
+                    placeholder: 'Select an option',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+        }
     </script>
 @endpush
 
 @push('styles')
     <style>
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .filter-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .filter-card .form-label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
         .icon-service {
             width: 60px;
             height: 60px;

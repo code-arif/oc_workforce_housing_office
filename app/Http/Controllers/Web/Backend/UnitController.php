@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Web\Backend;
 
 use App\Models\Unit;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
@@ -16,7 +15,11 @@ class UnitController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $units = Unit::latest('id')->get();
+            $units = Unit::with('property')
+                ->orderBy('property_id')
+                ->orderByRaw("CASE WHEN name REGEXP '^[0-9]+' THEN CAST(SUBSTRING_INDEX(name, ' ', 1) AS UNSIGNED) ELSE 999999 END ASC")
+                ->orderBy('name')
+                ->get();
 
             return DataTables::of($units)
                 ->addIndexColumn()
@@ -65,7 +68,7 @@ class UnitController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active') ? true : false;
+        $validated['is_active'] = true ;
 
         $exisingUnit = Unit::where('property_id', $validated['property_id'])->where('name', $validated['name'])->first();
 

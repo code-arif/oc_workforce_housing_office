@@ -2,6 +2,7 @@
 
 namespace App\Mail\TenantApplication;
 
+use App\Models\Application;
 use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -10,19 +11,19 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class TenantFormSubmittedMail extends Mailable
+class TenantFormSubmittedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public $tenant;
+    public $application;
     public $viewUrl;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Tenant $tenant)
+    public function __construct(Application $application)
     {
-        $this->tenant = $tenant;
+        $this->application = $application;
         $this->viewUrl = config('app.url');
     }
 
@@ -32,7 +33,7 @@ class TenantFormSubmittedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Tenant Application #' . $this->tenant->id . ' Received',
+            subject: 'New Application #' . $this->application->application_number . ' Received',
         );
     }
 
@@ -55,13 +56,13 @@ class TenantFormSubmittedMail extends Mailable
             ->from(config('mail.from.address'), config('mail.from.name'))
             ->priority(1) // High priority
             ->with([
-                'tenant' => $this->tenant,
+                'application' => $this->application,
                 'viewUrl' => $this->viewUrl,
                 'companyName' => config('app.name', 'OC Workforce Housing'),
                 'currentDate' => now()->format('F d, Y \a\t h:i A'),
-                'applicationId' => $this->tenant->id,
-                'tenantEmail' => $this->tenant->email,
-                'tenantStatus' => ucfirst($this->tenant->status),
+                'applicationId' => $this->application->id,
+                'tenantEmail' => $this->application->email,
+                'tenantStatus' => ucfirst($this->application->status),
             ]);
     }
 

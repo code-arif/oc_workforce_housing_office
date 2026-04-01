@@ -49,9 +49,23 @@
                                     </a>
 
                                     {{-- Housing Options --}}
-                                    <a class="nav-link" id="housing-options-tab" href="javascript:void(0);" data-section="housing-options"
-                                        data-title="Housing Options" data-breadcrumb="Housing Options">
+                                    <a class="nav-link" id="housing-options-tab" href="javascript:void(0);"
+                                        data-section="housing-options" data-title="Housing Options"
+                                        data-breadcrumb="Housing Options">
                                         <i class="fa-solid fa-filter me-2"></i> Housing Options
+                                    </a>
+
+                                    {{-- Vidoe section --}}
+                                    <a class="nav-link" id="video-section-tab" href="javascript:void(0);"
+                                        data-section="video-section" data-title="Video Section"
+                                        data-breadcrumb="Video Section">
+                                        <i class="fa-solid fa-video me-2"></i> Video Section
+                                    </a>
+
+                                    {{-- Who we are --}}
+                                    <a class="nav-link" id="who-we-are-tab" href="javascript:void(0);"
+                                        data-section="who-we-are" data-title="Who We Are" data-breadcrumb="Who We Are">
+                                        <i class="fa-solid fa-circle-info me-2"></i> Who We Are
                                     </a>
 
                                     <a class="nav-link" id="how-it-works-tab" href="javascript:void(0);"
@@ -82,15 +96,16 @@
                                         <i class="fa-solid fa-images me-2"></i> Gallery
                                     </a>
 
+
                                     {{-- Properties Page --}}
                                     <h6 class="px-3 pt-2 pb-2 mb-0 text-uppercase text-muted bg-light"
                                         style="font-size: 0.75rem;">
                                         Properties Page
                                     </h6>
-                                    <a class="nav-link" id="property-banner-tab" href="javascript:void(0);"
-                                        data-section="property-banner" data-title="Property Page Banner"
-                                        data-breadcrumb="Property Page Banner">
-                                        <i class="fa-solid fa-bandage me-2"></i> Property Page Banner
+                                    <a class="nav-link" id="property-one-banner-tab" href="javascript:void(0);"
+                                        data-section="property-one-banner" data-title="Property One Banner"
+                                        data-breadcrumb="Property One Banner">
+                                        <i class="fa-solid fa-bandage me-2"></i> Property One Banner
                                     </a>
                                     <a class="nav-link" id="property-our-offer-tab" href="javascript:void(0);"
                                         data-section="property-our-offer" data-title="Our Offer"
@@ -102,10 +117,20 @@
                                         data-breadcrumb="Property One">
                                         <i class="fa-solid fa-1 me-2"></i> Property One
                                     </a>
+                                    <a class="nav-link" id="property-two-banner-tab" href="javascript:void(0);"
+                                        data-section="property-two-banner" data-title="Property Two Banner"
+                                        data-breadcrumb="Property Two Banner">
+                                        <i class="fa-regular fa-flag me-2"></i> Property Two Banner
+                                    </a>
                                     <a class="nav-link" id="property-two-tab" href="javascript:void(0);"
                                         data-section="property-two" data-title="Property Two"
                                         data-breadcrumb="Property Two">
                                         <i class="fa-solid fa-2 me-2"></i> Property Two
+                                    </a>
+                                    <a class="nav-link" id="property-three-banner-tab" href="javascript:void(0);"
+                                        data-section="property-three-banner" data-title="Property Three Banner"
+                                        data-breadcrumb="Property Three Banner">
+                                        <i class="fa-solid fa-rectangle-ad me-2"></i> Property Three Banner
                                     </a>
                                     <a class="nav-link" id="property-three-tab" href="javascript:void(0);"
                                         data-section="property-three" data-title="Property Three"
@@ -270,6 +295,14 @@
                 'cms.index': BASE_URL,
                 'cms.section': BASE_URL + '/section/' + (params.section || params),
                 'cms.home.hero.section.update': BASE_URL + '/home/hero/update',
+
+                // home page housing option
+                'cms.housing.option.accordion.store': BASE_URL + '/home/housing-option/accordion/store',
+                'cms.housing.option.accordion.update': BASE_URL + '/home/housing-option/accordion/update' + (params
+                    .id || params),
+                'cms.housing.option.accordion.destroy': BASE_URL + '/home/accordion/{id}/' + (params.id || params),
+
+
                 'cms.slider.store': BASE_URL + '/home/slider/store',
                 'cms.slider.status': BASE_URL + '/home/slider/' + (params.id || params) + '/status',
                 'cms.slider.destroy': BASE_URL + '/home/slider/' + (params.id || params),
@@ -290,6 +323,13 @@
 
                 // gallery image delete route
                 'cms.gallery.item.delete': BASE_URL + '/gallery/item/delete/' + (params.id || params),
+
+                // video section routes
+                'cms.video.store': BASE_URL + '/home/video/store',
+                'cms.video.update': BASE_URL + '/home/video/update/' + (params.id || params),
+                'cms.video.status': BASE_URL + '/home/video/' + (params.id || params) + '/status',
+                'cms.video.destroy': BASE_URL + '/home/video/' + (params.id || params),
+                'cms.video.updateOrder': BASE_URL + '/home/video/update-order',
 
             };
             return routes[name] || BASE_URL;

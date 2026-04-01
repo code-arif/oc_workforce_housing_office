@@ -3,8 +3,12 @@
     <div class="col-lg-12">
         <div class="card box-shadow-0">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h4 class="card-title">Rooms</h4>
-                <button class="btn btn-primary btn-sm" id="addRoomBtn">
+                <h4 class="card-title">Rooms <br>
+                    <span class="badge bg-primary fs-12" id="totalRooms">Total</span>
+                    <span class="badge bg-success fs-12" id="availableRooms">Available</span>
+                    <span class="badge bg-danger fs-12" id="occupiedRooms">Occupied</span>
+                </h4>
+                <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="addRoomBtn">
                     <i class="fe fe-plus me-1"></i> Add Room
                 </button>
             </div>
@@ -15,9 +19,10 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Name</th>
                                 <th>Unit</th>
+                                <th>Name</th>
                                 <th>Beds</th>
+                                <th>For Gender</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -193,15 +198,15 @@
                 ajax: "{{ route('rooms.list') }}",
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false },
-                    { data: 'room_number', name: 'room_number' },
                     { data: 'unit', name: 'unit', orderable: false },
+                    { data: 'room_number', name: 'room_number' },
                     { data: 'beds_count', name: 'beds_count', orderable: false },
+                    { data: 'gender_designation', name: 'gender_designation' },
                     { data: 'status', name: 'status', orderable: false },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
                 ],
                 order: [[0, 'asc']],
                 pageLength: 10,
-                responsive: true
             });
 
             // Add Button
@@ -239,7 +244,7 @@
 
                     try {
                         const formData = new FormData(this);
-                        const url = isEditMode 
+                        const url = isEditMode
                             ? "{{ route('rooms.update', '') }}/" + editingId
                             : "{{ route('rooms.store') }}";
 
@@ -303,7 +308,7 @@
 
             function addBedInput(bedData = null) {
                 const bedContainer = document.getElementById('bedContainer');
-                
+
                 const emptyMsg = bedContainer.querySelector('.bed-item-empty');
                 if (emptyMsg) {
                     emptyMsg.remove();

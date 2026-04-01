@@ -4,7 +4,7 @@
         <div class="card box-shadow-0">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h4 class="card-title">Beds</h4>
-                <button class="btn btn-primary btn-sm" id="addBedBtn">
+                <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="addBedBtn">
                     <i class="fe fe-plus me-1"></i> Add Bed
                 </button>
             </div>
@@ -44,7 +44,7 @@
                 </div>
 
                 <div class="modal-body">
-                    
+
                     <div class="form-group mb-3">
                         <label for="property_id" class="form-label">Property</label>
                         <select class="form-control" id="property_id">
@@ -60,7 +60,7 @@
                         <label for="unit_id" class="form-label">Unit</label>
                         <select class="form-control" id="unit_id">
                             <option value="">Select a Property First</option>
-                           
+
                         </select>
                         <div class="invalid-feedback"></div>
                     </div>
@@ -69,7 +69,7 @@
                         <label for="room_id" class="form-label">Room <span class="text-danger">*</span></label>
                         <select class="form-control" name="room_id" id="room_id">
                             <option value="">Select a Unit First</option>
-                            
+
                         </select>
                         <div class="existingBeds" ></div>
                         <div class="invalid-feedback"></div>
@@ -137,7 +137,6 @@
                 ],
                 order: [[0, 'asc']],
                 pageLength: 10,
-                responsive: true
             });
 
             // Add Button
@@ -169,7 +168,7 @@
 
                     try {
                         const formData = new FormData(this);
-                        const url = isEditMode 
+                        const url = isEditMode
                             ? "{{ route('beds.update', '') }}/" + editingId
                             : "{{ route('beds.store') }}";
 
@@ -429,7 +428,7 @@
 
                                 roomSeleted.appendChild(option);
                             });
-                           
+
                         }
                     },
                     error: function(xhr) {
@@ -476,3 +475,9 @@
 
     })();
 </script>
+<style>
+    .form-check{
+       margin-right: 12px;
+       display: inline-block !important;
+    }
+</style>

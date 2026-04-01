@@ -4,11 +4,11 @@
     <div class="message-content">
         <p>Dear {{ $tenant->first_name ?? 'Applicant' }},</p>
 
-        <p>We are approve you email and please click the View Application button below for application</p>
+        <p>We approve your application and please click the button below for setup new password for the tenant account.</p>
 
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ $passResetUrl }}" class="action-button"
-                style="display: inline-block; background-color: #D9A600; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
+                style="display: inline-block; background-color: #ba9779; color: #000000; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 10px; border: none; cursor: pointer; text-align: center;">
                 Porceed to login →
             </a>
         </div>

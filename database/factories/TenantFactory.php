@@ -19,7 +19,6 @@ class TenantFactory extends Factory
     {
         return [
             'application_source' => 'self',
-            'status' => 'active',
 
             'move_in_date' => $this->faker->date(),
             'arrival_date' => $this->faker->date(),

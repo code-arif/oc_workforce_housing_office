@@ -29,4 +29,14 @@ class Bed extends Model
     {
         return $this->belongsToMany(Amenities::class, 'bed_amenities', 'bed_id', 'amenity_id');
     }
+
+    public function leases()
+    {
+        return $this->hasMany(Lease::class);
+    }
+
+    public function leaseAssignments()
+    {
+        return $this->hasMany(LeaseAssignment::class, 'bed_id');
+    }
 }
