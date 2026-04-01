@@ -182,7 +182,7 @@
                 <th>Tenant</th>
                 <th>Due Date</th>
                 <th class="text-right">Outstanding Amount</th>
-                <th>Note</th>
+                {{-- <th>Note</th> --}}
                 <th>Invoice No.</th>
             </tr>
         </thead>
@@ -194,7 +194,7 @@
                 <td>{{ $row['tenant_name'] }}</td>
                 <td>{{ $row['due_date'] }}</td>
                 <td class="text-right">${{ $row['outstanding_amount'] }}</td>
-                <td>{{ $row['notes'] }}</td>
+                {{-- <td>{{ $row['notes'] }}</td> --}}
                 <td>{{ $row['invoice_number'] }}</td>
             </tr>
             @empty

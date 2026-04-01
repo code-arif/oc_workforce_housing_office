@@ -238,7 +238,7 @@
                                         <span>${{ number_format($invoice->amount, 2) }}</span>
                                     </div>
 
-                                    @if($isFirstInvoice && $depositInvoice !== null)
+                                    {{-- @if($isFirstInvoice && $depositInvoice !== null)
                                     <div class="summary-row deposit">
                                         <span>
                                             Security Deposit
@@ -258,7 +258,7 @@
                                         </span>
                                         <span class="text-success">${{ number_format($lease->deposit_amount, 2) }}</span>
                                     </div>
-                                    @endif
+                                    @endif --}}
 
                                     <div class="summary-row total">
                                         <span>Total Invoice Amount</span>
@@ -428,8 +428,8 @@
                                                class="form-control datepicker2"
                                                id="paymentDate"
                                                name="payment_date"
-                                               value="{{ date('Y-m-d') }}"
-                                               max="{{ date('Y-m-d') }}"
+                                               value="{{ date('m/d/Y') }}"
+                                               max="{{ date('m/d/Y') }}"
                                                required>
                                     </div>
 
@@ -711,7 +711,7 @@
 <script>
 
     $('.datepicker2').datepicker({
-        format: 'yyyy-mm-dd',
+        format: 'mm/dd/yyyy',
         autoclose: true,
         todayHighlight: true,
         width: 300
@@ -755,7 +755,8 @@
 
         const formData = new FormData(event.target);
         const paymentAmount = parseFloat(formData.get('amount'));
-
+        console.log(formData);
+        
         if (paymentAmount <= 0 || paymentAmount > balanceDue) {
             toastr.error('Invalid payment amount');
             return;

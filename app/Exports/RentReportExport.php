@@ -39,7 +39,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
                 $row['tenant_name'],
                 $row['due_date'],
                 '$' . $row['outstanding_amount'],
-                $row['notes'],
+                // $row['notes'],
                 $row['invoice_number'],
             ];
         }
@@ -63,7 +63,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
             'Tenant',
             'Due Date',
             'Outstanding Amount',
-            'Note',
+            // 'Note',
             'Invoice No.',
         ];
     }
@@ -76,7 +76,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
             'C' => 25,
             'D' => 15,
             'E' => 18,
-            'F' => 30,
+            // 'F' => 30,
             'G' => 15,
         ];
     }

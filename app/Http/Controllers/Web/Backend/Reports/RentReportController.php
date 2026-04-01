@@ -109,9 +109,9 @@ class RentReportController extends Controller
                     $outstanding = $invoice->total_amount - $invoice->paid_amount;
                     return number_format($outstanding, 2);
                 })
-                ->addColumn('notes', function ($invoice) {
-                    return $invoice->notes ?? '';
-                })
+                // ->addColumn('notes', function ($invoice) {
+                //     return $invoice->notes ?? '';
+                // })
                 ->addColumn('invoice_number', function ($invoice) {
                     return $invoice->invoice_number ?? 'N/A';
                 })

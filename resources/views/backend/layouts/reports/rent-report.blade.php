@@ -132,7 +132,6 @@
                                         <th>Tenant</th>
                                         <th>Due Date</th>
                                         <th class="text-end">Outstanding Amount ($)</th>
-                                        <th>Note</th>
                                         <th>Invoice No.</th>
                                     </tr>
                                 </thead>
@@ -142,7 +141,7 @@
                                     <tr>
                                         <th colspan="4" class="text-end">Total Outstanding:</th>
                                         <th class="text-end" id="footerTotalOutstanding">$0.00</th>
-                                        <th colspan="2"></th>
+                                        <th colspan="1"></th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -195,7 +194,6 @@
                 { data: 'tenant_name', name: 'tenant_name' },
                 { data: 'due_date', name: 'due_date' },
                 { data: 'outstanding_amount', name: 'outstanding_amount', className: 'text-end' },
-                { data: 'notes', name: 'notes' },
                 { data: 'invoice_number', name: 'invoice_number' }
             ],
             order: [[3, 'asc']],

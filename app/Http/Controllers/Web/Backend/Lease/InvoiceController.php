@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers\Web\Backend\Lease;
 
+use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
+use App\Models\Item;
 use App\Models\Lease;
 use App\Models\Payment;
 use App\Models\Transaction;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\Item;
-use App\Models\InvoiceItem;
-use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class InvoiceController extends Controller
 {
@@ -313,7 +314,7 @@ class InvoiceController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $bedId,
                     'amount' => $depositPaymentAmount,
-                    'payment_date' => $request->payment_date,
+                    'payment_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
                     'payment_method' => $request->payment_method,
                     'reference_number' => $request->reference_number,
                     'payment_type' => $depositPaymentAmount >= $depositAmount ? 'full' : 'partial',
@@ -356,7 +357,7 @@ class InvoiceController extends Controller
                     'type' => 'payment',
                     'entry_type' => 'credit',
                     'amount' => $depositPaymentAmount,
-                    'transaction_date' => $request->payment_date,
+                    'transaction_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
                     'description' => 'Security deposit payment for Invoice ' . $invoice->invoice_number,
                     'notes' => $request->note,
                     'metadata' => [
@@ -378,7 +379,7 @@ class InvoiceController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $bedId,
                     'amount' => $rentPaymentAmount,
-                    'payment_date' => $request->payment_date,
+                    'payment_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
                     'payment_method' => $request->payment_method,
                     'reference_number' => $request->reference_number,
                     'payment_type' => ($rentPaymentAmount >= $rentBalanceDue) ? 'full' : 'partial',
@@ -422,7 +423,7 @@ class InvoiceController extends Controller
                     'type' => 'payment',
                     'entry_type' => 'credit',
                     'amount' => $rentPaymentAmount,
-                    'transaction_date' => $request->payment_date,
+                    'transaction_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
                     'description' => $this->generatePaymentDescription($invoice, $rentPayment, $rentPaymentAmount >= $rentBalanceDue),
                     'notes' => $request->note,
                     'metadata' => [
