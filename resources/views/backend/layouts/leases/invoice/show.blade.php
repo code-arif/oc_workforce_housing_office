@@ -196,7 +196,7 @@
                                             </tr>
 
                                             <!-- Security Deposit (only for first invoice if includes deposit and not collected) -->
-                                            @if($isFirstInvoice && $depositInvoice !== null)
+                                            {{-- @if($isFirstInvoice && $depositInvoice !== null)
                                             <tr class="deposit-row">
                                                 <td class="item-desc">
                                                     <strong>Security Deposit</strong>
@@ -209,7 +209,7 @@
                                                 <td class="item-rate">${{ number_format($depositInvoice->amount, 2) }}</td>
                                                 <td class="item-amount">${{ number_format($depositInvoice->amount, 2) }}</td>
                                             </tr>
-                                            @endif
+                                            @endif --}}
                                         @else
                                             @foreach ($invoice->items as $item)
                                                 <tr>
