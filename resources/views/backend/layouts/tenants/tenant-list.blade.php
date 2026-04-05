@@ -167,7 +167,6 @@
                                         <option value="pending">Pending</option>
                                         <option value="approved">Approved</option>
                                         <option value="rejected">Rejected</option>
-                                        <option value="under_review">Under Review</option>
                                     </select>
                                 </div>
 
