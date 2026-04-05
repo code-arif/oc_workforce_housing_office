@@ -167,6 +167,7 @@
                                         <option value="pending">Pending</option>
                                         <option value="approved">Approved</option>
                                         <option value="rejected">Rejected</option>
+                                        <option value="under_review">Under Review</option>
                                     </select>
                                 </div>
 
@@ -379,8 +380,8 @@
                 serverSide: true,
                 language: {
                     processing: `<div class="text-center">
-                                                                            <img src="{{ asset('default/loader.gif') }}" alt="Loader" style="width: 50px;">
-                                                                        </div>`
+                                                                                <img src="{{ asset('default/loader.gif') }}" alt="Loader" style="width: 50px;">
+                                                                            </div>`
                 },
                 pagingType: "full_numbers",
                 dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
