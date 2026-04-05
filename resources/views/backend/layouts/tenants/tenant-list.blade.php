@@ -24,8 +24,10 @@
 
                 <!-- STATISTICS ROW -->
                 <div class="row mb-4">
-                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
-                        <div class="card stats-card" style="border-left: 4px solid #007bff;">
+                    {{-- Total --}}
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+                        <div class="card stats-card" style="border-left:4px solid #007bff; cursor:pointer;"
+                            onclick="resetAllFilters()">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
@@ -39,8 +41,10 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
-                        <div class="card stats-card" style="border-left: 4px solid #28a745;"
+
+                    {{-- Active (has active lease) --}}
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+                        <div class="card stats-card" style="border-left:4px solid #28a745; cursor:pointer;"
                             onclick="filterByAccountStatus('active')">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -55,8 +59,28 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
-                        <div class="card stats-card" style="border-left: 4px solid #ffc107;"
+
+                    {{-- Approved --}}
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+                        <div class="card stats-card" style="border-left:4px solid #17a2b8; cursor:pointer;"
+                            onclick="filterByStatus('approved')">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-muted mb-1">Approved</h6>
+                                        <h3 class="mb-0">{{ $approvedTenants }}</h3>
+                                    </div>
+                                    <div class="icon-service bg-info-transparent text-info p-3 rounded-3">
+                                        <i class="fe fe-user-check fs-20"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Pending --}}
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+                        <div class="card stats-card" style="border-left:4px solid #ffc107; cursor:pointer;"
                             onclick="filterByStatus('pending')">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -71,16 +95,18 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
-                        <div class="card stats-card" style="border-left: 4px solid #6c757d;"
-                            onclick="filterByAccountStatus('inactive')">
+
+                    {{-- Rejected --}}
+                    <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+                        <div class="card stats-card" style="border-left:4px solid #dc3545; cursor:pointer;"
+                            onclick="filterByStatus('rejected')">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="text-muted mb-1">Inactive</h6>
-                                        <h3 class="mb-0">{{ $inactiveTenants }}</h3>
+                                        <h6 class="text-muted mb-1">Rejected</h6>
+                                        <h3 class="mb-0">{{ $rejectedTenants }}</h3>
                                     </div>
-                                    <div class="icon-service bg-secondary-transparent text-secondary p-3 rounded-3">
+                                    <div class="icon-service bg-danger-transparent text-danger p-3 rounded-3">
                                         <i class="fe fe-user-x fs-20"></i>
                                     </div>
                                 </div>
@@ -112,11 +138,12 @@
                     <div class="col-12">
                         <div class="filter-card">
                             <div class="row align-items-end g-3">
-                                <div class="col-md-3">
+                                <div class="col-md-1">
                                     <label class="form-label">Tenant </label>
                                     <input type="text" name="tenantFilter" id="tenantFilter" class="form-control"
-                                        placeholder="Search by name, email...">
+                                        placeholder="name, email...">
                                 </div>
+
                                 <div class="col-md-2">
                                     <label class="form-label">Property</label>
                                     <select class="form-select select3" id="propertyFilter">
@@ -126,26 +153,56 @@
                                         @endforeach
                                     </select>
                                 </div>
+
                                 <div class="col-md-2">
                                     <label class="form-label">Beds</label>
                                     <select class="form-select select3" id="bedsFilter"></select>
                                 </div>
+
+                                {{-- Tenant Status Filter --}}
+                                <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select select3" id="statusFilter">
+                                        <option value="">All Status</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="under_review">Under Review</option>
+                                    </select>
+                                </div>
+
+                                <input type="hidden" id="accountStatusFilter" value="">
+
                                 <div class="col-md-2">
                                     <label class="form-label">Date From</label>
                                     <input type="text" class="form-control datepicker2" id="dateFrom"
                                         placeholder="Search by tenant created from...">
                                 </div>
+
                                 <div class="col-md-2">
                                     <label class="form-label">Date To</label>
                                     <input type="text" class="form-control datepicker2" id="dateTo"
                                         placeholder="Search by tenant created to...">
                                 </div>
+
                                 <div class="col-md-1 mb-1">
                                     <button type="button" class="btn btn-secondary d-inline-flex align-items-center"
                                         id="resetFilter">
                                         <i class="fe fe-refresh-cw me-1"></i> Reset
                                     </button>
                                 </div>
+                            </div>
+
+                            {{-- Active filter indicator --}}
+                            <div id="activeFilterIndicator" class="mt-2 d-none">
+                                <small class="text-muted">
+                                    <i class="fe fe-filter me-1"></i>
+                                    Filtering by: <span id="activeFilterText" class="fw-bold text-primary"></span>
+                                    <a href="#" onclick="resetAllFilters()" class="ms-2 text-danger">
+                                        <i class="fe fe-x"></i> Clear
+                                    </a>
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -190,7 +247,8 @@
                                                     style="width: 100px;">Status</th>
                                                 <th class="bg-transparent border-bottom-0 text-center"
                                                     style="width: 100px;">Rent</th>
-                                                {{-- <th class="bg-transparent border-bottom-0 text-center" style="width: 100px;">Roommates</th> --}}
+                                                {{-- <th class="bg-transparent border-bottom-0 text-center"
+                                                    style="width: 100px;">Roommates</th> --}}
                                                 <th class="bg-transparent border-bottom-0 text-center"
                                                     style="width: 120px;">Action</th>
                                             </tr>
@@ -248,8 +306,7 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="submitBtn">
                             <span class="btn-text">Add Tenant</span>
-                            <span class="spinner-border spinner-border-sm d-none" role="status"
-                                aria-hidden="true"></span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
                     </div>
                 </form>
@@ -264,7 +321,7 @@
         let dataTable;
         let currentTab = 'all';
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             $.ajaxSetup({
                 headers: {
                     "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
@@ -284,18 +341,18 @@
 
         // Handle tab switching
         function initializeTabs() {
-            $('.nav-link[data-tab]').on('click', function(e) {
+            $('.nav-link[data-tab]').on('click', function (e) {
                 e.preventDefault();
-                
+
                 // Remove active class from all tabs
                 $('.nav-link[data-tab]').removeClass('active');
-                
+
                 // Add active class to clicked tab
                 $(this).addClass('active');
-                
+
                 // Update current tab
                 currentTab = $(this).data('tab');
-                
+
                 // Reload table with new filter
                 dataTable.ajax.reload();
             });
@@ -318,8 +375,8 @@
                 serverSide: true,
                 language: {
                     processing: `<div class="text-center">
-                        <img src="{{ asset('default/loader.gif') }}" alt="Loader" style="width: 50px;">
-                    </div>`
+                                                                    <img src="{{ asset('default/loader.gif') }}" alt="Loader" style="width: 50px;">
+                                                                </div>`
                 },
                 pagingType: "full_numbers",
                 dom: "<'row justify-content-between table-topbar'<'col-md-4 col-sm-3'l><'col-md-5 col-sm-5 px-0'f>>tipr",
@@ -327,7 +384,7 @@
                     url: "{{ route('tenants.get.data') }}",
                     type: "GET",
                     dataType: 'json', // Important for back/forward fix
-                    data: function(d) {
+                    data: function (d) {
                         d.tenant = $('#tenantFilter').val();
                         d.property_id = $('#propertyFilter').val();
                         d.bed_id = $('#bedsFilter').val();
@@ -340,96 +397,92 @@
                     }
                 },
                 columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'name',
-                        name: 'name',
-                        orderable: true,
-                        searchable: true
-                    },
-                    {
-                        data: 'property_unit',
-                        name: 'property_unit',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'address',
-                        name: 'address',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'has_active_lease',
-                        name: 'has_active_lease',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'tenant_status',
-                        name: 'status',
-                        orderable: true,
-                        searchable: false,
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'rent',
-                        name: 'rent',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center'
-                    },
-                    // {data: 'roommates', name: 'roommates', orderable: false, searchable: false, className: 'text-center'},
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center'
-                    }
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'name',
+                    name: 'name',
+                    orderable: true,
+                    searchable: true
+                },
+                {
+                    data: 'property_unit',
+                    name: 'property_unit',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'address',
+                    name: 'address',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'has_active_lease',
+                    name: 'has_active_lease',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center'
+                },
+                {
+                    data: 'tenant_status',
+                    name: 'status',
+                    orderable: true,
+                    searchable: false,
+                    className: 'text-center'
+                },
+                {
+                    data: 'rent',
+                    name: 'rent',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center'
+                },
+                // {data: 'roommates', name: 'roommates', orderable: false, searchable: false, className: 'text-center'},
+                {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false,
+                    className: 'text-center'
+                }
                 ]
             });
 
-            // Reset filters
-            $('#resetFilter').click(function() {
-                // $('#filterForm')[0].reset();
-                $('#propertyFilter, #bedsFilter, #tenantFilter, #statusFilter, #dateFrom, #dateTo').val(null)
-                    .trigger('change');
-                $('#tenantFilter').val('');
-                dataTable.ajax.reload();
+            // Reset button
+            $('#resetFilter').click(function () {
+                resetAllFilters();
             });
 
-            $('#propertyFilter, #bedsFilter, #statusFilter, #dateFrom, #dateTo').change(function() {
+            $('#propertyFilter, #bedsFilter, #statusFilter, #dateFrom, #dateTo').change(function () {
                 dataTable.ajax.reload();
             })
 
-            $('#tenantFilter').on('keyup', function() {
+            $('#tenantFilter').on('keyup', function () {
                 dataTable.ajax.reload();
             });
 
-            $('#propertyFilter').change(function() {
+            $('#propertyFilter').change(function () {
                 const propertyId = $(this).val();
                 $('#bedsFilter').empty().append('<option value="">All Beds</option>');
                 if (propertyId) {
                     $.ajax({
                         url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
                         type: 'GET',
-                        success: function(response) {
+                        success: function (response) {
                             console.log(response);
 
-                            response.data.forEach(function(bed) {
+                            response.data.forEach(function (bed) {
                                 $('#bedsFilter').append(
                                     `<option value="${bed.id}">${bed.bed_label}</option>`
                                 );
                             });
                             $('#bedsFilter').val(null).trigger('change');
                         },
-                        error: function() {
+                        error: function () {
                             toastr.error('Failed to fetch beds for the selected property.');
                         }
                     });
@@ -446,17 +499,64 @@
             dataTable.ajax.reload();
         }
 
+        // Stats card filter functions
         function filterByStatus(status) {
-            $('#statusFilter').val(status);
+            // statusFilter select update
+            $('#statusFilter').val(status).trigger('change');
+            // accountStatusFilter clear
             $('#accountStatusFilter').val('');
-            applyFilters();
+
+            showActiveFilterBadge('Status: ' + capitalizeFirst(status));
+            dataTable.ajax.reload();
         }
 
         function filterByAccountStatus(status) {
+            // accountStatusFilter hidden input update
             $('#accountStatusFilter').val(status);
-            $('#statusFilter').val('');
-            applyFilters();
+            // statusFilter select clear
+            $('#statusFilter').val('').trigger('change');
+
+            showActiveFilterBadge('Lease: ' + capitalizeFirst(status));
+            dataTable.ajax.reload();
         }
+
+        function resetAllFilters() {
+            $('#statusFilter').val('').trigger('change');
+            $('#accountStatusFilter').val('');
+            $('#tenantFilter').val('');
+            $('#propertyFilter').val(null).trigger('change');
+            $('#bedsFilter').val(null).trigger('change');
+            $('#dateFrom, #dateTo').val('');
+
+            hideActiveFilterBadge();
+            dataTable.ajax.reload();
+        }
+
+        function showActiveFilterBadge(text) {
+            $('#activeFilterText').text(text);
+            $('#activeFilterIndicator').removeClass('d-none');
+        }
+
+        function hideActiveFilterBadge() {
+            $('#activeFilterIndicator').addClass('d-none');
+            $('#activeFilterText').text('');
+        }
+
+        function capitalizeFirst(str) {
+            return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+        }
+
+        // Status select change → reload
+        $('#statusFilter').change(function () {
+            $('#accountStatusFilter').val(''); // account filter clear
+            const val = $(this).val();
+            if (val) {
+                showActiveFilterBadge('Status: ' + capitalizeFirst(val));
+            } else {
+                hideActiveFilterBadge();
+            }
+            dataTable.ajax.reload();
+        });
 
         // Add Tenant Modal
         function showAddTenantModal() {
@@ -474,7 +574,7 @@
             $.ajax({
                 url: "{{ route('tenants.edit', ':id') }}".replace(':id', id),
                 type: 'GET',
-                success: function(response) {
+                success: function (response) {
                     NProgress.done();
                     console.log(response);
 
@@ -490,7 +590,7 @@
                         $('#tenantModal').modal('show');
                     }
                 },
-                error: function() {
+                error: function () {
                     NProgress.done();
                     toastr.error('Failed to load tenant data');
                 }
@@ -498,7 +598,7 @@
         }
 
         // Submit Form
-        $('#tenantForm').on('submit', function(e) {
+        $('#tenantForm').on('submit', function (e) {
             e.preventDefault();
 
             const tenantId = $('#tenant_id').val();
@@ -518,7 +618,7 @@
                 url: url,
                 type: method,
                 data: $(this).serialize(),
-                success: function(response) {
+                success: function (response) {
                     NProgress.done();
                     $('#submitBtn').prop('disabled', false);
                     $('#submitBtn .btn-text').removeClass('d-none');
@@ -530,7 +630,7 @@
                         dataTable.ajax.reload();
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     NProgress.done();
                     $('#submitBtn').prop('disabled', false);
                     $('#submitBtn .btn-text').removeClass('d-none');
@@ -538,7 +638,7 @@
 
                     if (xhr.status === 422) {
                         const errors = xhr.responseJSON.errors;
-                        $.each(errors, function(key, value) {
+                        $.each(errors, function (key, value) {
                             const input = $(`#${key}`);
                             input.addClass('is-invalid');
                             input.siblings('.invalid-feedback').text(value[0]);
@@ -574,7 +674,7 @@
             $.ajax({
                 type: "DELETE",
                 url: "{{ route('tenants.destroy', ':id') }}".replace(':id', id),
-                success: function(resp) {
+                success: function (resp) {
                     NProgress.done();
                     if (resp.success) {
                         toastr.success(resp.message);
@@ -583,7 +683,7 @@
                         toastr.error(resp.message);
                     }
                 },
-                error: function(error) {
+                error: function (error) {
                     NProgress.done();
                     toastr.error(error.responseJSON?.message || 'Failed to delete tenant!');
                 }
@@ -649,7 +749,7 @@
                 data: {
                     status: status
                 },
-                success: function(response) {
+                success: function (response) {
                     NProgress.done();
                     if (response.success) {
                         toastr.success(response.message);
@@ -658,7 +758,7 @@
                         toastr.error(response.message);
                     }
                 },
-                error: function(xhr) {
+                error: function (xhr) {
                     NProgress.done();
                     toastr.error(xhr.responseJSON?.message || 'Failed to update tenant status!');
                 }
@@ -709,7 +809,8 @@
         .nav-tabs-custom .nav-link.active {
             color: #ffffff !important;
             border-bottom-color: #D9A600 !important;
-            background: var(--primary-bg-color);;
+            background: var(--primary-bg-color);
+            ;
         }
 
         .filter-card {

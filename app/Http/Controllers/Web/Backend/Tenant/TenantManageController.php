@@ -35,6 +35,8 @@ class TenantManageController extends Controller
             $q->where('status', 'ACTIVE');
         })->count();
         $pendingTenants = Tenant::where('status', 'pending')->count();
+        $approvedTenants = Tenant::where('status', 'approved')->count();
+        $rejectedTenants = Tenant::where('status', 'rejected')->count();
         $inactiveTenants = $totalTenants - $activeTenants;
         $properties = Property::select('id', 'name')->orderBy('name')->get();
 
@@ -42,6 +44,8 @@ class TenantManageController extends Controller
             'totalTenants',
             'activeTenants',
             'pendingTenants',
+            'approvedTenants',
+            'rejectedTenants',
             'inactiveTenants',
             'properties'
         ));
@@ -93,7 +97,7 @@ class TenantManageController extends Controller
                 if ($request->tab === 'under_review') {
                     // Show only tenants under review (pending, processing, under_review)
                     $query->whereIn('tenants.status', ['pending', 'processing', 'under_review']);
-                }elseif ($request->tab === 'all') {
+                } elseif ($request->tab === 'all') {
                     $query->whereIn('tenants.status', ['approved']);
                 }
                 // For 'all' tab, no additional filtering needed
@@ -271,7 +275,7 @@ class TenantManageController extends Controller
                                 <button type="button" onclick="editTenant(' . $data->id . ')" class="btn btn-info" title="Edit Tenant">
                                     <i class="fe fe-edit"></i>
                                 </button>
-                                
+
                                 <button type="button" onclick="showDeleteConfirm(' . $data->id . ')" class="btn btn-danger" title="Delete Tenant">
                                     <i class="fe fe-trash"></i>
                                 </button>
@@ -377,9 +381,9 @@ class TenantManageController extends Controller
 
                 // Password reset URL with token + email as query string
                 $passResetUrl = config('app.frontend_url')
-                  . "/password-setup/"
-                  . $tenant->approval_token
-                  . "?" . http_build_query(['email' => $tenant->email]);
+                    . "/password-setup/"
+                    . $tenant->approval_token
+                    . "?" . http_build_query(['email' => $tenant->email]);
 
                 Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
 

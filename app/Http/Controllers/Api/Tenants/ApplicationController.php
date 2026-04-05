@@ -61,7 +61,8 @@ class ApplicationController extends Controller
             // Generate approval token
             $token = Str::random(64);
 
-            $tokenExpiration = now()->addHours(48);
+            // $tokenExpiration = now()->addHours(48);
+            $tokenExpiration = now()->addDays(30);
 
             DB::table('application_tokens')->insert([
                 'email' => $request->email,
