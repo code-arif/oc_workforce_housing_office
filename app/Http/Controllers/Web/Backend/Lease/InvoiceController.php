@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Item;
-use App\Models\Lease;
 use App\Models\Payment;
 use App\Models\Transaction;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -82,6 +83,12 @@ class InvoiceController extends Controller
         $totalPaid = $invoice->paid_amount ?? $invoice->payments->sum('amount');
         $balanceDue = $invoice->balance_due ?? ($totalDue - $totalPaid);
 
+        $isSuperAdmin = $this->isSuperAdmin(Auth::id());
+        $hasOnlyCashPayments = $invoice->payments->isNotEmpty() && $invoice->payments->every(function ($payment) {
+            return $payment->payment_method === 'cash';
+        });
+        $canCancelPaidCash = $isSuperAdmin && $invoice->status === 'PAID' && $hasOnlyCashPayments;
+
         // Items list for edit modal (ITEM_SALE invoices)
         $availableItems = Item::where('status', true)->get();
 
@@ -94,7 +101,8 @@ class InvoiceController extends Controller
             'totalPaid',
             'balanceDue',
             'depositInvoice',
-            'availableItems'
+            'availableItems',
+            'canCancelPaidCash'
         ));
     }
 
@@ -559,7 +567,7 @@ class InvoiceController extends Controller
                     'lease_id'           => $invoice->lease_id,
                     'invoice_id'         => $invoice->id,
                     'transaction_number' => $this->generateTransactionNumber(),
-                    'type'               => 'reversal',
+                    'type'               => 'adjustment',
                     'entry_type'         => 'debit',
                     'amount'             => $invoice->paid_amount,
                     'transaction_date'   => $now->toDateString(),
@@ -597,6 +605,130 @@ class InvoiceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to void invoice.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a mistaken paid invoice cash payment and revert the invoice to UNPAID.
+     */
+    public function cancelPaidCashPayment(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $currentUserId = Auth::id();
+        if (!$this->isSuperAdmin($currentUserId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only Master Admin can cancel a paid cash invoice.',
+            ], 403);
+        }
+
+        DB::beginTransaction();
+        try {
+            $invoice = Invoice::with(['lease.assignments', 'payments'])->findOrFail($id);
+
+            if ($invoice->status !== 'PAID') {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only PAID invoices can be reverted with this action.',
+                ], 422);
+            }
+
+            if ($invoice->payments->isEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No payment record found for this invoice.',
+                ], 422);
+            }
+
+            $nonCashPayments = $invoice->payments->filter(function ($payment) {
+                return $payment->payment_method !== 'cash';
+            });
+
+            if ($nonCashPayments->isNotEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This action supports cash-only paid invoices.',
+                ], 422);
+            }
+
+            $now = now();
+            $bedId = $invoice->lease->assignments()->where('is_current', true)->value('bed_id');
+            $paymentIds = $invoice->payments->pluck('id')->values()->all();
+            $removedAmount = (float) $invoice->payments->sum('amount');
+
+            $paymentsSnapshot = $invoice->payments->map(function ($payment) {
+                return [
+                    'id' => $payment->id,
+                    'payment_number' => $payment->payment_number,
+                    'amount' => (float) $payment->amount,
+                    'payment_date' => optional($payment->payment_date)->toDateString(),
+                    'payment_method' => $payment->payment_method,
+                    'reference_number' => $payment->reference_number,
+                    'recorded_by' => $payment->recorded_by,
+                ];
+            })->values()->all();
+
+            Payment::whereIn('id', $paymentIds)->delete();
+
+            $invoice->update([
+                'status' => 'UNPAID',
+                'paid_amount' => 0,
+                'balance_due' => $invoice->total_amount,
+                'paid_at' => null,
+            ]);
+
+            if (
+                $invoice->lease &&
+                $invoice->is_first_invoice &&
+                $invoice->includes_deposit &&
+                $invoice->lease->deposit_collected
+            ) {
+                $invoice->lease->update(['deposit_collected' => false]);
+            }
+
+            Transaction::create([
+                'tenant_id' => $invoice->tenant_id,
+                'bed_id' => $bedId,
+                'lease_id' => $invoice->lease_id,
+                'invoice_id' => $invoice->id,
+                'transaction_number' => $this->generateTransactionNumber(),
+                'type' => 'adjustment',
+                'entry_type' => 'debit',
+                'amount' => $removedAmount,
+                'transaction_date' => $now->toDateString(),
+                'description' => 'Paid cash invoice ' . $invoice->invoice_number . ' reverted to UNPAID by Master Admin',
+                'notes' => $request->reason,
+                'metadata' => [
+                    'action' => 'cancel_paid_cash_invoice',
+                    'cancelled_by' => $currentUserId,
+                    'cancelled_at' => $now->toISOString(),
+                    'invoice_status_from' => 'PAID',
+                    'invoice_status_to' => 'UNPAID',
+                    'removed_payment_ids' => $paymentIds,
+                    'removed_payments_snapshot' => $paymentsSnapshot,
+                    'removed_amount' => $removedAmount,
+                ],
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice payment cancelled and invoice reverted to UNPAID.',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to cancel paid cash invoice: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel paid cash invoice.',
             ], 500);
         }
     }
@@ -702,6 +834,19 @@ class InvoiceController extends Controller
         $nextId = $lastTransaction ? $lastTransaction->id + 1 : 1;
         
         return $prefix . str_pad($nextId, 8, '0', STR_PAD_LEFT);
+    }
+
+    private function isSuperAdmin(?int $userId): bool
+    {
+        if (!$userId) {
+            return false;
+        }
+
+        return User::whereKey($userId)
+            ->whereHas('roles', function ($query) {
+                $query->where('name', 'super admin');
+            })
+            ->exists();
     }
 
     /**

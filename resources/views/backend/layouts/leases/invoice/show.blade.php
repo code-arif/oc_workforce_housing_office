@@ -33,6 +33,11 @@
                         <a href="{{ route('invoices.download.pdf', $invoice->id) }}" class="btn btn-outline-primary">
                             <i class="fe fe-download me-2"></i>Download PDF
                         </a>
+                        @if($canCancelPaidCash)
+                        <button class="btn btn-outline-danger" onclick="showCancelPaidCashModal()" title="Cancel mistaken paid cash invoice">
+                            <i class="fe fe-rotate-ccw me-2"></i>Cancel Paid Cash
+                        </button>
+                        @endif
                         @if($invoice->status !== 'PAID' && $invoice->status !== 'CANCELLED')
                         <button class="btn btn-outline-warning" onclick="showEditForm()" title="Edit invoice details">
                             <i class="fe fe-edit me-2"></i>Edit Invoice
@@ -704,6 +709,54 @@
         </div>
     </div>
 
+    {{-- ════════════════════════════════════════════════════════════
+         CANCEL PAID CASH INVOICE MODAL
+    ════════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="cancelPaidCashModal" tabindex="-1" aria-labelledby="cancelPaidCashModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="cancelPaidCashModalLabel">
+                        <i class="fe fe-alert-triangle me-2"></i>Cancel Paid Cash Invoice
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong><i class="fe fe-alert-circle me-1"></i>Important:</strong>
+                        This will remove existing cash payment records from Payment History and revert this invoice to
+                        <strong>UNPAID</strong>.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Cancellation Reason <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="cancelPaidCashReason" rows="3" maxlength="500"
+                            placeholder="Enter why this paid cash invoice is being cancelled..."></textarea>
+                        <div class="form-text">This reason will be stored in the audit trail, max 500 characters.</div>
+                    </div>
+
+                    <div class="mb-0">
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Invoice: <strong>{{ $invoice->invoice_number }}</strong></span>
+                            <span>Paid Amount: <strong>${{ number_format($invoice->paid_amount ?? 0, 2) }}</strong></span>
+                            <span>Status: <strong>{{ $invoice->status }}</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmCancelPaidCashBtn" onclick="submitCancelPaidCashInvoice()">
+                        <i class="fe fe-rotate-ccw me-2"></i>Confirm Cancellation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -1023,6 +1076,51 @@
                 toastr.error(msg);
                 confirmBtn.disabled = false;
                 confirmBtn.innerHTML = '<i class="fe fe-slash me-2"></i>Confirm Void Invoice';
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CANCEL PAID CASH INVOICE
+    // ═══════════════════════════════════════════════════════════
+
+    function showCancelPaidCashModal() {
+        document.getElementById('cancelPaidCashReason').value = '';
+        $('#cancelPaidCashModal').modal('show');
+    }
+
+    function submitCancelPaidCashInvoice() {
+        const reason = document.getElementById('cancelPaidCashReason').value.trim();
+        if (!reason) {
+            toastr.error('A reason is required to cancel this paid cash invoice.');
+            document.getElementById('cancelPaidCashReason').focus();
+            return;
+        }
+
+        const confirmBtn = document.getElementById('confirmCancelPaidCashBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+
+        $.ajax({
+            url: '{{ route('invoices.cancel.paid.cash', $invoice->id) }}',
+            type: 'POST',
+            data: { reason: reason, _token: '{{ csrf_token() }}' },
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message || 'Paid cash invoice cancelled successfully.');
+                    $('#cancelPaidCashModal').modal('hide');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    toastr.error(res.message || 'Failed to cancel paid cash invoice.');
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="fe fe-rotate-ccw me-2"></i>Confirm Cancellation';
+                }
+            },
+            error: function(xhr) {
+                const msg = xhr.responseJSON?.message || 'Failed to cancel paid cash invoice.';
+                toastr.error(msg);
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fe fe-rotate-ccw me-2"></i>Confirm Cancellation';
             }
         });
     }

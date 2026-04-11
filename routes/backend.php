@@ -385,6 +385,7 @@ Route::prefix('invoices')->name('invoices.')->group(function () {
     Route::get('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'getPayments'])->name('payments.index');
     Route::post('/{id}/mark-paid', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'markPaid'])->name('mark.paid');
     Route::post('/{id}/cancel', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancel'])->name('cancel');
+    Route::post('/{id}/cancel-paid-cash', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancelPaidCashPayment'])->name('cancel.paid.cash');
 });
 
 /*
