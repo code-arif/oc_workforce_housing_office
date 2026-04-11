@@ -23,8 +23,11 @@
                 autoclose: true
             });
             if (value) {
-                // value may be yyyy-mm-dd from server, parse safely to avoid UTC shift
-                $(this).datepicker('setDate', new Date(value + 'T00:00:00'));
+                // value may be yyyy-mm-dd or yyyy-mm-dd HH:ii:ss from server
+                const parsedDate = parseServerDateValue(value);
+                if (parsedDate) {
+                    $(this).datepicker('setDate', parsedDate);
+                }
             }
         });
 
@@ -95,6 +98,30 @@
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    // Helper: parses server date strings like yyyy-mm-dd or yyyy-mm-dd HH:ii:ss
+    function parseServerDateValue(value) {
+        if (!value) {
+            return null;
+        }
+
+        const datePart = String(value).trim().split(' ')[0];
+        const parts = datePart.split('-');
+
+        if (parts.length !== 3) {
+            return null;
+        }
+
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const day = parseInt(parts[2], 10);
+
+        if (!year || !month || !day) {
+            return null;
+        }
+
+        return new Date(year, month - 1, day);
     }
 
     // Helper: reads a datepicker element and returns yyyy-mm-dd (safe for backend)
@@ -326,7 +353,13 @@
         customPaymentCounter++;
         const rentAmount = parseFloat($('#rent_amount').val()) || 0;
         const defaultAmount = amount || rentAmount;
-
+        if (dueDate) {
+            // Convert yyyy-mm-dd to mm/dd/yyyy for display
+            const parts = dueDate.split('-');
+            if (parts.length === 3) {
+                dueDate = `${parts[1]}/${parts[2]}/${parts[0]}`;
+            }
+        }
         const paymentHtml = `
             <div class="custom-payment-entry mb-2" data-payment-id="${customPaymentCounter}">
                 <div class="row align-items-center">
@@ -1350,7 +1383,13 @@
         @if (isset($selectedTenant) && $selectedTenant)
             $('.add-tenant-section').addClass('d-none');
             let moveInDate = '{{ $selectedTenant->arrival_date }}';
-            $('#actual_move_in').val('{{ $selectedTenant->arrival_date }}');
+            const parsedMoveInDate = parseServerDateValue(moveInDate);
+            if (parsedMoveInDate) {
+                $('#actual_move_in').datepicker('setDate', parsedMoveInDate);
+                leaseData.actual_move_in = formatDateForInput(parsedMoveInDate);
+            } else {
+                $('#actual_move_in').val(moveInDate);
+            }
             const preSelectedTenant = {
                 id: {{ $selectedTenant->id }},
                 first_name: @json($selectedTenant->profile->first_name ?? ''),
