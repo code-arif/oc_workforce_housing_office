@@ -382,7 +382,8 @@
                                                    class="form-control"
                                                    id="paymentAmount"
                                                    name="amount"
-                                                   min="0"
+                                                   min="0.01"
+                                                   step="0.01"
                                                    max="{{ $balanceDue }}"
                                                    value="{{ $balanceDue }}"
                                                    required

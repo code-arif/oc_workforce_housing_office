@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 class IncomeController extends Controller
@@ -284,7 +285,7 @@ class IncomeController extends Controller
                 'total_amount' => $totalAmount,
                 'balance_due' => $totalAmount,
                 'issue_date' => now(),
-                'due_date' => $request->due_date,
+                'due_date' => Carbon::parse($request->due_date)->format('Y-m-d'),
                 'type' => 'ITEM_SALE',
                 'status' => 'UNPAID',
                 'is_recurring' => $request->boolean('is_recurring'),

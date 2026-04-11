@@ -358,33 +358,45 @@ class LeaseDocumentController extends Controller
             'signature' => 'required|string'
         ]);
 
-        $document = LeaseDocument::findOrFail($id);
+        try {
+            $document = LeaseDocument::findOrFail($id);
         
-        // Save signature as base64 image
-        $document->update([
-            'admin_signature' => $request->signature,
-            'admin_signed_at' => now(),
-            'status' => $document->tenant_signature ? 'signed' : 'pending_signatures'
-        ]);
+            // Save signature as base64 image
+            $document->update([
+                'admin_signature' => $request->signature,
+                'admin_signed_at' => now(),
+                'status' => $document->tenant_signature ? 'signed' : 'pending_signatures'
+            ]);
 
-        // If tenant has also signed, mark lease as ACTIVE and notify tenant
-        if ($document->tenant_signature) {
-            $document->lease->update(['status' => 'ACTIVE']);
+            // If tenant has also signed, mark lease as ACTIVE and notify tenant
+            if ($document->tenant_signature) {
+                $document->lease->update(['status' => 'ACTIVE']);
 
-            try {
-                $lease = $document->lease->load(['tenant.profile', 'property', 'assignments.bed']);
-                Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
-            } catch (\Exception $e) {
-                Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+                //if tenant is not activated yet, activate tenant
+                if ($document->lease->tenant->status != 'approved' ) {
+                    $document->lease->tenant->update(['status' => 'approved']);
+                }
+                try {
+                    $lease = $document->lease->load(['tenant.profile', 'property', 'assignments.bed']);
+                    Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+                }
+            } else {
+                $document->lease->update(['status' => 'PENDING_TENANT_SIGN']);
             }
-        } else {
-            $document->lease->update(['status' => 'PENDING_TENANT_SIGN']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin signature saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving admin signature: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save admin signature: ' . $e->getMessage()
+            ], 500);
         }
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Admin signature saved successfully'
-        ]);
     }
 
     public function signTenant(Request $request, $id)
@@ -393,33 +405,47 @@ class LeaseDocumentController extends Controller
             'signature' => 'required|string'
         ]);
 
-        $document = LeaseDocument::findOrFail($id);
+        try {
+            $document = LeaseDocument::findOrFail($id);
         
-        $document->update([
-            'tenant_signature' => $request->signature,
-            'tenant_signed_at' => now(),
-            'status' => $document->admin_signature ? 'signed' : 'pending_signatures'
-        ]);
+            $document->update([
+                'tenant_signature' => $request->signature,
+                'tenant_signed_at' => now(),
+                'status' => $document->admin_signature ? 'signed' : 'pending_signatures'
+            ]);
 
-        if ($document->admin_signature) {
-            $document->lease->update(['status' => 'ACTIVE']);
+            if ($document->admin_signature) {
+                $document->lease->update(['status' => 'ACTIVE']);
 
-            try {
-                $lease = $document->lease->load(['tenant.profile', 'property', 'assignments.bed']);
-                Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
-            } catch (\Exception $e) {
-                Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+                //if tenant is not activated yet, activate tenant
+                if ($document->lease->tenant->status != 'approved' ) {
+                    $document->lease->tenant->update(['status' => 'approved']);
+                }
+
+                try {
+                    $lease = $document->lease->load(['tenant.profile', 'property', 'assignments.bed']);
+                    Mail::to($lease->tenant->email)->queue(new LeaseFullySignedMail($lease));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send lease-fully-signed email: ' . $e->getMessage());
+                }
+            } else {
+                $document->update(['status' => 'pending_signatures']);
+                $document->lease->update(['status' => 'PENDING_ADMIN_SIGN']);
             }
-        } else {
-            $document->update(['status' => 'pending_signatures']);
-            $document->lease->update(['status' => 'PENDING_ADMIN_SIGN']);
+            
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tenant signature saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving tenant signature: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save tenant signature: ' . $e->getMessage()
+            ], 500);
         }
         
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Tenant signature saved successfully'
-        ]);
     }
 
     /**

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\MaintenanceRequest;
+use Laravel\Reverb\Loggers\Log;
 
 class DashboardController extends Controller
 {
@@ -100,9 +101,18 @@ class DashboardController extends Controller
      */
     private function getPropertyStatsOptimized($property)
     {
+        // dd($property);
+        
+        //find active leased property
+        // $property = Property::where('id', $property->id)
+        //     ->whereHas('leases', function ($q) {
+        //         $q->where('status', 'ACTIVE');
+        //     })
+        //     ->first();
+
         // Get unit IDs in a single query
         $unitIds = $property->units()->pluck('id');
-        
+        // dd($unitIds);
         if ($unitIds->isEmpty()) {
             return $this->emptyPropertyStats($property);
         }

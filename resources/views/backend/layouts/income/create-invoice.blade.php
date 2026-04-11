@@ -163,7 +163,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Due Date <span class="text-danger">*</span></label>
                                             <input type="text" class="form-control datepicker2" id="due_date"
-                                                name="due_date" required placeholder="yyyy-mm-dd">
+                                                name="due_date" required placeholder="mm/dd/yyyy">
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Invoice Type <span
@@ -323,7 +323,7 @@
             // Initialize Datepicker
             if ($('.datepicker2').length) {
                 $('.datepicker2').datepicker({
-                    format: 'yyyy-mm-dd',
+                    format: 'mm/dd/yyyy',
                     autoclose: true,
                     todayHighlight: true,
                     startDate: new Date()
