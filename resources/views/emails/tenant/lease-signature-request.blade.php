@@ -16,7 +16,7 @@
             <p><strong>Address:</strong> {{ $property->address ?? 'N/A' }}{{ isset($property->city) ? ', ' . $property->city : '' }}{{ isset($property->state) ? ', ' . $property->state : '' }} {{ $property->zip_code ?? '' }}</p>
             <p><strong>Lease Start Date:</strong> {{ \Carbon\Carbon::parse($lease->start_date)->format('F d, Y') }}</p>
             <p><strong>Lease End Date:</strong> {{ \Carbon\Carbon::parse($lease->end_date)->format('F d, Y') }}</p>
-            <p><strong>Monthly Rent:</strong> ${{ number_format($lease->rent_amount, 2) }}</p>
+            <p><strong>Seasonal Rent:</strong> ${{ number_format($lease->rent_amount, 2) }}</p>
             <p><strong>Security Deposit:</strong> ${{ number_format($lease->deposit_amount, 2) }}</p>
         </div>
 
