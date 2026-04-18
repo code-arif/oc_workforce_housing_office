@@ -146,8 +146,8 @@ class DashboardController extends Controller
 
         // Get active lease count
         $activeLeasesCount = Lease::where('property_id', $property->id)
-            ->where('status', '!=', 'TERMINATED')
-            ->orWhere('status', '!=', 'COMPLETED')
+            // ->where('status', '!=', 'TERMINATED')
+            // ->orWhere('status', '!=', 'COMPLETED')
             ->whereNull('deleted_at')
             ->count();
 
