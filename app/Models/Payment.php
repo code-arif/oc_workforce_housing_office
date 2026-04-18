@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class Payment extends Model
 {
@@ -97,6 +98,14 @@ class Payment extends Model
                     '0', 
                     STR_PAD_LEFT
                 );
+            }
+
+            if ($payment->payment_method === 'cash') {
+                $payment->review_status = 'confirmed';
+                $payment->reviewed_at = $payment->reviewed_at ?? now();
+                $payment->reviewed_by = $payment->reviewed_by
+                    ?? $payment->recorded_by
+                    ?? Auth::id();
             }
         });
 

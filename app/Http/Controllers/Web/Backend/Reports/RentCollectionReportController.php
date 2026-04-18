@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers\Web\Backend\Reports;
 
-use App\Models\Lease;
 use App\Models\Tenant;
-use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Property;
 use Illuminate\Http\Request;
@@ -14,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\RentCollectionReportExport;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class RentCollectionReportController extends Controller
 {
@@ -192,12 +191,30 @@ class RentCollectionReportController extends Controller
         ]);
 
         $payment = Payment::findOrFail($id);
+
+        if ($payment->payment_method === 'cash') {
+            $payment->review_status = 'confirmed';
+            $payment->reviewed_at = now();
+            $payment->reviewed_by = $payment->reviewed_by ?? $payment->recorded_by ?? Auth::id();
+
+            if ($request->filled('note')) {
+                $payment->review_note = $request->note;
+            }
+
+            $payment->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Cash payment is auto-confirmed by admin.',
+                'status' => $payment->review_status,
+            ]);
+        }
         
         $payment->review_status = $request->status;
         
         if (in_array($request->status, ['reviewed', 'confirmed', 'disputed'])) {
             $payment->reviewed_at = now();
-            $payment->reviewed_by = auth()->id();
+            $payment->reviewed_by = Auth::id();
         } else {
             $payment->reviewed_at = null;
             $payment->reviewed_by = null;
@@ -227,21 +244,43 @@ class RentCollectionReportController extends Controller
             'status' => 'required|in:pending,reviewed,confirmed,disputed',
         ]);
 
+        $cashPaymentIds = Payment::whereIn('id', $request->payment_ids)
+            ->where('payment_method', 'cash')
+            ->pluck('id')
+            ->all();
+
+        $nonCashPaymentIds = array_values(array_diff($request->payment_ids, $cashPaymentIds));
+
+        if (!empty($cashPaymentIds)) {
+            Payment::whereIn('id', $cashPaymentIds)->update([
+                'review_status' => 'confirmed',
+                'reviewed_at' => now(),
+                'reviewed_by' => Auth::id(),
+            ]);
+        }
+
+        if (empty($nonCashPaymentIds)) {
+            return response()->json([
+                'success' => true,
+                'message' => count($cashPaymentIds) . ' cash payment(s) kept as auto-confirmed by admin.',
+            ]);
+        }
+
         $updateData = ['review_status' => $request->status];
         
         if (in_array($request->status, ['reviewed', 'confirmed', 'disputed'])) {
             $updateData['reviewed_at'] = now();
-            $updateData['reviewed_by'] = auth()->id();
+            $updateData['reviewed_by'] = Auth::id();
         } else {
             $updateData['reviewed_at'] = null;
             $updateData['reviewed_by'] = null;
         }
 
-        Payment::whereIn('id', $request->payment_ids)->update($updateData);
+        Payment::whereIn('id', $nonCashPaymentIds)->update($updateData);
 
         return response()->json([
             'success' => true,
-            'message' => count($request->payment_ids) . ' payment(s) updated successfully',
+            'message' => count($nonCashPaymentIds) . ' payment(s) updated successfully' . (!empty($cashPaymentIds) ? ' (' . count($cashPaymentIds) . ' cash payment(s) remained confirmed).' : ''),
         ]);
     }
 
