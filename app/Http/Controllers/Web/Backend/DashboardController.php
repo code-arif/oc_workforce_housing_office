@@ -51,6 +51,7 @@ class DashboardController extends Controller
         // Get unsigned leases (leases pending tenant signature)
         $unsignedLeases = Lease::with(['tenant.profile:id,tenant_id,first_name,last_name', 'property:id,name'])
             ->where('status', '!=','ACTIVE')
+            ->whereNull('deleted_at')
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
@@ -145,7 +146,8 @@ class DashboardController extends Controller
 
         // Get active lease count
         $activeLeasesCount = Lease::where('property_id', $property->id)
-            // ->where('status', 'ACTIVE')
+            ->where('status', '!=', 'TERMINATED')
+            ->orWhere('status', '!=', 'COMPLETED')
             ->whereNull('deleted_at')
             ->count();
 
