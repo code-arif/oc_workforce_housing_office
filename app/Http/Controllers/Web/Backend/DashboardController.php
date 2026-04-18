@@ -145,7 +145,8 @@ class DashboardController extends Controller
 
         // Get active lease count
         $activeLeasesCount = Lease::where('property_id', $property->id)
-            ->where('status', 'ACTIVE')
+            // ->where('status', 'ACTIVE')
+            ->whereNull('deleted_at')
             ->count();
 
         $occupancyRate = $totalBeds > 0 ? round(($occupiedBeds / $totalBeds) * 100, 1) : 0;
