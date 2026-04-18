@@ -42,9 +42,9 @@ class TenentApplicationRequest extends FormRequest
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|string',
             'gender' => 'nullable|string|max:20',
-            'country_of_origin' => 'nullable|string|max:100',
+            'country_of_origin' => 'nullable|string',
             'date_of_birth' => 'required|date|before:today',
 
             // Dates
@@ -73,7 +73,7 @@ class TenentApplicationRequest extends FormRequest
             'employment_histories.*.industry' => 'nullable|string|max:255',
             'employment_histories.*.job_title' => 'nullable|string|max:255',
             'employment_histories.*.employer_contact_person_name' => 'nullable|string|max:255',
-            'employment_histories.*.employer_contact_person_phone' => 'nullable|string|max:20',
+            'employment_histories.*.employer_contact_person_phone' => 'nullable|string',
             'employment_histories.*.employer_contact_person_email' => 'nullable|email',
 
             // Sponsor Information
