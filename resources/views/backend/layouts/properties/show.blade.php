@@ -120,7 +120,7 @@
                                     <div class="col-6 mb-2">
                                         <div class="border  p-2 text-center">
                                             <h4 class="fw-bold text-info mb-0">{{ $stats['active_leases'] }}</h4>
-                                            <small class="text-muted">Active Leases</small>
+                                            <small class="text-muted">All Leases</small>
                                         </div>
                                     </div>
                                     <div class="col-6 mb-2">

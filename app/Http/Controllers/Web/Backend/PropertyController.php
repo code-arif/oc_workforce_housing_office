@@ -197,7 +197,7 @@ class PropertyController extends Controller
         $availableBeds = $totalBeds - $occupiedBeds;
 
         // Calculate rental stats
-        $activeLeases = $property->leases->where('status', 'ACTIVE');
+        $activeLeases = $property->leases->where('status', '!=','TERMINATED')->where('status', '!=', 'COMPLETED');
         $totalMonthlyRent = $activeLeases->sum('rent_amount');
 
         // Calculate totals
