@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Edit Lease Template:' . {{ $template->name }})
+@section('title', 'Edit Lease Template:' . $template->name)
 @section('content')
 <div class="container-fluid">
     <div class="row">
