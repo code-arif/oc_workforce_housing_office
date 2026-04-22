@@ -475,6 +475,8 @@ Route::controller(ProfileController::class)->group(function () {
 Route::controller(SettingController::class)->group(function () {
     Route::get('setting/general', 'index')->name('setting.general.index');
     Route::patch('setting/general', 'update')->name('setting.general.update');
+    Route::get('setting/mail', 'mailIndex')->name('setting.mail.index');
+    Route::patch('setting/mail', 'mailUpdate')->name('setting.mail.update');
 });
 
 /**

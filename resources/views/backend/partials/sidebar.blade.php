@@ -203,6 +203,8 @@
                     <ul class="slide-menu">
                         <li><a href="{{ route('setting.general.index') }}" class="slide-item {{ request()->routeIs('setting.general.*') ? 'active' : '' }}">General Settings</a>
                         </li>
+                        <li><a href="{{ route('setting.mail.index') }}" class="slide-item {{ request()->routeIs('setting.mail.*') ? 'active' : '' }}">Mail Settings</a>
+                        </li>
                         <li><a href="{{ route('setting.profile.index') }}" class="slide-item {{ request()->routeIs('setting.profile.*') ? 'active' : '' }}">Profile Settings</a>
                         </li>
                         <li><a href="{{ route('social.profile.index') }}" class="slide-item {{ request()->routeIs('social.profile.*') ? 'active' : '' }}">Social Profile</a></li>

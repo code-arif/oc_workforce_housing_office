@@ -75,4 +75,49 @@ class SettingController extends Controller
             return back()->with('t-error', 'Failed to update' . $e->getMessage());
         }
     }
+
+    /**
+     * Display the mail settings page.
+     */
+    public function mailIndex(): View
+    {
+        $setting = Setting::latest('id')->first();
+        return view('backend.layouts.settings.mail_settings', compact('setting'));
+    }
+
+    /**
+     * Update mail settings.
+     */
+    public function mailUpdate(Request $request): RedirectResponse
+    {
+        $validatedData = $request->validate([
+            'mail_mailer'       => 'nullable|in:smtp,sendmail,log',
+            'mail_host'         => 'nullable|string|max:255',
+            'mail_port'         => 'nullable|integer|min:1|max:65535',
+            'mail_username'     => 'nullable|string|max:255',
+            'mail_password'     => 'nullable|string|max:1000',
+            'mail_encryption'   => 'nullable|in:tls,ssl',
+            'mail_from_address' => 'nullable|email|max:255',
+            'mail_from_name'    => 'nullable|string|max:255',
+        ]);
+
+        try {
+            $setting = Setting::first();
+
+            if (!$request->filled('mail_password') && $setting) {
+                unset($validatedData['mail_password']);
+            }
+
+            Setting::updateOrCreate(
+                [
+                    'id' => 1
+                ],
+                $validatedData
+            );
+
+            return back()->with('t-success', 'Mail settings updated successfully');
+        } catch (Exception $e) {
+            return back()->with('t-error', 'Failed to update mail settings: ' . $e->getMessage());
+        }
+    }
 }
