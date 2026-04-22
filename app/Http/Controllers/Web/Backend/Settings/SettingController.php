@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Backend\Settings;
 use Exception;
 use App\Helper\Helper;
 use App\Models\Setting;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 
@@ -115,9 +116,71 @@ class SettingController extends Controller
                 $validatedData
             );
 
+            $this->updateEnvironmentFile($validatedData);
+            Artisan::call('config:clear');
+
             return back()->with('t-success', 'Mail settings updated successfully');
         } catch (Exception $e) {
             return back()->with('t-error', 'Failed to update mail settings: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Sync mail settings to the environment file.
+     */
+    private function updateEnvironmentFile(array $values): void
+    {
+        $envPath = base_path('.env');
+
+        if (!file_exists($envPath) || !is_writable($envPath)) {
+            return;
+        }
+
+        $envValues = [
+            'MAIL_MAILER' => $values['mail_mailer'] ?? null,
+            'MAIL_HOST' => $values['mail_host'] ?? null,
+            'MAIL_PORT' => $values['mail_port'] ?? null,
+            'MAIL_USERNAME' => $values['mail_username'] ?? null,
+            'MAIL_PASSWORD' => $values['mail_password'] ?? null,
+            'MAIL_ENCRYPTION' => $values['mail_encryption'] ?? null,
+            // 'MAIL_SCHEME' => $values['mail_encryption'] ?? null,
+            'MAIL_FROM_ADDRESS' => $values['mail_from_address'] ?? null,
+            // 'MAIL_FROM_NAME' => $values['mail_from_name'] ?? null,
+        ];
+
+        $content = file_get_contents($envPath);
+
+        foreach ($envValues as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $formattedValue = $this->formatEnvValue($value);
+            $pattern = '/^' . preg_quote($key, '/') . '=.*$/m';
+
+            if (preg_match($pattern, $content)) {
+                $content = preg_replace($pattern, $key . '=' . $formattedValue, $content);
+            } else {
+                $content .= PHP_EOL . $key . '=' . $formattedValue;
+            }
+        }
+
+        file_put_contents($envPath, $content);
+    }
+
+    /**
+     * Format env values safely for the .env file.
+     */
+    private function formatEnvValue(string $value): string
+    {
+        if ($value === '') {
+            return '""';
+        }
+
+        if (preg_match('/\s|#|"|\'/u', $value)) {
+            return '"' . str_replace('"', '\\"', $value) . '"';
+        }
+
+        return $value;
     }
 }
