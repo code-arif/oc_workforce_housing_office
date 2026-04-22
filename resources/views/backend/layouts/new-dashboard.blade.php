@@ -1503,6 +1503,10 @@
             });
         }
 
+        function hideSingleEmailActionButtons() {
+            $('#approveFromModalBtn, #rejectFromModalBtn').addClass('d-none').off('click');
+        }
+
         // Display Single Email Application Details in Modal
         function displaySingleEmailDetails(application) {
             // Format dates
@@ -1790,6 +1794,7 @@
             $('#singleEmailDetails').html(html);
 
             // Show/hide action buttons based on status
+            hideSingleEmailActionButtons();
             if (application.status === 'pending') {
                 $('#approveFromModalBtn').removeClass('d-none').off('click').on('click', function() {
                     $('#singleEmailModal').modal('hide');
@@ -1840,6 +1845,9 @@
                             const fallbackRedirectUrl = `{{ route('leases.create') }}?tenant_id=${response.tenant_id}`;
                             const redirectUrl = response.redirect_url || fallbackRedirectUrl;
 
+                            hideSingleEmailActionButtons();
+                            $('#singleEmailModal').modal('hide');
+
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Approved!',
@@ -1850,7 +1858,6 @@
                             }).then(() => {
                                 window.location.href = redirectUrl;
                             });
-                            singleEmailTable.ajax.reload();
                         },
                         error: function(xhr) {
                             Swal.fire({
@@ -1862,6 +1869,67 @@
                         }
                     });
                 }
+            });
+        }
+
+        // Reject Single Email
+        function rejectApplication(id) {
+            Swal.fire({
+                title: 'Reject Application?',
+                text: 'This action cannot be undone!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Reject!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (!result.isConfirmed) return;
+
+                Swal.fire({
+                    title: 'Processing...',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: `/admin/applications/${id}/reject`,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        hideSingleEmailActionButtons();
+                        $('#singleEmailModal').modal('hide');
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Rejected!',
+                            text: response.message,
+                            confirmButtonColor: '#dc3545',
+                            timer: 1200,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+
+                        if (typeof singleEmailTable !== 'undefined' && singleEmailTable.ajax) {
+                            singleEmailTable.ajax.reload(null, false);
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Failed!',
+                            text: xhr.responseJSON?.message || 'An error occurred',
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                });
             });
         }
     </script>

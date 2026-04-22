@@ -314,6 +314,10 @@
             });
         }
 
+        function hideSingleEmailActionButtons() {
+            $('#approveFromModalBtn, #rejectFromModalBtn').addClass('d-none').off('click');
+        }
+
         // Display Single Email Application Details in Modal
         function displaySingleEmailDetails(application) {
             // Format dates
@@ -601,6 +605,7 @@
             $('#singleEmailDetails').html(html);
 
             // Show/hide action buttons based on status
+            hideSingleEmailActionButtons();
             if (application.status === 'pending') {
                 $('#approveFromModalBtn').removeClass('d-none').off('click').on('click', function() {
                     $('#singleEmailModal').modal('hide');
@@ -613,6 +618,8 @@
             } else {
                 $('#approveFromModalBtn').addClass('d-none');
                 $('#rejectFromModalBtn').addClass('d-none');
+                                        hideSingleEmailActionButtons();
+                                        $('#singleEmailModal').modal('hide');
             }
         }
 
@@ -847,6 +854,9 @@
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
+                            hideSingleEmailActionButtons();
+                            $('#singleEmailModal').modal('hide');
+
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Rejected!',
