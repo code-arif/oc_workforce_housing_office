@@ -30,6 +30,42 @@ class MessagingController extends Controller
     }
 
     /**
+     * Get or create the default email account for a user
+     */
+    private function getDefaultAccount($user)
+    {
+        // 1. Try to find an account already owned by this user
+        $account = EmailAccount::where('user_id', $user->id)
+            ->where('is_default', true)
+            ->first();
+
+        if ($account) {
+            return $account;
+        }
+
+        // 2. If not found, check if the system default email is already in use by someone else
+        $defaultEmail = config('mail.from.address', 'info@ocworkforcehousing.com');
+        $account = EmailAccount::where('email', $defaultEmail)->first();
+
+        if ($account) {
+            // Found it! We'll share this account record.
+            // Note: If we want isolation, we'd need to change the DB schema.
+            // But for a support inbox, sharing is usually desired.
+            return $account;
+        }
+
+        // 3. If still not found, create a new one for this user
+        return EmailAccount::create([
+            'user_id' => $user->id,
+            'is_default' => true,
+            'email' => $defaultEmail,
+            'name' => $user->first_name . ' ' . $user->last_name,
+            'provider' => 'gmail',
+            'is_active' => true,
+        ]);
+    }
+
+    /**
      * Show messaging inbox page
      */
     public function index(Request $request)
@@ -37,15 +73,7 @@ class MessagingController extends Controller
         $user = Auth::user();
 
         // Get or create default email account
-        $account = EmailAccount::firstOrCreate(
-            ['user_id' => $user->id, 'is_default' => true],
-            [
-                'email' => config('mail.from.address', 'info@ocworkforcehousing.com'),
-                'name' => $user->first_name . ' ' . $user->last_name,
-                'provider' => 'gmail',
-                'is_active' => true,
-            ]
-        );
+        $account = $this->getDefaultAccount($user);
 
         $folder = $request->get('folder', 'inbox');
         $search = $request->get('search');
@@ -87,9 +115,7 @@ class MessagingController extends Controller
     public function sync(Request $request)
     {
         $user = Auth::user();
-        $account = EmailAccount::where('user_id', $user->id)
-            ->where('is_default', true)
-            ->firstOrFail();
+        $account = $this->getDefaultAccount($user);
 
         $folder = $request->get('folder', 'INBOX');
         $limit = $request->get('limit', 50);
@@ -115,9 +141,7 @@ class MessagingController extends Controller
     public function getMessages(Request $request)
     {
         $user = Auth::user();
-        $account = EmailAccount::where('user_id', $user->id)
-            ->where('is_default', true)
-            ->firstOrFail();
+        $account = $this->getDefaultAccount($user);
 
         $folder = $request->get('folder', 'inbox');
         $page = $request->get('page', 1);
@@ -222,9 +246,7 @@ class MessagingController extends Controller
         }
 
         $user = Auth::user();
-        $account = EmailAccount::where('user_id', $user->id)
-            ->where('is_default', true)
-            ->firstOrFail();
+        $account = $this->getDefaultAccount($user);
 
         // Handle attachments
         $attachmentPaths = [];
@@ -262,9 +284,7 @@ class MessagingController extends Controller
     public function saveDraft(Request $request)
     {
         $user = Auth::user();
-        $account = EmailAccount::where('user_id', $user->id)
-            ->where('is_default', true)
-            ->firstOrFail();
+        $account = $this->getDefaultAccount($user);
 
         $data = [
             'to' => $request->to,
@@ -418,15 +438,7 @@ class MessagingController extends Controller
         $user = Auth::user();
         
         // Get email account
-        $account = EmailAccount::firstOrCreate(
-            ['user_id' => $user->id, 'is_default' => true],
-            [
-                'email' => config('mail.from.address', 'noreply@example.com'),
-                'name' => $user->first_name . ' ' . $user->last_name,
-                'provider' => 'gmail',
-                'is_active' => true,
-            ]
-        );
+        $account = $this->getDefaultAccount($user);
 
         // Get folder counts for sidebar
         $counts = $this->emailService->getFolderCounts($account);
