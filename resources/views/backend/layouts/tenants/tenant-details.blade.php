@@ -1175,32 +1175,32 @@
                         ${application.passport_copy_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Passport Copy</small>
-                                <a href="${application.passport_copy_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="fe fe-eye me-1"></i>View
+                                <a href="${application.passport_copy_url}" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2" style="font-size: 0.75rem;">
+                                    <i class="fe fe-eye me-1"></i> View
                                 </a>
                             </div>
                         ` : ''}
                         ${application.visa_document_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Visa Document</small>
-                                <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="fe fe-eye me-1"></i>View
+                                <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2" style="font-size: 0.75rem;">
+                                    <i class="fe fe-eye me-1"></i> View
                                 </a>
                             </div>
                         ` : ''}
                         ${application.front_id_document_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Front ID</small>
-                                <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="fe fe-eye me-1"></i>View
+                                <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2" style="font-size: 0.75rem;">
+                                    <i class="fe fe-eye me-1"></i> View
                                 </a>
                             </div>
                         ` : ''}
                         ${application.back_id_document_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Back ID</small>
-                                <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="fe fe-eye me-1"></i>View
+                                <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2" style="font-size: 0.75rem;">
+                                    <i class="fe fe-eye me-1"></i> View
                                 </a>
                             </div>
                         ` : ''}
