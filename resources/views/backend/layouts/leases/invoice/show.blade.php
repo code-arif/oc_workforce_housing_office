@@ -472,10 +472,10 @@
 
                                     <!-- Submit Buttons -->
                                     <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-success">
+                                        <button type="submit" class="btn btn-success d-inline-flex align-items-center justify-content-center">
                                             <i class="fe fe-check me-2"></i>Submit Payment
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary" onclick="hidePaymentForm()">
+                                        <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center" onclick="hidePaymentForm()">
                                             Cancel
                                         </button>
                                     </div>
@@ -816,30 +816,38 @@
             return;
         }
 
-        if (!confirm('Confirm payment of $' + paymentAmount.toFixed(2) + '?')) {
-            return;
-        }
-
-        $.ajax({
-            url: `{{ route('invoices.payments.store', $invoice->id) }}`,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                if (response.success) {
-                    toastr.success(response.message || 'Payment recorded successfully');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    toastr.error(response.message || 'Failed to record payment');
-                }
-            },
-            error: function(xhr) {
-                const message = xhr.responseJSON?.message || 'Failed to record payment';
-                toastr.error(message);
+        Swal.fire({
+            title: 'Confirm Payment',
+            text: 'Are you sure you want to record a payment of $' + paymentAmount.toFixed(2) + '?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, record it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `{{ route('invoices.payments.store', $invoice->id) }}`,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message || 'Payment recorded successfully');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            toastr.error(response.message || 'Failed to record payment');
+                        }
+                    },
+                    error: function(xhr) {
+                        const message = xhr.responseJSON?.message || 'Failed to record payment';
+                        toastr.error(message);
+                    }
+                });
             }
         });
     }
@@ -1133,7 +1141,7 @@
     .invoice-container {
         /* max-width: 900px; */
         margin: 0 auto;
-        padding: 20px 0;
+        padding: 0;
     }
 
     .invoice-paper {

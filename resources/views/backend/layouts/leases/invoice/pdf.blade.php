@@ -469,21 +469,7 @@
                     <td class="text-right">${{ number_format($invoice->amount, 2) }}</td>
                 </tr>
 
-                <!-- Security Deposit (only for first invoice if includes deposit and not collected) -->
-                @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
-                <tr class="deposit-row">
-                    <td class="item-desc">
-                        <strong>Security Deposit</strong>
-                        <p class="text-muted small mb-0">
-                            <span class="badge bg-warning-light text-warning">One-time payment</span>
-                            Refundable security deposit
-                        </p>
-                    </td>
-                    <td class="text-center">1</td>
-                    <td class="text-center">${{ number_format($lease->deposit_amount, 2) }}</td>
-                    <td class="text-center">${{ number_format($lease->deposit_amount, 2) }}</td>
-                </tr>
-                @endif
+
             @else
                 @foreach ($invoice->items as $item)
                     <tr>
@@ -510,13 +496,7 @@
                     <td class="summary-value">${{ number_format($invoice->amount, 2) }}</td>
                 </tr>
                 
-                @if($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0)
-                <tr class="summary-row">
-                    <td class="summary-label">Security Deposit</td>
-                    <td class="summary-value">${{ number_format($lease->deposit_amount, 2) }}</td>
-                </tr>
-                @php $totalDue += $lease->deposit_amount; $balanceDue += $lease->deposit_amount; @endphp
-                @endif
+
 
                 <tr class="summary-total">
                     <td class="summary-label">Total Invoice Amount</td>

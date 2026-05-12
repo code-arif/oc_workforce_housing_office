@@ -76,9 +76,6 @@ class InvoiceController extends Controller
         // If the total_amount is not set, calculate it
         if (!$totalDue || $totalDue == 0) {
             $totalDue = $invoice->amount;
-            if ($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0) {
-                $totalDue += $lease->deposit_amount;
-            }
         }
 
         $totalPaid = $invoice->paid_amount ?? $invoice->payments->sum('amount');
@@ -894,9 +891,6 @@ class InvoiceController extends Controller
 
         if (!$totalDue || $totalDue == 0) {
             $totalDue = $invoice->amount;
-            if ($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0) {
-                $totalDue += $lease->deposit_amount;
-            }
         }
 
         $totalPaid = $invoice->paid_amount ?? $invoice->payments->sum('amount');
