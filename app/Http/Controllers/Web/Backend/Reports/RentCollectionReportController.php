@@ -26,7 +26,7 @@ class RentCollectionReportController extends Controller
             ->with('profile:id,tenant_id,first_name,last_name')
             ->orderBy('email')
             ->get();
-        
+
         return view('backend.layouts.reports.rent-collection-report', compact('properties', 'tenants'));
     }
 
@@ -131,7 +131,7 @@ class RentCollectionReportController extends Controller
                     $method = strtolower($payment->payment_method ?? 'other');
                     $badge = $badges[$method] ?? 'bg-secondary';
                     $label = ucfirst(str_replace('_', ' ', $payment->payment_method ?? 'N/A'));
-                    return "<span class='badge {$badge} px-2 py-1'>{$label}</span>";
+                    return "<span class='badge {$badge} p-3'>{$label}</span>";
                 })
                 ->addColumn('review_status_badge', function ($payment) {
                     $status = $payment->review_status ?? 'pending';
@@ -145,21 +145,21 @@ class RentCollectionReportController extends Controller
                 })
                 ->addColumn('reviewed_info', function ($payment) {
                     if ($payment->reviewed_at && $payment->reviewedBy) {
-                        return $payment->reviewedBy->name . '<br><small class="text-muted">' . 
+                        return $payment->reviewedBy->name . '<br><small class="text-muted">' .
                                $payment->reviewed_at->format('M d, Y H:i') . '</small>';
                     }
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('invoice_info', function ($payment) {
                     if ($payment->invoice) {
-                        return $payment->invoice->invoice_number . '<br><small class="text-muted">Due: ' . 
+                        return $payment->invoice->invoice_number . '<br><small class="text-muted">Due: ' .
                                ($payment->invoice->due_date ? $payment->invoice->due_date->format('M d, Y') : 'N/A') . '</small>';
                     }
                     return 'N/A';
                 })
                 ->addColumn('actions', function ($payment) {
                     $buttons = '<div class="btn-group btn-group-sm">';
-                    
+
                     if ($payment->review_status !== 'confirmed') {
                         if ($payment->review_status !== 'reviewed') {
                             $buttons .= '<button type="button" class="btn btn-outline-info btn-review" data-id="' . $payment->id . '" data-status="reviewed" title="Mark as Reviewed"><i class="fe fe-eye"></i></button>';
@@ -169,7 +169,7 @@ class RentCollectionReportController extends Controller
                     } else {
                         $buttons .= '<button type="button" class="btn btn-outline-warning btn-review" data-id="' . $payment->id . '" data-status="pending" title="Reset to Pending"><i class="fe fe-rotate-ccw"></i></button>';
                     }
-                    
+
                     $buttons .= '</div>';
                     return $buttons;
                 })
@@ -209,9 +209,9 @@ class RentCollectionReportController extends Controller
                 'status' => $payment->review_status,
             ]);
         }
-        
+
         $payment->review_status = $request->status;
-        
+
         if (in_array($request->status, ['reviewed', 'confirmed', 'disputed'])) {
             $payment->reviewed_at = now();
             $payment->reviewed_by = Auth::id();
@@ -267,7 +267,7 @@ class RentCollectionReportController extends Controller
         }
 
         $updateData = ['review_status' => $request->status];
-        
+
         if (in_array($request->status, ['reviewed', 'confirmed', 'disputed'])) {
             $updateData['reviewed_at'] = now();
             $updateData['reviewed_by'] = Auth::id();
@@ -326,7 +326,7 @@ class RentCollectionReportController extends Controller
             'confirmed_amount' => (clone $query)->where('review_status', 'confirmed')->sum('amount'),
             'disputed' => (clone $query)->where('review_status', 'disputed')->count(),
             'disputed_amount' => (clone $query)->where('review_status', 'disputed')->sum('amount'),
-            
+
             // By payment method
             'by_method' => (clone $query)
                 ->select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total'))
@@ -345,7 +345,7 @@ class RentCollectionReportController extends Controller
     public function exportPdf(Request $request)
     {
         $data = $this->getReportData($request);
-        
+
         $pdf = Pdf::loadView('backend.layouts.reports.rent-collection-report-pdf', [
             'reportData' => $data['reportData'],
             'summary' => $data['summary'],
@@ -354,7 +354,7 @@ class RentCollectionReportController extends Controller
         ]);
 
         $pdf->setPaper('A4', 'landscape');
-        
+
         $filename = 'rent-collection-report-' . now()->format('Y-m-d-His') . '.pdf';
         return $pdf->stream($filename);
     }
@@ -365,9 +365,9 @@ class RentCollectionReportController extends Controller
     public function exportExcel(Request $request)
     {
         $data = $this->getReportData($request);
-        
+
         $filename = 'rent-collection-report-' . now()->format('Y-m-d-His') . '.xlsx';
-        
+
         return Excel::download(
             new RentCollectionReportExport(
                 $data['reportData'],
@@ -419,8 +419,8 @@ class RentCollectionReportController extends Controller
         if ($request->filled('tenant_id')) {
             $query->where('tenant_id', $request->tenant_id);
             $tenant = Tenant::with('profile')->find($request->tenant_id);
-            $filters['tenant'] = $tenant?->profile ? 
-                trim($tenant->profile->first_name . ' ' . $tenant->profile->last_name) : 
+            $filters['tenant'] = $tenant?->profile ?
+                trim($tenant->profile->first_name . ' ' . $tenant->profile->last_name) :
                 'Selected Tenant';
         }
 
@@ -450,7 +450,7 @@ class RentCollectionReportController extends Controller
 
         foreach ($payments as $payment) {
             $profile = $payment->tenant?->profile;
-            $tenantName = $profile 
+            $tenantName = $profile
                 ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
                 : 'N/A';
 
@@ -458,7 +458,7 @@ class RentCollectionReportController extends Controller
             $bedLabel = $assignment?->bed?->bed_label ?? 'N/A';
 
             $totalCollected += $payment->amount;
-            
+
             switch ($payment->review_status) {
                 case 'confirmed':
                     $confirmedTotal += $payment->amount;
