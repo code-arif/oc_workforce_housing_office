@@ -43,84 +43,124 @@
                 <!-- Template Info Sidebar -->
                 <div class="col-xl-3 col-lg-4">
                     <!-- Lease Summary -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-home text-primary"></i> Lease Summary
+                    <div class="card border-0 shadow-sm overflow-hidden">
+                        <div class="card-header border-bottom-0 pt-4 pb-0">
+                            <h5 class="card-title mb-0 fw-bold">
+                                <i class="fas fa-file-invoice text-primary me-2"></i> Lease Summary
                             </h5>
                         </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label class="text-muted small">Property</label>
-                                <div class="fw-semibold">{{ $lease->property->name ?? 'N/A' }}</div>
-                            </div>
-                            @php
-                                $assignment = $lease->assignments->where('is_current', true)->first();
-                                $bed = $assignment?->bed;
-                                $room = $bed?->room;
-                                $unit = $room?->unit;
-                            @endphp
-                            <div class="mb-3">
-                                <label class="text-muted small">Unit / Room / Bed</label>
-                                <div class="fw-semibold">
-                                    {{ $unit?->unit_number ?? '' }}
-                                    {{ $room ? '/ Room ' . $room->room_number : '' }}
-                                    {{ $bed ? '/ ' . $bed->bed_label : '' }}
+                        <div class="card-body pt-3">
+                            <div class="summary-list">
+                                <div class="summary-item mb-3 p-2 rounded-1 hover-light transition-all  bg-light-50">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-building text-muted me-2 small"></i>
+                                        <label class="text-muted small mb-0 text-uppercase fw-bold ls-1">Property</label>
+                                    </div>
+                                    <div class="fw-semibold text-dark ps-4">{{ $lease->property->name ?? 'N/A' }}</div>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="text-muted small">Lease Term</label>
-                                <div class="fw-semibold">
-                                    {{ date('M d, Y', strtotime($lease->start_date)) }} - {{ date('M d, Y', strtotime($lease->end_date)) }}
+
+                                @php
+                                    $assignment = $lease->assignments->where('is_current', true)->first();
+                                    $bed = $assignment?->bed;
+                                    $room = $bed?->room;
+                                    $unit = $room?->unit;
+                                @endphp
+                                <div class="summary-item mb-3 p-2 rounded-1 hover-light transition-all  bg-light-50">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-door-open text-muted me-2 small"></i>
+                                        <label class="text-muted small mb-0 text-uppercase fw-bold ls-1">Unit / Room / Bed</label>
+                                    </div>
+                                    <div class="fw-semibold text-dark ps-4">
+                                        {{ $unit?->unit_number ?? 'N/A' }}
+                                        {{ $room ? ' / ' . $room->room_number : '' }}
+                                        {{ $bed ? ' / ' . $bed->bed_label : '' }}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="text-muted small">Seasonal Rent</label>
-                                <div class="fw-bold text-primary fs-5">${{ number_format($lease->rent_amount, 2) }}</div>
-                            </div>
-                            @if($lease->deposit_amount > 0)
-                            <div class="mb-3">
-                                <label class="text-muted small">Security Deposit</label>
-                                <div class="fw-semibold">${{ number_format($lease->deposit_amount, 2) }}</div>
-                            </div>
-                            @endif
-                            <div class="mb-3">
-                                <label class="text-muted small">Template</label>
-                                <div>
-                                    <span class="badge badge-{{ $template->file_type == 'pdf' ? 'danger' : 'primary' }}">
-                                        {{ strtoupper($template->file_type ?? 'PDF') }}
-                                    </span>
-                                    <span class="ms-1">{{ $template->name }}</span>
+
+                                <div class="summary-item mb-3 p-2 rounded-1 hover-light transition-all  bg-light-50">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-calendar-alt text-muted me-2 small"></i>
+                                        <label class="text-muted small mb-0 text-uppercase fw-bold ls-1">Lease Term</label>
+                                    </div>
+                                    <div class="fw-semibold text-dark ps-4">
+                                        {{ date('M d, Y', strtotime($lease->start_date)) }} <br>
+                                        <span class="text-muted mx-2">to</span>
+                                        {{ date('M d, Y', strtotime($lease->end_date)) }}
+                                    </div>
+                                </div>
+
+                                <div class="summary-item mb-3 p-3 rounded-1 hover-light transition-all  bg-light-50">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="text-primary small mb-0 text-uppercase fw-bold">Seasonal Rent</label>
+                                        <i class="fas fa-money-bill-wave text-primary"></i>
+                                    </div>
+                                    <div class="fw-bold text-primary fs-3">${{ number_format($lease->rent_amount, 2) }}</div>
+                                </div>
+
+                                @if($lease->deposit_amount > 0)
+                                <div class="summary-item mb-3 p-2 rounded-1 hover-light transition-all  bg-light-50">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-shield-alt text-muted me-2 small"></i>
+                                        <label class="text-muted small mb-0 text-uppercase fw-bold ls-1">Security Deposit</label>
+                                    </div>
+                                    <div class="fw-semibold text-dark ps-4">${{ number_format($lease->deposit_amount, 2) }}</div>
+                                </div>
+                                @endif
+
+                                <div class="summary-item p-2 rounded-1 hover-light transition-all  bg-light-50">
+                                    <label class="text-muted small mb-1 d-block text-uppercase fw-bold ls-1">Active Template</label>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-{{ $template->file_type == 'pdf' ? 'danger' : 'primary' }} me-2">
+                                            {{ strtoupper($template->file_type ?? 'PDF') }}
+                                        </span>
+                                        <span class="small fw-medium text-truncate">{{ $template->name }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Tenant Info -->
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-user text-info"></i> Tenant
+                    <div class="card mt-4 border-0 shadow-sm overflow-hidden">
+                        <div class="card-header border-bottom-0 pt-4 pb-0">
+                            <h5 class="card-title mb-0 fw-bold">
+                                <i class="fas fa-user-circle text-info me-2"></i> Tenant Details
                             </h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body pt-3">
                             @php
                                 $profile = $lease->tenant?->profile;
                                 $tenantName = $profile ? trim($profile->first_name . ' ' . ($profile->last_name ?? '')) : 'N/A';
                                 $avatar = $profile && $profile->avatar ? asset($profile->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($tenantName) . '&background=random';
                             @endphp
-                            <div class="d-flex align-items-center mb-3">
-                                <img src="{{ $avatar }}" alt="Tenant" class="rounded-circle me-3" width="50" height="50" style="object-fit: cover;">
-                                <div>
-                                    <strong>{{ $tenantName }}</strong>
-                                    <small class="text-muted d-block">{{ $lease->tenant?->email ?? 'N/A' }}</small>
+                            <div class="tenant-profile-card p-3 rounded-1 hover-light transition-all  bg-light-50">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="avatar-wrapper position-relative me-3">
+                                        <img src="{{ $avatar }}" alt="Tenant" class="rounded-circle shadow-sm" width="60" height="60" style="object-fit: cover; border: 2px solid #fff;">
+                                        <span class="status-indicator bg-success position-absolute bottom-0 end-0 rounded-circle" style="width: 12px; height: 12px; border: 2px solid #fff;"></span>
+                                    </div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <h6 class="mb-0 fw-bold text-truncate">{{ $tenantName }}</h6>
+                                        <small class="text-muted text-truncate d-block">{{ $lease->tenant?->email ?? 'N/A' }}</small>
+                                    </div>
+                                </div>
+                                <div class="tenant-contact-info border-top pt-3 mt-1">
+                                    @if($profile?->phone)
+                                    <div class="d-flex align-items-center mb-2 small text-dark">
+                                        <div class="bg-white rounded-circle shadow-xs p-1 me-2 text-center" style="width: 24px; height: 24px;">
+                                            <i class="fas fa-phone text-info" style="font-size: 10px;"></i>
+                                        </div>
+                                        <span>{{ $profile->phone }}</span>
+                                    </div>
+                                    @endif
+                                    <div class="d-flex align-items-center small text-dark">
+                                        <div class="bg-white rounded-circle shadow-xs p-1 me-2 text-center" style="width: 24px; height: 24px;">
+                                            <i class="fas fa-envelope text-info" style="font-size: 10px;"></i>
+                                        </div>
+                                        <span class="text-truncate">{{ $lease->tenant?->email ?? 'N/A' }}</span>
+                                    </div>
                                 </div>
                             </div>
-                            @if($profile?->phone)
-                            <div class="small text-muted">
-                                <i class="fas fa-phone me-1"></i> {{ $profile->phone }}
-                            </div>
-                            @endif
                         </div>
                     </div>
 
@@ -1222,6 +1262,56 @@
     .badge-warning {
         background: #fef3c7;
         color: #f59e0b;
+    }
+
+    /* Enhanced Card Helper Classes */
+    .bg-light-50 {
+        background-color: #f9fafb !important;
+    }
+
+    .bg-primary-transparent {
+        background-color: rgba(59, 130, 246, 0.08) !important;
+    }
+
+    .border-primary-light {
+        border-color: rgba(59, 130, 246, 0.2) !important;
+    }
+
+    .border-info-light {
+        border-color: rgba(14, 165, 233, 0.2) !important;
+    }
+
+    .ls-1 {
+        letter-spacing: 0.05em;
+    }
+
+    .hover-light:hover {
+        background-color: #f3f4f6 !important;
+        transform: translateX(5px);
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .shadow-xs {
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .tenant-profile-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .tenant-profile-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .avatar-wrapper img {
+        transition: transform 0.3s ease;
+    }
+
+    .avatar-wrapper:hover img {
+        transform: scale(1.05);
     }
 
     /* Print Styles */
