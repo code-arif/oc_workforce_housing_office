@@ -420,6 +420,7 @@ Route::prefix('/maintanance')->name('maintanance.')->group(function () {
     Route::delete('/delete/{maintananceId}', [MaintananceController::class, 'destroy'])->name('delete'); //done
     Route::get('/details/{id}', [MaintananceController::class, 'show'])->name('show'); // done
     Route::get('/maintanance/{id}/details', [MaintananceController::class, 'details'])->name('details'); // done
+    Route::get('/{id}/export-pdf', [MaintananceController::class, 'exportPdf'])->name('export.pdf');
 
     Route::post('/{id}/mark-resolved', [MaintananceController::class, 'markAsResolved'])->name('markResolved');
     Route::post('/{id}/update-status', [MaintananceController::class, 'updateStatus'])->name('updateStatus');

@@ -133,6 +133,9 @@
                             </button>
                             <h4 class="mb-0">Maintenance Detail</h4>
                             <div class="header-actions">
+                                <button class="btn btn-info me-2" onclick="printMaintenance({{ $maintenance->id }})">
+                                    <i class="fe fe-printer me-1"></i> Print PDF
+                                </button>
                                 <button class="btn btn-light" onclick="window.location='{{ route('maintanance.index') }}'">
                                     <i class="fe fe-x"></i>
                                 </button>
@@ -623,6 +626,14 @@ $avatar =
     <script>
         const MAINTENANCE_ID = {{ $maintenance->id }};
         const CSRF_TOKEN = '{{ csrf_token() }}';
+
+        /*========================================
+         | PRINT PDF
+         ========================================*/
+        function printMaintenance(id) {
+            const url = "{{ route('maintanance.export.pdf', ':id') }}".replace(':id', id);
+            window.open(url, '_blank');
+        }
 
         /*========================================
          | SEARCH

@@ -316,6 +316,12 @@
             window.location.href = '{{ route('maintanance.show', '') }}/' + id;
         }
 
+        // Print function
+        function printMaintenance(id) {
+            const url = "{{ route('maintanance.export.pdf', ':id') }}".replace(':id', id);
+            window.open(url, '_blank');
+        }
+
         // Edit function
         function editRequest(id) {
             window.location.href = '{{ route('maintanance.edit', '') }}/' + id;

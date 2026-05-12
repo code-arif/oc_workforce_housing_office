@@ -17,6 +17,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Yajra\DataTables\Facades\DataTables;
 
 class MaintananceController extends Controller
@@ -235,17 +236,20 @@ class MaintananceController extends Controller
                 ->addColumn('issue_date', fn($data) => date('M d, Y', strtotime($data->created_at)))
                 ->addColumn('actions', function ($data) {
                     return '<div class="btn-group" role="group">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="viewDetails(' . $data->id . ')">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="viewDetails(' . $data->id . ')" title="View Details">
                                 <i class="fe fe-eye"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-info" onclick="editRequest(' . $data->id . ')">
+                            <button type="button" class="btn btn-sm btn-info" onclick="printMaintenance(' . $data->id . ')" title="Print PDF">
+                                <i class="fe fe-printer"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-warning" onclick="editRequest(' . $data->id . ')" title="Edit">
                                 <i class="fe fe-edit"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-success" onclick="quickStatus(' . $data->id . ')"
                                 title="Change Status">
                                 <i class="fe fe-refresh-cw"></i>
                             </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRequest(' . $data->id . ')">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRequest(' . $data->id . ')" title="Delete">
                                 <i class="fe fe-trash"></i>
                             </button>
                         </div>';
@@ -760,5 +764,29 @@ class MaintananceController extends Controller
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Export Maintenance Detail to PDF
+     */
+    public function exportPdf($id)
+    {
+        $maintenance = MaintenanceRequest::with([
+            'tenant.profile',
+            'tenant.activeLease.property',
+            'tenant.activeLease.currentAssignment.bed.room.unit',
+            'property',
+            'unitModel',
+            'room',
+            'bed',
+            'attachments',
+            'creator'
+        ])->findOrFail($id);
+
+        $pdf = Pdf::loadView('backend.layouts.maintenance.detail-pdf', compact('maintenance'));
+        $pdf->setPaper('A4', 'portrait');
+
+        $filename = 'Maintenance-Request-' . $maintenance->id . '.pdf';
+        return $pdf->stream($filename);
     }
 }
