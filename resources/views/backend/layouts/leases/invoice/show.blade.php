@@ -777,7 +777,7 @@
                     <h5 class="modal-title" id="cancelPaidCashModalLabel">
                         <i class="fe fe-alert-triangle me-2"></i>Cancel Paid Cash Invoice
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning">
@@ -804,13 +804,19 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fe fe-x me-1"></i>Cancel
+
+                    <button type="button" class="btn btn-secondary d-flex align-items-center justify-content-center"
+                        data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i>
+                        <span>Cancel</span>
                     </button>
-                    <button type="button" class="btn btn-danger" id="confirmCancelPaidCashBtn"
-                        onclick="submitCancelPaidCashInvoice()">
-                        <i class="fe fe-rotate-ccw me-2"></i>Confirm Cancellation
+
+                    <button type="button" class="btn btn-danger d-flex align-items-center justify-content-center"
+                        id="confirmCancelPaidCashBtn" onclick="submitCancelPaidCashInvoice()">
+                        <i class="fe fe-rotate-ccw me-2"></i>
+                        <span>Confirm Cancellation</span>
                     </button>
+
                 </div>
             </div>
         </div>
