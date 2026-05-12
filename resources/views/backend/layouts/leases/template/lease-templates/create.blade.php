@@ -22,7 +22,7 @@
                     <!-- Left Side - Instructions -->
                     <div class="col-lg-4">
                         <!-- Quick Guide -->
-                        <div class="card card-primary">
+                        <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-book-open"></i> Quick Guide
@@ -65,32 +65,32 @@
                         </div>
 
                         <!-- Tips Card -->
-                        <div class="card border-warning">
-                            <div class="card-header bg-warning-transparent">
-                                <h5 class="card-title mb-0 text-warning">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
                                     <i class="fas fa-lightbulb"></i> Best Practices
                                 </h5>
                             </div>
                             <div class="card-body">
                                 <ul class="tips-list mb-0">
                                     <li>
-                                        <i class="fas fa-check-circle text-success"></i>
+                                        <i class="fas fa-check-circle text-primary"></i>
                                         <span><strong>Use PDF format</strong> for better formatting preservation</span>
                                     </li>
                                     <li>
-                                        <i class="fas fa-check-circle text-success"></i>
+                                        <i class="fas fa-check-circle text-primary"></i>
                                         <span><strong>Remove signatures</strong> from the template before uploading</span>
                                     </li>
                                     <li>
-                                        <i class="fas fa-check-circle text-success"></i>
+                                        <i class="fas fa-check-circle text-primary"></i>
                                         <span><strong>Use standard fonts</strong> like Arial or Times New Roman</span>
                                     </li>
                                     <li>
-                                        <i class="fas fa-check-circle text-success"></i>
+                                        <i class="fas fa-check-circle text-primary"></i>
                                         <span><strong>Clear formatting</strong> with proper headings and spacing</span>
                                     </li>
                                     <li>
-                                        <i class="fas fa-check-circle text-success"></i>
+                                        <i class="fas fa-check-circle text-primary"></i>
                                         <span><strong>Keep file size</strong> under 10MB for optimal performance</span>
                                     </li>
                                 </ul>
@@ -98,7 +98,7 @@
                         </div>
 
                         <!-- Supported Placeholders -->
-                        <div class="card card-info">
+                        <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-tags"></i> Available Placeholders
@@ -107,34 +107,34 @@
                             <div class="card-body">
                                 <div class="placeholder-preview">
                                     <div class="placeholder-category mb-3">
-                                        <h6 class="text-primary"><i class="fas fa-user"></i> Tenant Info</h6>
+                                        <h6><i class="fas fa-user"></i> Tenant Info</h6>
                                         <div class="placeholder-tags">
-                                            <span class="badge bg-primary-transparent">Tenant Name</span>
-                                            <span class="badge bg-primary-transparent">Tenant Email</span>
-                                            <span class="badge bg-primary-transparent">Tenant Phone</span>
+                                            <span class="badge bg-light text-dark border">Tenant Name</span>
+                                            <span class="badge bg-light text-dark border">Tenant Email</span>
+                                            <span class="badge bg-light text-dark border">Tenant Phone</span>
                                         </div>
                                     </div>
                                     <div class="placeholder-category mb-3">
-                                        <h6 class="text-success"><i class="fas fa-building"></i> Property</h6>
+                                        <h6><i class="fas fa-building"></i> Property</h6>
                                         <div class="placeholder-tags">
-                                            <span class="badge bg-success-transparent">Property Address</span>
-                                            <span class="badge bg-success-transparent">Property Type</span>
+                                            <span class="badge bg-light text-dark border">Property Address</span>
+                                            <span class="badge bg-light text-dark border">Property Type</span>
                                         </div>
                                     </div>
                                     <div class="placeholder-category mb-3">
-                                        <h6 class="text-warning"><i class="fas fa-file-contract"></i> Lease Terms</h6>
+                                        <h6><i class="fas fa-file-contract"></i> Lease Terms</h6>
                                         <div class="placeholder-tags">
-                                            <span class="badge bg-warning-transparent">Start Date</span>
-                                            <span class="badge bg-warning-transparent">End Date</span>
-                                            <span class="badge bg-warning-transparent">Monthly Rent</span>
-                                            <span class="badge bg-warning-transparent">Security Deposit</span>
+                                            <span class="badge bg-light text-dark border">Start Date</span>
+                                            <span class="badge bg-light text-dark border">End Date</span>
+                                            <span class="badge bg-light text-dark border">Monthly Rent</span>
+                                            <span class="badge bg-light text-dark border">Security Deposit</span>
                                         </div>
                                     </div>
                                     <div class="placeholder-category">
-                                        <h6 class="text-info"><i class="fas fa-signature"></i> Signatures</h6>
+                                        <h6><i class="fas fa-signature"></i> Signatures</h6>
                                         <div class="placeholder-tags">
-                                            <span class="badge bg-info-transparent">Admin Signature</span>
-                                            <span class="badge bg-info-transparent">Tenant Signature</span>
+                                            <span class="badge bg-light text-dark border">Admin Signature</span>
+                                            <span class="badge bg-light text-dark border">Tenant Signature</span>
                                         </div>
                                     </div>
                                 </div>
@@ -224,12 +224,12 @@
                                                 class="d-none @error('template_file') is-invalid @enderror"
                                                 accept=".pdf,.docx" required>
 
-                                            <button type="button"
+                                            {{-- <button type="button"
                                                 class="btn btn-primary btn-sm mt-3 d-inline-flex align-items-center"
                                                 id="browseBtn">
                                                 <i class="fas fa-folder-open me-1"></i>
                                                 Browse Files
-                                            </button>
+                                            </button> --}}
                                         </div>
 
                                         <!-- File Preview (Hidden by default) -->
@@ -336,14 +336,15 @@
             width: 35px;
             height: 35px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
-            color: white;
+            /* background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%); */
+            background: #d9a600;
+            color: #000;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
             font-size: 14px;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            /* box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3); */
         }
 
         .timeline-content h6 {
@@ -425,11 +426,12 @@
             height: 80px;
             margin: 0 auto 20px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            /* background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%); */
+            background: #d9a600;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            /* box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); */
         }
 
         .upload-icon-wrapper i {
@@ -489,7 +491,8 @@
             width: 60px;
             height: 60px;
             border-radius: 12px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+            /* background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%); */
+            background: #d9a600;
             display: flex;
             align-items: center;
             justify-content: center;
