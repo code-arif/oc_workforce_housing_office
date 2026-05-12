@@ -75,7 +75,7 @@
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label class="text-muted small">Monthly Rent</label>
+                                <label class="text-muted small">Seasonal Rent</label>
                                 <div class="fw-bold text-primary fs-5">${{ number_format($lease->rent_amount, 2) }}</div>
                             </div>
                             @if($lease->deposit_amount > 0)
@@ -313,10 +313,10 @@
         </div>
         <div class="mb-3">
             <label for="customTextArea" class="form-label fw-semibold">Text Content</label>
-            <textarea 
-                id="customTextArea" 
-                class="form-control" 
-                rows="6" 
+            <textarea
+                id="customTextArea"
+                class="form-control"
+                rows="6"
                 placeholder="Enter your text here..."
                 style="font-size: 14px; resize: vertical;"
             ></textarea>
@@ -359,16 +359,16 @@
             adminSignature: @json($document->admin_signature ?? null)
         };
         const autoOpenAdminSign = @json(request()->boolean('quick_admin_sign'));
-        
+
         // Separate text input fields from regular placeholders
         const placeholders = allPlaceholders.filter(p => p.type !== 'text_input');
         const textInputFields = allPlaceholders.filter(p => p.type === 'text_input');
-        
+
         // Store custom text values (from database or user input)
         let customTextValuesRaw = @json($document->custom_fields ?? []);
         // Ensure it's an object, not an array
-        let customTextValues = (customTextValuesRaw && typeof customTextValuesRaw === 'object' && !Array.isArray(customTextValuesRaw)) 
-            ? customTextValuesRaw 
+        let customTextValues = (customTextValuesRaw && typeof customTextValuesRaw === 'object' && !Array.isArray(customTextValuesRaw))
+            ? customTextValuesRaw
             : {};
 
         if (!pdfUrl) {
@@ -400,7 +400,7 @@
             container.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Loading PDF...</p></div>';
 
             const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
-            
+
             loadingTask.promise.then(function(pdf) {
                 pdfDoc = pdf;
                 container.innerHTML = '';
@@ -492,11 +492,11 @@
 
             const content = document.createElement('div');
             content.className = 'overlay-content';
-            
+
             // Adjust font size based on scale
             const fontSize = Math.max(8, Math.min(14, 11 * scale));
             content.style.fontSize = fontSize + 'px';
-            
+
             // Use actual lease data value
             const fieldName = p.field || 'field';
             const value = leaseData[fieldName] || '';
@@ -535,7 +535,7 @@
 
             const content = document.createElement('div');
             content.className = 'text-content';
-            
+
             if (savedValue) {
                 content.textContent = savedValue;
             } else {
@@ -544,7 +544,7 @@
                 placeholder.textContent = 'Click to add text: ' + label;
                 content.appendChild(placeholder);
             }
-            
+
             overlay.appendChild(content);
 
             const icon = document.createElement('i');
@@ -581,7 +581,7 @@
 
             if (isSigned && signatureData) {
                 overlay.classList.add('signed');
-                
+
                 // Show actual signature image
                 const sigImg = document.createElement('img');
                 sigImg.src = signatureData;
@@ -590,7 +590,7 @@
                 overlay.appendChild(sigImg);
             } else if (isSigned) {
                 overlay.classList.add('signed');
-                
+
                 // Show signed indicator without image
                 const statusBadge = document.createElement('div');
                 statusBadge.className = 'sig-status bg-success text-white';
@@ -601,7 +601,7 @@
                 overlay.classList.add('pending');
                 overlay.dataset.signatureType = isTenantSig ? 'tenant' : 'admin';
                 overlay.dataset.signatureLabel = label;
-                
+
                 const sigLabel = document.createElement('div');
                 sigLabel.className = 'sig-label';
                 sigLabel.textContent = label;
@@ -645,12 +645,12 @@
         function initSignatureCanvas() {
             signatureCanvas = document.getElementById('signatureCanvas');
             signatureCtx = signatureCanvas.getContext('2d');
-            
+
             // Set canvas size
             const wrapper = document.getElementById('signatureCanvasWrapper');
             signatureCanvas.width = wrapper.offsetWidth - 4;
             signatureCanvas.height = 200;
-            
+
             // Set drawing style
             signatureCtx.strokeStyle = '#1e3a5f';
             signatureCtx.lineWidth = 2;
@@ -679,14 +679,14 @@
         function draw(e) {
             if (!isDrawing) return;
             e.preventDefault();
-            
+
             const [x, y] = getCoords(e);
-            
+
             signatureCtx.beginPath();
             signatureCtx.moveTo(lastX, lastY);
             signatureCtx.lineTo(x, y);
             signatureCtx.stroke();
-            
+
             [lastX, lastY] = [x, y];
         }
 
@@ -725,7 +725,7 @@
             currentSignatureType = type;
             document.getElementById('signatureModalTitle').textContent = label || 'Add Signature';
             document.getElementById('signatureModal').classList.add('show');
-            
+
             // Initialize canvas after modal is visible
             setTimeout(() => {
                 initSignatureCanvas();
@@ -756,12 +756,12 @@
             const signatureData = signatureCanvas.toDataURL('image/png');
             const saveBtn = document.getElementById('saveSignatureBtn');
             const originalText = saveBtn.innerHTML;
-            
+
             saveBtn.disabled = true;
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
 
             // Determine which endpoint to call
-            const endpoint = currentSignatureType === 'tenant' 
+            const endpoint = currentSignatureType === 'tenant'
                 ? '{{ route("lease-documents.sign-tenant", ":id") }}'.replace(':id', documentId)
                 : '{{ route("lease-documents.sign-admin", ":id") }}'.replace(':id', documentId);
 
@@ -787,19 +787,19 @@
                         documentData.adminSigned = true;
                         documentData.adminSignature = signatureData;
                     }
-                    
+
                     closeSignatureModal();
-                    
+
                     // Show success message
                     if (typeof toastr !== 'undefined') {
                         toastr.success('Signature saved successfully!');
                     } else {
                         alert('Signature saved successfully!');
                     }
-                    
+
                     // Re-render PDF to show updated signature
                     renderPdf();
-                    
+
                     // Update sidebar signature status
                     updateSidebarSignatureStatus();
                 } else {
@@ -830,7 +830,7 @@
             document.getElementById('textInputModalTitle').textContent = label || 'Enter Text';
             document.getElementById('customTextArea').value = currentValue || '';
             document.getElementById('textInputModal').classList.add('show');
-            
+
             // Focus on textarea
             setTimeout(() => {
                 document.getElementById('customTextArea').focus();
@@ -848,8 +848,8 @@
 
         window.saveTextInput = function() {
             const textValue = document.getElementById('customTextArea').value.trim();
-           
-            
+
+
             if (!textValue) {
                 alert('Please enter some text');
                 return;
@@ -857,7 +857,7 @@
 
             const saveBtn = document.getElementById('saveTextBtn');
             const originalText = saveBtn.innerHTML;
-            
+
             saveBtn.disabled = true;
             saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
 
@@ -866,7 +866,7 @@
             console.log(textValue);
             console.log(currentTextFieldId);
             console.log(customTextValues);
-            
+
             // Save to database
             fetch('{{ route("lease-documents.update-custom-fields", ":id") }}'.replace(':id', documentId), {
                 method: 'POST',
@@ -883,14 +883,14 @@
             .then(data => {
                 if (data.success) {
                     closeTextInputModal();
-                    
+
                     // Show success message
                     if (typeof toastr !== 'undefined') {
                         toastr.success('Text saved successfully!');
                     } else {
                         alert('Text saved successfully!');
                     }
-                    
+
                     // Re-render PDF to show updated text
                     renderPdf();
                 } else {
