@@ -796,7 +796,7 @@
                         <i class="fe fe-user me-2"></i>Application Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                        aria-label="Close">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div id="tenantApplicationDetails">
@@ -809,14 +809,14 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fe fe-x me-1"></i>Close
+                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i> Close
                     </button>
-                    <button type="button" class="btn btn-success d-none" id="approveFromModalBtn">
-                        <i class="fe fe-check me-1"></i>Approve & Send Form
+                    <button type="button" class="btn btn-success d-none d-inline-flex align-items-center" id="approveFromModalBtn">
+                        <i class="fe fe-check me-1"></i> Approve & Send Form
                     </button>
-                    <button type="button" class="btn btn-danger d-none" id="rejectFromModalBtn">
-                        <i class="fe fe-x me-1"></i>Reject
+                    <button type="button" class="btn btn-danger d-none d-inline-flex align-items-center" id="rejectFromModalBtn">
+                        <i class="fe fe-x me-1"></i> Reject
                     </button>
                 </div>
             </div>
@@ -1342,7 +1342,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <small class="text-muted d-block">Interested in Property</small>
-                            <strong class="badge bg-primary px-3 py-1 rounded-pill">${application.property.name || 'N/A'}</strong>
+                            <strong class="badge bg-primary p-3 rounded-pill">${application.property.name || 'N/A'}</strong>
                         </div>
                     </div>
                 </div>
@@ -1388,7 +1388,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <small class="text-muted d-block">Status</small>
-                            <span class="badge px-3 py-1 rounded-pill bg-${application.status === 'pending' ? 'warning' : application.status === 'approved' ? 'success' : 'danger'}">
+                            <span class="badge p-3 rounded-pill bg-${application.status === 'pending' ? 'warning' : application.status === 'approved' ? 'success' : 'danger'}">
                                 ${application.status.charAt(0).toUpperCase() + application.status.slice(1).replace('_', ' ')}
                             </span>
                         </div>
