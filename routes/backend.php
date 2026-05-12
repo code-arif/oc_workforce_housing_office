@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\Backend\DashboardController;
 use App\Http\Controllers\Web\Backend\FaqController;
 use App\Http\Controllers\Web\Backend\Income\IncomeController;
 use App\Http\Controllers\Web\Backend\ItemController;
+use App\Http\Controllers\Web\Backend\Lease\InvoiceController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseDocumentController;
 use App\Http\Controllers\Web\Backend\Lease\LeaseTemplateController;
@@ -39,6 +40,7 @@ use App\Http\Controllers\Web\Backend\Settings\ProfileController;
 use App\Http\Controllers\Web\Backend\Settings\SettingController;
 use App\Http\Controllers\Web\Backend\Settings\SocialLinkController;
 use App\Http\Controllers\Web\Backend\Stripe\StripeConnectController;
+use App\Http\Controllers\Web\Backend\SystemMonitorController;
 use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 use App\Http\Controllers\Web\Backend\Tenant\PaymentManageController;
@@ -47,7 +49,6 @@ use App\Http\Controllers\Web\Backend\UnitController;
 use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
 use App\Http\Controllers\Web\Backend\UserManagement\UserController;
-use App\Http\Controllers\Web\Backend\SystemMonitorController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -77,6 +78,7 @@ Route::prefix('units')->name('units.')->group(function () {
     Route::get('/toggle-status/{id}', [UnitController::class, 'toggleStatus'])->name('toggle.status');
 });
 
+// rooms manage
 Route::prefix('rooms')->name('rooms.')->group(function () {
     Route::get('/list', [RoomController::class, 'index'])->name('list');
     Route::get('/show/{id}', [RoomController::class, 'show'])->name('show');
@@ -91,6 +93,7 @@ Route::prefix('rooms')->name('rooms.')->group(function () {
     Route::get('/get-units/{propertyId}', [RoomController::class, 'getUnits'])->name('get.units');
 });
 
+// beds manage
 Route::prefix('beds')->name('beds.')->group(function () {
     Route::get('/list', [BedController::class, 'index'])->name('list');
     Route::post('/store', [BedController::class, 'store'])->name('store');
@@ -105,8 +108,6 @@ Route::prefix('beds')->name('beds.')->group(function () {
 
     Route::get('/get-beds/{roomId}', [BedController::class, 'getBeds'])->name('get.beds');
 });
-
-
 
 //Property manage
 Route::prefix('property')->name('property.')->group(function () {
@@ -378,14 +379,14 @@ Route::prefix('leases')->name('leases.')->group(function () {
 
 // Invoice Routes
 Route::prefix('invoices')->name('invoices.')->group(function () {
-    Route::get('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'show'])->name('show');
-    Route::get('/{id}/download-pdf', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'downloadPdf'])->name('download.pdf');
-    Route::put('/{id}', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'update'])->name('update');
-    Route::post('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'storePayment'])->name('payments.store');
-    Route::get('/{id}/payments', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'getPayments'])->name('payments.index');
-    Route::post('/{id}/mark-paid', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'markPaid'])->name('mark.paid');
-    Route::post('/{id}/cancel', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancel'])->name('cancel');
-    Route::post('/{id}/cancel-paid-cash', [\App\Http\Controllers\Web\Backend\Lease\InvoiceController::class, 'cancelPaidCashPayment'])->name('cancel.paid.cash');
+    Route::get('/{id}', [InvoiceController::class, 'show'])->name('show');
+    Route::get('/{id}/download-pdf', [InvoiceController::class, 'downloadPdf'])->name('download.pdf');
+    Route::put('/{id}', [InvoiceController::class, 'update'])->name('update');
+    Route::post('/{id}/payments', [InvoiceController::class, 'storePayment'])->name('payments.store');
+    Route::get('/{id}/payments', [InvoiceController::class, 'getPayments'])->name('payments.index');
+    Route::post('/{id}/mark-paid', [InvoiceController::class, 'markPaid'])->name('mark.paid');
+    Route::post('/{id}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');
+    Route::post('/{id}/cancel-paid-cash', [InvoiceController::class, 'cancelPaidCashPayment'])->name('cancel.paid.cash');
 });
 
 /*

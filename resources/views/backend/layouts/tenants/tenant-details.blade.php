@@ -66,11 +66,11 @@
                                 </div> --}}
 
                                 <div class="d-flex justify-content-center gap-2 mb-3">
-                                    <span class="badge bg-{{ $tenant->status === 'approved' || $tenant->status === 'active' ? 'success' : ($tenant->status === 'pending' ? 'warning' : 'secondary') }} px-3 py-3 rounded-pill" >
+                                    <span class="badge bg-{{ $tenant->status === 'approved' || $tenant->status === 'active' ? 'success' : ($tenant->status === 'pending' ? 'warning' : 'secondary') }} p-3 rounded-pill" >
                                         {{ ucfirst($tenant->status) }}
                                     </span>
                                     @if($activeLease)
-                                        <span class="badge bg-primary px-3 py-3 rounded-pill">Active Lease</span>
+                                        <span class="badge bg-primary p-3 rounded-pill">Active Lease</span>
                                     @endif
                                 </div>
                                 <button type="button" class="btn btn-secondary me-2 d-inline-flex align-items-center" title="View application details" id="viewApplicationBtn"
@@ -299,8 +299,8 @@
                         <!-- Current Lease -->
                         @if($activeLease)
                         <div class="card current-lease-card">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="card-title mb-0 text-white">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
                                     <i class="fe fe-home me-2"></i>Current Lease
                                 </h5>
                             </div>
@@ -335,7 +335,7 @@
                                             <div class="text-md-end">
                                                 <h3 class="text-primary mb-0">${{ number_format($activeLease->rent_amount, 2) }}</h3>
                                                 <small class="text-muted">Seasonal Rent</small>
-                                            </div> 
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -376,7 +376,7 @@
                                             data-lease-id="{{ $activeLease->id }}">
                                         <i class="fe fe-edit-3 me-1"></i> Change Bed
                                     </a>
-                                    
+
                                 </div>
                             </div>
                         </div>
@@ -399,7 +399,7 @@
                         <div class="row mt-4">
                             <div class="col-md-3 col-6">
                                 <div class="card invoice-stat-card">
-                                    <div class="card-body text-center">
+                                    <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-primary-light mb-2">
                                             <i class="fe fe-file-text text-primary"></i>
                                         </div>
@@ -410,7 +410,7 @@
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="card invoice-stat-card">
-                                    <div class="card-body text-center">
+                                    <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-success-light mb-2">
                                             <i class="fe fe-check-circle text-success"></i>
                                         </div>
@@ -421,7 +421,7 @@
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="card invoice-stat-card">
-                                    <div class="card-body text-center">
+                                    <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-warning-light mb-2">
                                             <i class="fe fe-clock text-warning"></i>
                                         </div>
@@ -432,7 +432,7 @@
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="card invoice-stat-card">
-                                    <div class="card-body text-center">
+                                    <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-danger-light mb-2">
                                             <i class="fe fe-alert-circle text-danger"></i>
                                         </div>
@@ -454,7 +454,7 @@
                                     <button type="button" class="btn btn-outline-danger" data-filter="overdue">Overdue</button>
                                 </div>
                             </div>
-                            <div class="card-body p-0" style="height: 200px; overflow-y:scroll;">
+                            <div class="card-body p-0" style="height: 350px; overflow-y:scroll;">
                                 @if(isset($invoices) && $invoices->count() > 0)
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0" id="invoicesTable">
@@ -1027,7 +1027,7 @@
                                     year: 'numeric'
                                 });
                     console.log(today);
-                    
+
                     $('#moveInDate').val(today);
 
                     // Populate available beds dropdown
@@ -1117,7 +1117,7 @@
             // View Single Email Application Details
     function viewApplicationDetails(id) {
         console.log(id);
-        
+
         // Show modal
         $('#tenantApplication').modal('show');
 
@@ -1162,7 +1162,7 @@
 
         // Build document section if documents exist
         let documentsHtml = '';
-        const hasDocuments = application.passport_copy_url || application.visa_document_url || 
+        const hasDocuments = application.passport_copy_url || application.visa_document_url ||
                             application.front_id_document_url || application.back_id_document_url;
 
         if (hasDocuments) {

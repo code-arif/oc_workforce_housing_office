@@ -230,7 +230,7 @@
                                                 </tr>
                                             @endforeach
                                         @endif
-                                        
+
                                     </tbody>
                                 </table>
                             </div>
@@ -497,9 +497,9 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editInvoiceModalLabel">
-                        <i class="fe fe-edit me-2 text-warning"></i>Edit Invoice {{ $invoice->invoice_number }}
+                        <i class="fe fe-edit me-2 text-warning"></i>Edit Invoice <span class="text-primary fw-bold">{{ $invoice->invoice_number }}</span>
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form id="editInvoiceForm">
@@ -510,7 +510,7 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Due Date <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control datepicker2" id="edit_due_date" name="due_date"
-                                    value="{{ $invoice->due_date->format('Y-m-d') }}" required>
+                                    value="{{ $invoice->due_date->format('m/d/Y') }}" required>
                             </div>
                             @if($invoice->type !== 'ITEM_SALE')
                             <div class="col-md-6">
@@ -617,24 +617,24 @@
 
                         {{-- Live summary for non ITEM_SALE --}}
                         @if($invoice->type !== 'ITEM_SALE')
-                        <div class="alert alert-secondary py-2" id="editAmountSummary">
-                            <div class="d-flex justify-content-between small">
-                                <span>Base Amount:</span>
-                                <strong id="summaryBase">${{ number_format($invoice->amount, 2) }}</strong>
+                        <div class="bg-light border rounded-1 p-3 mb-0" id="editAmountSummary">
+                            <div class="d-flex justify-content-between small mb-2">
+                                <span class="text-muted">Base Amount:</span>
+                                <strong class="text-dark" id="summaryBase">${{ number_format($invoice->amount, 2) }}</strong>
                             </div>
                             @if($invoice->is_first_invoice && $invoice->includes_deposit && !$lease->deposit_collected)
-                            <div class="d-flex justify-content-between small">
-                                <span>Security Deposit (auto-added):</span>
-                                <strong>${{ number_format($lease->deposit_amount ?? 0, 2) }}</strong>
+                            <div class="d-flex justify-content-between small mb-2">
+                                <span class="text-muted">Security Deposit (auto-added):</span>
+                                <strong class="text-dark">${{ number_format($lease->deposit_amount ?? 0, 2) }}</strong>
                             </div>
                             @endif
-                            <div class="d-flex justify-content-between small">
-                                <span>Already Paid:</span>
+                            <div class="d-flex justify-content-between small mb-2">
+                                <span class="text-muted">Already Paid:</span>
                                 <strong class="text-success">${{ number_format($invoice->paid_amount ?? 0, 2) }}</strong>
                             </div>
-                            <div class="d-flex justify-content-between fw-bold border-top pt-1 mt-1">
-                                <span>New Balance Due:</span>
-                                <strong class="text-danger" id="summaryBalance">$0.00</strong>
+                            <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-2">
+                                <span class="text-dark">New Balance Due:</span>
+                                <strong class="text-primary" id="summaryBalance">$0.00</strong>
                             </div>
                         </div>
                         @endif
@@ -642,11 +642,11 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fe fe-x me-1"></i>Cancel
+                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center" data-bs-dismiss="modal">
+                        <i class="fe fe-x me-1"></i> Cancel
                     </button>
-                    <button type="button" class="btn btn-warning" id="saveEditBtn" onclick="submitEditInvoice()">
-                        <i class="fe fe-save me-1"></i>Save Changes
+                    <button type="button" class="btn btn-warning d-inline-flex align-items-center" id="saveEditBtn" onclick="submitEditInvoice()">
+                        <i class="fe fe-save me-1"></i> Save Changes
                     </button>
                 </div>
             </div>
@@ -810,7 +810,7 @@
         const formData = new FormData(event.target);
         const paymentAmount = parseFloat(formData.get('amount'));
         console.log(formData);
-        
+
         if (paymentAmount <= 0 || paymentAmount > balanceDue) {
             toastr.error('Invalid payment amount');
             return;

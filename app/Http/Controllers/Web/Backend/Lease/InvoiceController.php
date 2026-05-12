@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +25,8 @@ class InvoiceController extends Controller
     public function show($id)
     {
         $invoice = Invoice::with([
-            'lease.property', 
-            'lease.tenant.profile', 
+            'lease.property',
+            'lease.tenant.profile',
             'lease.assignments.bed',
             'items.item',
             'payments' => function($query) {
@@ -59,7 +60,7 @@ class InvoiceController extends Controller
                 ->where('invoice_number', '<', $invoice->invoice_number)
                 ->orderBy('invoice_number', 'desc')
                 ->first();
-            
+
             // Can make payment if there's no previous invoice or previous is paid
             $canMakePayment = !$previousInvoice || $previousInvoice->status === 'PAID' || $invoice->type == 'ITEM_SALE';
         }
@@ -71,7 +72,7 @@ class InvoiceController extends Controller
 
         // Calculate totals - use stored values if available
         $totalDue = $invoice->total_amount;
-        
+
         // If the total_amount is not set, calculate it
         if (!$totalDue || $totalDue == 0) {
             $totalDue = $invoice->amount;
@@ -93,8 +94,8 @@ class InvoiceController extends Controller
         $availableItems = Item::where('status', true)->get();
 
         return view('backend.layouts.leases.invoice.show', compact(
-            'invoice', 
-            'lease', 
+            'invoice',
+            'lease',
             'isFirstInvoice',
             'canMakePayment',
             'totalDue',
@@ -138,18 +139,18 @@ class InvoiceController extends Controller
             $updateData  = [];
             $changeLog   = [];
 
-            // ── Due date ─────────────────────────────────────────────────────────
+            // Due date
             if ($request->filled('due_date') && $request->due_date !== $invoice->due_date->format('Y-m-d')) {
                 $changeLog['due_date'] = ['from' => $invoice->due_date->format('Y-m-d'), 'to' => $request->due_date];
                 $updateData['due_date'] = $request->due_date;
             }
 
-            // ── Notes ────────────────────────────────────────────────────────────
+            // Notes
             if ($request->has('notes')) {
                 $updateData['notes'] = $request->notes;
             }
 
-            // ── Line-item recalculation (ITEM_SALE invoices) ─────────────────────
+            // Line-item recalculation (ITEM_SALE invoices)
             if ($invoice->type === 'ITEM_SALE' && $request->has('items')) {
                 $invoice->items()->delete();
 
@@ -174,7 +175,7 @@ class InvoiceController extends Controller
                 $updateData['total_amount'] = $newTotal;
                 $updateData['balance_due'] = max(0, $newTotal - ($invoice->paid_amount ?? 0));
 
-            // ── Amount adjustment (non-ITEM_SALE invoices) ───────────────────────
+            // Amount adjustment (non-ITEM_SALE invoices)
             } elseif ($request->filled('amount') && $invoice->type !== 'ITEM_SALE') {
                 $newAmount = (float) $request->amount;
                 $newTotal  = $newAmount;
@@ -192,7 +193,7 @@ class InvoiceController extends Controller
                 $updateData['balance_due']  = max(0, $newTotal - ($invoice->paid_amount ?? 0));
             }
 
-            // ── Recalculate status when balance/amounts changed ───────────────────
+            // Recalculate status when balance/amounts changed
             if (isset($updateData['balance_due'])) {
                 $paid = $invoice->paid_amount ?? 0;
                 if ($updateData['balance_due'] <= 0 && $paid > 0) {
@@ -208,7 +209,7 @@ class InvoiceController extends Controller
 
             $invoice->update($updateData);
 
-            // ── Audit transaction ─────────────────────────────────────────────────
+            // Audit transaction
             if (!empty($changeLog)) {
                 $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
                 Transaction::create([
@@ -239,7 +240,7 @@ class InvoiceController extends Controller
                 'invoice' => $invoice->fresh()->load('items.item'),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to update invoice: ' . $e->getMessage());
             return response()->json([
@@ -268,25 +269,25 @@ class InvoiceController extends Controller
             $invoice = Invoice::with('lease.property')->findOrFail($id);
             $lease = $invoice->lease;
             $bedId = $lease->assignments()->where('is_current', true)->first()->bed_id ?? null;
-            
+
             // Check for deposit invoice with same invoice number (for first invoice)
             $depositInvoice = null;
             $depositAmount = 0;
-            
+
             if ($invoice->is_first_invoice && !$lease->deposit_collected) {
                 $depositInvoice = Invoice::where('lease_id', $lease->id)
                     ->where('invoice_number', $invoice->invoice_number)
                     ->where('type', 'DEPOSIT')
                     ->where('status', '!=', 'PAID')
                     ->first();
-                    
+
                 $depositAmount = $depositInvoice ? $depositInvoice->balance_due : 0;
             }
 
             // Total balance due (rent + deposit if applicable)
             $rentBalanceDue = $invoice->balance_due;
             $totalBalanceDue = $rentBalanceDue + $depositAmount;
-            
+
             $paymentAmount = $request->amount;
 
             // Validate payment amount doesn't exceed total balance
@@ -300,7 +301,7 @@ class InvoiceController extends Controller
             // Allocate payment: First to deposit (if applicable), then to rent
             $depositPaymentAmount = 0;
             $rentPaymentAmount = 0;
-            
+
             if ($depositAmount > 0 && $paymentAmount > 0) {
                 // Pay deposit first
                 $depositPaymentAmount = min($paymentAmount, $depositAmount);
@@ -339,9 +340,9 @@ class InvoiceController extends Controller
                 // Update Deposit Invoice
                 $newDepositPaid = ($depositInvoice->paid_amount ?? 0) + $depositPaymentAmount;
                 $newDepositBalance = $depositInvoice->total_amount - $newDepositPaid;
-                
+
                 $depositStatus = $newDepositBalance <= 0 ? 'PAID' : 'PARTIAL';
-                
+
                 $depositInvoice->update([
                     'paid_amount' => $newDepositPaid,
                     'balance_due' => max(0, $newDepositBalance),
@@ -472,7 +473,7 @@ class InvoiceController extends Controller
             DB::rollBack();
             Log::error('Failed to store payment: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to record payment. Please try again.' . $e->getMessage(),
@@ -749,7 +750,7 @@ class InvoiceController extends Controller
         try {
             $invoice = Invoice::with('lease')->findOrFail($id);
             $lease = $invoice->lease;
-            
+
             $balanceDue = $invoice->total_amount - ($invoice->paid_amount ?? 0);
 
             if ($balanceDue <= 0) {
@@ -816,7 +817,7 @@ class InvoiceController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to mark invoice as paid: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update invoice status.'
@@ -832,7 +833,7 @@ class InvoiceController extends Controller
         $prefix = 'TXN-';
         $lastTransaction = Transaction::orderBy('id', 'desc')->first();
         $nextId = $lastTransaction ? $lastTransaction->id + 1 : 1;
-        
+
         return $prefix . str_pad($nextId, 8, '0', STR_PAD_LEFT);
     }
 
@@ -856,11 +857,11 @@ class InvoiceController extends Controller
     {
         $paymentType = $isFullPayment ? 'Full payment' : 'Partial payment';
         $description = $paymentType . ' for Invoice ' . $invoice->invoice_number;
-        
+
         if ($invoice->is_first_invoice && $invoice->includes_deposit && $isFullPayment) {
             $description .= ' (includes security deposit)';
         }
-        
+
         return $description;
     }
 
@@ -870,8 +871,8 @@ class InvoiceController extends Controller
     public function downloadPdf($id)
     {
         $invoice = Invoice::with([
-            'lease.property', 
-            'lease.tenant.profile', 
+            'lease.property',
+            'lease.tenant.profile',
             'lease.assignments.bed',
             'payments' => function($query) {
                 $query->orderBy('payment_date', 'desc');
@@ -890,7 +891,7 @@ class InvoiceController extends Controller
 
         // Calculate totals
         $totalDue = $invoice->total_amount;
-        
+
         if (!$totalDue || $totalDue == 0) {
             $totalDue = $invoice->amount;
             if ($isFirstInvoice && !$lease->deposit_collected && $lease->deposit_amount > 0) {
@@ -902,8 +903,8 @@ class InvoiceController extends Controller
         $balanceDue = $invoice->balance_due ?? ($totalDue - $totalPaid);
 
         $data = compact(
-            'invoice', 
-            'lease', 
+            'invoice',
+            'lease',
             'isFirstInvoice',
             'totalDue',
             'totalPaid',
