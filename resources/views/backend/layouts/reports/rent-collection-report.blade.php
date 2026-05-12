@@ -49,7 +49,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label for="filterReviewStatus" class="form-label">Review Status</label>
                                 <select class="form-select select3" id="filterReviewStatus">
                                     <option value="">All Statuses</option>
@@ -59,7 +59,7 @@
                                     <option value="disputed">Disputed</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label for="filterProperty" class="form-label">Property</label>
                                 <select class="form-select select3" id="filterProperty">
                                     <option value="">All Properties</option>
@@ -68,7 +68,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label class="form-label">Tenant</label>
                                 <select class="form-select select3" id="filterTenant">
                                     <option value="">All Tenants</option>
@@ -77,7 +77,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label for="filterPaymentMethod" class="form-label">Payment Method</label>
                                 <select class="form-select select3" id="filterPaymentMethod">
                                     <option value="">All Methods</option>
@@ -89,11 +89,11 @@
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label for="filterDateFrom" class="form-label">From Date</label>
                                 <input type="text" class="form-control datepicker2" id="filterDateFrom" placeholder="Start date...">
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label for="filterDateTo" class="form-label">To Date</label>
                                 <input type="text" class="form-control datepicker2" id="filterDateTo" placeholder="End date...">
                             </div>
@@ -286,7 +286,7 @@
 
         // Initialize Datepicker
         $('#filterDateFrom, #filterDateTo').datepicker({
-            format: 'yyyy-mm-dd',
+            format: 'mm/dd/yyyy',
             autoclose: true,
             todayHighlight: true
         });
@@ -333,7 +333,10 @@
             order: [[5, 'desc']],
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+            dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center gap-3"l <"bulk-actions-container">> f >rtip',
+            initComplete: function() {
+                $('#bulkActionsGroup').appendTo('.bulk-actions-container');
+            },
             drawCallback: function(settings) {
                 updateLastUpdated();
                 loadSummary();

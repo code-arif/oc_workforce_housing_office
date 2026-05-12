@@ -131,15 +131,15 @@ class RentCollectionReportController extends Controller
                     $method = strtolower($payment->payment_method ?? 'other');
                     $badge = $badges[$method] ?? 'bg-secondary';
                     $label = ucfirst(str_replace('_', ' ', $payment->payment_method ?? 'N/A'));
-                    return "<span class='badge {$badge}'>{$label}</span>";
+                    return "<span class='badge {$badge} px-2 py-1'>{$label}</span>";
                 })
                 ->addColumn('review_status_badge', function ($payment) {
                     $status = $payment->review_status ?? 'pending';
                     $badges = [
-                        'pending' => '<span class="badge bg-warning text-dark"><i class="fe fe-clock me-1"></i>Pending Review</span>',
-                        'reviewed' => '<span class="badge bg-info"><i class="fe fe-eye me-1"></i>Reviewed</span>',
-                        'confirmed' => '<span class="badge bg-success"><i class="fe fe-check-circle me-1"></i>Confirmed</span>',
-                        'disputed' => '<span class="badge bg-danger"><i class="fe fe-alert-triangle me-1"></i>Disputed</span>',
+                        'pending' => '<span class="badge bg-warning text-dark px-2 py-1"><i class="fe fe-clock me-1"></i>Pending Review</span>',
+                        'reviewed' => '<span class="badge bg-info px-2 py-1"><i class="fe fe-eye me-1"></i>Reviewed</span>',
+                        'confirmed' => '<span class="badge bg-success px-2 py-1"><i class="fe fe-check-circle me-1"></i>Confirmed</span>',
+                        'disputed' => '<span class="badge bg-danger px-2 py-1"><i class="fe fe-alert-triangle me-1"></i>Disputed</span>',
                     ];
                     return $badges[$status] ?? $badges['pending'];
                 })
