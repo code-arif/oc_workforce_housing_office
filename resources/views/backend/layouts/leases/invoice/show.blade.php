@@ -30,7 +30,7 @@
                         <a href="{{ route('leases.show', $invoice->lease_id) }}" class="btn btn-outline-secondary">
                             <i class="fe fe-arrow-left me-2"></i>Back to Lease
                         </a>
-                        <a href="{{ route('invoices.download.pdf', $invoice->id) }}" class="btn btn-outline-primary">
+                        <a href="{{ route('invoices.download.pdf', $invoice->id) }}" class="btn btn-outline-primary" target="_blank">
                             <i class="fe fe-download me-2"></i>Download PDF
                         </a>
                         @if($canCancelPaidCash)
