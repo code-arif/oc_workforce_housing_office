@@ -120,7 +120,7 @@ class IncomeController extends Controller
                 })
                 ->filterColumn('property', function ($query, $keyword) {
                     $query->whereHas('lease.property', function ($q) use ($keyword) {
-                        $q->where('property.name', 'like', "%{$keyword}%");
+                        $q->where('properties.name', 'like', "%{$keyword}%");
                     });
                 })
                 ->addColumn('invoice_info', function ($data) {
