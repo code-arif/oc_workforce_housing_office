@@ -802,7 +802,7 @@
                     <div id="tenantApplicationDetails">
                         <!-- Details will be loaded here -->
                         <div class="text-center py-4">
-                            <div class="spinner-border text-info" role="status">
+                            <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
@@ -1124,7 +1124,7 @@
         // Reset modal content to loading state
         $('#tenantApplicationDetails').html(`
             <div class="text-center py-4">
-                <div class="spinner-border text-info" role="status">
+                <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
@@ -1169,13 +1169,13 @@
             documentsHtml = `
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fe fe-file-text text-info me-2"></i>Documents
+                        <i class="fe fe-file-text text-primary me-2"></i>Documents
                     </h6>
                     <div class="row">
                         ${application.passport_copy_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Passport Copy</small>
-                                <a href="${application.passport_copy_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                <a href="${application.passport_copy_url}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fe fe-eye me-1"></i>View
                                 </a>
                             </div>
@@ -1183,7 +1183,7 @@
                         ${application.visa_document_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Visa Document</small>
-                                <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                <a href="${application.visa_document_url}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fe fe-eye me-1"></i>View
                                 </a>
                             </div>
@@ -1191,7 +1191,7 @@
                         ${application.front_id_document_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Front ID</small>
-                                <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                <a href="${application.front_id_document_url}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fe fe-eye me-1"></i>View
                                 </a>
                             </div>
@@ -1199,7 +1199,7 @@
                         ${application.back_id_document_url ? `
                             <div class="col-md-3 mb-3">
                                 <small class="text-muted d-block">Back ID</small>
-                                <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-info">
+                                <a href="${application.back_id_document_url}" target="_blank" class="btn btn-sm btn-outline-primary">
                                     <i class="fe fe-eye me-1"></i>View
                                 </a>
                             </div>
@@ -1259,7 +1259,7 @@
             employerHtml = `
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fe fe-briefcase text-info me-2"></i>Employer Information
+                        <i class="fe fe-briefcase text-primary me-2"></i>Employer Information
                     </h6>
                     ${employerinfo}
                 </div>
@@ -1272,7 +1272,7 @@
             sponsorHtml = `
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fe fe-users text-info me-2"></i>Sponsor Information
+                        <i class="fe fe-users text-primary me-2"></i>Sponsor Information
                     </h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -1299,7 +1299,7 @@
                         ${application.is_j1_sponsor ? `
                             <div class="col-md-12 mb-3">
                                 <small class="text-muted d-block">J-1 Sponsor</small>
-                                <span class="badge bg-info">${application.is_j1_sponsor}</span>
+                                <span class="badge bg-primary px-3 py-1 rounded-pill">${application.is_j1_sponsor}</span>
                             </div>
                         ` : ''}
                     </div>
@@ -1312,7 +1312,7 @@
                 <!-- Personal Information -->
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fe fe-user text-info me-2"></i>Personal Information
+                        <i class="fe fe-user text-primary me-2"></i>Personal Information
                     </h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -1342,7 +1342,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <small class="text-muted d-block">Interested in Property</small>
-                            <strong class="badge bg-info p-3">${application.property.name || 'N/A'}</strong>
+                            <strong class="badge bg-primary px-3 py-1 rounded-pill">${application.property.name || 'N/A'}</strong>
                         </div>
                     </div>
                 </div>
@@ -1350,7 +1350,7 @@
                 <!-- Travel Information -->
                 <div class="mb-4">
                     <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fe fe-calendar text-info me-2"></i>Travel Information
+                        <i class="fe fe-calendar text-primary me-2"></i>Travel Information
                     </h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -1372,7 +1372,7 @@
                 ${application.notes ? `
                     <div class="mb-4">
                         <h6 class="border-bottom pb-2 mb-3">
-                            <i class="fe fe-message-square text-info me-2"></i>Additional Notes
+                            <i class="fe fe-message-square text-primary me-2"></i>Additional Notes
                         </h6>
                         <div class="alert alert-light border">
                             ${application.notes}
@@ -1383,12 +1383,12 @@
                 <!-- Application Status -->
                 <div class="mb-3">
                     <h6 class="border-bottom pb-2 mb-3">
-                        <i class="fe fe-info text-info me-2"></i>Application Status
+                        <i class="fe fe-info text-primary me-2"></i>Application Status
                     </h6>
                     <div class="row">
                         <div class="col-md-4 mb-2">
                             <small class="text-muted d-block">Status</small>
-                            <span class="badge p-2 bg-${application.status === 'pending' ? 'warning' : application.status === 'approved' ? 'success' : 'danger'}">
+                            <span class="badge px-3 py-1 rounded-pill bg-${application.status === 'pending' ? 'warning' : application.status === 'approved' ? 'success' : 'danger'}">
                                 ${application.status.charAt(0).toUpperCase() + application.status.slice(1).replace('_', ' ')}
                             </span>
                         </div>
