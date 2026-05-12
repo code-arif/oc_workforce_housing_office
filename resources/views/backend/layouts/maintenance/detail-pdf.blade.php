@@ -30,6 +30,7 @@
         }
         .section {
             margin-bottom: 20px;
+            clear: both;
         }
         .section-title {
             background-color: #f8fafc;
@@ -37,8 +38,10 @@
             font-weight: bold;
             color: #1e3a5f;
             border-left: 4px solid #1e3a5f;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             font-size: 14px;
+            display: block;
+            width: 100%;
         }
         .info-grid {
             width: 100%;
@@ -78,24 +81,28 @@
             padding: 15px;
             border-radius: 4px;
             min-height: 100px;
+            clear: both;
         }
         .attachments-grid {
             width: 100%;
             margin-top: 10px;
+            display: block;
+            clear: both;
         }
         .attachment-item {
             display: inline-block;
-            width: 31%;
+            width: 30%;
             margin-right: 2%;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             text-align: center;
+            vertical-align: top;
+            page-break-inside: avoid;
         }
         .attachment-item img {
             width: 100%;
-            max-height: 180px;
-            object-fit: cover;
             border: 1px solid #ddd;
             border-radius: 4px;
+            margin-bottom: 5px;
         }
         .footer {
             margin-top: 30px;
