@@ -19,7 +19,7 @@
                     </div>
                     <div class="ms-auto pageheader-btn d-flex gap-2">
                         <div class="btn-group" id="bulkActionsGroup" style="display: none;">
-                            <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button type="button" class="btn btn-warning dropdown-toggle d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fe fe-check-square me-2"></i> Bulk Actions (<span id="selectedCount">0</span>)
                             </button>
                             <ul class="dropdown-menu">
@@ -48,8 +48,8 @@
                         <h4 class="card-title mb-0"><i class="fe fe-filter me-2"></i>Filter Report</h4>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-6 col-md-4 col-lg-2">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterReviewStatus" class="form-label">Review Status</label>
                                 <select class="form-select select3" id="filterReviewStatus">
                                     <option value="">All Statuses</option>
@@ -59,7 +59,7 @@
                                     <option value="disputed">Disputed</option>
                                 </select>
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterProperty" class="form-label">Property</label>
                                 <select class="form-select select3" id="filterProperty">
                                     <option value="">All Properties</option>
@@ -68,7 +68,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-xl">
                                 <label class="form-label">Tenant</label>
                                 <select class="form-select select3" id="filterTenant">
                                     <option value="">All Tenants</option>
@@ -77,7 +77,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterPaymentMethod" class="form-label">Payment Method</label>
                                 <select class="form-select select3" id="filterPaymentMethod">
                                     <option value="">All Methods</option>
@@ -89,19 +89,17 @@
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterDateFrom" class="form-label">From Date</label>
                                 <input type="text" class="form-control datepicker2" id="filterDateFrom" placeholder="Start date...">
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterDateTo" class="form-label">To Date</label>
                                 <input type="text" class="form-control datepicker2" id="filterDateTo" placeholder="End date...">
                             </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12 d-flex justify-content-end">
-                                <button type="button" class="btn btn-outline-secondary" id="resetFilters">
-                                    <i class="fe fe-refresh-cw me-1"></i> Reset Filters
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <button type="button" class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center" id="resetFilters">
+                                    <i class="fe fe-refresh-cw me-1"></i> Reset
                                 </button>
                             </div>
                         </div>
@@ -211,8 +209,10 @@
                             <table class="table table-bordered table-hover" id="collectionReportTable" style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 40px;">
-                                            <input type="checkbox" class="form-check-input" id="selectAll">
+                                        <th style="width: 40px;" class="text-center align-middle">
+                                            <div class="d-flex justify-content-center align-items-center">
+                                                <input type="checkbox" class="form-check-input m-0" id="selectAll">
+                                            </div>
                                         </th>
                                         <th>Payment #</th>
                                         <th>Property</th>
@@ -315,7 +315,7 @@
                     data: 'id', 
                     orderable: false,
                     render: function(data) {
-                        return `<input type="checkbox" class="form-check-input row-select" value="${data}">`;
+                        return `<div class="d-flex justify-content-center align-items-center"><input type="checkbox" class="form-check-input row-select m-0" value="${data}"></div>`;
                     }
                 },
                 { data: 'payment_number', name: 'payment_number' },

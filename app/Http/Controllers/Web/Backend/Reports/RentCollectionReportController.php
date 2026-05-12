@@ -136,10 +136,10 @@ class RentCollectionReportController extends Controller
                 ->addColumn('review_status_badge', function ($payment) {
                     $status = $payment->review_status ?? 'pending';
                     $badges = [
-                        'pending' => '<span class="badge bg-warning text-dark px-2 py-1"><i class="fe fe-clock me-1"></i>Pending Review</span>',
-                        'reviewed' => '<span class="badge bg-info px-2 py-1"><i class="fe fe-eye me-1"></i>Reviewed</span>',
-                        'confirmed' => '<span class="badge bg-success px-2 py-1"><i class="fe fe-check-circle me-1"></i>Confirmed</span>',
-                        'disputed' => '<span class="badge bg-danger px-2 py-1"><i class="fe fe-alert-triangle me-1"></i>Disputed</span>',
+                        'pending' => '<span class="badge bg-warning text-dark px-2 py-1 d-inline-flex align-items-center"><i class="fe fe-clock me-1" style="font-size: 12px;"></i>Pending Review</span>',
+                        'reviewed' => '<span class="badge bg-info px-2 py-1 d-inline-flex align-items-center"><i class="fe fe-eye me-1" style="font-size: 12px;"></i>Reviewed</span>',
+                        'confirmed' => '<span class="badge bg-success px-2 py-1 d-inline-flex align-items-center"><i class="fe fe-check-circle me-1" style="font-size: 12px;"></i>Confirmed</span>',
+                        'disputed' => '<span class="badge bg-danger px-2 py-1 d-inline-flex align-items-center"><i class="fe fe-alert-triangle me-1" style="font-size: 12px;"></i>Disputed</span>',
                     ];
                     return $badges[$status] ?? $badges['pending'];
                 })
