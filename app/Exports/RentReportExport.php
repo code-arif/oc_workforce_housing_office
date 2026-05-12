@@ -41,6 +41,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
                 '$' . $row['outstanding_amount'],
                 // $row['notes'],
                 $row['invoice_number'],
+                $row['status'],
             ];
         }
 
@@ -48,9 +49,9 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
         $rows[] = ['', '', '', '', '', '', ''];
 
         // Summary rows
-        $rows[] = ['', '', '', 'SUMMARY', '', '', ''];
-        $rows[] = ['', '', '', 'Total Invoices:', $this->summary['total_invoices'], '', ''];
-        $rows[] = ['', '', '', 'Total Outstanding:', '$' . number_format($this->summary['total_outstanding'], 2), '', ''];
+        $rows[] = ['', '', '', 'SUMMARY', '', '', '', ''];
+        $rows[] = ['', '', '', 'Total Invoices:', $this->summary['total_invoices'], '', '', ''];
+        $rows[] = ['', '', '', 'Total Outstanding:', '$' . number_format($this->summary['total_outstanding'], 2), '', '', ''];
 
         return $rows;
     }
@@ -65,6 +66,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
             'Outstanding Amount',
             // 'Note',
             'Invoice No.',
+            'Status',
         ];
     }
 
@@ -78,6 +80,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
             'E' => 18,
             // 'F' => 30,
             'G' => 15,
+            'H' => 15,
         ];
     }
 
@@ -119,7 +122,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
                 $summaryStartRow = $lastDataRow + 2;
 
                 // Add borders to data rows
-                $sheet->getStyle('A1:G' . $lastDataRow)->applyFromArray([
+                $sheet->getStyle('A1:H' . $lastDataRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -131,7 +134,7 @@ class RentReportExport implements FromArray, WithHeadings, WithStyles, WithColum
                 // Style alternating rows with light gray background
                 for ($i = 2; $i <= $lastDataRow; $i++) {
                     if ($i % 2 == 0) {
-                        $sheet->getStyle('A' . $i . ':G' . $i)->applyFromArray([
+                        $sheet->getStyle('A' . $i . ':H' . $i)->applyFromArray([
                             'fill' => [
                                 'fillType' => Fill::FILL_SOLID,
                                 'startColor' => ['rgb' => 'F8F9FA'],

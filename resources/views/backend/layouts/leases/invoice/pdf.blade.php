@@ -92,6 +92,10 @@
             background: rgba(244, 67, 54, 0.25);
             color: #ef9a9a;
         }
+        .status-voided {
+            background: rgba(109, 109, 109, 0.25);
+            color: #ffffff;
+        }
 
         /* Info Section */
         .info-section {
@@ -369,6 +373,8 @@
                         <span class="status-badge status-paid">✓ Paid</span>
                     @elseif($invoice->status == 'PARTIAL')
                         <span class="status-badge status-partial">Partially Paid</span>
+                    @elseif($invoice->status == 'CANCELLED')
+                        <span class="status-badge status-voided">! Void/Cancelled</span>
                     @elseif($invoice->isOverdue())
                         <span class="status-badge status-overdue">! Overdue</span>
                     @else
@@ -495,7 +501,7 @@
                     <td class="summary-label">Rent Amount</td>
                     <td class="summary-value">${{ number_format($invoice->amount, 2) }}</td>
                 </tr>
-                
+
 
 
                 <tr class="summary-total">
@@ -549,7 +555,7 @@
         <div class="payment-note">
             <div class="payment-note-title">Payment Information</div>
             <div class="payment-note-text">
-                Please ensure payment is made by the due date to avoid late fees. 
+                Please ensure payment is made by the due date to avoid late fees.
                 For questions regarding this invoice, please contact our office.
             </div>
         </div>

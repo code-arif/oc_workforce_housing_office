@@ -99,6 +99,31 @@ class RentCollectionReportController extends Controller
             }
 
             return DataTables::of($query)
+                ->filterColumn('invoice_number', function ($query, $keyword) {
+                    $query->whereHas('invoice', function ($q) use ($keyword) {
+                        $q->where('invoice_number', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('tenant_name', function ($query, $keyword) {
+                    $query->whereHas('tenant.profile', function ($q) use ($keyword) {
+                        $q->where(DB::raw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', COALESCE(last_name, ''))"), 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('property_name', function ($query, $keyword) {
+                    $query->whereHas('lease.property', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('reviewed_by', function ($query, $keyword) {
+                    $query->whereHas('reviewedBy', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('bed_label', function ($query, $keyword) {
+                    $query->whereHas('lease.assignments.bed', function ($q) use ($keyword) {
+                        $q->where('bed_label', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('property_name', function ($payment) {
                     return $payment->lease?->property?->name ?? 'N/A';
                 })

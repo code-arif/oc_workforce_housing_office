@@ -527,7 +527,7 @@ class InvoiceController extends Controller
             $bedId = $invoice->lease->assignments()->where('is_current', true)->value('bed_id');
             $now   = now();
 
-            // ── Mark invoice as CANCELLED with audit fields ────────────────────
+            // Mark invoice as CANCELLED with audit fields
             $invoice->update([
                 'status'            => 'CANCELLED',
                 'cancelled_reason'  => $request->reason,
@@ -535,7 +535,7 @@ class InvoiceController extends Controller
                 'cancelled_at'      => $now,
             ]);
 
-            // ── Audit transaction 1: void the outstanding balance ──────────────
+            // Audit transaction 1: void the outstanding balance
             Transaction::create([
                 'tenant_id'          => $invoice->tenant_id,
                 'bed_id'             => $bedId,
@@ -557,7 +557,7 @@ class InvoiceController extends Controller
                 ],
             ]);
 
-            // ── Audit transaction 2: note any already-collected payments ───────
+            // Audit transaction 2: note any already-collected payments
             if ((float) $invoice->paid_amount > 0) {
                 Transaction::create([
                     'tenant_id'          => $invoice->tenant_id,
@@ -597,7 +597,7 @@ class InvoiceController extends Controller
                 'paid_amount'  => $invoice->paid_amount,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to void invoice: ' . $e->getMessage());
             return response()->json([

@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Web\Backend\Reports;
 
-use App\Models\Lease;
-use App\Models\Tenant;
-use App\Models\Invoice;
-use App\Models\Property;
-use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Http\Controllers\Controller;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\RentReportExport;
+use App\Http\Controllers\Controller;
+use App\Models\Invoice;
+use App\Models\Lease;
+use App\Models\Property;
+use App\Models\Tenant;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
 class RentReportController extends Controller
@@ -88,6 +89,24 @@ class RentReportController extends Controller
             }
 
             return DataTables::of($query)
+                ->filterColumn('property_name', function ($query, $keyword) {
+                    $query->whereHas('lease.property', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('bed_label', function ($query, $keyword) {
+                    $query->whereHas('lease.assignments.bed', function ($q) use ($keyword) {
+                        $q->where('bed_label', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('tenant_name', function ($query, $keyword) {
+                    $query->whereHas('tenant.profile', function ($q) use ($keyword) {
+                        $q->where(DB::raw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', COALESCE(last_name, ''))"), 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('outstanding_amount', function ($query, $keyword) {
+                    $query->whereRaw('(total_amount - paid_amount) like ?', ["%{$keyword}%"]);
+                })
                 ->addColumn('property_name', function ($invoice) {
                     return $invoice->lease?->property?->name ?? 'N/A';
                 })
@@ -115,6 +134,20 @@ class RentReportController extends Controller
                 ->addColumn('invoice_number', function ($invoice) {
                     return $invoice->invoice_number ?? 'N/A';
                 })
+                ->addColumn('status', function ($invoice) {
+                    $status = $invoice->status;
+                    $badgeClass = 'bg-secondary';
+
+                    if ($status === 'PAID') $badgeClass = 'bg-success';
+                    elseif ($status === 'UNPAID') $badgeClass = 'bg-warning text-dark';
+                    elseif ($status === 'PARTIAL') $badgeClass = 'bg-info text-dark';
+                    elseif ($status === 'OVERDUE') $badgeClass = 'bg-danger';
+                    elseif ($status === 'CANCELLED') $badgeClass = 'bg-dark';
+
+                    $displayStatus = $status === 'CANCELLED' ? 'VOIDED' : $status;
+                    return '<span class="badge ' . $badgeClass . '">' . $displayStatus . '</span>';
+                })
+                ->rawColumns(['status'])
                 ->make(true);
         }
 
@@ -127,7 +160,7 @@ class RentReportController extends Controller
     public function exportPdf(Request $request)
     {
         $data = $this->getReportData($request);
-        
+
         $pdf = Pdf::loadView('backend.layouts.reports.rent-report-pdf', [
             'reportData' => $data['reportData'],
             'summary' => $data['summary'],
@@ -136,7 +169,7 @@ class RentReportController extends Controller
         ]);
 
         $pdf->setPaper('A4', 'landscape');
-        
+
         $filename = 'rent-report-' . now()->format('Y-m-d-His') . '.pdf';
         return $pdf->stream($filename);
     }
@@ -147,9 +180,9 @@ class RentReportController extends Controller
     public function exportExcel(Request $request)
     {
         $data = $this->getReportData($request);
-        
+
         $filename = 'rent-report-' . now()->format('Y-m-d-His') . '.xlsx';
-        
+
         return Excel::download(
             new RentReportExport(
                 $data['reportData'],
@@ -197,8 +230,8 @@ class RentReportController extends Controller
         if ($request->filled('tenant_id')) {
             $query->where('tenant_id', $request->tenant_id);
             $tenant = Tenant::with('profile')->find($request->tenant_id);
-            $filters['tenant'] = $tenant?->profile ? 
-                trim($tenant->profile->first_name . ' ' . $tenant->profile->last_name) : 
+            $filters['tenant'] = $tenant?->profile ?
+                trim($tenant->profile->first_name . ' ' . $tenant->profile->last_name) :
                 'Selected Tenant';
         }
 
@@ -227,7 +260,7 @@ class RentReportController extends Controller
 
         foreach ($invoices as $invoice) {
             $profile = $invoice->tenant?->profile;
-            $tenantName = $profile 
+            $tenantName = $profile
                 ? trim($profile->first_name . ' ' . ($profile->middle_name ?? '') . ' ' . ($profile->last_name ?? ''))
                 : 'N/A';
 
@@ -245,6 +278,7 @@ class RentReportController extends Controller
                 'outstanding_amount' => number_format($outstanding, 2),
                 'notes' => $invoice->notes ?? '',
                 'invoice_number' => $invoice->invoice_number ?? 'N/A',
+                'status' => $invoice->status === 'CANCELLED' ? 'VOIDED' : $invoice->status,
             ];
         }
 

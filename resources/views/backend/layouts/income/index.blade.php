@@ -115,7 +115,7 @@
                                             <option value="PARTIAL">Partial</option>
                                             <option value="PAID">Paid</option>
                                             <option value="OVERDUE">Overdue</option>
-                                            <option value="CANCELLED">Cancelled</option>
+                                            <option value="CANCELLED">Voided</option>
                                         </select>
                                     </div>
                                     <div class="col-md-1">

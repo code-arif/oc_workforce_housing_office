@@ -184,6 +184,7 @@
                 <th class="text-right">Outstanding Amount</th>
                 {{-- <th>Note</th> --}}
                 <th>Invoice No.</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
@@ -196,6 +197,7 @@
                 <td class="text-right">${{ $row['outstanding_amount'] }}</td>
                 {{-- <td>{{ $row['notes'] }}</td> --}}
                 <td>{{ $row['invoice_number'] }}</td>
+                <td>{{ $row['status'] }}</td>
             </tr>
             @empty
             <tr>

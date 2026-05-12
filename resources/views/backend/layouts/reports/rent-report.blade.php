@@ -19,12 +19,15 @@
                     </div>
                     <div class="ms-auto pageheader-btn">
                         <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"
+                                aria-expanded="false">
                                 <i class="fe fe-download me-2"></i> Export Report
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fe fe-file-text me-2 text-danger"></i> Export as PDF</a></li>
-                                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fe fe-file me-2 text-success"></i> Export as Excel</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i
+                                            class="fe fe-file-text me-2 text-danger"></i> Export as PDF</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i
+                                            class="fe fe-file me-2 text-success"></i> Export as Excel</a></li>
                             </ul>
                         </div>
                     </div>
@@ -41,7 +44,7 @@
                                 <label for="filterProperty" class="form-label">Property</label>
                                 <select class="form-select select3" id="filterProperty" name="property_id">
                                     <option value="">All Properties</option>
-                                    @foreach($properties as $property)
+                                    @foreach ($properties as $property)
                                         <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
@@ -57,17 +60,20 @@
                                 <select class="form-select select3" id="tenantFilter">
                                     <option value="">Select Tenant</option>
                                     @foreach ($tenants as $tenant)
-                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}</option>
+                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }}
+                                            {{ $tenant->profile->last_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-2">
                                 <label for="filterDateFrom" class="form-label">Due Date From</label>
-                                <input type="text" class="form-control datepicker2" id="filterDateFrom" name="date_from" placeholder="Search by due date...">
+                                <input type="text" class="form-control datepicker2" id="filterDateFrom" name="date_from"
+                                    placeholder="Search by due date...">
                             </div>
                             <div class="col-md-2">
                                 <label for="filterDateTo" class="form-label">Due Date To</label>
-                                <input type="text" class="form-control datepicker2" id="filterDateTo" name="date_to" placeholder="Search by due date...">
+                                <input type="text" class="form-control datepicker2" id="filterDateTo" name="date_to"
+                                    placeholder="Search by due date...">
                             </div>
                             <div class="col-md-2 d-flex align-items-end gap-2">
                                 <button type="button" class="btn btn-outline-secondary" id="resetFilters">
@@ -133,6 +139,7 @@
                                         <th>Due Date</th>
                                         <th class="text-end">Outstanding Amount ($)</th>
                                         <th>Invoice No.</th>
+                                        <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -141,7 +148,7 @@
                                     <tr>
                                         <th colspan="4" class="text-end">Total Outstanding:</th>
                                         <th class="text-end" id="footerTotalOutstanding">$0.00</th>
-                                        <th colspan="1"></th>
+                                        <th colspan="2"></th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -155,189 +162,227 @@
 @endsection
 
 @push('scripts')
-<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
-<script>
-    $(document).ready(function() {
-        // Initialize Select2
-        $('.select3').select2({
-            placeholder: 'Select Option',
-            allowClear: true
-        });
-
-        // Initialize Datepicker
-        $('#filterDateFrom, #filterDateTo').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-
-        // Track totals
-        let totalOutstanding = 0;
-
-        // Initialize DataTable
-        var table = $('#rentReportTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "{{ route('reports.rent.data') }}",
-                data: function(d) {
-                    d.property_id = $('#filterProperty').val();
-                    d.bed_id = $('#bedFilter').val();
-                    d.tenant_id = $('#tenantFilter').val();
-                    d.date_from = $('#filterDateFrom').val();
-                    d.date_to = $('#filterDateTo').val();
-                }
-            },
-            columns: [
-                { data: 'property_name', name: 'property_name' },
-                { data: 'bed_label', name: 'bed_label' },
-                { data: 'tenant_name', name: 'tenant_name' },
-                { data: 'due_date', name: 'due_date' },
-                { data: 'outstanding_amount', name: 'outstanding_amount', className: 'text-end' },
-                { data: 'invoice_number', name: 'invoice_number' }
-            ],
-            order: [[3, 'asc']],
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-            drawCallback: function(settings) {
-                // Calculate totals from current page data
-                calculateTotals();
-                updateLastUpdated();
-            }
-        });
-
-        function calculateTotals() {
-            totalOutstanding = 0;
-
-            table.rows({ search: 'applied' }).every(function() {
-                var data = this.data();
-                totalOutstanding += parseFloat(data.outstanding_amount.replace(/,/g, '')) || 0;
+    <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2
+            $('.select3').select2({
+                placeholder: 'Select Option',
+                allowClear: true
             });
 
-            // Update footer
-            $('#footerTotalOutstanding').text('$' + numberFormat(totalOutstanding));
+            // Initialize Datepicker
+            $('#filterDateFrom, #filterDateTo').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true
+            });
 
-            // Update summary cards
-            $('#summaryTotalInvoices').text(table.rows({ search: 'applied' }).count());
-            $('#summaryTotalOutstanding').text('$' + numberFormat(totalOutstanding));
-        }
+            // Track totals
+            let totalOutstanding = 0;
 
-        function numberFormat(num) {
-            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function updateLastUpdated() {
-            const now = new Date();
-            $('#lastUpdated').text('Last updated: ' + now.toLocaleTimeString());
-        }
-
-        function getFilterParams() {
-            let params = new URLSearchParams();
-            if ($('#filterProperty').val()) params.append('property_id', $('#filterProperty').val());
-            if ($('#bedFilter').val()) params.append('bed_id', $('#bedFilter').val());
-            if ($('#tenantFilter').val()) params.append('tenant_id', $('#tenantFilter').val());
-            if ($('#filterDateFrom').val()) params.append('date_from', $('#filterDateFrom').val());
-            if ($('#filterDateTo').val()) params.append('date_to', $('#filterDateTo').val());
-            return params.toString();
-        }
-
-        // Apply Filters on change
-        $('#filterProperty, #bedFilter, #tenantFilter, #filterDateFrom, #filterDateTo').on('change', function() {
-            table.ajax.reload();
-        });
-        $('#filterDateFrom, #filterDateTo').on('keyup', function() {
-            table.ajax.reload();
-        });
-
-        // Reset Filters
-        $('#resetFilters').on('click', function() {
-            $('#filterProperty').val('').trigger('change');
-            $('#bedFilter').val('').trigger('change');
-            $('#tenantFilter').val('').trigger('change');
-            $('#filterDateFrom').val('');
-            $('#filterDateTo').val('');
-
-            table.ajax.reload();
-        });
-
-        $('#filterProperty').change(function() {
-            const propertyId = $(this).val();
-            $('#bedFilter').empty().append('<option value="">All Beds</option>');
-            if (propertyId) {
-                $.ajax({
-                    url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
-                    type: 'GET',
-                    success: function(response) {
-                        console.log(response);
-                        
-                        response.data.forEach(function(bed) {
-                            $('#bedFilter').append(
-                                `<option value="${bed.id}">${bed.bed_label}</option>`
-                            );
-                        });
-                        $('#bedFilter').val(null).trigger('change');
-                    },
-                    error: function() {
-                        toastr.error('Failed to fetch beds for the selected property.');
+            // Initialize DataTable
+            var table = $('#rentReportTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('reports.rent.data') }}",
+                    data: function(d) {
+                        d.property_id = $('#filterProperty').val();
+                        d.bed_id = $('#bedFilter').val();
+                        d.tenant_id = $('#tenantFilter').val();
+                        d.date_from = $('#filterDateFrom').val();
+                        d.date_to = $('#filterDateTo').val();
                     }
+                },
+                columns: [{
+                        data: 'property_name',
+                        name: 'property_name'
+                    },
+                    {
+                        data: 'bed_label',
+                        name: 'bed_label'
+                    },
+                    {
+                        data: 'tenant_name',
+                        name: 'tenant_name'
+                    },
+                    {
+                        data: 'due_date',
+                        name: 'due_date'
+                    },
+                    {
+                        data: 'outstanding_amount',
+                        name: 'outstanding_amount',
+                        className: 'text-end'
+                    },
+                    {
+                        data: 'invoice_number',
+                        name: 'invoice_number'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                order: [
+                    [3, 'asc']
+                ],
+                pageLength: 25,
+                lengthMenu: [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
+                drawCallback: function(settings) {
+                    // Calculate totals from current page data
+                    calculateTotals();
+                    updateLastUpdated();
+                }
+            });
+
+            function calculateTotals() {
+                totalOutstanding = 0;
+
+                table.rows({
+                    search: 'applied'
+                }).every(function() {
+                    var data = this.data();
+                    totalOutstanding += parseFloat(data.outstanding_amount.replace(/,/g, '')) || 0;
+                });
+
+                // Update footer
+                $('#footerTotalOutstanding').text('$' + numberFormat(totalOutstanding));
+
+                // Update summary cards
+                $('#summaryTotalInvoices').text(table.rows({
+                    search: 'applied'
+                }).count());
+                $('#summaryTotalOutstanding').text('$' + numberFormat(totalOutstanding));
+            }
+
+            function numberFormat(num) {
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
                 });
             }
-        });
 
-        // Export PDF
-        $('#exportPdfBtn').on('click', function(e) {
-            e.preventDefault();
-            const params = getFilterParams();
-            const url = "{{ route('reports.rent.export.pdf') }}" + (params ? '?' + params : '');
-            window.location.href = url;
-        });
-
-        // Export Excel
-        $('#exportExcelBtn').on('click', function(e) {
-            e.preventDefault();
-            const params = getFilterParams();
-            const url = "{{ route('reports.rent.export.excel') }}" + (params ? '?' + params : '');
-            window.location.href = url;
-        });
-
-        // Enter key trigger for date inputs
-        $('#filterDateFrom, #filterDateTo').on('keypress', function(e) {
-            if (e.which === 13) {
-                table.ajax.reload();
+            function updateLastUpdated() {
+                const now = new Date();
+                $('#lastUpdated').text('Last updated: ' + now.toLocaleTimeString());
             }
+
+            function getFilterParams() {
+                let params = new URLSearchParams();
+                if ($('#filterProperty').val()) params.append('property_id', $('#filterProperty').val());
+                if ($('#bedFilter').val()) params.append('bed_id', $('#bedFilter').val());
+                if ($('#tenantFilter').val()) params.append('tenant_id', $('#tenantFilter').val());
+                if ($('#filterDateFrom').val()) params.append('date_from', $('#filterDateFrom').val());
+                if ($('#filterDateTo').val()) params.append('date_to', $('#filterDateTo').val());
+                return params.toString();
+            }
+
+            // Apply Filters on change
+            $('#filterProperty, #bedFilter, #tenantFilter, #filterDateFrom, #filterDateTo').on('change',
+        function() {
+                table.ajax.reload();
+            });
+            $('#filterDateFrom, #filterDateTo').on('keyup', function() {
+                table.ajax.reload();
+            });
+
+            // Reset Filters
+            $('#resetFilters').on('click', function() {
+                $('#filterProperty').val('').trigger('change');
+                $('#bedFilter').val('').trigger('change');
+                $('#tenantFilter').val('').trigger('change');
+                $('#filterDateFrom').val('');
+                $('#filterDateTo').val('');
+
+                table.ajax.reload();
+            });
+
+            $('#filterProperty').change(function() {
+                const propertyId = $(this).val();
+                $('#bedFilter').empty().append('<option value="">All Beds</option>');
+                if (propertyId) {
+                    $.ajax({
+                        url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
+                        type: 'GET',
+                        success: function(response) {
+                            console.log(response);
+
+                            response.data.forEach(function(bed) {
+                                $('#bedFilter').append(
+                                    `<option value="${bed.id}">${bed.bed_label}</option>`
+                                );
+                            });
+                            $('#bedFilter').val(null).trigger('change');
+                        },
+                        error: function() {
+                            toastr.error('Failed to fetch beds for the selected property.');
+                        }
+                    });
+                }
+            });
+
+            // Export PDF
+            $('#exportPdfBtn').on('click', function(e) {
+                e.preventDefault();
+                const params = getFilterParams();
+                const url = "{{ route('reports.rent.export.pdf') }}" + (params ? '?' + params : '');
+                window.location.href = url;
+            });
+
+            // Export Excel
+            $('#exportExcelBtn').on('click', function(e) {
+                e.preventDefault();
+                const params = getFilterParams();
+                const url = "{{ route('reports.rent.export.excel') }}" + (params ? '?' + params : '');
+                window.location.href = url;
+            });
+
+            // Enter key trigger for date inputs
+            $('#filterDateFrom, #filterDateTo').on('keypress', function(e) {
+                if (e.which === 13) {
+                    table.ajax.reload();
+                }
+            });
         });
-    });
-</script>
+    </script>
 @endpush
 
 @push('styles')
-<style>
-    .select2-container {
-        width: 100% !important;
-    }
-    .icon-service {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-    }
-    
-    #rentReportTable tfoot th {
-        font-weight: 600;
-    }
-    
-    .card-title i {
-        opacity: 0.7;
-    }
-    
-    .filter-card .form-label {
-        font-weight: 500;
-        font-size: 13px;
-        color: #6c757d;
-    }
-</style>
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .icon-service {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        #rentReportTable tfoot th {
+            font-weight: 600;
+        }
+
+        .card-title i {
+            opacity: 0.7;
+        }
+
+        .filter-card .form-label {
+            font-weight: 500;
+            font-size: 13px;
+            color: #6c757d;
+        }
+    </style>
 @endpush

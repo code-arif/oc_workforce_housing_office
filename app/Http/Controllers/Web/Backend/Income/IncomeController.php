@@ -204,7 +204,7 @@ class IncomeController extends Controller
                     }
 
                     $color = $statusColors[$status] ?? 'secondary';
-                    $label = ucfirst(strtolower($status));
+                    $label = $status === 'CANCELLED' ? 'Voided' : ucfirst(strtolower($status));
 
                     return '<span class="badge p-3 bg-' . $color . '">' . $label . '</span>';
                 })
