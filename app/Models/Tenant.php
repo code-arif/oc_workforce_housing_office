@@ -7,10 +7,11 @@ use App\Models\Lease\LeaseDocument;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Traits\LoggableActivity;
 
 class Tenant extends Authenticatable implements JWTSubject
 {
-    use HasFactory;
+    use HasFactory, LoggableActivity;
 
     protected $fillable = [
         'application_id',

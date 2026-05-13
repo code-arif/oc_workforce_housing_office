@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Models\Lease\LeaseDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LoggableActivity;
 
 class Lease extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LoggableActivity;
     protected $table = 'leases';
 
     protected $fillable = [

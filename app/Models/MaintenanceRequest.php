@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\LoggableActivity;
 
 class MaintenanceRequest extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, LoggableActivity;
 
     protected $fillable = [
         'tenant_id',

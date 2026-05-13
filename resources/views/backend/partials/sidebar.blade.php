@@ -48,71 +48,71 @@
 
                 {{-- Applications --}}
                 @can('applications.list')
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
-                        href="{{ route('tenants.applications.index') }}">
-                        <i class="fa-solid fa-clipboard-list"></i>
-                        <span class="side-menu__label">Applications</span>
-                    </a>
-                </li>
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                            href="{{ route('tenants.applications.index') }}">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <span class="side-menu__label">Applications</span>
+                        </a>
+                    </li>
                 @endcan
 
                 {{-- Tenants --}}
                 @can('tenant.list')
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
-                        href="{{ route('tenants.index') }}">
-                        <i class="fa fa-users"></i>
-                        <span class="side-menu__label">Tenants</span>
-                    </a>
-                </li>
-                @endcan               
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('tenants.index') ? 'has-link' : '' }}"
+                            href="{{ route('tenants.index') }}">
+                            <i class="fa fa-users"></i>
+                            <span class="side-menu__label">Tenants</span>
+                        </a>
+                    </li>
+                @endcan
 
                 {{-- Leases and files --}}
                 @canany(['lease.list', 'lease.template.list', 'seasons.list'])
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('seasons.*','leases.*','lease-templates.*') ? 'has-link' : '' }}"
-                    data-bs-toggle="slide" href="#">
-                        <i class="fa-solid fa-file"></i>
-                        <span class="side-menu__label">Manage Leases & Files</span>
-                        <i class="angle fa fa-angle-right ms-auto"></i>
-                    </a>
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('seasons.*', 'leases.*', 'lease-templates.*') ? 'has-link' : '' }}"
+                            data-bs-toggle="slide" href="#">
+                            <i class="fa-solid fa-file"></i>
+                            <span class="side-menu__label">Manage Leases & Files</span>
+                            <i class="angle fa fa-angle-right ms-auto"></i>
+                        </a>
 
-                    <ul class="slide-menu">
-                        @can('seasons.list')
-                            <li>
-                                <a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a>
-                            </li>
-                        @endcan
+                        <ul class="slide-menu">
+                            @can('seasons.list')
+                                <li>
+                                    <a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a>
+                                </li>
+                            @endcan
 
-                        @can('lease.template.list')
-                            <li>
-                                <a href="{{ route('lease-templates.index') }}" class="slide-item">Lease Templates</a>
-                            </li>
-                        @endcan
+                            @can('lease.template.list')
+                                <li>
+                                    <a href="{{ route('lease-templates.index') }}" class="slide-item">Lease Templates</a>
+                                </li>
+                            @endcan
 
-                        @can('lease.list')
-                            <li>
-                                <a href="{{ route('leases.index') }}" class="slide-item">Leases</a>
-                            </li>
-                        @endcan
-                    </ul>
-                </li>
+                            @can('lease.list')
+                                <li>
+                                    <a href="{{ route('leases.index') }}" class="slide-item">Leases</a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </li>
                 @endcanany
 
 
                 {{-- Income --}}
                 @can('income')
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('invoices.index') ? 'has-link' : '' }}"
-                        href="{{ route('invoices.index') }}">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <span class="side-menu__label">Income</span>
-                    </a>
-                </li>
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('invoices.index') ? 'has-link' : '' }}"
+                            href="{{ route('invoices.index') }}">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span class="side-menu__label">Income</span>
+                        </a>
+                    </li>
                 @endcan
 
-                
+
 
                 @can('cms.view')
                     {{-- Frontend --}}
@@ -131,8 +131,8 @@
                             </li>
                             {{-- Maintanence --}}
                             <li>
-                                <a class="slide-item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"href="{{ route('maintanance.index') }}">
-                                Maintanence
+                                <a
+                                    class="slide-item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"href="{{ route('maintanance.index') }}"> Maintanence
                                 </a>
                             </li>
                             {{-- Items & FAQ --}}
@@ -148,28 +148,30 @@
 
                 {{-- Reports --}}
                 @can('reports.list')
-                <li class="slide">
-                    <a class="side-menu__item" data-bs-toggle="slide" href="#">
-                        <i class="fa-solid fa-explosion"></i>
-                        <span class="side-menu__label">Reports</span>
-                        <i class="angle fa fa-angle-right ms-auto"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('reports.property.index') }}"
-                                class="slide-item {{ request()->routeIs('reports.property.*') ? 'active' : '' }}">Property
-                                Reports</a></li>
-                        <li><a href="{{ route('reports.rent.index') }}"
-                                class="slide-item {{ request()->routeIs('reports.rent.*') ? 'active' : '' }}">Rent
-                                Reports</a></li>
-                        <li><a href="{{ route('reports.rent-collection.index') }}"
-                                class="slide-item {{ request()->routeIs('reports.rent-collection.*') ? 'active' : '' }}">Rent
-                                Collection</a></li>
-                        <li><a href="{{ route('reports.tenant.index') }}" class="slide-item">Tenant Reports</a></li>
-                        {{-- <li><a href="#" class="slide-item">Lease Reports</a></li> --}}
-                    </ul>
-                </li>
+                    <li class="slide">
+                        <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                            <i class="fa-solid fa-explosion"></i>
+                            <span class="side-menu__label">Reports</span>
+                            <i class="angle fa fa-angle-right ms-auto"></i>
+                        </a>
+                        <ul class="slide-menu">
+                            <li><a href="{{ route('reports.property.index') }}"
+                                    class="slide-item {{ request()->routeIs('reports.property.*') ? 'active' : '' }}">Property
+                                    Reports</a></li>
+                            <li><a href="{{ route('reports.rent.index') }}"
+                                    class="slide-item {{ request()->routeIs('reports.rent.*') ? 'active' : '' }}">Rent
+                                    Reports</a></li>
+                            <li><a href="{{ route('reports.rent-collection.index') }}"
+                                    class="slide-item {{ request()->routeIs('reports.rent-collection.*') ? 'active' : '' }}">Rent
+                                    Collection</a></li>
+                            <li><a href="{{ route('reports.tenant.index') }}" class="slide-item">Tenant Reports</a></li>
+                            {{-- <li><a href="#" class="slide-item">Lease Reports</a></li> --}}
+                        </ul>
+                    </li>
                 @endcan
-                @canany(['user-management.users.list', 'user-management.roles.list', 'user-management.permissions.list'])
+
+                @canany(['user-management.users.list', 'user-management.roles.list',
+                    'user-management.permissions.list'])
                     {{-- User Management --}}
                     <li class="slide">
                         <a class="side-menu__item" data-bs-toggle="slide" href="#">
@@ -191,27 +193,49 @@
                         </ul>
                     </li>
                 @endcan
+
+                {{-- Activity logs --}}
+                <li class="slide">
+                    <a class="side-menu__item {{ request()->routeIs('system-monitor.activity-logs.*') ? 'has-link' : '' }}"
+                        href="{{ route('activity-logs.index') }}">
+                        <i class="fa-solid fa-desktop"></i>
+                        <span class="side-menu__label">Activity Logs</span>
+                    </a>
+                </li>
+
                 {{-- Settings --}}
                 @can('settings')
-                    
-                <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('setting.*', 'social.profile.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
-                        <i class="fa fa-cog"></i>
-                        <span class="side-menu__label">Settings</span>
-                        <i class="angle fa fa-angle-right ms-auto"></i>
-                    </a>
-                    <ul class="slide-menu">
-                        <li><a href="{{ route('setting.general.index') }}" class="slide-item {{ request()->routeIs('setting.general.*') ? 'active' : '' }}">General Settings</a>
-                        </li>
-                        <li><a href="{{ route('setting.mail.index') }}" class="slide-item {{ request()->routeIs('setting.mail.*') ? 'active' : '' }}">Mail Settings</a>
-                        </li>
-                        <li><a href="{{ route('setting.profile.index') }}" class="slide-item {{ request()->routeIs('setting.profile.*') ? 'active' : '' }}">Profile Settings</a>
-                        </li>
-                        <li><a href="{{ route('social.profile.index') }}" class="slide-item {{ request()->routeIs('social.profile.*') ? 'active' : '' }}">Social Profile</a></li>
-                        <li><a href="{{ route('setting.mail-templates.index') }}" class="slide-item {{ request()->routeIs('setting.mail-templates.*') ? 'active' : '' }}">Mail Templates</a></li>
-                        <li><a href="{{ route('system-monitor.index') }}" class="slide-item {{ request()->routeIs('system-monitor.*') ? 'active' : '' }}">System Monitor</a></li>
-                    </ul>
-                </li>
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('setting.*', 'social.profile.*') ? 'has-link' : '' }}"
+                            data-bs-toggle="slide" href="#">
+                            <i class="fa fa-cog"></i>
+                            <span class="side-menu__label">Settings</span>
+                            <i class="angle fa fa-angle-right ms-auto"></i>
+                        </a>
+                        <ul class="slide-menu">
+                            <li><a href="{{ route('setting.general.index') }}"
+                                    class="slide-item {{ request()->routeIs('setting.general.*') ? 'active' : '' }}">General
+                                    Settings</a>
+                            </li>
+                            <li><a href="{{ route('setting.mail.index') }}"
+                                    class="slide-item {{ request()->routeIs('setting.mail.*') ? 'active' : '' }}">Mail
+                                    Settings</a>
+                            </li>
+                            <li><a href="{{ route('setting.profile.index') }}"
+                                    class="slide-item {{ request()->routeIs('setting.profile.*') ? 'active' : '' }}">Profile
+                                    Settings</a>
+                            </li>
+                            <li><a href="{{ route('social.profile.index') }}"
+                                    class="slide-item {{ request()->routeIs('social.profile.*') ? 'active' : '' }}">Social
+                                    Profile</a></li>
+                            <li><a href="{{ route('setting.mail-templates.index') }}"
+                                    class="slide-item {{ request()->routeIs('setting.mail-templates.*') ? 'active' : '' }}">Mail
+                                    Templates</a></li>
+                            <li><a href="{{ route('system-monitor.index') }}"
+                                    class="slide-item {{ request()->routeIs('system-monitor.*') ? 'active' : '' }}">System
+                                    Monitor</a></li>
+                        </ul>
+                    </li>
                 @endcan
             </ul>
 

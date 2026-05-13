@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\LoggableActivity;
 
 class Payment extends Model
 {
+    use LoggableActivity;
     protected $fillable = [
         'invoice_id', 'tenant_id', 'lease_id', 'bed_id',
         'payment_number', 'amount', 'payment_date', 'payment_method',

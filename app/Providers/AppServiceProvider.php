@@ -6,6 +6,11 @@ use App\Models\Setting;
 use App\Services\GoogleCalendarService;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +29,34 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(Login::class, function ($event) {
+            ActivityLog::create([
+                'user_id' => $event->user->id,
+                'role' => $event->user->getRoleNames()->first() ?? 'User',
+                'action' => 'Login',
+                'module' => 'Auth',
+                'route' => Request::fullUrl(),
+                'method' => Request::method(),
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+            ]);
+        });
+
+        Event::listen(Logout::class, function ($event) {
+            if ($event->user) {
+                ActivityLog::create([
+                    'user_id' => $event->user->id,
+                    'role' => $event->user->getRoleNames()->first() ?? 'User',
+                    'action' => 'Logout',
+                    'module' => 'Auth',
+                    'route' => Request::fullUrl(),
+                    'method' => Request::method(),
+                    'ip_address' => Request::ip(),
+                    'user_agent' => Request::userAgent(),
+                ]);
+            }
+        });
+
         try {
             if (!Schema::hasTable('settings')) {
                 return;

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\Backend\ActivityLogController;
 use App\Http\Controllers\Web\Backend\AmenityController;
 use App\Http\Controllers\Web\Backend\BedController;
 use App\Http\Controllers\Web\Backend\CMS\About\AboutPageController;
@@ -678,4 +679,15 @@ Route::prefix('system-monitor')->name('system-monitor.')->group(function () {
     // Route::get('/api/database', [SystemMonitorController::class, 'getDatabaseInfo'])->name('api.database');
     // Route::get('/api/stats', [SystemMonitorController::class, 'getApplicationStats'])->name('api.stats');
     // Route::get('/api/activity', [SystemMonitorController::class, 'getUserActivity'])->name('api.activity');
+});
+
+
+// Activity Logs Routes
+Route::prefix('activity-logs')->name('activity-logs.')->group(function () {
+    Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+    Route::get('/data', [ActivityLogController::class, 'getData'])->name('data');
+    Route::get('/show/{id}', [ActivityLogController::class, 'show'])->name('show');
+    Route::get('/export', [ActivityLogController::class, 'export'])->name('export');
+    Route::delete('/destroy/{id}', [ActivityLogController::class, 'destroy'])->name('destroy');
+    Route::post('/mass-delete', [ActivityLogController::class, 'massDelete'])->name('mass-delete');
 });
