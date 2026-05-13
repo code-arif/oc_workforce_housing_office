@@ -59,7 +59,8 @@ class RentReportController extends Controller
                 ->whereHas('lease', function ($q) {
                     $q->where('status', 'ACTIVE');
                 })
-                ->whereIn('invoices.status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
+                ->whereIn('invoices.status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
+                ->orderBy('id', 'desc');
 
             // Property filter
             if ($request->filled('property_id')) {
@@ -146,6 +147,9 @@ class RentReportController extends Controller
 
                     $displayStatus = $status === 'CANCELLED' ? 'VOIDED' : $status;
                     return '<span class="badge ' . $badgeClass . '">' . $displayStatus . '</span>';
+                })
+                ->addColumn('notes', function ($invoice) {
+                    return $invoice->notes ?? '';
                 })
                 ->rawColumns(['status'])
                 ->make(true);
@@ -253,7 +257,7 @@ class RentReportController extends Controller
             $filters['date_to'] = date('M d, Y', strtotime($request->date_to));
         }
 
-        $invoices = $query->orderBy('due_date', 'asc')->get();
+        $invoices = $query->orderBy('id', 'desc')->get();
 
         $reportData = [];
         $totalOutstanding = 0;

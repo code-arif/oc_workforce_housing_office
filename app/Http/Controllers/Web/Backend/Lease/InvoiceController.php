@@ -345,6 +345,7 @@ class InvoiceController extends Controller
                     'balance_due' => max(0, $newDepositBalance),
                     'status' => $depositStatus,
                     'paid_at' => $depositStatus === 'PAID' ? now() : null,
+                    'notes'=> $request->note ?? 'Deposit payment',
                 ]);
 
                 // Mark deposit as collected if fully paid
@@ -416,6 +417,7 @@ class InvoiceController extends Controller
                     'balance_due' => $newRentBalance,
                     'status' => $rentStatus,
                     'paid_at' => $paidAt,
+                    'notes' => $request->note,
                 ]);
 
                 // Create Transaction for Rent Payment
@@ -466,7 +468,7 @@ class InvoiceController extends Controller
                 'invoice' => $invoice->fresh(),
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to store payment: ' . $e->getMessage());
             Log::error($e->getTraceAsString());

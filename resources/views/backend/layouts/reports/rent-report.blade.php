@@ -140,6 +140,7 @@
                                         <th class="text-end">Outstanding Amount ($)</th>
                                         <th>Invoice No.</th>
                                         <th>Status</th>
+                                        <th>Note</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -148,7 +149,7 @@
                                     <tr>
                                         <th colspan="4" class="text-end">Total Outstanding:</th>
                                         <th class="text-end" id="footerTotalOutstanding">$0.00</th>
-                                        <th colspan="2"></th>
+                                        <th colspan="3"></th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -225,10 +226,11 @@
                         name: 'status',
                         orderable: false,
                         searchable: false
+                    },
+                    {
+                        data: 'notes',
+                        name: 'notes'
                     }
-                ],
-                order: [
-                    [3, 'asc']
                 ],
                 pageLength: 25,
                 lengthMenu: [
@@ -287,9 +289,9 @@
 
             // Apply Filters on change
             $('#filterProperty, #bedFilter, #tenantFilter, #filterDateFrom, #filterDateTo').on('change',
-        function() {
-                table.ajax.reload();
-            });
+                function() {
+                    table.ajax.reload();
+                });
             $('#filterDateFrom, #filterDateTo').on('keyup', function() {
                 table.ajax.reload();
             });
