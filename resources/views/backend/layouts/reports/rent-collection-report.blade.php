@@ -19,89 +19,35 @@
                     </div>
                     <div class="ms-auto pageheader-btn d-flex gap-2">
                         <div class="btn-group" id="bulkActionsGroup" style="display: none;">
-                            <button type="button" class="btn btn-warning dropdown-toggle d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button type="button" class="btn btn-warning dropdown-toggle d-inline-flex align-items-center"
+                                data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fe fe-check-square me-2"></i> Bulk Actions (<span id="selectedCount">0</span>)
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item bulk-action" href="#" data-status="reviewed"><i class="fe fe-eye me-2 text-info"></i> Mark as Reviewed</a></li>
-                                <li><a class="dropdown-item bulk-action" href="#" data-status="confirmed"><i class="fe fe-check-circle me-2 text-success"></i> Confirm All</a></li>
-                                <li><a class="dropdown-item bulk-action" href="#" data-status="disputed"><i class="fe fe-alert-triangle me-2 text-danger"></i> Mark as Disputed</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item bulk-action" href="#" data-status="pending"><i class="fe fe-rotate-ccw me-2 text-warning"></i> Reset to Pending</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-status="reviewed"><i
+                                            class="fe fe-eye me-2 text-info"></i> Mark as Reviewed</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-status="confirmed"><i
+                                            class="fe fe-check-circle me-2 text-success"></i> Confirm All</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-status="disputed"><i
+                                            class="fe fe-alert-triangle me-2 text-danger"></i> Mark as Disputed</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-status="pending"><i
+                                            class="fe fe-rotate-ccw me-2 text-warning"></i> Reset to Pending</a></li>
                             </ul>
                         </div>
                         <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown"
+                                aria-expanded="false">
                                 <i class="fe fe-download me-2"></i> Export Report
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fe fe-file-text me-2 text-danger"></i> Export as PDF</a></li>
-                                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fe fe-file me-2 text-success"></i> Export as Excel</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i
+                                            class="fe fe-file-text me-2 text-danger"></i> Export as PDF</a></li>
+                                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i
+                                            class="fe fe-file me-2 text-success"></i> Export as Excel</a></li>
                             </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter Card -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0"><i class="fe fe-filter me-2"></i>Filter Report</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <label for="filterReviewStatus" class="form-label">Review Status</label>
-                                <select class="form-select select3" id="filterReviewStatus">
-                                    <option value="">All Statuses</option>
-                                    <option value="pending">Pending Review</option>
-                                    <option value="reviewed">Reviewed</option>
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="disputed">Disputed</option>
-                                </select>
-                            </div>
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <label for="filterProperty" class="form-label">Property</label>
-                                <select class="form-select select3" id="filterProperty">
-                                    <option value="">All Properties</option>
-                                    @foreach($properties as $property)
-                                        <option value="{{ $property->id }}">{{ $property->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <label class="form-label">Tenant</label>
-                                <select class="form-select select3" id="filterTenant">
-                                    <option value="">All Tenants</option>
-                                    @foreach ($tenants as $tenant)
-                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name ?? '' }} {{ $tenant->profile->last_name ?? '' }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <label for="filterPaymentMethod" class="form-label">Payment Method</label>
-                                <select class="form-select select3" id="filterPaymentMethod">
-                                    <option value="">All Methods</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="check">Check</option>
-                                    <option value="credit_card">Credit Card</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="stripe">Stripe</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <label for="filterDateFrom" class="form-label">From Date</label>
-                                <input type="text" class="form-control datepicker2" id="filterDateFrom" placeholder="Start date...">
-                            </div>
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <label for="filterDateTo" class="form-label">To Date</label>
-                                <input type="text" class="form-control datepicker2" id="filterDateTo" placeholder="End date...">
-                            </div>
-                            <div class="col-sm-6 col-md-4 col-xl">
-                                <button type="button" class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center" id="resetFilters">
-                                    <i class="fe fe-refresh-cw me-1"></i> Reset
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -187,12 +133,82 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h4 class="card-title mb-0"><i class="fe fe-credit-card me-2"></i>Collection by Payment Method</h4>
+                                <h4 class="card-title mb-0"><i class="fe fe-credit-card me-2"></i>Collection by Payment
+                                    Method</h4>
                             </div>
                             <div class="card-body">
                                 <div class="row" id="paymentMethodsBreakdown">
                                     <!-- Dynamically populated -->
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0"><i class="fe fe-filter me-2"></i>Filter Report</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterReviewStatus" class="form-label">Review Status</label>
+                                <select class="form-select select3" id="filterReviewStatus">
+                                    <option value="">All Statuses</option>
+                                    <option value="pending">Pending Review</option>
+                                    <option value="reviewed">Reviewed</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="disputed">Disputed</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterProperty" class="form-label">Property</label>
+                                <select class="form-select select3" id="filterProperty">
+                                    <option value="">All Properties</option>
+                                    @foreach($properties as $property)
+                                        <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label class="form-label">Tenant</label>
+                                <select class="form-select select3" id="filterTenant">
+                                    <option value="">All Tenants</option>
+                                    @foreach ($tenants as $tenant)
+                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name ?? '' }}
+                                            {{ $tenant->profile->last_name ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterPaymentMethod" class="form-label">Payment Method</label>
+                                <select class="form-select select3" id="filterPaymentMethod">
+                                    <option value="">All Methods</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="check">Check</option>
+                                    <option value="credit_card">Credit Card</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="stripe">Stripe</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterDateFrom" class="form-label">From Date</label>
+                                <input type="text" class="form-control datepicker2" id="filterDateFrom"
+                                    placeholder="Start date...">
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterDateTo" class="form-label">To Date</label>
+                                <input type="text" class="form-control datepicker2" id="filterDateTo"
+                                    placeholder="End date...">
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <button type="button"
+                                    class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center"
+                                    id="resetFilters">
+                                    <i class="fe fe-refresh-cw me-1"></i> Reset
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -258,7 +274,8 @@
                     <input type="hidden" id="reviewNewStatus">
                     <div class="mb-3">
                         <label for="reviewNote" class="form-label">Note (Optional)</label>
-                        <textarea class="form-control" id="reviewNote" rows="3" placeholder="Add a note about this review action..."></textarea>
+                        <textarea class="form-control" id="reviewNote" rows="3"
+                            placeholder="Add a note about this review action..."></textarea>
                     </div>
                     <div class="alert alert-info mb-0">
                         <i class="fe fe-info me-2"></i>
@@ -275,371 +292,373 @@
 @endsection
 
 @push('scripts')
-<script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
-<script>
-    $(document).ready(function() {
-        // Initialize Select2
-        $('.select3').select2({
-            placeholder: 'Select Option',
-            allowClear: true
-        });
+    <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+    <script>
+        $(document).ready(function () {
+            // Initialize Select2
+            $('.select3').select2({
+                placeholder: 'Select Option',
+                allowClear: true
+            });
 
-        // Initialize Datepicker
-        $('#filterDateFrom, #filterDateTo').datepicker({
-            format: 'mm/dd/yyyy',
-            autoclose: true,
-            todayHighlight: true
-        });
+            // Initialize Datepicker
+            $('#filterDateFrom, #filterDateTo').datepicker({
+                format: 'mm/dd/yyyy',
+                autoclose: true,
+                todayHighlight: true
+            });
 
-        // Track selected payments
-        let selectedPayments = [];
-        let totalCollected = 0;
+            // Track selected payments
+            let selectedPayments = [];
+            let totalCollected = 0;
 
-        // Initialize DataTable
-        var table = $('#collectionReportTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "{{ route('reports.rent-collection.data') }}",
-                data: function(d) {
-                    d.review_status = $('#filterReviewStatus').val();
-                    d.property_id = $('#filterProperty').val();
-                    d.tenant_id = $('#filterTenant').val();
-                    d.payment_method = $('#filterPaymentMethod').val();
-                    d.date_from = $('#filterDateFrom').val();
-                    d.date_to = $('#filterDateTo').val();
-                }
-            },
-            columns: [
-                { 
-                    data: 'id', 
-                    orderable: false,
-                    render: function(data) {
-                        return `<div class="d-flex justify-content-center align-items-center"><input type="checkbox" class="form-check-input row-select m-0" value="${data}"></div>`;
+            // Initialize DataTable
+            var table = $('#collectionReportTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('reports.rent-collection.data') }}",
+                    data: function (d) {
+                        d.review_status = $('#filterReviewStatus').val();
+                        d.property_id = $('#filterProperty').val();
+                        d.tenant_id = $('#filterTenant').val();
+                        d.payment_method = $('#filterPaymentMethod').val();
+                        d.date_from = $('#filterDateFrom').val();
+                        d.date_to = $('#filterDateTo').val();
                     }
                 },
-                { data: 'payment_number', name: 'payment_number' },
-                { data: 'property_name', name: 'property_name' },
-                { data: 'bed_label', name: 'bed_label' },
-                { data: 'tenant_name', name: 'tenant_name' },
-                { data: 'formatted_payment_date', name: 'payment_date' },
-                { data: 'formatted_amount', name: 'amount', className: 'text-end' },
-                { data: 'payment_method_badge', name: 'payment_method' },
-                { data: 'invoice_info', name: 'invoice_number' },
-                { data: 'review_status_badge', name: 'review_status' },
-                { data: 'reviewed_info', name: 'reviewed_by' },
-                { data: 'actions', name: 'actions', orderable: false, searchable: false }
-            ],
-            order: [[5, 'desc']],
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center gap-3"l <"bulk-actions-container">> f >rtip',
-            initComplete: function() {
-                $('#bulkActionsGroup').appendTo('.bulk-actions-container');
-            },
-            drawCallback: function(settings) {
-                updateLastUpdated();
-                loadSummary();
-                updateSelectAllState();
-            }
-        });
-
-        function numberFormat(num) {
-            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function updateLastUpdated() {
-            const now = new Date();
-            $('#lastUpdated').text('Last updated: ' + now.toLocaleTimeString());
-        }
-
-        function loadSummary() {
-            $.ajax({
-                url: "{{ route('reports.rent-collection.summary') }}",
-                data: getFilterParams(),
-                success: function(data) {
-                    $('#summaryTotalCollected').text('$' + numberFormat(data.total_amount || 0));
-                    $('#summaryTotalPayments').text(data.total_payments || 0);
-                    
-                    $('#summaryPendingAmount').text('$' + numberFormat(data.pending_amount || 0));
-                    $('#summaryPendingCount').text(data.pending_review || 0);
-                    
-                    $('#summaryConfirmedAmount').text('$' + numberFormat(data.confirmed_amount || 0));
-                    $('#summaryConfirmedCount').text(data.confirmed || 0);
-                    
-                    $('#summaryDisputedAmount').text('$' + numberFormat(data.disputed_amount || 0));
-                    $('#summaryDisputedCount').text(data.disputed || 0);
-
-                    $('#footerTotalCollected').text('$' + numberFormat(data.total_amount || 0));
-
-                    // Update payment methods breakdown
-                    updatePaymentMethodsBreakdown(data.by_method || {});
+                columns: [
+                    {
+                        data: 'id',
+                        orderable: false,
+                        render: function (data) {
+                            return `<div class="d-flex justify-content-center align-items-center"><input type="checkbox" class="form-check-input row-select m-0" value="${data}"></div>`;
+                        }
+                    },
+                    { data: 'payment_number', name: 'payment_number' },
+                    { data: 'property_name', name: 'property_name' },
+                    { data: 'bed_label', name: 'bed_label' },
+                    { data: 'tenant_name', name: 'tenant_name' },
+                    { data: 'formatted_payment_date', name: 'payment_date' },
+                    { data: 'formatted_amount', name: 'amount', className: 'text-end' },
+                    { data: 'payment_method_badge', name: 'payment_method' },
+                    { data: 'invoice_info', name: 'invoice_number' },
+                    { data: 'review_status_badge', name: 'review_status' },
+                    { data: 'reviewed_info', name: 'reviewed_by' },
+                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                ],
+                order: [[5, 'desc']],
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center gap-3"l <"bulk-actions-container">> f >rtip',
+                initComplete: function () {
+                    $('#bulkActionsGroup').appendTo('.bulk-actions-container');
+                },
+                drawCallback: function (settings) {
+                    updateLastUpdated();
+                    loadSummary();
+                    updateSelectAllState();
                 }
             });
-        }
 
-        function updatePaymentMethodsBreakdown(methodData) {
-            const icons = {
-                'cash': 'fe-dollar-sign',
-                'check': 'fe-file-text',
-                'credit_card': 'fe-credit-card',
-                'bank_transfer': 'fe-send',
-                'stripe': 'fe-zap',
-                'other': 'fe-more-horizontal'
-            };
-            const colors = {
-                'cash': 'success',
-                'check': 'info',
-                'credit_card': 'primary',
-                'bank_transfer': 'warning',
-                'stripe': 'purple',
-                'other': 'secondary'
-            };
-
-            let html = '';
-            for (const [method, data] of Object.entries(methodData)) {
-                const icon = icons[method] || 'fe-circle';
-                const color = colors[method] || 'secondary';
-                const label = method ? method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
-                
-                html += `
-                    <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                        <div class="d-flex align-items-center p-3 border">
-                            <div class="icon-service bg-${color}-transparent text-${color} me-3" style="width: 40px; height: 40px; font-size: 16px;">
-                                <i class="fe ${icon}"></i>
-                            </div>
-                            <div>
-                                <small class="text-muted">${label}</small>
-                                <h6 class="mb-0">$${numberFormat(data.total || 0)}</h6>
-                                <small class="text-muted">${data.count || 0} payments</small>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            if (!html) {
-                html = '<div class="col-12 text-center text-muted py-3">No payment data available</div>';
-            }
-            
-            $('#paymentMethodsBreakdown').html(html);
-        }
-
-        function getFilterParams() {
-            return {
-                review_status: $('#filterReviewStatus').val(),
-                property_id: $('#filterProperty').val(),
-                tenant_id: $('#filterTenant').val(),
-                payment_method: $('#filterPaymentMethod').val(),
-                date_from: $('#filterDateFrom').val(),
-                date_to: $('#filterDateTo').val()
-            };
-        }
-
-        function getFilterQueryString() {
-            let params = new URLSearchParams();
-            const filters = getFilterParams();
-            for (const [key, value] of Object.entries(filters)) {
-                if (value) params.append(key, value);
-            }
-            return params.toString();
-        }
-
-        // Filter change handlers
-        $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod, #filterDateFrom, #filterDateTo').on('change', function() {
-            table.ajax.reload();
-        });
-
-        // Reset Filters
-        $('#resetFilters').on('click', function() {
-            $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod').val('').trigger('change');
-            $('#filterDateFrom, #filterDateTo').val('');
-            table.ajax.reload();
-        });
-
-        // Select all checkbox
-        $('#selectAll').on('change', function() {
-            const isChecked = $(this).prop('checked');
-            $('.row-select').prop('checked', isChecked);
-            updateSelectedPayments();
-        });
-
-        // Individual row checkbox
-        $(document).on('change', '.row-select', function() {
-            updateSelectedPayments();
-            updateSelectAllState();
-        });
-
-        function updateSelectedPayments() {
-            selectedPayments = [];
-            $('.row-select:checked').each(function() {
-                selectedPayments.push($(this).val());
-            });
-            
-            $('#selectedCount').text(selectedPayments.length);
-            
-            if (selectedPayments.length > 0) {
-                $('#bulkActionsGroup').show();
-            } else {
-                $('#bulkActionsGroup').hide();
-            }
-        }
-
-        function updateSelectAllState() {
-            const totalCheckboxes = $('.row-select').length;
-            const checkedCheckboxes = $('.row-select:checked').length;
-            
-            $('#selectAll').prop('checked', totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes);
-            $('#selectAll').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
-        }
-
-        // Single review action
-        $(document).on('click', '.btn-review', function() {
-            const paymentId = $(this).data('id');
-            const newStatus = $(this).data('status');
-            
-            $('#reviewPaymentId').val(paymentId);
-            $('#reviewNewStatus').val(newStatus);
-            $('#reviewNote').val('');
-            
-            const statusLabels = {
-                'reviewed': 'mark as Reviewed',
-                'confirmed': 'Confirm this payment',
-                'disputed': 'mark as Disputed',
-                'pending': 'reset to Pending'
-            };
-            
-            $('#statusChangeInfo').text(`You are about to ${statusLabels[newStatus]}.`);
-            $('#reviewNoteModal').modal('show');
-        });
-
-        // Confirm review action
-        $('#confirmReviewBtn').on('click', function() {
-            const paymentId = $('#reviewPaymentId').val();
-            const newStatus = $('#reviewNewStatus').val();
-            const note = $('#reviewNote').val();
-
-            $.ajax({
-                url: `/admin/reports/rent-collection/${paymentId}/review`,
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    status: newStatus,
-                    note: note
-                },
-                success: function(response) {
-                    $('#reviewNoteModal').modal('hide');
-                    toastr.success(response.message);
-                    table.ajax.reload(null, false);
-                },
-                error: function(xhr) {
-                    toastr.error(xhr.responseJSON?.message || 'Failed to update status');
-                }
-            });
-        });
-
-        // Bulk action handlers
-        $(document).on('click', '.bulk-action', function(e) {
-            e.preventDefault();
-            
-            if (selectedPayments.length === 0) {
-                toastr.warning('Please select at least one payment');
-                return;
+            function numberFormat(num) {
+                return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
 
-            const newStatus = $(this).data('status');
-            const statusLabels = {
-                'reviewed': 'Reviewed',
-                'confirmed': 'Confirmed',
-                'disputed': 'Disputed',
-                'pending': 'Pending'
-            };
+            function updateLastUpdated() {
+                const now = new Date();
+                $('#lastUpdated').text('Last updated: ' + now.toLocaleTimeString());
+            }
 
-            if (confirm(`Are you sure you want to mark ${selectedPayments.length} payment(s) as ${statusLabels[newStatus]}?`)) {
+            function loadSummary() {
                 $.ajax({
-                    url: "{{ route('reports.rent-collection.bulk-update') }}",
-                    type: 'POST',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        payment_ids: selectedPayments,
-                        status: newStatus
-                    },
-                    success: function(response) {
-                        toastr.success(response.message);
-                        selectedPayments = [];
-                        $('#bulkActionsGroup').hide();
-                        $('#selectAll').prop('checked', false);
-                        table.ajax.reload();
-                    },
-                    error: function(xhr) {
-                        toastr.error(xhr.responseJSON?.message || 'Failed to update payments');
+                    url: "{{ route('reports.rent-collection.summary') }}",
+                    data: getFilterParams(),
+                    success: function (data) {
+                        $('#summaryTotalCollected').text('$' + numberFormat(data.total_amount || 0));
+                        $('#summaryTotalPayments').text(data.total_payments || 0);
+
+                        $('#summaryPendingAmount').text('$' + numberFormat(data.pending_amount || 0));
+                        $('#summaryPendingCount').text(data.pending_review || 0);
+
+                        $('#summaryConfirmedAmount').text('$' + numberFormat(data.confirmed_amount || 0));
+                        $('#summaryConfirmedCount').text(data.confirmed || 0);
+
+                        $('#summaryDisputedAmount').text('$' + numberFormat(data.disputed_amount || 0));
+                        $('#summaryDisputedCount').text(data.disputed || 0);
+
+                        $('#footerTotalCollected').text('$' + numberFormat(data.total_amount || 0));
+
+                        // Update payment methods breakdown
+                        updatePaymentMethodsBreakdown(data.by_method || {});
                     }
                 });
             }
-        });
 
-        // Export PDF
-        $('#exportPdfBtn').on('click', function(e) {
-            e.preventDefault();
-            const params = getFilterQueryString();
-            const url = "{{ route('reports.rent-collection.export.pdf') }}" + (params ? '?' + params : '');
-            window.location.href = url;
-        });
+            function updatePaymentMethodsBreakdown(methodData) {
+                const icons = {
+                    'cash': 'fe-dollar-sign',
+                    'check': 'fe-file-text',
+                    'credit_card': 'fe-credit-card',
+                    'bank_transfer': 'fe-send',
+                    'stripe': 'fe-zap',
+                    'other': 'fe-more-horizontal'
+                };
+                const colors = {
+                    'cash': 'success',
+                    'check': 'info',
+                    'credit_card': 'primary',
+                    'bank_transfer': 'warning',
+                    'stripe': 'purple',
+                    'other': 'secondary'
+                };
 
-        // Export Excel
-        $('#exportExcelBtn').on('click', function(e) {
-            e.preventDefault();
-            const params = getFilterQueryString();
-            const url = "{{ route('reports.rent-collection.export.excel') }}" + (params ? '?' + params : '');
-            window.location.href = url;
-        });
+                let html = '';
+                for (const [method, data] of Object.entries(methodData)) {
+                    const icon = icons[method] || 'fe-circle';
+                    const color = colors[method] || 'secondary';
+                    const label = method ? method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
 
-        // Initial summary load
-        loadSummary();
-    });
-</script>
+                    html += `
+                        <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
+                            <div class="d-flex align-items-center p-3 border">
+                                <div class="icon-service bg-${color}-transparent text-${color} me-3" style="width: 40px; height: 40px; font-size: 16px;">
+                                    <i class="fe ${icon}"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">${label}</small>
+                                    <h6 class="mb-0">$${numberFormat(data.total || 0)}</h6>
+                                    <small class="text-muted">${data.count || 0} payments</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                if (!html) {
+                    html = '<div class="col-12 text-center text-muted py-3">No payment data available</div>';
+                }
+
+                $('#paymentMethodsBreakdown').html(html);
+            }
+
+            function getFilterParams() {
+                return {
+                    review_status: $('#filterReviewStatus').val(),
+                    property_id: $('#filterProperty').val(),
+                    tenant_id: $('#filterTenant').val(),
+                    payment_method: $('#filterPaymentMethod').val(),
+                    date_from: $('#filterDateFrom').val(),
+                    date_to: $('#filterDateTo').val()
+                };
+            }
+
+            function getFilterQueryString() {
+                let params = new URLSearchParams();
+                const filters = getFilterParams();
+                for (const [key, value] of Object.entries(filters)) {
+                    if (value) params.append(key, value);
+                }
+                return params.toString();
+            }
+
+            // Filter change handlers
+            $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod, #filterDateFrom, #filterDateTo').on('change', function () {
+                table.ajax.reload();
+            });
+
+            // Reset Filters
+            $('#resetFilters').on('click', function () {
+                $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod').val('').trigger('change');
+                $('#filterDateFrom, #filterDateTo').val('');
+                table.ajax.reload();
+            });
+
+            // Select all checkbox
+            $('#selectAll').on('change', function () {
+                const isChecked = $(this).prop('checked');
+                $('.row-select').prop('checked', isChecked);
+                updateSelectedPayments();
+            });
+
+            // Individual row checkbox
+            $(document).on('change', '.row-select', function () {
+                updateSelectedPayments();
+                updateSelectAllState();
+            });
+
+            function updateSelectedPayments() {
+                selectedPayments = [];
+                $('.row-select:checked').each(function () {
+                    selectedPayments.push($(this).val());
+                });
+
+                $('#selectedCount').text(selectedPayments.length);
+
+                if (selectedPayments.length > 0) {
+                    $('#bulkActionsGroup').show();
+                } else {
+                    $('#bulkActionsGroup').hide();
+                }
+            }
+
+            function updateSelectAllState() {
+                const totalCheckboxes = $('.row-select').length;
+                const checkedCheckboxes = $('.row-select:checked').length;
+
+                $('#selectAll').prop('checked', totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes);
+                $('#selectAll').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
+            }
+
+            // Single review action
+            $(document).on('click', '.btn-review', function () {
+                const paymentId = $(this).data('id');
+                const newStatus = $(this).data('status');
+
+                $('#reviewPaymentId').val(paymentId);
+                $('#reviewNewStatus').val(newStatus);
+                $('#reviewNote').val('');
+
+                const statusLabels = {
+                    'reviewed': 'mark as Reviewed',
+                    'confirmed': 'Confirm this payment',
+                    'disputed': 'mark as Disputed',
+                    'pending': 'reset to Pending'
+                };
+
+                $('#statusChangeInfo').text(`You are about to ${statusLabels[newStatus]}.`);
+                $('#reviewNoteModal').modal('show');
+            });
+
+            // Confirm review action
+            $('#confirmReviewBtn').on('click', function () {
+                const paymentId = $('#reviewPaymentId').val();
+                const newStatus = $('#reviewNewStatus').val();
+                const note = $('#reviewNote').val();
+
+                $.ajax({
+                    url: `/admin/reports/rent-collection/${paymentId}/review`,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        status: newStatus,
+                        note: note
+                    },
+                    success: function (response) {
+                        $('#reviewNoteModal').modal('hide');
+                        toastr.success(response.message);
+                        table.ajax.reload(null, false);
+                    },
+                    error: function (xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Failed to update status');
+                    }
+                });
+            });
+
+            // Bulk action handlers
+            $(document).on('click', '.bulk-action', function (e) {
+                e.preventDefault();
+
+                if (selectedPayments.length === 0) {
+                    toastr.warning('Please select at least one payment');
+                    return;
+                }
+
+                const newStatus = $(this).data('status');
+                const statusLabels = {
+                    'reviewed': 'Reviewed',
+                    'confirmed': 'Confirmed',
+                    'disputed': 'Disputed',
+                    'pending': 'Pending'
+                };
+
+                if (confirm(`Are you sure you want to mark ${selectedPayments.length} payment(s) as ${statusLabels[newStatus]}?`)) {
+                    $.ajax({
+                        url: "{{ route('reports.rent-collection.bulk-update') }}",
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            payment_ids: selectedPayments,
+                            status: newStatus
+                        },
+                        success: function (response) {
+                            toastr.success(response.message);
+                            selectedPayments = [];
+                            $('#bulkActionsGroup').hide();
+                            $('#selectAll').prop('checked', false);
+                            table.ajax.reload();
+                        },
+                        error: function (xhr) {
+                            toastr.error(xhr.responseJSON?.message || 'Failed to update payments');
+                        }
+                    });
+                }
+            });
+
+            // Export PDF
+            $('#exportPdfBtn').on('click', function (e) {
+                e.preventDefault();
+                const params = getFilterQueryString();
+                const url = "{{ route('reports.rent-collection.export.pdf') }}" + (params ? '?' + params : '');
+                window.location.href = url;
+            });
+
+            // Export Excel
+            $('#exportExcelBtn').on('click', function (e) {
+                e.preventDefault();
+                const params = getFilterQueryString();
+                const url = "{{ route('reports.rent-collection.export.excel') }}" + (params ? '?' + params : '');
+                window.location.href = url;
+            });
+
+            // Initial summary load
+            loadSummary();
+        });
+    </script>
 @endpush
 
 @push('styles')
-<style>
-    .select2-container {
-        width: 100% !important;
-    }
-    .icon-service {
-        width: 50px;
-        height: 50px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-    }
-    
-    #collectionReportTable tfoot th {
-        font-weight: 600;
-    }
-    
-    .card-title i {
-        opacity: 0.7;
-    }
-    
-    .bg-purple-transparent {
-        background-color: rgba(102, 16, 242, 0.1) !important;
-    }
-    .text-purple {
-        color: #6610f2 !important;
-    }
-    
-    .btn-group-sm .btn {
-        padding: 0.25rem 0.5rem;
-    }
-    
-    .row-select {
-        cursor: pointer;
-    }
-    
-    .table tbody tr:hover {
-        background-color: rgba(0, 123, 255, 0.05);
-    }
-</style>
+    <style>
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .icon-service {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        #collectionReportTable tfoot th {
+            font-weight: 600;
+        }
+
+        .card-title i {
+            opacity: 0.7;
+        }
+
+        .bg-purple-transparent {
+            background-color: rgba(102, 16, 242, 0.1) !important;
+        }
+
+        .text-purple {
+            color: #6610f2 !important;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+        }
+
+        .row-select {
+            cursor: pointer;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+    </style>
 @endpush
