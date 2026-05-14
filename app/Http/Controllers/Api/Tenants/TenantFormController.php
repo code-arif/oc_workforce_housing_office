@@ -22,8 +22,7 @@ class TenantFormController extends Controller
 
     public function submitApplication(TenentApplicationRequest $request, $approvalToken)
     {
-        // dd($request->all(), $approvalToken);
-        try { 
+        try {
             $validateToken = DB::table('application_tokens')
                 ->where('email', $request->email)
                 ->where('token', $approvalToken)
@@ -97,7 +96,7 @@ class TenantFormController extends Controller
                     'employer_info' => $employerInfo
                 ]);
             }
-            
+
             // Handle document uploads
             $documentFields = [
                 'passport' => 'passport_copy',
@@ -111,7 +110,7 @@ class TenantFormController extends Controller
                 if ($request->hasFile($inputName)) {
                     $file = $request->file($inputName);
                     $path = $file->store("application_documents/{$application->id}", 'public');
-                    
+
                     $application->update([
                         $dbField => $path,
                     ]);
