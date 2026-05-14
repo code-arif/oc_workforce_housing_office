@@ -53,7 +53,7 @@
                 </div>
 
                 <!-- Summary Cards -->
-                <div class="row mb-4" id="summaryCards">
+                {{-- <div class="row mb-4" id="summaryCards">
                     <div class="col-xl-3 col-lg-6 col-md-6">
                         <div class="card">
                             <div class="card-body">
@@ -126,10 +126,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
                 <!-- Payment Methods Breakdown -->
-                <div class="row mb-4">
+                {{-- <div class="row mb-4">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
@@ -143,10 +143,92 @@
                             </div>
                         </div>
                     </div>
+                </div> --}}
+
+                <!-- Combined Summary + Payment Methods Row -->
+                <div class="row mb-3" id="summaryCards">
+                    <!-- Left: Summary Stats -->
+                    <div class="col-lg-7 col-xl-8 mb-3 mb-lg-0">
+                        <div class="card h-100 mb-0">
+                            <div class="card-body py-3 px-3">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                            <div class="icon-service-sm bg-primary-transparent text-primary flex-shrink-0">
+                                                <i class="fe fe-dollar-sign"></i>
+                                            </div>
+                                            <div class="overflow-hidden">
+                                                <p class="text-muted mb-0 small text-truncate">Total Collected</p>
+                                                <h6 class="mb-0 text-primary fw-bold" id="summaryTotalCollected">$0.00</h6>
+                                                <small class="text-muted"><span id="summaryTotalPayments">0</span>
+                                                    payments</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                            <div class="icon-service-sm bg-warning-transparent text-warning flex-shrink-0">
+                                                <i class="fe fe-clock"></i>
+                                            </div>
+                                            <div class="overflow-hidden">
+                                                <p class="text-muted mb-0 small text-truncate">Pending Review</p>
+                                                <h6 class="mb-0 text-warning fw-bold" id="summaryPendingAmount">$0.00</h6>
+                                                <small class="text-muted"><span id="summaryPendingCount">0</span>
+                                                    payments</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                            <div class="icon-service-sm bg-success-transparent text-success flex-shrink-0">
+                                                <i class="fe fe-check-circle"></i>
+                                            </div>
+                                            <div class="overflow-hidden">
+                                                <p class="text-muted mb-0 small text-truncate">Confirmed</p>
+                                                <h6 class="mb-0 text-success fw-bold" id="summaryConfirmedAmount">$0.00</h6>
+                                                <small class="text-muted"><span id="summaryConfirmedCount">0</span>
+                                                    payments</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                            <div class="icon-service-sm bg-danger-transparent text-danger flex-shrink-0">
+                                                <i class="fe fe-alert-triangle"></i>
+                                            </div>
+                                            <div class="overflow-hidden">
+                                                <p class="text-muted mb-0 small text-truncate">Disputed</p>
+                                                <h6 class="mb-0 text-danger fw-bold" id="summaryDisputedAmount">$0.00</h6>
+                                                <small class="text-muted"><span id="summaryDisputedCount">0</span>
+                                                    payments</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Payment Methods -->
+                    <div class="col-lg-5 col-xl-4">
+                        <div class="card h-100 mb-0">
+                            <div class="card-header py-2 px-3">
+                                <h6 class="card-title mb-0 small d-flex align-items-center">
+                                    <i class="fe fe-credit-card me-1"></i>
+                                    <span>Collection by Payment Method</span>
+                                </h6>
+                            </div>
+                            <div class="card-body py-2 px-3">
+                                <div class="row g-2" id="paymentMethodsBreakdown">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Filter Card -->
-                <div class="card mb-4">
+                {{-- <div class="card mb-4">
                     <div class="card-header">
                         <h4 class="card-title mb-0"><i class="fe fe-filter me-2"></i>Filter Report</h4>
                     </div>
@@ -167,7 +249,7 @@
                                 <select class="form-select select3" id="filterProperty">
                                     <option value="">All Properties</option>
                                     @foreach($properties as $property)
-                                        <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                    <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -176,8 +258,9 @@
                                 <select class="form-select select3" id="filterTenant">
                                     <option value="">All Tenants</option>
                                     @foreach ($tenants as $tenant)
-                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name ?? '' }}
-                                            {{ $tenant->profile->last_name ?? '' }}</option>
+                                    <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name ?? '' }}
+                                        {{ $tenant->profile->last_name ?? '' }}
+                                    </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -206,6 +289,73 @@
                             <div class="col-sm-6 col-md-4 col-xl">
                                 <button type="button"
                                     class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center"
+                                    id="resetFilters">
+                                    <i class="fe fe-refresh-cw me-1"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div> --}}
+
+                <!-- Filter Card -->
+                <div class="card mb-3">
+                    <div class="card-body py-2 px-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterReviewStatus" class="form-label mb-1 small">Review Status</label>
+                                <select class="form-select form-select-sm select3" id="filterReviewStatus">
+                                    <option value="">All Statuses</option>
+                                    <option value="pending">Pending Review</option>
+                                    <option value="reviewed">Reviewed</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="disputed">Disputed</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterProperty" class="form-label mb-1 small">Property</label>
+                                <select class="form-select form-select-sm select3" id="filterProperty">
+                                    <option value="">All Properties</option>
+                                    @foreach($properties as $property)
+                                        <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label class="form-label mb-1 small">Tenant</label>
+                                <select class="form-select form-select-sm select3" id="filterTenant">
+                                    <option value="">All Tenants</option>
+                                    @foreach ($tenants as $tenant)
+                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name ?? '' }}
+                                            {{ $tenant->profile->last_name ?? '' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterPaymentMethod" class="form-label mb-1 small">Payment Method</label>
+                                <select class="form-select form-select-sm select3" id="filterPaymentMethod">
+                                    <option value="">All Methods</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="check">Check</option>
+                                    <option value="credit_card">Credit Card</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="stripe">Stripe</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterDateFrom" class="form-label mb-1 small">From Date</label>
+                                <input type="text" class="form-control form-control-sm datepicker2" id="filterDateFrom"
+                                    placeholder="Start date...">
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterDateTo" class="form-label mb-1 small">To Date</label>
+                                <input type="text" class="form-control form-control-sm datepicker2" id="filterDateTo"
+                                    placeholder="End date...">
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <button type="button"
+                                    class="btn btn-sm btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center"
                                     id="resetFilters">
                                     <i class="fe fe-refresh-cw me-1"></i> Reset
                                 </button>
@@ -323,8 +473,8 @@
                         d.property_id = $('#filterProperty').val();
                         d.tenant_id = $('#filterTenant').val();
                         d.payment_method = $('#filterPaymentMethod').val();
-                        d.date_from = $('#filterDateFrom').val();
-                        d.date_to = $('#filterDateTo').val();
+                        d.date_from = parseDateForQuery($('#filterDateFrom').val());
+                        d.date_to = parseDateForQuery($('#filterDateTo').val());
                     }
                 },
                 columns: [
@@ -350,9 +500,14 @@
                 order: [[5, 'desc']],
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                dom: '<"d-flex justify-content-between align-items-center mb-3"<"d-flex align-items-center gap-3"l <"bulk-actions-container">> f >rtip',
+                dom: '<"row align-items-center mb-2"<"col-auto d-flex align-items-center gap-2"l<"bulk-actions-container ms-1">><"col-auto ms-auto"f>>rtip',
+
                 initComplete: function () {
-                    $('#bulkActionsGroup').appendTo('.bulk-actions-container');
+                    $('#bulkActionsGroup').appendTo('.bulk-actions-container').css('display', '');
+                    // hide it again since no rows selected yet
+                    if (selectedPayments.length === 0) {
+                        $('#bulkActionsGroup').hide();
+                    }
                 },
                 drawCallback: function (settings) {
                     updateLastUpdated();
@@ -420,26 +575,36 @@
                     const label = method ? method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
 
                     html += `
-                        <div class="col-xl-2 col-lg-4 col-md-6 mb-3">
-                            <div class="d-flex align-items-center p-3 border">
-                                <div class="icon-service bg-${color}-transparent text-${color} me-3" style="width: 40px; height: 40px; font-size: 16px;">
-                                    <i class="fe ${icon}"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted">${label}</small>
-                                    <h6 class="mb-0">$${numberFormat(data.total || 0)}</h6>
-                                    <small class="text-muted">${data.count || 0} payments</small>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                            <div class="icon-service-sm bg-${color}-transparent text-${color} flex-shrink-0">
+                                                <i class="fe ${icon}"></i>
+                                            </div>
+                                            <div class="overflow-hidden">
+                                                <small class="text-muted d-block text-truncate">${label}</small>
+                                                <h6 class="mb-0 small fw-bold">$${numberFormat(data.total || 0)}</h6>
+                                                <small class="text-muted">${data.count || 0} pmts</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
                 }
 
                 if (!html) {
-                    html = '<div class="col-12 text-center text-muted py-3">No payment data available</div>';
+                    html = '<div class="col-12 text-center text-muted py-2 small">No data available</div>';
                 }
 
                 $('#paymentMethodsBreakdown').html(html);
+            }
+
+            function parseDateForQuery(dateString) {
+                if (!dateString) return '';
+                const parts = dateString.trim().split('/');
+                if (parts.length === 3) {
+                    const [month, day, year] = parts;
+                    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                }
+                return dateString;
             }
 
             function getFilterParams() {
@@ -448,8 +613,8 @@
                     property_id: $('#filterProperty').val(),
                     tenant_id: $('#filterTenant').val(),
                     payment_method: $('#filterPaymentMethod').val(),
-                    date_from: $('#filterDateFrom').val(),
-                    date_to: $('#filterDateTo').val()
+                    date_from: parseDateForQuery($('#filterDateFrom').val()),
+                    date_to: parseDateForQuery($('#filterDateTo').val())
                 };
             }
 
@@ -633,6 +798,28 @@
             font-size: 22px;
         }
 
+        #summaryCards .card {
+            min-height: 120px;
+        }
+
+        #summaryCards .card-body {
+            padding: 0.9rem 1rem;
+        }
+
+        #summaryCards p {
+            margin-bottom: 0.25rem;
+            font-size: 0.92rem;
+        }
+
+        #summaryCards h3 {
+            font-size: 1.4rem;
+        }
+
+        #paymentMethodsBreakdown .border {
+            min-height: 110px;
+            background-color: #fff;
+        }
+
         #collectionReportTable tfoot th {
             font-weight: 600;
         }
@@ -659,6 +846,49 @@
 
         .table tbody tr:hover {
             background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        /* Replace old icon-service & summaryCards styles */
+        .icon-service-sm {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        #summaryCards .card {
+            min-height: unset;
+        }
+
+        #summaryCards .card-body {
+            padding: 0.75rem;
+        }
+
+        #paymentMethodsBreakdown .border {
+            min-height: unset;
+            background-color: #fff;
+        }
+
+        /* DataTable controls cleanup */
+        .dataTables_wrapper .dataTables_length select {
+            display: inline-block;
+            width: auto;
+            padding: 0.25rem 1.8rem 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 0;
         }
     </style>
 @endpush
