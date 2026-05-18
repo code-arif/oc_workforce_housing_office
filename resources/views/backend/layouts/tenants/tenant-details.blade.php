@@ -73,10 +73,16 @@
                                         <span class="badge bg-primary p-3 rounded-pill">Active Lease</span>
                                     @endif
                                 </div>
-                                <button type="button" class="btn btn-secondary me-2 d-inline-flex align-items-center" title="View application details" id="viewApplicationBtn"
-                                        data-tenant-id="{{ $tenant->id }}" onclick="viewApplicationDetails({{$tenant->application_id}})">
-                                    <i class="fe fe-eye me-1"></i> Open Application
-                                </button>
+                                <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+                                    <button type="button" class="btn btn-secondary d-inline-flex align-items-center" title="View application details" id="viewApplicationBtn"
+                                            data-tenant-id="{{ $tenant->id }}" onclick="viewApplicationDetails({{$tenant->application_id}})">
+                                        <i class="fe fe-eye me-1"></i> Open Application
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center" title="Resend Password Setup Email"
+                                            onclick="resendSetupEmail({{ $tenant->id }})">
+                                        <i class="fe fe-mail me-1"></i> Resend Setup Email
+                                    </button>
+                                </div>
                                 {{-- Approve/Reject buttons for non-approved tenants --}}
                                 {{-- @if(!in_array($tenant->status, ['approved', 'active']))
                                     <div class="d-flex justify-content-center gap-2 mb-3">
@@ -1840,6 +1846,40 @@
                 error: function(xhr) {
                     NProgress.done();
                     toastr.error(xhr.responseJSON?.message || 'Failed to update status!');
+                }
+            });
+        }
+    });
+}
+
+// Resend password setup email
+function resendSetupEmail(tenantId) {
+    Swal.fire({
+        title: 'Resend Setup Email?',
+        text: 'This will send a new password setup link to the tenant.',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, send it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            NProgress.start();
+            $.ajax({
+                url: "{{ route('tenants.resend.setup.email', ':id') }}".replace(':id', tenantId),
+                type: 'POST',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function(response) {
+                    NProgress.done();
+                    if (response.success) {
+                        toastr.success(response.message);
+                    } else {
+                        toastr.error(response.message || 'Failed to resend email');
+                    }
+                },
+                error: function(xhr) {
+                    NProgress.done();
+                    toastr.error(xhr.responseJSON?.message || 'Failed to resend setup email!');
                 }
             });
         }

@@ -733,6 +733,39 @@ class TenantManageController extends Controller
     }
 
     /**
+     * Resend the password setup/reset email to the tenant
+     */
+    public function resendSetupEmail($id)
+    {
+        try {
+            $tenant = Tenant::findOrFail($id);
+
+            // Generate approval token
+            $tenant->generateApprovalToken();
+            $tenant->refresh();
+
+            // Password reset URL with token + email as query string
+            $passResetUrl = config('app.frontend_url')
+                . "/password-setup/"
+                . $tenant->approval_token
+                . "?" . http_build_query(['email' => $tenant->email]);
+
+            Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password setup email has been resent to the tenant successfully.'
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to resend setup email: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to resend setup email: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Export in excel all tenants
      */
     /**
