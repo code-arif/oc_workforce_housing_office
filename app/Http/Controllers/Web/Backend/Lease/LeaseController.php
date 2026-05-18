@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Backend\Lease;
 
 use App\Http\Controllers\Controller;
 use App\Mail\Tenant\LeaseCompletedMail;
+use App\Mail\Tenant\NewLeaseDetailsMail;
 use App\Mail\Tenant\LeaseSignatureRequestMail;
 use App\Mail\Tenant\TenantPasswordRestLinkMail;
 use App\Mail\TenantApplication\TenantWelcomeMail;
@@ -452,6 +453,7 @@ class LeaseController extends Controller
 
             // if (env('APP_ENV') !== 'production') {
             $tenant = Tenant::find($tenantId);
+            $passResetUrl = null;
             if ($tenant->status !== 'approved') {
 
                 // Generate approval token
@@ -463,18 +465,25 @@ class LeaseController extends Controller
                     . "/password-setup/"
                     . $tenant->approval_token
                     . "?" . http_build_query(['email' => $tenant->email]);
-
-                Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
             }
 
+            $sendWelcome = $request->boolean('send_welcome_email');
+            $sendSignature = $request->boolean('send_for_signature') && !$isDraft;
 
-            // Send welcome email if enabled
-            if ($request->boolean('send_welcome_email')) {
-                $this->sendWelcomeEmail($lease);
-            }
-            if ($request->boolean('send_for_signature') && !$isDraft) {
-                // Trigger sending for signature process
-                $this->sendLeaseForSignature($lease);
+            if ($passResetUrl || $sendWelcome || $sendSignature) {
+                $leaseDocument = $sendSignature ? $lease->documents->first() : null;
+                if ($sendSignature && $leaseDocument) {
+                    $leaseDocument->update(['status' => 'pending_signatures']);
+                }
+                
+                Mail::to($tenant->email)->queue(new NewLeaseDetailsMail(
+                    $lease, 
+                    $passResetUrl, 
+                    $sendWelcome, 
+                    $sendSignature,
+                    $leaseDocument
+                ));
+                Log::info('Combined Lease Details email queued successfully for lease ID: ' . $lease->id . ' to ' . $tenant->email);
             }
 
             DB::commit();
