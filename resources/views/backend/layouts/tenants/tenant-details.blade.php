@@ -237,7 +237,7 @@
                                 <div class="info-item mb-3">
                                     <div class="d-flex align-items-center">
                                         <div class="info-icon bg-warning-light">
-                                            <i class="fe fe-gift text-warning"></i>
+                                            <i class="fe fe-calendar text-warning"></i>
                                         </div>
                                         <div class="ms-3">
                                             <small class="text-muted d-block">Date of Birth</small>
@@ -1940,11 +1940,11 @@ function resendSetupEmail(tenantId) {
         font-size: 18px;
     }
 
-    .bg-primary-light { background: rgba(99, 102, 241, 0.1); }
-    .bg-success-light { background: rgba(34, 197, 94, 0.1); }
-    .bg-warning-light { background: rgba(245, 158, 11, 0.1); }
-    .bg-danger-light { background: rgba(239, 68, 68, 0.1); }
-    .bg-info-light { background: rgba(59, 130, 246, 0.1); }
+    .bg-primary-light { background: rgba(186, 151, 121, 0.15) !important; } /* Theme primary color */
+    .bg-success-light { background: rgba(34, 197, 94, 0.15) !important; }
+    .bg-warning-light { background: rgba(245, 158, 11, 0.15) !important; }
+    .bg-danger-light { background: rgba(239, 68, 68, 0.15) !important; }
+    .bg-info-light { background: rgba(59, 130, 246, 0.15) !important; }
 
     /* Current Lease Card */
     .current-lease-card {
