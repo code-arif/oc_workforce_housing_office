@@ -92,7 +92,7 @@ class ApplicationController extends Controller
 
             return $this->success([
                 'email' => $request->email,
-            ], 'Thank you for your interest! We will contact you shortly.', 201);
+            ], 'Thank you for your interest! Please check your email now to complete and submit your rental application.', 201);
         } catch (Exception $e) {
 
             DB::rollBack();
@@ -191,8 +191,8 @@ class ApplicationController extends Controller
 
             // Send confirmation mail to applicant
             try {
-                // Mail::to($application->email)
-                //     ->queue(new ReservationSubmittedConfirmationMail($application));
+                Mail::to($application->email)
+                    ->queue(new ReservationSubmittedConfirmationMail($application));
             } catch (Exception $mailError) {
                 Log::error('Failed to send confirmation email to applicant: ' . $mailError->getMessage());
             }

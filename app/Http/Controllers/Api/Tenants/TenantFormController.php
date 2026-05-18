@@ -128,7 +128,7 @@ class TenantFormController extends Controller
             }
 
             // Short delay to avoid rate limiting
-            sleep(1);
+            // sleep(1);
 
             // Send success mail to tenant
             try {

@@ -2,7 +2,7 @@
 
 namespace App\Mail\TenantApplication;
 
-use App\Models\Application;
+use App\Models\ReservationRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -20,7 +20,7 @@ class ReservationSubmittedConfirmationMail extends Mailable implements ShouldQue
     /**
      * Create a new message instance.
      */
-    public function __construct(Application $application)
+    public function __construct(ReservationRequest $application)
     {
         $this->application = $application;
         $this->supportUrl = config('app.frontend_url') . '/contact';
@@ -51,6 +51,12 @@ class ReservationSubmittedConfirmationMail extends Mailable implements ShouldQue
      */
     public function build()
     {
+        $applicantName = implode(' ', array_filter([
+            $this->application->first_name,
+            $this->application->middle_name,
+            $this->application->last_name
+        ]));
+
         return $this
             ->from(config('mail.from.address'), config('mail.from.name'))
             ->replyTo(config('mail.admin_email'), 'Support Team')
@@ -60,8 +66,8 @@ class ReservationSubmittedConfirmationMail extends Mailable implements ShouldQue
                 'companyName' => config('app.name', 'OC Workforce Housing'),
                 'companyEmail' => config('mail.admin_email'),
                 'companyPhone' => config('app.phone', '(443) 336-5182'),
-                'applicantName' => $this->application->full_name,
-                'applicationType' => ucfirst($this->application->type),
+                'applicantName' => $applicantName,
+                'applicationType' => 'Reservation Request',
                 'currentYear' => now()->year,
             ]);
     }
