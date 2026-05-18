@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Backend\Lease;
 
 use App\Http\Controllers\Controller;
 use App\Mail\Tenant\LeaseCompletedMail;
+use App\Mail\Tenant\NewLeaseDetailsMail;
 use App\Mail\Tenant\LeaseSignatureRequestMail;
 use App\Mail\Tenant\TenantPasswordRestLinkMail;
 use App\Mail\TenantApplication\TenantWelcomeMail;
@@ -19,6 +20,7 @@ use App\Models\Room;
 use App\Models\Season;
 use App\Models\Tenant;
 use App\Models\Unit;
+use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -378,7 +380,7 @@ class LeaseController extends Controller
                 ]);
 
                 if ($lease && $assignlease) {
-                    $bed = \App\Models\Bed::find($request->bed_id);
+                    $bed = Bed::find($request->bed_id);
                     $bed->update(['is_occupied' => 1]);
                 }
             }
@@ -449,9 +451,9 @@ class LeaseController extends Controller
                 ]);
             }
 
-            // if (env('APP_ENV') !== 'production') {
             $tenant = Tenant::find($tenantId);
-            if ($tenant->status !== 'approved') {
+            $passResetUrl = null;
+            if ($tenant) {
 
                 // Generate approval token
                 $tenant->generateApprovalToken();
@@ -462,18 +464,25 @@ class LeaseController extends Controller
                     . "/password-setup/"
                     . $tenant->approval_token
                     . "?" . http_build_query(['email' => $tenant->email]);
-
-                Mail::to($tenant->email)->queue(new TenantPasswordRestLinkMail($tenant, $passResetUrl));
             }
-            // }
 
-            // Send welcome email if enabled
-            if ($request->boolean('send_welcome_email')) {
-                $this->sendWelcomeEmail($lease);
-            }
-            if ($request->boolean('send_for_signature') && !$isDraft) {
-                // Trigger sending for signature process
-                $this->sendLeaseForSignature($lease);
+            $sendWelcome = $request->boolean('send_welcome_email');
+            $sendSignature = $request->boolean('send_for_signature') && !$isDraft;
+
+            if ($passResetUrl || $sendWelcome || $sendSignature) {
+                $leaseDocument = $sendSignature ? $lease->documents->first() : null;
+                if ($sendSignature && $leaseDocument) {
+                    $leaseDocument->update(['status' => 'pending_signatures']);
+                }
+
+                Mail::to($tenant->email)->queue(new NewLeaseDetailsMail(
+                    $lease,
+                    $passResetUrl,
+                    $sendWelcome,
+                    $sendSignature,
+                    $leaseDocument
+                ));
+                Log::info('Combined Lease Details email queued successfully for lease ID: ' . $lease->id . ' to ' . $tenant->email);
             }
 
             DB::commit();
@@ -494,7 +503,7 @@ class LeaseController extends Controller
                 'bed_assignment_pending' => $assignBedLater,
                 'redirect_url' => route('leases.show', $lease->id),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             return response()->json([
@@ -509,12 +518,12 @@ class LeaseController extends Controller
      */
     private function generateWeeklyPaymentSchedule(Lease $lease, int $weeklyDueDay, ?string $firstInvoiceDate = null)
     {
-        $startDate = new \DateTime($lease->start_date);
-        $endDate = new \DateTime($lease->end_date);
+        $startDate = new DateTime($lease->start_date);
+        $endDate = new DateTime($lease->end_date);
 
         // Use first invoice date or calculate from start date
         $currentDate = $firstInvoiceDate
-            ? new \DateTime($firstInvoiceDate)
+            ? new DateTime($firstInvoiceDate)
             : $this->getNextOccurrenceOfDay($startDate, $weeklyDueDay);
 
         while ($currentDate <= $endDate) {
@@ -545,32 +554,32 @@ class LeaseController extends Controller
      * Helper: Get next occurrence of a specific day of week
      * weekDay: 1=Monday, 2=Tuesday, ..., 7=Sunday (ISO-8601)
      */
-    private function getNextOccurrenceOfDay(\DateTime $fromDate, int $targetDayOfWeek): \DateTime
+    private function getNextOccurrenceOfDay(DateTime $fromDate, int $targetDayOfWeek): DateTime
     {
         $date = clone $fromDate;
-        
+
         // Get current day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
         $currentDay = (int)$date->format('w');
         // Convert to ISO format: 1=Monday, 2=Tuesday, ..., 7=Sunday
         $currentDay = $currentDay === 0 ? 7 : $currentDay;
-        
+
         $daysToAdd = $targetDayOfWeek - $currentDay;
         if ($daysToAdd <= 0) {
             $daysToAdd += 7;
         }
-        
+
         $date->modify("+{$daysToAdd} days");
         return $date;
     }
 
     private function generatePaymentSchedule(Lease $lease, int $dueDay, ?string $firstInvoiceDate = null)
     {
-        $startDate = new \DateTime($lease->start_date);
-        $endDate = new \DateTime($lease->end_date);
+        $startDate = new DateTime($lease->start_date);
+        $endDate = new DateTime($lease->end_date);
 
         // Use first invoice date or calculate from start date
         $currentDate = $firstInvoiceDate
-            ? new \DateTime($firstInvoiceDate)
+            ? new DateTime($firstInvoiceDate)
             : clone $startDate;
 
         $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
@@ -611,13 +620,13 @@ class LeaseController extends Controller
      */
     private function generateInvoices(Lease $lease, int $tenantId, int $dueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false, ?string $depositDueDate = null)
     {
-        $startDate = new \DateTime($lease->start_date);
-        $endDate = new \DateTime($lease->end_date);
+        $startDate = new DateTime($lease->start_date);
+        $endDate = new DateTime($lease->end_date);
         $isMonthToMonth = ($lease->start_date === $lease->end_date);
 
         // Use first invoice date or calculate from start date
         $currentDate = $firstInvoiceDate
-            ? new \DateTime($firstInvoiceDate)
+            ? new DateTime($firstInvoiceDate)
             : clone $startDate;
 
         $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));

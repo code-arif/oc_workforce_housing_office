@@ -285,6 +285,7 @@ Route::group([], function () {
     Route::get('/tenants/create', [TenantManageController::class, 'create'])->name('tenants.create');
     Route::post('/tenants/update/{id}', [TenantManageController::class, 'update'])->name('tenants.update');
     Route::post('/tenants/store', [TenantManageController::class, 'store'])->name('tenants.store');
+    Route::post('/tenants/{id}/resend-setup-email', [TenantManageController::class, 'resendSetupEmail'])->name('tenants.resend.setup.email');
 
     Route::get('/tenants/export/excel', [TenantManageController::class, 'export'])->name('tenants.export'); // DONE: Tenant Export in excel
     Route::post('/tenants/{id}/approve', [TenantManageController::class, 'approveStatus'])->name('tenants.approve'); // DONE: Tenant approval

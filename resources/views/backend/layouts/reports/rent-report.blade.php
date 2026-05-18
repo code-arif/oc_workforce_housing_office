@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Filter Card -->
-                <div class="card mb-4">
+                {{-- <div class="card mb-4">
                     <div class="card-header">
                         <h4 class="card-title mb-0"><i class="fe fe-filter me-2"></i>Filter Report</h4>
                     </div>
@@ -45,7 +45,7 @@
                                 <select class="form-select select3" id="filterProperty" name="property_id">
                                     <option value="">All Properties</option>
                                     @foreach ($properties as $property)
-                                        <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                    <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -60,8 +60,8 @@
                                 <select class="form-select select3" id="tenantFilter">
                                     <option value="">Select Tenant</option>
                                     @foreach ($tenants as $tenant)
-                                        <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }}
-                                            {{ $tenant->profile->last_name }}</option>
+                                    <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }}
+                                        {{ $tenant->profile->last_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -82,10 +82,10 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> --}}
 
                 <!-- Summary Cards -->
-                <div class="row mb-4" id="summaryCards">
+                {{-- <div class="row mb-4" id="summaryCards">
                     <div class="col-xl-4 col-lg-6 col-md-6">
                         <div class="card">
                             <div class="card-body">
@@ -115,6 +115,89 @@
                                         <div class="icon-service bg-danger-transparent text-danger">
                                             <i class="fe fe-alert-circle"></i>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> --}}
+
+                <!-- Combined Filter + Summary Row -->
+                <div class="row mb-3">
+                    <!-- Left: Filters -->
+                    <div class="col-lg-8 col-xl-9 mb-3 mb-lg-0">
+                        <div class="card h-100 mb-0">
+                            <div class="card-body py-2 px-3">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-sm-6 col-md-4 col-xl">
+                                        <label for="filterProperty" class="form-label mb-1 small">Property</label>
+                                        <select class="form-select form-select-sm select3" id="filterProperty"
+                                            name="property_id">
+                                            <option value="">All Properties</option>
+                                            @foreach ($properties as $property)
+                                                <option value="{{ $property->id }}">{{ $property->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6 col-md-4 col-xl">
+                                        <label class="form-label mb-1 small">Bed</label>
+                                        <select class="form-select form-select-sm select3" id="bedFilter">
+                                            <option value="">All Beds</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6 col-md-4 col-xl">
+                                        <label class="form-label mb-1 small">Tenant</label>
+                                        <select class="form-select form-select-sm select3" id="tenantFilter">
+                                            <option value="">Select Tenant</option>
+                                            @foreach ($tenants as $tenant)
+                                                <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }}
+                                                    {{ $tenant->profile->last_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-6 col-md-4 col-xl">
+                                        <label for="filterDateFrom" class="form-label mb-1 small">Due Date From</label>
+                                        <input type="text" class="form-control form-control-sm datepicker2"
+                                            id="filterDateFrom" name="date_from" placeholder="Start date...">
+                                    </div>
+                                    <div class="col-sm-6 col-md-4 col-xl">
+                                        <label for="filterDateTo" class="form-label mb-1 small">Due Date To</label>
+                                        <input type="text" class="form-control form-control-sm datepicker2"
+                                            id="filterDateTo" name="date_to" placeholder="End date...">
+                                    </div>
+                                    <div class="col-sm-6 col-md-4 col-xl">
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center"
+                                            id="resetFilters">
+                                            <i class="fe fe-refresh-cw me-1"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Summary Cards -->
+                    <div class="col-lg-4 col-xl-3" id="summaryCards">
+                        <div class="card h-100 mb-0">
+                            <div class="card-body py-2 px-3 d-flex flex-column justify-content-center gap-2">
+                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                    <div class="icon-service-sm bg-primary-transparent text-primary flex-shrink-0">
+                                        <i class="fe fe-file-text"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-muted mb-0 small">Total Invoices</p>
+                                        <h6 class="mb-0 fw-bold" id="summaryTotalInvoices">0</h6>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
+                                    <div class="icon-service-sm bg-danger-transparent text-danger flex-shrink-0">
+                                        <i class="fe fe-alert-circle"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-muted mb-0 small">Total Outstanding</p>
+                                        <h6 class="mb-0 fw-bold text-danger" id="summaryTotalOutstanding">$0.00</h6>
                                     </div>
                                 </div>
                             </div>
@@ -165,7 +248,7 @@
 @push('scripts')
     <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Initialize Select2
             $('.select3').select2({
                 placeholder: 'Select Option',
@@ -188,7 +271,7 @@
                 serverSide: true,
                 ajax: {
                     url: "{{ route('reports.rent.data') }}",
-                    data: function(d) {
+                    data: function (d) {
                         d.property_id = $('#filterProperty').val();
                         d.bed_id = $('#bedFilter').val();
                         d.tenant_id = $('#tenantFilter').val();
@@ -197,40 +280,40 @@
                     }
                 },
                 columns: [{
-                        data: 'property_name',
-                        name: 'property_name'
-                    },
-                    {
-                        data: 'bed_label',
-                        name: 'bed_label'
-                    },
-                    {
-                        data: 'tenant_name',
-                        name: 'tenant_name'
-                    },
-                    {
-                        data: 'due_date',
-                        name: 'due_date'
-                    },
-                    {
-                        data: 'outstanding_amount',
-                        name: 'outstanding_amount',
-                        className: 'text-end'
-                    },
-                    {
-                        data: 'invoice_number',
-                        name: 'invoice_number'
-                    },
-                    {
-                        data: 'status',
-                        name: 'status',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'notes',
-                        name: 'notes'
-                    }
+                    data: 'property_name',
+                    name: 'property_name'
+                },
+                {
+                    data: 'bed_label',
+                    name: 'bed_label'
+                },
+                {
+                    data: 'tenant_name',
+                    name: 'tenant_name'
+                },
+                {
+                    data: 'due_date',
+                    name: 'due_date'
+                },
+                {
+                    data: 'outstanding_amount',
+                    name: 'outstanding_amount',
+                    className: 'text-end'
+                },
+                {
+                    data: 'invoice_number',
+                    name: 'invoice_number'
+                },
+                {
+                    data: 'status',
+                    name: 'status',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'notes',
+                    name: 'notes'
+                }
                 ],
                 pageLength: 25,
                 lengthMenu: [
@@ -238,7 +321,7 @@
                     [10, 25, 50, 100, "All"]
                 ],
                 dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rtip',
-                drawCallback: function(settings) {
+                drawCallback: function (settings) {
                     // Calculate totals from current page data
                     calculateTotals();
                     updateLastUpdated();
@@ -250,7 +333,7 @@
 
                 table.rows({
                     search: 'applied'
-                }).every(function() {
+                }).every(function () {
                     var data = this.data();
                     totalOutstanding += parseFloat(data.outstanding_amount.replace(/,/g, '')) || 0;
                 });
@@ -289,15 +372,15 @@
 
             // Apply Filters on change
             $('#filterProperty, #bedFilter, #tenantFilter, #filterDateFrom, #filterDateTo').on('change',
-                function() {
+                function () {
                     table.ajax.reload();
                 });
-            $('#filterDateFrom, #filterDateTo').on('keyup', function() {
+            $('#filterDateFrom, #filterDateTo').on('keyup', function () {
                 table.ajax.reload();
             });
 
             // Reset Filters
-            $('#resetFilters').on('click', function() {
+            $('#resetFilters').on('click', function () {
                 $('#filterProperty').val('').trigger('change');
                 $('#bedFilter').val('').trigger('change');
                 $('#tenantFilter').val('').trigger('change');
@@ -307,24 +390,24 @@
                 table.ajax.reload();
             });
 
-            $('#filterProperty').change(function() {
+            $('#filterProperty').change(function () {
                 const propertyId = $(this).val();
                 $('#bedFilter').empty().append('<option value="">All Beds</option>');
                 if (propertyId) {
                     $.ajax({
                         url: '{{ url('admin/leases/property') }}/' + propertyId + '/beds',
                         type: 'GET',
-                        success: function(response) {
+                        success: function (response) {
                             console.log(response);
 
-                            response.data.forEach(function(bed) {
+                            response.data.forEach(function (bed) {
                                 $('#bedFilter').append(
                                     `<option value="${bed.id}">${bed.bed_label}</option>`
                                 );
                             });
                             $('#bedFilter').val(null).trigger('change');
                         },
-                        error: function() {
+                        error: function () {
                             toastr.error('Failed to fetch beds for the selected property.');
                         }
                     });
@@ -332,7 +415,7 @@
             });
 
             // Export PDF
-            $('#exportPdfBtn').on('click', function(e) {
+            $('#exportPdfBtn').on('click', function (e) {
                 e.preventDefault();
                 const params = getFilterParams();
                 const url = "{{ route('reports.rent.export.pdf') }}" + (params ? '?' + params : '');
@@ -340,7 +423,7 @@
             });
 
             // Export Excel
-            $('#exportExcelBtn').on('click', function(e) {
+            $('#exportExcelBtn').on('click', function (e) {
                 e.preventDefault();
                 const params = getFilterParams();
                 const url = "{{ route('reports.rent.export.excel') }}" + (params ? '?' + params : '');
@@ -348,7 +431,7 @@
             });
 
             // Enter key trigger for date inputs
-            $('#filterDateFrom, #filterDateTo').on('keypress', function(e) {
+            $('#filterDateFrom, #filterDateTo').on('keypress', function (e) {
                 if (e.which === 13) {
                     table.ajax.reload();
                 }
@@ -363,14 +446,15 @@
             width: 100% !important;
         }
 
-        .icon-service {
-            width: 50px;
-            height: 50px;
-            border-radius: 10px;
+        .icon-service-sm {
+            width: 34px;
+            height: 34px;
+            min-width: 34px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 16px;
         }
 
         #rentReportTable tfoot th {
@@ -381,10 +465,21 @@
             opacity: 0.7;
         }
 
-        .filter-card .form-label {
-            font-weight: 500;
-            font-size: 13px;
-            color: #6c757d;
+        .dataTables_wrapper .dataTables_length select {
+            display: inline-block;
+            width: auto;
+            padding: 0.25rem 1.8rem 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 0;
         }
     </style>
 @endpush

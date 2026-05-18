@@ -55,10 +55,14 @@ class TenantFormLinkMail extends Mailable implements ShouldQueue
     {
         return $this
             ->from(config('mail.from.address'), config('mail.from.name'))
+            ->replyTo(config('mail.admin_email'), 'Support Team')
             ->with([
                 'email' => $this->email,
                 'formUrl' => $this->formUrl,
                 'companyName' => config('app.name', 'OC Workforce Housing'),
+                'companyEmail' => config('mail.admin_email'),
+                'companyPhone' => config('app.phone', '(443) 336-5182'),
+                'companyWebsite' => config('app.url'),
                 'currentDate' => now()->format('F d, Y \a\t h:i A'),
                 'applicationId' => null,
                 'tenantEmail' => $this->email,

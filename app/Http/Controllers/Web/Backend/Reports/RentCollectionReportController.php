@@ -13,6 +13,7 @@ use App\Exports\RentCollectionReportExport;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class RentCollectionReportController extends Controller
 {
@@ -91,11 +92,11 @@ class RentCollectionReportController extends Controller
             }
 
             // Date range filter (by payment date)
-            if ($request->filled('date_from')) {
-                $query->where('payments.payment_date', '>=', $request->date_from);
+            if ($from = $this->normalizeRequestDate($request->date_from)) {
+                $query->whereDate('payments.payment_date', '>=', $from);
             }
-            if ($request->filled('date_to')) {
-                $query->where('payments.payment_date', '<=', $request->date_to);
+            if ($to = $this->normalizeRequestDate($request->date_to)) {
+                $query->whereDate('payments.payment_date', '<=', $to);
             }
 
             return DataTables::of($query)
@@ -328,11 +329,11 @@ class RentCollectionReportController extends Controller
         if ($request->filled('payment_method')) {
             $query->where('payment_method', $request->payment_method);
         }
-        if ($request->filled('date_from')) {
-            $query->where('payment_date', '>=', $request->date_from);
+        if ($from = $this->normalizeRequestDate($request->date_from)) {
+            $query->whereDate('payment_date', '>=', $from);
         }
-        if ($request->filled('date_to')) {
-            $query->where('payment_date', '<=', $request->date_to);
+        if ($to = $this->normalizeRequestDate($request->date_to)) {
+            $query->whereDate('payment_date', '<=', $to);
         }
         if ($request->filled('review_status')) {
             $query->where('review_status', $request->review_status);
@@ -456,12 +457,12 @@ class RentCollectionReportController extends Controller
         }
 
         // Date range filter
-        if ($request->filled('date_from')) {
-            $query->where('payment_date', '>=', $request->date_from);
+        if ($from = $this->normalizeRequestDate($request->date_from)) {
+            $query->whereDate('payment_date', '>=', $from);
             $filters['date_from'] = date('M d, Y', strtotime($request->date_from));
         }
-        if ($request->filled('date_to')) {
-            $query->where('payment_date', '<=', $request->date_to);
+        if ($to = $this->normalizeRequestDate($request->date_to)) {
+            $query->whereDate('payment_date', '<=', $to);
             $filters['date_to'] = date('M d, Y', strtotime($request->date_to));
         }
 
@@ -523,5 +524,24 @@ class RentCollectionReportController extends Controller
             ],
             'filters' => $filters,
         ];
+    }
+
+    private function normalizeRequestDate($date)
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        $date = trim($date);
+
+        try {
+            if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $date)) {
+                return Carbon::createFromFormat('m/d/Y', $date)->format('Y-m-d');
+            }
+
+            return Carbon::parse($date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

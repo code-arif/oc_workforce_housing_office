@@ -104,7 +104,7 @@ class Tenant extends Authenticatable implements JWTSubject
     public function generateApprovalToken()
     {
         $this->approval_token = Str::random(64);
-        $this->approval_token_expires_at = now()->addDays(30); // Token valid for 30 days
+        $this->approval_token_expires_at = now()->addMonth(); // Token valid for 1 month
         $this->save();
 
         return $this;
@@ -168,7 +168,7 @@ class Tenant extends Authenticatable implements JWTSubject
     public function generatePasswordResetToken()
     {
         $this->reset_password_token = Str::random(64);
-        $this->reset_password_token_expire_at = now()->addHour();
+        $this->reset_password_token_expire_at = now()->addMonth(); // Token valid for 1 month
         $this->save();
 
         return $this;

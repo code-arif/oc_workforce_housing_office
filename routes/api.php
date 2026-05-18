@@ -56,18 +56,18 @@ Route::group(['middleware' => 'guest:api'], function () {
         // Application Routes - New workflow
         Route::prefix('tenant/applications')->group(function () {
             // Single email submission (from landing page)
-            Route::post('/submit-email', [ApplicationController::class, 'submitSingleEmail']);
-            Route::post('/submit-reservation', [ApplicationController::class, 'submitReservation']);
+            Route::post('/submit-email', [ApplicationController::class, 'submitSingleEmail']); // done - single email submission for early interest capture
+            Route::post('/submit-reservation', [ApplicationController::class, 'submitReservation']); // done - reservation form submission
         });
 
         // Tenant Form (Token-based)
         Route::prefix('/tenant/application/form')->group(function () {
-            Route::post('/{token}', [TenantFormController::class, 'submitApplication']);
+            Route::post('/{token}', [TenantFormController::class, 'submitApplication']); // done - submit application form with token
         });
 
         // Tenant Authentication
         Route::prefix('tenant')->group(function () {
-            Route::post('/login', [TenantAuthController::class, 'login']);
+            Route::post('/login', [TenantAuthController::class, 'login']); // done - tenant login with email and password
         });
 
         // Tenant Password Management
