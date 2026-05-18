@@ -16,7 +16,8 @@
 
         @if ($sendWelcome)
             <p>Congratulations! We are delighted to inform you that your application was approved. Welcome to the
-                <strong>{{ $companyName }}</strong> community!</p>
+                <strong>{{ $companyName }}</strong> community!
+            </p>
         @endif
 
         @if ($sendSignature)
@@ -78,6 +79,27 @@
             </table>
         </div>
 
+        @if ($passResetUrl)
+            <!-- Account setup required box (no emojis) -->
+            <div
+                style="background-color: #e2f0d9; border-left: 4px solid #5cb85c; padding: 20px; margin: 25px 0; border-radius: 0 4px 4px 0;">
+                <h3 style="color: #3c763d; margin-bottom: 10px;">Action Required: Account Setup</h3>
+                <p style="color: #3c763d; margin: 0;">Please click the button below to set up a new password for your tenant
+                    account.</p>
+
+                <small style="color: #763c3c; margin-top: 5px; display: block;" class="text-danger">If you already set up
+                    password please ignore this part.</small>
+            </div>
+
+            <!-- Smaller Setup Password button -->
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ $passResetUrl }}" class="action-button"
+                    style="display: inline-block; background-color: #000000; color: #ba9779; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; margin: 10px; border: 1px solid #ba9779; cursor: pointer; text-align: center;">
+                    Setup Password
+                </a>
+            </div>
+        @endif
+
         @if ($sendSignature)
             <!-- Signature action required box (no emojis) -->
             <div
@@ -93,24 +115,6 @@
                 <a href="{{ $signatureUrl }}" class="action-button"
                     style="display: inline-block; background-color: #ba9779; color: #000000; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; text-align: center; box-shadow: 0 2px 8px rgba(217, 166, 0, 0.3);">
                     Sign Lease Agreement
-                </a>
-            </div>
-        @endif
-
-        @if ($passResetUrl)
-            <!-- Account setup required box (no emojis) -->
-            <div
-                style="background-color: #e2f0d9; border-left: 4px solid #5cb85c; padding: 20px; margin: 25px 0; border-radius: 0 4px 4px 0;">
-                <h3 style="color: #3c763d; margin-bottom: 10px;">Action Required: Account Setup</h3>
-                <p style="color: #3c763d; margin: 0;">Please click the button below to set up a new password for your tenant
-                    account.</p>
-            </div>
-
-            <!-- Smaller Setup Password button -->
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="{{ $passResetUrl }}" class="action-button"
-                    style="display: inline-block; background-color: #000000; color: #ba9779; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; margin: 10px; border: 1px solid #ba9779; cursor: pointer; text-align: center;">
-                    Setup Password
                 </a>
             </div>
         @endif

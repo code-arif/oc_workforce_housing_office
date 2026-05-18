@@ -451,10 +451,9 @@ class LeaseController extends Controller
                 ]);
             }
 
-            // if (env('APP_ENV') !== 'production') {
             $tenant = Tenant::find($tenantId);
             $passResetUrl = null;
-            if ($tenant->status !== 'approved') {
+            if ($tenant) {
 
                 // Generate approval token
                 $tenant->generateApprovalToken();
@@ -475,11 +474,11 @@ class LeaseController extends Controller
                 if ($sendSignature && $leaseDocument) {
                     $leaseDocument->update(['status' => 'pending_signatures']);
                 }
-                
+
                 Mail::to($tenant->email)->queue(new NewLeaseDetailsMail(
-                    $lease, 
-                    $passResetUrl, 
-                    $sendWelcome, 
+                    $lease,
+                    $passResetUrl,
+                    $sendWelcome,
                     $sendSignature,
                     $leaseDocument
                 ));
@@ -575,12 +574,12 @@ class LeaseController extends Controller
 
     private function generatePaymentSchedule(Lease $lease, int $dueDay, ?string $firstInvoiceDate = null)
     {
-        $startDate = new \DateTime($lease->start_date);
-        $endDate = new \DateTime($lease->end_date);
+        $startDate = new DateTime($lease->start_date);
+        $endDate = new DateTime($lease->end_date);
 
         // Use first invoice date or calculate from start date
         $currentDate = $firstInvoiceDate
-            ? new \DateTime($firstInvoiceDate)
+            ? new DateTime($firstInvoiceDate)
             : clone $startDate;
 
         $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));
@@ -621,13 +620,13 @@ class LeaseController extends Controller
      */
     private function generateInvoices(Lease $lease, int $tenantId, int $dueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false, ?string $depositDueDate = null)
     {
-        $startDate = new \DateTime($lease->start_date);
-        $endDate = new \DateTime($lease->end_date);
+        $startDate = new DateTime($lease->start_date);
+        $endDate = new DateTime($lease->end_date);
         $isMonthToMonth = ($lease->start_date === $lease->end_date);
 
         // Use first invoice date or calculate from start date
         $currentDate = $firstInvoiceDate
-            ? new \DateTime($firstInvoiceDate)
+            ? new DateTime($firstInvoiceDate)
             : clone $startDate;
 
         $currentDate->setDate($currentDate->format('Y'), $currentDate->format('m'), min($dueDay, $currentDate->format('t')));

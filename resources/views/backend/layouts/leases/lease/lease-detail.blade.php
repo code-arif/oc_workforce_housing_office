@@ -93,21 +93,25 @@
                             });
                         @endphp
                         <div class="content-header">
-                            <button class="btn btn-light mobile-sidebar-toggle d-lg-none" onclick="toggleSidebar()">
-                                <i class="fe fe-menu"></i>
-                            </button>
-                            <h4 class="mb-0">Lease Detail</h4>
-                            <button class="btn btn-light close-detail"
-                                onclick="window.location='{{ route('leases.index') }}'">
-                                <i class="fe fe-x"></i>
-                            </button>
-                            @if($quickSignDocument)
-                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $quickSignDocument->id, 'quick_admin_sign' => 1]) }}"
-                                    class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1">
-                                    <i class="fe fe-edit-3"></i>
-                                    <span>Quick Admin Sign</span>
-                                </a>
-                            @endif
+                            <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-light mobile-sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+                                    <i class="fe fe-menu"></i>
+                                </button>
+                                <h4 class="mb-0">Lease Detail</h4>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                @if($quickSignDocument)
+                                    <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $quickSignDocument->id, 'quick_admin_sign' => 1]) }}"
+                                        class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1">
+                                        <i class="fe fe-edit-3"></i>
+                                        <span>Quick Admin Sign</span>
+                                    </a>
+                                @endif
+                                <button class="btn btn-light close-detail"
+                                    onclick="window.location='{{ route('leases.index') }}'">
+                                    <i class="fe fe-x"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <div class="lease-detail-content" id="leaseDetailContent">
@@ -357,323 +361,312 @@
                                 </div>
                             </div>
 
-                            <!-- Open Documents Section -->
-                            <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center section-header"
-                                    data-bs-toggle="collapse" data-bs-target="#openDocsSection">
-                                    <h5 class="section-title mb-0">
-                                        <i class="fe fe-file-text me-2"></i> Open Documents
-                                        <span class="badge bg-secondary ms-2 document-count">
-                                            {{ $lease->documents->where('tenant_signed_at', null)->count() }}
-                                        </span>
-                                    </h5>
-                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
-                                        <i class="fe fe-minus"></i>
-                                    </button>
-                                </div>
-
-                                <div class="collapse show" id="openDocsSection">
-                                    @if ($openLeaseDocuments->count() > 0)
-                                        @foreach ($openLeaseDocuments as $doc)
-                                                <div class="document-card">
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="document-icon">
-                                                            <i class="fe fe-file-text"></i>
-                                                        </div>
-                                                        <div class="flex-grow-1 ms-3">
-                                                            <h6 class="mb-1">
-                                                                {{ $doc->template ? $doc->template->name : 'Lease Agreement' }}
-                                                            </h6>
-                                                            <div class="document-status">
-                                                                @if (!$doc->tenant_signed_at)
-                                                                    <span class="badge badge-sm bg-warning">Pending Tenant
-                                                                        Signature</span>
-                                                                @elseif(!$doc->admin_signed_at)
-                                                                    <span class="badge badge-sm bg-info">Pending Admin
-                                                                        Signature</span>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                        <div class="d-flex gap-2">
-                                                            <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}"
-                                                                class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
-                                                                title="Preview Document">
-                                                                <i class="fe fe-eye"></i>
-                                                                <span>Sign Document</span>
-                                                            </a>
-                                                            @if(!$doc->admin_signed_at)
-                                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id, 'quick_admin_sign' => 1]) }}"
-                                                                    class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
-                                                                    title="Open preview with admin signature pad">
-                                                                    <i class="fe fe-edit-3"></i>
-                                                                    <span>Quick Admin Sign</span>
-                                                                </a>
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                        @endforeach
-                                    @else
-                                        <div class="empty-state">
-                                            <div class="empty-state-icon">
-                                                <i class="fe fe-check-circle"></i>
-                                            </div>
-                                            <h6>No Open Documents Found</h6>
-                                            <p class="text-muted">All documents have been signed</p>
-                                            @if ($lease->documents->count() > 0)
-                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $lease->documents->first()->id]) }}"
-                                                    class="btn btn-sm btn-outline-primary mt-2">
-                                                    <i class="fe fe-eye me-1"></i> View Signed Document
-                                                </a>
-                                            @else
-                                                <button class="btn btn-sm btn-primary mt-2">
-                                                    <i class="fe fe-plus me-1"></i> Sign a Document
-                                                </button>
-                                            @endif
+                            <div class="row g-4">
+                                <!-- Left Column: Documents -->
+                                <div class="col-lg-6">
+                                    <!-- Open Documents Card -->
+                                    <div class="detail-card mb-4">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="card-title mb-0">
+                                                <i class="fe fe-file-text me-2"></i> Open Documents
+                                                <span class="badge bg-secondary ms-2 document-count">
+                                                    {{ $lease->documents->where('tenant_signed_at', null)->count() }}
+                                                </span>
+                                            </h5>
                                         </div>
-                                    @endif
-                                </div>
-                            </div>
-                            @if ($lease->status == 'ACTIVE')
-                                <!-- Invoice Section -->
-                                <div class="detail-section">
-                                    <div class="d-flex justify-content-between align-items-center section-header"
-                                        data-bs-toggle="collapse" data-bs-target="#invoiceSection">
-                                        <h5 class="section-title mb-0">
-                                            <i class="fe fe-file-text me-2"></i> Rent Invoices
-                                            <span class="badge bg-primary ms-2">
-                                                {{ $lease->invoices->where('type', 'RENT')->count() }}
-                                            </span>
-                                        </h5>
-                                        <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
-                                            <i class="fe fe-minus"></i>
-                                        </button>
-                                    </div>
 
-                                    <div class="collapse show" id="invoiceSection">
-                                        <!-- Invoice List -->
-                                        <div class="invoice-list">
-                                            @if ($lease->invoices->where('type', 'RENT')->count() > 0)
-                                                @php
-                                                    $rentInvoices = $lease->invoices
-                                                        ->where('type', 'RENT')
-                                                        ->sortBy('created_at')
-                                                        ->values();
-                                                    $firstInvoice = $rentInvoices->first();
-                                                @endphp
-                                                @foreach ($rentInvoices as $index => $invoice)
-                                                    @php
-                                                        $isFirstInvoice = $invoice->id === $firstInvoice->id;
-                                                        $hasDeposit = $isFirstInvoice && $lease->deposit_amount > 0;
-                                                        $totalAmount =
-                                                            $invoice->amount +
-                                                            ($hasDeposit && !$lease->deposit_collected
-                                                                ? $lease->deposit_amount
-                                                                : 0);
-                                                    @endphp
-                                                    <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                        class="invoice-card {{ $isFirstInvoice && $hasDeposit ? 'has-deposit' : '' }}">
-                                                        <div class="invoice-left">
-                                                            <div
-                                                                class="invoice-icon {{ $invoice->status == 'PAID' ? 'paid' : ($invoice->isOverdue() ? 'overdue' : 'pending') }}">
-                                                                @if ($invoice->status == 'PAID')
-                                                                    <i class="fe fe-check"></i>
-                                                                @elseif($invoice->isOverdue())
-                                                                    <i class="fe fe-alert-circle"></i>
-                                                                @else
-                                                                    <i class="fe fe-clock"></i>
-                                                                @endif
-                                                            </div>
-                                                            <div class="invoice-details">
-                                                                <h6 class="invoice-title">
-                                                                    {{ $invoice->invoice_number ?? 'INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}
-                                                                    @if ($isFirstInvoice && $hasDeposit)
-                                                                        <span class="badge bg-info-light text-info ms-2">+
-                                                                            Deposit</span>
-                                                                    @endif
-                                                                </h6>
-                                                                <span class="invoice-date">Due:
-                                                                    {{ date('M d, Y', strtotime($invoice->due_date)) }}</span>
-                                                                @if ($isFirstInvoice && $hasDeposit && !$lease->deposit_collected)
-                                                                    <span class="deposit-note">
-                                                                        <i class="fe fe-shield"></i> Includes security
-                                                                        deposit
-                                                                    </span>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                        <div class="invoice-right">
-                                                            <span class="invoice-amount">Due:
-                                                                ${{ number_format($totalAmount, 2) }}</span>
-                                                            @if ($isFirstInvoice && $hasDeposit)
-                                                                <div class="amount-breakdown">
-                                                                    <small class="text-muted">Rent:
-                                                                        ${{ number_format($invoice->amount, 2) }}</small>
-                                                                    @if (!$lease->deposit_collected)
-                                                                        <small class="text-warning">Deposit:
-                                                                            ${{ number_format($lease->deposit_amount, 2) }}</small>
-                                                                    @else
-                                                                        <small class="text-success">Deposit:
-                                                                            Collected</small>
+                                        <div class="card-body">
+                                            @if ($openLeaseDocuments->count() > 0)
+                                                @foreach ($openLeaseDocuments as $doc)
+                                                        <div class="document-card">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="document-icon">
+                                                                    <i class="fe fe-file-text"></i>
+                                                                </div>
+                                                                <div class="flex-grow-1 ms-3">
+                                                                    <h6 class="mb-1">
+                                                                        {{ $doc->template ? $doc->template->name : 'Lease Agreement' }}
+                                                                    </h6>
+                                                                    <div class="document-status">
+                                                                        @if (!$doc->tenant_signed_at)
+                                                                            <span class="badge badge-sm bg-warning text-dark">Pending Tenant
+                                                                                Signature</span>
+                                                                        @elseif(!$doc->admin_signed_at)
+                                                                            <span class="badge badge-sm bg-info text-white">Pending Admin
+                                                                                Signature</span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                                <div class="d-flex gap-2">
+                                                                    <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}"
+                                                                        class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                                                                        title="Preview Document">
+                                                                        <i class="fe fe-eye"></i>
+                                                                        <span>Sign Document</span>
+                                                                    </a>
+                                                                    @if(!$doc->admin_signed_at)
+                                                                        <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id, 'quick_admin_sign' => 1]) }}"
+                                                                            class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+                                                                            title="Open preview with admin signature pad">
+                                                                            <i class="fe fe-edit-3"></i>
+                                                                            <span>Quick Admin Sign</span>
+                                                                        </a>
                                                                     @endif
                                                                 </div>
-                                                            @endif
-                                                            @if ($invoice->status == 'PAID')
-                                                                <span class="invoice-status paid">Paid</span>
-                                                            @elseif($invoice->isOverdue())
-                                                                <span class="invoice-status overdue">Overdue</span>
-                                                            @elseif($invoice->status == 'CANCELLED')
-                                                                <span class="invoice-status cancelled">Cancelled</span>
-                                                            @elseif($invoice->status == 'PARTIAL')
-                                                                <span class="invoice-status partial">Partially Paid</span>
-                                                            @else
-                                                                <span class="invoice-status pending">Unpaid</span>
-                                                            @endif
+                                                            </div>
                                                         </div>
-                                                        <div class="invoice-arrow">
-                                                            <i class="fe fe-chevron-right"></i>
-                                                        </div>
-                                                    </a>
                                                 @endforeach
                                             @else
-                                                <div class="empty-invoice-state">
-                                                    <i class="fe fe-inbox"></i>
-                                                    <p>No rent invoices generated yet</p>
+                                                <div class="empty-state">
+                                                    <div class="empty-state-icon">
+                                                        <i class="fe fe-check-circle"></i>
+                                                    </div>
+                                                    <h6>No Open Documents Found</h6>
+                                                    <p class="text-muted">All documents have been signed</p>
+                                                    @if ($lease->documents->count() > 0)
+                                                        <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $lease->documents->first()->id]) }}"
+                                                            class="btn btn-sm btn-outline-primary mt-2">
+                                                            <i class="fe fe-eye me-1"></i> View Signed Document
+                                                        </a>
+                                                    @else
+                                                        <button class="btn btn-sm btn-primary mt-2">
+                                                            <i class="fe fe-plus me-1"></i> Sign a Document
+                                                        </button>
+                                                    @endif
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
-                                </div>
-                            @else
-                                <!-- Invoice Section -->
-                                <div class="detail-section">
-                                    <div class="d-flex justify-content-between align-items-center section-header"
-                                        data-bs-toggle="collapse" data-bs-target="#invoiceSectionEmpty">
-                                        <h5 class="section-title mb-0">
-                                            <i class="fe fe-file-text me-2"></i> Rent Invoices
-                                        </h5>
-                                        <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
-                                            <i class="fe fe-plus"></i>
-                                        </button>
-                                    </div>
 
-                                    <div class="collapse" id="invoiceSectionEmpty">
-                                        <div class="invoice-section">
-                                            <div class="empty-invoice-state">
-                                                <i class="fe fe-inbox"></i>
-                                                <p>Once document is signed by both party, rent invoices will be generated
-                                                    here.</p>
-                                            </div>
+                                    <!-- Completed Documents Card -->
+                                    <div class="detail-card mb-4">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="card-title mb-0">
+                                                <i class="fe fe-check-square me-2"></i> Completed Documents
+                                                <span class="badge bg-success ms-2">
+                                                    {{ $lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() }}
+                                                </span>
+                                            </h5>
                                         </div>
-                                    </div>
-                                </div>
-                            @endif
-                            <!-- Completed Documents Section -->
-                            <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center section-header"
-                                    data-bs-toggle="collapse" data-bs-target="#completedDocsSection">
-                                    <h5 class="section-title mb-0">
-                                        <i class="fe fe-check-square me-2"></i> Completed Documents
-                                        <span class="badge bg-success ms-2">
-                                            {{ $lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() }}
-                                        </span>
-                                    </h5>
-                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
-                                        <i class="fe fe-plus"></i>
-                                    </button>
-                                </div>
 
-                                <div class="collapse" id="completedDocsSection">
-                                    <div class="document-section">
-                                        @if ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() > 0)
-                                        <div class="completed-docs-list">
-                                            @foreach ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null) as $doc)
-                                                <div class="completed-doc-item">
-                                                    <div class="d-flex align-items-center justify-content-between">
-                                                        <div class="d-flex align-items-center">
-                                                            <i class="fe fe-file-text text-success me-2"></i>
-                                                            <div>
-                                                                <div class="fw-semibold">{{ $doc->template ? $doc->template->name : 'Lease Agreement' }}</div>
-                                                                <small class="text-muted">
-                                                                    Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
-                                                                </small>
-                                                            </div>
-                                                        </div>
-                                                        <div class="d-flex align-items-center gap-3">
-                                                            <div class="text-end">
-                                                                <div class="text-muted small">
-                                                                    {{ date('M d, Y | g:i A', strtotime($doc->admin_signed_at)) }}
+                                        <div class="card-body">
+                                            <div class="document-section">
+                                                @if ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() > 0)
+                                                <div class="completed-docs-list">
+                                                    @foreach ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null) as $doc)
+                                                        <div class="completed-doc-item">
+                                                            <div class="d-flex align-items-center justify-content-between">
+                                                                <div class="d-flex align-items-center">
+                                                                    <i class="fe fe-file-text text-success me-2"></i>
+                                                                    <div>
+                                                                        <div class="fw-semibold">{{ $doc->template ? $doc->template->name : 'Lease Agreement' }}</div>
+                                                                        <small class="text-muted">
+                                                                            Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
+                                                                        </small>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="d-flex align-items-center gap-3">
+                                                                    <div class="text-end">
+                                                                        <div class="text-muted small">
+                                                                            {{ date('M d, Y | g:i A', strtotime($doc->admin_signed_at)) }}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="d-flex gap-2">
+                                                                        <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview">
+                                                                            <i class="fe fe-eye"></i>
+                                                                        </a>
+                                                                        <a href="{{ route('lease-documents.download-pdf', $doc->id) }}" class="btn btn-sm btn-outline-success" target="_blank" title="Download">
+                                                                            <i class="fe fe-download"></i>
+                                                                        </a>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                            <div class="d-flex gap-2">
-                                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}" class="btn btn-sm btn-outline-primary" title="Preview">
-                                                                    <i class="fe fe-eye"></i>
-                                                                </a>
-                                                                <a href="{{ route('lease-documents.download-pdf', $doc->id) }}" class="btn btn-sm btn-outline-success" target="_blank" title="Download">
-                                                                    <i class="fe fe-download"></i>
-                                                                </a>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                                @else
+                                                <div class="empty-state-small">
+                                                    <p class="text-muted mb-0">No completed documents</p>
+                                                </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Invoices & History -->
+                                <div class="col-lg-6">
+                                    @if ($lease->status == 'ACTIVE')
+                                        <!-- Rent Invoices Card -->
+                                        <div class="detail-card mb-4">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fe fe-file-text me-2"></i> Rent Invoices
+                                                    <span class="badge bg-primary ms-2">
+                                                        {{ $lease->invoices->where('type', 'RENT')->count() }}
+                                                    </span>
+                                                </h5>
+                                            </div>
+
+                                            <div class="card-body">
+                                                <!-- Invoice List -->
+                                                <div class="invoice-list">
+                                                    @if ($lease->invoices->where('type', 'RENT')->count() > 0)
+                                                        @php
+                                                            $rentInvoices = $lease->invoices
+                                                                ->where('type', 'RENT')
+                                                                ->sortBy('created_at')
+                                                                ->values();
+                                                            $firstInvoice = $rentInvoices->first();
+                                                        @endphp
+                                                        @foreach ($rentInvoices as $index => $invoice)
+                                                            @php
+                                                                $isFirstInvoice = $invoice->id === $firstInvoice->id;
+                                                                $hasDeposit = $isFirstInvoice && $lease->deposit_amount > 0;
+                                                                $totalAmount =
+                                                                    $invoice->amount +
+                                                                    ($hasDeposit && !$lease->deposit_collected
+                                                                        ? $lease->deposit_amount
+                                                                        : 0);
+                                                            @endphp
+                                                            <a href="{{ route('invoices.show', $invoice->id) }}"
+                                                                class="invoice-card {{ $isFirstInvoice && $hasDeposit ? 'has-deposit' : '' }}">
+                                                                <div class="invoice-left">
+                                                                    <div
+                                                                        class="invoice-icon {{ $invoice->status == 'PAID' ? 'paid' : ($invoice->isOverdue() ? 'overdue' : 'pending') }}">
+                                                                        @if ($invoice->status == 'PAID')
+                                                                            <i class="fe fe-check"></i>
+                                                                        @elseif($invoice->isOverdue())
+                                                                            <i class="fe fe-alert-circle"></i>
+                                                                        @else
+                                                                            <i class="fe fe-clock"></i>
+                                                                        @endif
+                                                                    </div>
+                                                                    <div class="invoice-details">
+                                                                        <h6 class="invoice-title">
+                                                                            {{ $invoice->invoice_number ?? 'INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}
+                                                                            @if ($isFirstInvoice && $hasDeposit)
+                                                                                <span class="badge bg-info-light text-info ms-2">+
+                                                                                    Deposit</span>
+                                                                            @endif
+                                                                        </h6>
+                                                                        <span class="invoice-date">Due:
+                                                                            {{ date('M d, Y', strtotime($invoice->due_date)) }}</span>
+                                                                        @if ($isFirstInvoice && $hasDeposit && !$lease->deposit_collected)
+                                                                            <span class="deposit-note">
+                                                                                <i class="fe fe-shield"></i> Includes security
+                                                                                deposit
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                                <div class="invoice-right">
+                                                                    <span class="invoice-amount">Due:
+                                                                        ${{ number_format($totalAmount, 2) }}</span>
+                                                                    @if ($isFirstInvoice && $hasDeposit)
+                                                                        <div class="amount-breakdown">
+                                                                            <small class="text-muted">Rent:
+                                                                                ${{ number_format($invoice->amount, 2) }}</small>
+                                                                            @if (!$lease->deposit_collected)
+                                                                                <small class="text-warning">Deposit:
+                                                                                    ${{ number_format($lease->deposit_amount, 2) }}</small>
+                                                                            @else
+                                                                                <small class="text-success">Deposit:
+                                                                                    Collected</small>
+                                                                            @endif
+                                                                        </div>
+                                                                    @endif
+                                                                    @if ($invoice->status == 'PAID')
+                                                                        <span class="invoice-status paid">Paid</span>
+                                                                    @elseif($invoice->isOverdue())
+                                                                        <span class="invoice-status overdue">Overdue</span>
+                                                                    @elseif($invoice->status == 'CANCELLED')
+                                                                        <span class="invoice-status cancelled">Cancelled</span>
+                                                                    @elseif($invoice->status == 'PARTIAL')
+                                                                        <span class="invoice-status partial">Partially Paid</span>
+                                                                    @else
+                                                                        <span class="invoice-status pending">Unpaid</span>
+                                                                    @endif
+                                                                </div>
+                                                                <div class="invoice-arrow">
+                                                                    <i class="fe fe-chevron-right"></i>
+                                                                </div>
+                                                            </a>
+                                                        @endforeach
+                                                    @else
+                                                        <div class="empty-invoice-state">
+                                                            <i class="fe fe-inbox"></i>
+                                                            <p>No rent invoices generated yet</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <!-- Rent Invoices Card -->
+                                        <div class="detail-card mb-4">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="fe fe-file-text me-2"></i> Rent Invoices
+                                                </h5>
+                                            </div>
+
+                                            <div class="card-body">
+                                                <div class="empty-invoice-state">
+                                                    <i class="fe fe-inbox"></i>
+                                                    <p>Once document is signed by both party, rent invoices will be generated
+                                                        here.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <!-- Lease History Card -->
+                                    <div class="detail-card mb-4">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="card-title mb-0">
+                                                <i class="fe fe-clock me-2"></i> Lease History
+                                            </h5>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="timeline-section">
+                                                <div class="timeline-item">
+                                                    <div class="timeline-icon bg-success">
+                                                        <i class="fe fe-check"></i>
+                                                    </div>
+                                                    <div class="timeline-content">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <h6 class="mb-1">Lease Signed</h6>
+                                                                <p class="text-muted mb-0 small">
+                                                                    Lease Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
+                                                                </p>
                                                             </div>
+                                                            <span class="text-muted small">
+                                                                {{ $lease->documents->first() && $lease->documents->first()->admin_signed_at ? date('M d, Y', strtotime($lease->documents->first()->admin_signed_at)) : 'N/A' }}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @endforeach
-                                        </div>
-                                        @else
-                                        <div class="empty-state-small">
-                                            <p class="text-muted mb-0">No completed documents</p>
-                                        </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Lease History Section -->
-                            <div class="detail-section">
-                                <div class="d-flex justify-content-between align-items-center section-header" data-bs-toggle="collapse" data-bs-target="#leaseHistorySection">
-                                    <h5 class="section-title mb-0">
-                                        <i class="fe fe-clock me-2"></i> Lease History
-                                    </h5>
-                                    <button class="btn btn-sm btn-outline-primary collapse-toggle-btn">
-                                        <i class="fe fe-plus"></i>
-                                    </button>
-                                </div>
-
-                                <div class="collapse" id="leaseHistorySection">
-                                    <div class="timeline-section">
-                                        <div class="timeline-item">
-                                            <div class="timeline-icon bg-success">
-                                                <i class="fe fe-check"></i>
-                                            </div>
-                                            <div class="timeline-content">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div>
-                                                        <h6 class="mb-1">Lease Signed</h6>
-                                                        <p class="text-muted mb-0 small">
-                                                            Lease Signed by {{ $lease->property ? $lease->property->name : 'Property' }}
-                                                        </p>
+                                                <div class="timeline-item">
+                                                    <div class="timeline-icon bg-info">
+                                                        <i class="fe fe-edit"></i>
                                                     </div>
-                                                    <span class="text-muted small">
-                                                        {{ $lease->documents->first() && $lease->documents->first()->admin_signed_at ? date('M d, Y', strtotime($lease->documents->first()->admin_signed_at)) : 'N/A' }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="timeline-item">
-                                            <div class="timeline-icon bg-info">
-                                                <i class="fe fe-edit"></i>
-                                            </div>
-                                            <div class="timeline-content">
-                                                <div class="d-flex justify-content-between align-items-start">
-                                                    <div>
-                                                        <h6 class="mb-1">Lease Created</h6>
-                                                        <p class="text-muted mb-0 small">
-                                                            Lease was created in the system
-                                                        </p>
+                                                    <div class="timeline-content">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <h6 class="mb-1">Lease Created</h6>
+                                                                <p class="text-muted mb-0 small">
+                                                                    Lease was created in the system
+                                                                </p>
+                                                            </div>
+                                                            <span class="text-muted small">
+                                                                {{ date('M d, Y', strtotime($lease->created_at)) }}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <span class="text-muted small">
-                                                        {{ date('M d, Y', strtotime($lease->created_at)) }}
-                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1283,16 +1276,7 @@
             }
         });
 
-        // Collapse/expand sections - handle Bootstrap collapse events
-        $('.collapse').on('show.bs.collapse', function() {
-            const sectionHeader = $(this).prev('.section-header');
-            sectionHeader.find('.collapse-toggle-btn i').removeClass('fe-plus').addClass('fe-minus');
-        });
-
-        $('.collapse').on('hide.bs.collapse', function() {
-            const sectionHeader = $(this).prev('.section-header');
-            sectionHeader.find('.collapse-toggle-btn i').removeClass('fe-minus').addClass('fe-plus');
-        });
+        // Collapse/expand sections are handled elegantly via native CSS with aria-expanded rotation.
 
         $('#resendSignatureMail').click(function(e) {
             e.preventDefault();
@@ -1323,68 +1307,123 @@
 
 @push('styles')
     <style>
-
         /* Color utilities */
         .bg-warning-light {
-            background: rgba(255, 193, 7, 0.15) !important;
+            background: rgba(186, 151, 121, 0.15) !important;
+            color: #ba9779 !important;
         }
 
         .bg-success-light {
-            background: rgba(76, 175, 80, 0.15) !important;
+            background: rgba(34, 197, 94, 0.15) !important;
+            color: #16a34a !important;
         }
 
         .bg-info-light {
-            background: rgba(33, 150, 243, 0.15) !important;
+            background: rgba(59, 130, 246, 0.15) !important;
+            color: #2563eb !important;
+        }
+
+        /* Lease Detail Container */
+        .lease-detail-container {
+            display: flex;
+            height: calc(100vh - 70px);
+            background: #f8fafc;
+            margin: 15px 0px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Right Content */
+        .lease-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .content-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+        }
+
+        .content-header h4 {
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .lease-detail-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Lease Header Banner */
+        .lease-header {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 10px 30px -10px rgba(0, 0, 0, 0.03);
         }
 
         /* Info Cards */
         .info-card {
-            background: #fff;
-            border: 1px solid #e9ecef;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             overflow: hidden;
-            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease-in-out;
         }
 
         .info-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 25px -5px rgba(186, 151, 121, 0.12);
+            border-color: #ba9779;
         }
 
         .info-card-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: #fafafa;
             padding: 12px 16px;
             font-weight: 600;
-            font-size: 13px;
-            color: #6c757d;
+            font-size: 12px;
+            color: #475569;
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 1px solid #e9ecef;
+            border-bottom: 1px solid #e2e8f0;
+            /* border-top: 3px solid #ba9779; */
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .info-card-header i {
             font-size: 14px;
+            color: #ba9779;
         }
 
         .info-card-body {
             padding: 16px;
         }
 
-        .tenant-card .info-card-header {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            color: #1976d2;
+        /* Specific summaries styling */
+        .tenant-name {
+            color: #0f172a;
+            font-weight: 700;
         }
 
-        .property-card .info-card-header {
-            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
-            color: #388e3c;
-        }
-
-        .invoice-summary-card .info-card-header {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-            color: #f57c00;
+        .lease-property-title {
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 1rem;
         }
 
         .property-detail-item {
@@ -1393,13 +1432,16 @@
             gap: 8px;
             margin-bottom: 8px;
             font-size: 14px;
+            color: #475569;
         }
 
         .property-detail-item i {
             width: 16px;
             text-align: center;
+            color: #ba9779;
         }
 
+        /* Invoice summary styles */
         .invoice-stats {
             display: flex;
             flex-direction: column;
@@ -1411,70 +1453,180 @@
             justify-content: space-between;
             align-items: center;
             padding: 8px 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
             font-size: 13px;
+            color: #334155;
         }
 
         .invoice-stat-item .stat-label {
-            color: #6c757d;
+            color: #64748b;
+            font-weight: 500;
         }
 
         .invoice-stat-item .stat-value {
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .invoice-stat-item.text-success {
-            background: rgba(76, 175, 80, 0.1);
-        }
-
-        .invoice-stat-item.text-success .stat-value {
-            color: #4caf50;
+            background: rgba(34, 197, 94, 0.06);
+            border-color: rgba(34, 197, 94, 0.15);
+            color: #16a34a !important;
         }
 
         .invoice-stat-item.text-danger {
-            background: rgba(244, 67, 54, 0.1);
-        }
-
-        .invoice-stat-item.text-danger .stat-value {
-            color: #f44336;
+            background: rgba(239, 68, 68, 0.06);
+            border-color: rgba(239, 68, 68, 0.15);
+            color: #dc2626 !important;
         }
 
         .invoice-links {
-            border-top: 1px solid #e9ecef;
+            border-top: 1px solid #e2e8f0;
             padding-top: 12px;
         }
 
         .invoice-link-group {
             font-size: 12px;
             line-height: 1.8;
+            color: #475569;
         }
 
         .invoice-link {
-            font-weight: 500;
+            font-weight: 600;
             text-decoration: none;
             transition: all 0.2s;
         }
 
         .invoice-link.paid {
-            color: #4caf50;
+            color: #16a34a;
         }
 
         .invoice-link.paid:hover {
-            color: #388e3c;
+            color: #15803d;
             text-decoration: underline;
         }
 
         .invoice-link.unpaid {
-            color: #f44336;
+            color: #dc2626;
         }
 
         .invoice-link.unpaid:hover {
-            color: #d32f2f;
+            color: #b91c1c;
             text-decoration: underline;
         }
 
-        /* Invoice List */
+        /* Detail Cards */
+        .detail-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .detail-card:hover {
+            border-color: #ba9779;
+            box-shadow: 0 10px 25px -5px rgba(186, 151, 121, 0.06);
+        }
+
+        .detail-card .card-header {
+            padding: 20px 24px;
+            background: #fafafa;
+            border-bottom: 1px solid #e2e8f0;
+            /* border-top: 3px solid #ba9779; */
+        }
+
+        .detail-card .card-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .detail-card .card-title i {
+            color: #ba9779;
+            font-size: 16px;
+        }
+
+        .detail-card .card-body {
+            padding: 24px;
+            background: #ffffff;
+        }
+
+        /* Document Cards inside sections */
+        .document-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: border-color 0.2s;
+        }
+
+        .document-card:hover {
+            border-color: #ba9779;
+        }
+
+        .document-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .document-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(186, 151, 121, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ba9779;
+            font-size: 22px;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .empty-state-icon {
+            width: 72px;
+            height: 72px;
+            background: rgba(34, 197, 94, 0.08);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            color: #16a34a;
+            font-size: 32px;
+        }
+
+        .empty-state-small {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+
+        /* Completed Docs List */
+        .completed-doc-item {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.2s;
+        }
+
+        .completed-doc-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .completed-doc-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Invoice List inside sections */
         .invoice-list {
             display: flex;
             flex-direction: column;
@@ -1482,26 +1634,25 @@
         }
 
         .invoice-card {
-            background: #fff;
-            border: 1px solid #e9ecef;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             padding: 18px 20px;
             display: flex;
             align-items: center;
             text-decoration: none;
-            transition: all 0.2s ease;
+            transition: all 0.2s ease-in-out;
             position: relative;
         }
 
         .invoice-card:hover {
-            border-color: #2196F3;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.1);
+            border-color: #ba9779;
+            box-shadow: 0 6px 20px -5px rgba(186, 151, 121, 0.12);
             text-decoration: none;
         }
 
         .invoice-card.has-deposit {
-            border-left: 4px solid #ffc107;
-            background: linear-gradient(to right, #fffbeb 0%, #fff 15%);
+            border-left: 4px solid #ba9779;
         }
 
         .invoice-left {
@@ -1512,40 +1663,36 @@
         }
 
         .invoice-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             flex-shrink: 0;
         }
 
         .invoice-icon.paid {
-            background: rgba(76, 175, 80, 0.1);
-            color: #4caf50;
+            background: rgba(34, 197, 94, 0.08);
+            color: #16a34a;
         }
 
         .invoice-icon.pending {
-            background: rgba(255, 193, 7, 0.1);
-            color: #f9a825;
+            background: rgba(234, 179, 8, 0.08);
+            color: #ca8a04;
         }
 
         .invoice-icon.overdue {
-            background: rgba(244, 67, 54, 0.1);
-            color: #f44336;
-        }
-
-        .invoice-details {
-            flex: 1;
+            background: rgba(239, 68, 68, 0.08);
+            color: #dc2626;
         }
 
         .invoice-title {
             font-weight: 600;
-            font-size: 15px;
-            color: #2c3e50;
-            margin-bottom: 4px;
+            font-size: 14px;
+            color: #0f172a;
+            margin-bottom: 2px;
             display: flex;
             align-items: center;
             flex-wrap: wrap;
@@ -1553,8 +1700,8 @@
         }
 
         .invoice-date {
-            font-size: 13px;
-            color: #6c757d;
+            font-size: 12px;
+            color: #64748b;
             display: block;
         }
 
@@ -1563,12 +1710,9 @@
             align-items: center;
             gap: 5px;
             font-size: 12px;
-            color: #f57c00;
-            margin-top: 6px;
-        }
-
-        .deposit-note i {
-            font-size: 14px;
+            color: #ba9779;
+            margin-top: 4px;
+            font-weight: 500;
         }
 
         .invoice-right {
@@ -1578,17 +1722,17 @@
 
         .invoice-amount {
             display: block;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 4px;
+            color: #0f172a;
+            margin-bottom: 2px;
         }
 
         .amount-breakdown {
             display: flex;
             flex-direction: column;
-            gap: 2px;
-            margin-bottom: 6px;
+            gap: 1px;
+            margin-bottom: 4px;
         }
 
         .amount-breakdown small {
@@ -1596,331 +1740,50 @@
         }
 
         .invoice-status {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            padding: 4px 12px;
+            padding: 2px 10px;
             border-radius: 20px;
             display: inline-block;
+            text-transform: uppercase;
         }
 
         .invoice-status.paid {
-            background: rgba(76, 175, 80, 0.1);
-            color: #4caf50;
+            background: rgba(34, 197, 94, 0.08);
+            color: #16a34a;
         }
 
         .invoice-status.pending {
-            background: rgba(255, 193, 7, 0.1);
-            color: #f9a825;
+            background: rgba(234, 179, 8, 0.08);
+            color: #ca8a04;
         }
 
         .invoice-status.overdue {
-            background: rgba(244, 67, 54, 0.1);
-            color: #f44336;
+            background: rgba(239, 68, 68, 0.08);
+            color: #dc2626;
         }
 
         .invoice-arrow {
-            color: #adb5bd;
-            font-size: 18px;
+            color: #94a3b8;
+            font-size: 16px;
+            transition: transform 0.2s;
         }
 
         .invoice-card:hover .invoice-arrow {
-            color: #2196F3;
+            color: #ba9779;
+            transform: translateX(4px);
         }
 
-        .empty-invoice-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #adb5bd;
-        }
-
-        .empty-invoice-state i {
-            font-size: 48px;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        .empty-invoice-state p {
-            margin: 0;
-            font-size: 14px;
-        }
-
-        .invoice-item {
-            cursor: pointer;
-            padding: 15px;
-            border-bottom: 1px solid #f1f3f5;
-        }
-        .invoice-item:hover {
-            background-color: #f8f9fa;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        .invoice-item:last-child {
-            border-bottom: none;
-        }
-        .lease-detail-container {
-            display: flex;
-            height: calc(100vh - 70px);
-            background: #fff;
-            margin: 15px 0px;
-        }
-
-        /* Left Sidebar */
-        .lease-sidebar {
-            width: 350px;
-            border-right: 1px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-            background: #fff;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .sidebar-header h5 {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .search-box input {
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-            padding: 8px 12px;
-            font-size: 14px;
-        }
-
-        .lease-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .lease-item {
-            display: flex;
-            align-items: stretch;
-            padding: 0;
-            cursor: pointer;
-            border-bottom: 1px solid #f8f9fa;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .lease-item:hover {
-            background: #f8f9fa;
-        }
-
-        .lease-item.active {
-            background: #e3f2fd;
-        }
-
-        .lease-status-indicator {
-            width: 4px;
-            min-height: 100%;
-        }
-
-        .lease-info {
-            flex: 1;
-            padding: 12px 16px;
-        }
-
-        .lease-property {
-            font-size: 14px;
-            color: #2c3e50;
-            margin-bottom: 4px;
-        }
-
-        .lease-tenant {
-            font-size: 13px;
-            color: #6c757d;
-            margin-bottom: 4px;
-        }
-
-        .lease-dates {
-            font-size: 12px;
-            color: #adb5bd;
-        }
-
-        .lease-badge {
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-        }
-
-        /* Right Content */
-        .lease-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .content-header {
-            padding: 20px 30px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #fff;
-        }
-
-        .content-header h4 {
-            font-weight: 600;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .mobile-sidebar-toggle {
-            display: none;
-        }
-
-        .lease-detail-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
-        }
-
-        .lease-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-            border: 1px solid #e9ecef;
-        }
-
-        .detail-section {
-            margin-bottom: 20px;
-            background: #fff;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .section-header {
-            padding: 18px 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-bottom: 1px solid transparent;
-            margin: 0;
-        }
-
-        .section-header:hover {
-            background: #f8f9fa;
-        }
-
-        .section-header[aria-expanded="true"] {
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .section-title {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .collapse-toggle-btn {
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .collapse-toggle-btn:hover {
-            background: #e3f2fd;
-            border-color: #2196F3;
-            color: #2196F3;
-        }
-
-        .collapse-toggle-btn i {
-            font-size: 14px;
-            transition: transform 0.2s ease;
-        }
-
-        .detail-section .collapse,
-        .detail-section .collapsing {
-            padding: 0 20px;
-        }
-
-        .detail-section .collapse.show {
-            padding: 15px 20px 20px;
-        }
-
-        .document-section {
-            margin-top: 0;
-        }
-
-        .document-card {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-        }
-
-        .document-card:last-child {
-            margin-bottom: 0;
-        }
-
-        .document-icon {
-            width: 50px;
-            height: 50px;
-            background: #e3f2fd;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2196F3;
-            font-size: 24px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .empty-state-icon {
-            width: 80px;
-            height: 80px;
-            background: #e8f5e9;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            color: #4caf50;
-            font-size: 40px;
-        }
-
-        .empty-state-small {
-            text-align: center;
-            padding: 20px;
-        }
-
-        .completed-docs-list {
-            background: #fff;
-        }
-
-        .completed-doc-item {
-            padding: 15px;
-            border-bottom: 1px solid #f1f3f5;
-        }
-
-        .completed-doc-item:last-child {
-            border-bottom: none;
-        }
-
+        /* Timeline Section (History) */
         .timeline-section {
             position: relative;
-            padding-left: 40px;
+            padding-left: 32px;
+            margin-top: 10px;
         }
 
         .timeline-item {
             position: relative;
-            padding-bottom: 30px;
+            padding-bottom: 24px;
         }
 
         .timeline-item:last-child {
@@ -1930,56 +1793,63 @@
         .timeline-item:not(:last-child)::after {
             content: '';
             position: absolute;
-            left: -25px;
-            top: 35px;
+            left: -21px;
+            top: 24px;
             width: 2px;
-            height: calc(100% - 35px);
-            background: #e9ecef;
+            height: calc(100% - 24px);
+            background: #e2e8f0;
         }
 
         .timeline-icon {
             position: absolute;
-            left: -35px;
+            left: -32px;
             top: 0;
-            width: 32px;
-            height: 32px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 14px;
+            font-size: 11px;
         }
 
         .timeline-content {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
         }
 
-        /* Responsive */
+        .timeline-content h6 {
+            color: #0f172a;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        /* Custom buttons styling to fit golden theme */
+        .btn-outline-primary {
+            border-color: #ba9779;
+            color: #ba9779;
+        }
+        .btn-outline-primary:hover {
+            background-color: #ba9779;
+            border-color: #ba9779;
+            color: #fff;
+        }
+        .btn-primary {
+            background-color: #ba9779;
+            border-color: #ba9779;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #a38162;
+            border-color: #a38162;
+            color: #fff;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 991px) {
-            .lease-sidebar {
-                position: fixed;
-                left: -350px;
-                top: 0;
-                height: 100vh;
-                z-index: 1050;
-                transition: left 0.3s;
-            }
-
-            .lease-sidebar.show {
-                left: 0;
-            }
-
-            .mobile-sidebar-toggle {
-                display: block;
-            }
-
-            .lease-content {
-                width: 100%;
-            }
-
             .lease-detail-content {
                 padding: 20px;
             }
@@ -1991,16 +1861,7 @@
 
         @media (max-width: 767px) {
             .lease-header .row > div {
-                margin-bottom: 20px;
-            }
-
-            .lease-badge {
-                padding: 8px 12px;
-            }
-
-            .badge-sm {
-                font-size: 10px;
-                padding: 4px 8px;
+                margin-bottom: 16px;
             }
         }
     </style>
