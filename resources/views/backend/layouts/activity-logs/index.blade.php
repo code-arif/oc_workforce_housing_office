@@ -447,29 +447,51 @@
         }
 
         function renderDataTable(data) {
-            if (!data || Object.keys(data).length === 0) {
+            if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
                 return '<div class="p-4 text-center text-muted">No data available</div>';
             }
 
-            let html = '<table class="table table-sm table-striped mb-0">';
-            html += '<thead class="bg-light"><tr><th class="ps-3">Field</th><th>Value</th></tr></thead>';
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (e) {
+                    return `<div class="p-3">${data}</div>`;
+                }
+            }
+
+            return buildTable(data);
+        }
+
+        function buildTable(data) {
+            if (typeof data !== 'object' || data === null) {
+                return `<span>${data}</span>`;
+            }
+
+            let html = '<table class="table table-sm table-bordered mb-0" style="font-size: 13px;">';
             html += '<tbody>';
 
             for (const key in data) {
                 let value = data[key];
+                let displayValue = '';
+
                 if (value === null) {
-                    value = '<span class="text-muted">null</span>';
-                } else if (typeof value === 'object') {
-                    value =
-                        `<pre class="mb-0 bg-transparent p-0" style="font-size: 11px;">${JSON.stringify(value, null, 2)}</pre>`;
+                    displayValue = '<span class="text-muted">null</span>';
                 } else if (typeof value === 'boolean') {
-                    value = value ? '<span class="badge bg-success">True</span>' :
+                    displayValue = value ? '<span class="badge bg-success">True</span>' :
                         '<span class="badge bg-danger">False</span>';
+                } else if (typeof value === 'object') {
+                    if (Object.keys(value).length === 0) {
+                        displayValue = '<span class="text-muted">Empty</span>';
+                    } else {
+                        displayValue = buildTable(value);
+                    }
+                } else {
+                    displayValue = value;
                 }
 
                 html += `<tr>
-                    <td class="ps-3 fw-semibold text-muted" style="width: 35%;">${key.replace(/_/g, ' ').toUpperCase()}</td>
-                    <td class="text-wrap">${value}</td>
+                    <td class="fw-semibold text-muted bg-light" style="width: 30%; white-space: nowrap; vertical-align: top;">${key.replace(/_/g, ' ').toUpperCase()}</td>
+                    <td class="text-break">${displayValue}</td>
                 </tr>`;
             }
 
