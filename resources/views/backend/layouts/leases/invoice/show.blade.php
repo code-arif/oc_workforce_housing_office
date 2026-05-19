@@ -467,14 +467,28 @@
                                         </div>
                                     </div>
 
-                                    <!-- Payment Date -->
+                                    <!-- Payment Date (Backdating restricted to admins/managers) -->
                                     <div class="mb-3">
                                         <label for="paymentDate" class="form-label">Payment Date <span
                                                 class="text-danger">*</span></label>
-                                        <input type="text" class="form-control datepicker2" id="paymentDate"
-                                            name="payment_date" value="{{ date('m/d/Y') }}" max="{{ date('m/d/Y') }}"
+                                        <input type="text" class="form-control @hasanyrole('super admin|admin|manager') datepicker2 @endhasanyrole" id="paymentDate"
+                                            name="payment_date" value="{{ date('m/d/Y') }}" 
+                                            @unlessrole('super admin|admin|manager') readonly @endunlessrole
                                             required>
+                                        @hasanyrole('super admin|admin|manager')
+                                        <div class="form-text text-muted small"><i class="fe fe-info me-1"></i>You have permission to backdate this payment.</div>
+                                        @endhasanyrole
                                     </div>
+
+                                    @hasanyrole('super admin|admin|manager')
+                                    <!-- Bank Deposit Date (Admin/Manager only) -->
+                                    <div class="mb-3">
+                                        <label for="depositDate" class="form-label">Bank Deposit Date</label>
+                                        <input type="text" class="form-control datepicker2" id="depositDate"
+                                            name="deposit_date" value="" placeholder="Optional (e.g. MM/DD/YYYY)">
+                                        <div class="form-text text-muted small">Date the cash/check was actually deposited in the bank.</div>
+                                    </div>
+                                    @endhasanyrole
 
                                     <!-- Payment Method -->
                                     <div class="mb-3">

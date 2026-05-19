@@ -255,10 +255,26 @@ class InvoiceController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'payment_date' => 'required|date|before_or_equal:today',
+            'deposit_date' => 'nullable|date',
             'payment_method' => 'required|in:cash,check,bank_transfer,credit_card,debit_card,online,stripe,paypal,other',
             'reference_number' => 'nullable|string|max:255',
             'note' => 'nullable|string',
         ]);
+
+        if (!auth()->user()->hasAnyRole(['super admin', 'admin', 'manager'])) {
+            if (Carbon::parse($request->payment_date)->toDateString() !== now()->toDateString()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "You do not have permission to backdate payments.",
+                ], 403);
+            }
+            if ($request->filled('deposit_date')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "You do not have permission to log deposit dates.",
+                ], 403);
+            }
+        }
 
         DB::beginTransaction();
 
@@ -320,7 +336,10 @@ class InvoiceController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $bedId,
                     'amount' => $depositPaymentAmount,
+                    'base_amount' => $depositPaymentAmount,
+                    'total_charged' => $depositPaymentAmount,
                     'payment_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
+                    'deposit_date' => $request->filled('deposit_date') ? Carbon::parse($request->deposit_date)->format('Y-m-d') : null,
                     'payment_method' => $request->payment_method,
                     'reference_number' => $request->reference_number,
                     'payment_type' => $depositPaymentAmount >= $depositAmount ? 'full' : 'partial',
@@ -386,7 +405,10 @@ class InvoiceController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $bedId,
                     'amount' => $rentPaymentAmount,
+                    'base_amount' => $rentPaymentAmount,
+                    'total_charged' => $rentPaymentAmount,
                     'payment_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
+                    'deposit_date' => $request->filled('deposit_date') ? Carbon::parse($request->deposit_date)->format('Y-m-d') : null,
                     'payment_method' => $request->payment_method,
                     'reference_number' => $request->reference_number,
                     'payment_type' => ($rentPaymentAmount >= $rentBalanceDue) ? 'full' : 'partial',
