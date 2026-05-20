@@ -89,7 +89,7 @@ class Invoice extends Model
 
     public function updatePaymentStatus()
     {
-        $totalPaid = $this->payments()->sum('amount');
+        $totalPaid = $this->payments()->where('status', '!=', 'voided')->sum('amount');
         $this->paid_amount = $totalPaid;
         $this->balance_due = $this->total_amount - $totalPaid;
 
