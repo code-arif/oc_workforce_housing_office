@@ -33,13 +33,14 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
 
         // Data rows
         foreach ($this->data as $row) {
+            $isVoid = (strtolower($row['review_status']) === 'void');
             $rows[] = [
                 $row['payment_number'],
                 $row['property_name'],
                 $row['bed_label'],
                 $row['tenant_name'],
                 $row['payment_date'],
-                '$' . $row['amount'],
+                $isVoid ? '$' . $row['amount'] . ' (VOID)' : '$' . $row['amount'],
                 $row['payment_method'],
                 $row['reference_number'],
                 $row['invoice_number'],
@@ -166,6 +167,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                         'reviewed' => '17a2b8',
                         'pending' => 'ffc107',
                         'disputed' => 'dc3545',
+                        'void' => 'dc3545',
                     ];
                     
                     if (isset($statusColors[$status])) {
@@ -180,6 +182,11 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                             ],
                             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                         ]);
+                    }
+
+                    if ($status === 'void') {
+                        $sheet->getStyle('A' . $i . ':L' . $i)->getFont()->setStrikethrough(true);
+                        $sheet->getStyle('A' . $i . ':L' . $i)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('dc3545'));
                     }
                 }
 

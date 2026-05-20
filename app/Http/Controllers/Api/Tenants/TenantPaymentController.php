@@ -78,6 +78,49 @@ class TenantPaymentController extends Controller
     }
 
     /**
+     * Create Stripe Payment Intent for custom Payment Element
+     */
+    public function createPaymentIntent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'invoice_id' => 'required|exists:invoices,id',
+            'amount_to_pay' => 'nullable|numeric|min:0.01',
+            'payment_method_type' => 'required|in:card,us_bank_account', // card or ACH
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationError($validator->errors());
+        }
+
+        try {
+            $tenant = $request->user();
+
+            $result = $this->stripeService->createPaymentIntent(
+                $request->invoice_id,
+                $tenant->id,
+                $request->amount_to_pay,
+                $request->payment_method_type
+            );
+
+            if (!$result['success']) {
+                return $this->error([], $result['message'], 400);
+            }
+
+            return $this->success([
+                'client_secret' => $result['client_secret'],
+                'base_amount' => $result['base_amount'],
+                'processing_fee' => $result['processing_fee'],
+                'total_charge' => $result['total_charge'],
+                'invoice' => $result['invoice'],
+                'tenant' => $result['tenant'],
+                'lease' => $result['lease'],
+            ], 'Payment intent created successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * Verify payment after Stripe redirect (for localhost testing)
      */
     public function verifyPayment(Request $request)

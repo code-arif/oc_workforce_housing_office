@@ -54,6 +54,10 @@ class RentCollectionReportController extends Controller
                     'payments.reviewed_at',
                     'payments.reviewed_by',
                     'payments.created_at',
+                    'payments.status',
+                    'payments.void_reason',
+                    'payments.voided_by',
+                    'payments.voided_at',
                 ])
                 ->with([
                     'tenant:id,email' => [
@@ -66,7 +70,8 @@ class RentCollectionReportController extends Controller
                             $q->where('is_current', true)->with('bed:id,bed_label');
                         }
                     ],
-                    'reviewedBy:id,name'
+                    'reviewedBy:id,name',
+                    'voidedBy:id,name'
                 ]);
 
             // Review status filter
@@ -143,7 +148,11 @@ class RentCollectionReportController extends Controller
                     return $payment->payment_date ? $payment->payment_date->format('M d, Y') : 'N/A';
                 })
                 ->addColumn('formatted_amount', function ($payment) {
-                    return number_format($payment->amount, 2);
+                    $amount = number_format($payment->amount, 2);
+                    if ($payment->status === 'voided') {
+                        return '<span class="text-decoration-line-through text-danger fw-bold">$' . $amount . '</span><br><small class="text-danger fw-bold">VOID</small>';
+                    }
+                    return '$' . $amount;
                 })
                 ->addColumn('payment_method_badge', function ($payment) {
                     $badges = [
@@ -160,6 +169,9 @@ class RentCollectionReportController extends Controller
                     return "<span class='badge {$badge} p-3'>{$label}</span>";
                 })
                 ->addColumn('review_status_badge', function ($payment) {
+                    if ($payment->status === 'voided') {
+                        return '<span class="badge bg-danger px-2 py-1 d-inline-flex align-items-center"><i class="fe fe-x-circle me-1" style="font-size: 12px;"></i>VOID</span>';
+                    }
                     $status = $payment->review_status ?? 'pending';
                     $badges = [
                         'pending' => '<span class="badge bg-warning text-dark px-2 py-1 d-inline-flex align-items-center"><i class="fe fe-clock me-1" style="font-size: 12px;"></i>Pending Review</span>',
@@ -170,6 +182,13 @@ class RentCollectionReportController extends Controller
                     return $badges[$status] ?? $badges['pending'];
                 })
                 ->addColumn('reviewed_info', function ($payment) {
+                    if ($payment->status === 'voided') {
+                        if ($payment->voided_at && $payment->voidedBy) {
+                            return e($payment->voidedBy->name) . '<br><small class="text-danger fw-bold">Voided:<br>' .
+                                   $payment->voided_at->format('M d, Y H:i') . '</small>';
+                        }
+                        return '<span class="text-danger fw-bold">Voided</span>';
+                    }
                     if ($payment->reviewed_at && $payment->reviewedBy) {
                         return $payment->reviewedBy->name . '<br><small class="text-muted">' .
                                $payment->reviewed_at->format('M d, Y H:i') . '</small>';
@@ -184,6 +203,9 @@ class RentCollectionReportController extends Controller
                     return 'N/A';
                 })
                 ->addColumn('actions', function ($payment) {
+                    if ($payment->status === 'voided') {
+                        return '<div class="text-danger" style="max-width: 150px; white-space: normal;"><small class="fw-bold">Void Reason:</small><br><small>' . e($payment->void_reason) . '</small></div>';
+                    }
                     $buttons = '<div class="btn-group btn-group-sm">';
 
                     if ($payment->review_status !== 'confirmed') {
@@ -199,7 +221,7 @@ class RentCollectionReportController extends Controller
                     $buttons .= '</div>';
                     return $buttons;
                 })
-                ->rawColumns(['payment_method_badge', 'review_status_badge', 'reviewed_info', 'invoice_info', 'actions'])
+                ->rawColumns(['formatted_amount', 'payment_method_badge', 'review_status_badge', 'reviewed_info', 'invoice_info', 'actions'])
                 ->make(true);
         }
 
@@ -339,22 +361,27 @@ class RentCollectionReportController extends Controller
             $query->where('review_status', $request->review_status);
         }
 
+        // Clone and filter out voided payments for all financial statistics
+        $activeQuery = (clone $query)->where('payments.status', '!=', 'voided');
+
         $summary = [
-            'total_payments' => (clone $query)->count(),
-            'total_amount' => (clone $query)->sum('amount'),
-            'pending_review' => (clone $query)->where('review_status', 'pending')->orWhereNull('review_status')->count(),
-            'pending_amount' => (clone $query)->where(function($q) {
+            'total_payments' => $activeQuery->count(),
+            'total_amount' => $activeQuery->sum('amount'),
+            'pending_review' => (clone $activeQuery)->where(function($q) {
+                $q->where('review_status', 'pending')->orWhereNull('review_status');
+            })->count(),
+            'pending_amount' => (clone $activeQuery)->where(function($q) {
                 $q->where('review_status', 'pending')->orWhereNull('review_status');
             })->sum('amount'),
-            'reviewed' => (clone $query)->where('review_status', 'reviewed')->count(),
-            'reviewed_amount' => (clone $query)->where('review_status', 'reviewed')->sum('amount'),
-            'confirmed' => (clone $query)->where('review_status', 'confirmed')->count(),
-            'confirmed_amount' => (clone $query)->where('review_status', 'confirmed')->sum('amount'),
-            'disputed' => (clone $query)->where('review_status', 'disputed')->count(),
-            'disputed_amount' => (clone $query)->where('review_status', 'disputed')->sum('amount'),
+            'reviewed' => (clone $activeQuery)->where('review_status', 'reviewed')->count(),
+            'reviewed_amount' => (clone $activeQuery)->where('review_status', 'reviewed')->sum('amount'),
+            'confirmed' => (clone $activeQuery)->where('review_status', 'confirmed')->count(),
+            'confirmed_amount' => (clone $activeQuery)->where('review_status', 'confirmed')->sum('amount'),
+            'disputed' => (clone $activeQuery)->where('review_status', 'disputed')->count(),
+            'disputed_amount' => (clone $activeQuery)->where('review_status', 'disputed')->sum('amount'),
 
             // By payment method
-            'by_method' => (clone $query)
+            'by_method' => (clone $activeQuery)
                 ->select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total'))
                 ->groupBy('payment_method')
                 ->get()
@@ -421,7 +448,8 @@ class RentCollectionReportController extends Controller
                         $q->where('is_current', true)->with('bed:id,bed_label');
                     }
                 ],
-                'reviewedBy:id,name'
+                'reviewedBy:id,name',
+                'voidedBy:id,name'
             ]);
 
         $filters = [];
@@ -483,17 +511,21 @@ class RentCollectionReportController extends Controller
             $assignment = $payment->lease?->assignments?->first();
             $bedLabel = $assignment?->bed?->bed_label ?? 'N/A';
 
-            $totalCollected += $payment->amount;
+            $isVoided = $payment->status === 'voided';
 
-            switch ($payment->review_status) {
-                case 'confirmed':
-                    $confirmedTotal += $payment->amount;
-                    break;
-                case 'disputed':
-                    $disputedTotal += $payment->amount;
-                    break;
-                default:
-                    $pendingTotal += $payment->amount;
+            if (!$isVoided) {
+                $totalCollected += $payment->amount;
+
+                switch ($payment->review_status) {
+                    case 'confirmed':
+                        $confirmedTotal += $payment->amount;
+                        break;
+                    case 'disputed':
+                        $disputedTotal += $payment->amount;
+                        break;
+                    default:
+                        $pendingTotal += $payment->amount;
+                }
             }
 
             $reportData[] = [
@@ -506,10 +538,11 @@ class RentCollectionReportController extends Controller
                 'payment_method' => ucfirst(str_replace('_', ' ', $payment->payment_method ?? 'N/A')),
                 'reference_number' => $payment->reference_number ?? '-',
                 'invoice_number' => $payment->invoice?->invoice_number ?? 'N/A',
-                'review_status' => ucfirst($payment->review_status ?? 'Pending'),
-                'reviewed_by' => $payment->reviewedBy?->name ?? '-',
-                'reviewed_at' => $payment->reviewed_at ? $payment->reviewed_at->format('M d, Y H:i') : '-',
-                'note' => $payment->note ?? '',
+                'review_status' => $isVoided ? 'VOID' : ucfirst($payment->review_status ?? 'Pending'),
+                'reviewed_by' => $isVoided ? ($payment->voidedBy?->name ?? '-') : ($payment->reviewedBy?->name ?? '-'),
+                'reviewed_at' => $isVoided ? ($payment->voided_at ? $payment->voided_at->format('M d, Y H:i') : '-') : ($payment->reviewed_at ? $payment->reviewed_at->format('M d, Y H:i') : '-'),
+                'note' => $isVoided ? 'VOIDED: ' . ($payment->void_reason ?? '') : ($payment->note ?? ''),
+                'status' => $payment->status,
             ];
         }
 

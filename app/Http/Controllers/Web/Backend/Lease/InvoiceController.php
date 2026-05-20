@@ -255,10 +255,26 @@ class InvoiceController extends Controller
         $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'payment_date' => 'required|date|before_or_equal:today',
+            'deposit_date' => 'nullable|date',
             'payment_method' => 'required|in:cash,check,bank_transfer,credit_card,debit_card,online,stripe,paypal,other',
             'reference_number' => 'nullable|string|max:255',
             'note' => 'nullable|string',
         ]);
+
+        if (!auth()->user()->hasAnyRole(['super admin', 'admin', 'manager'])) {
+            if (Carbon::parse($request->payment_date)->toDateString() !== now()->toDateString()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "You do not have permission to backdate payments.",
+                ], 403);
+            }
+            if ($request->filled('deposit_date')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "You do not have permission to log deposit dates.",
+                ], 403);
+            }
+        }
 
         DB::beginTransaction();
 
@@ -320,7 +336,10 @@ class InvoiceController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $bedId,
                     'amount' => $depositPaymentAmount,
+                    'base_amount' => $depositPaymentAmount,
+                    'total_charged' => $depositPaymentAmount,
                     'payment_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
+                    'deposit_date' => $request->filled('deposit_date') ? Carbon::parse($request->deposit_date)->format('Y-m-d') : null,
                     'payment_method' => $request->payment_method,
                     'reference_number' => $request->reference_number,
                     'payment_type' => $depositPaymentAmount >= $depositAmount ? 'full' : 'partial',
@@ -386,7 +405,10 @@ class InvoiceController extends Controller
                     'lease_id' => $lease->id,
                     'bed_id' => $bedId,
                     'amount' => $rentPaymentAmount,
+                    'base_amount' => $rentPaymentAmount,
+                    'total_charged' => $rentPaymentAmount,
                     'payment_date' => Carbon::parse($request->payment_date)->format('Y-m-d'),
+                    'deposit_date' => $request->filled('deposit_date') ? Carbon::parse($request->deposit_date)->format('Y-m-d') : null,
                     'payment_method' => $request->payment_method,
                     'reference_number' => $request->reference_number,
                     'payment_type' => ($rentPaymentAmount >= $rentBalanceDue) ? 'full' : 'partial',
@@ -607,15 +629,13 @@ class InvoiceController extends Controller
                 'message' => 'Failed to void invoice.',
             ], 500);
         }
-    }
-
-    /**
-     * Cancel a mistaken paid invoice cash payment and revert the invoice to UNPAID.
+    }    /**
+     * Cancel a mistaken paid invoice cash payment and revert the invoice to CANCELLED/VOIDED with ledger reversals.
      */
     public function cancelPaidCashPayment(Request $request, $id)
     {
         $request->validate([
-            'reason' => 'required|string|max:500',
+            'reason' => 'required|string|min:10|max:500',
         ]);
 
         $currentUserId = Auth::id();
@@ -628,13 +648,14 @@ class InvoiceController extends Controller
 
         DB::beginTransaction();
         try {
-            $invoice = Invoice::with(['lease.assignments', 'payments'])->findOrFail($id);
+            // Pessimistic lock for update to prevent concurrent payment applications or voids
+            $invoice = Invoice::lockForUpdate()->with(['lease.assignments', 'payments'])->findOrFail($id);
 
-            if ($invoice->status !== 'PAID') {
+            if (!in_array($invoice->status, ['PAID', 'PARTIAL'])) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only PAID invoices can be reverted with this action.',
+                    'message' => 'Only PAID or PARTIALLY PAID invoices can be voided with this action.',
                 ], 422);
             }
 
@@ -647,7 +668,7 @@ class InvoiceController extends Controller
             }
 
             $nonCashPayments = $invoice->payments->filter(function ($payment) {
-                return $payment->payment_method !== 'cash';
+                return strtolower($payment->payment_method) !== 'cash';
             });
 
             if ($nonCashPayments->isNotEmpty()) {
@@ -660,30 +681,39 @@ class InvoiceController extends Controller
 
             $now = now();
             $bedId = $invoice->lease->assignments()->where('is_current', true)->value('bed_id');
-            $paymentIds = $invoice->payments->pluck('id')->values()->all();
-            $removedAmount = (float) $invoice->payments->sum('amount');
+            $activePayments = $invoice->payments->where('status', '!=', 'voided');
 
-            $paymentsSnapshot = $invoice->payments->map(function ($payment) {
-                return [
-                    'id' => $payment->id,
-                    'payment_number' => $payment->payment_number,
-                    'amount' => (float) $payment->amount,
-                    'payment_date' => optional($payment->payment_date)->toDateString(),
-                    'payment_method' => $payment->payment_method,
-                    'reference_number' => $payment->reference_number,
-                    'recorded_by' => $payment->recorded_by,
-                ];
-            })->values()->all();
+            if ($activePayments->isEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'All payments for this invoice have already been voided.',
+                ], 422);
+            }
 
-            Payment::whereIn('id', $paymentIds)->delete();
+            $removedAmount = (float) $activePayments->sum('amount');
 
+            // 1. Mark Invoice as CANCELLED with audit fields
             $invoice->update([
-                'status' => 'UNPAID',
-                'paid_amount' => 0,
-                'balance_due' => $invoice->total_amount,
-                'paid_at' => null,
+                'status' => 'CANCELLED',
+                'paid_amount' => 0.00,
+                'balance_due' => 0.00, // Reversal neutralizes outstanding debt; balance becomes 0
+                'cancelled_reason' => $request->reason,
+                'cancelled_by' => $currentUserId,
+                'cancelled_at' => $now,
             ]);
 
+            // 2. Set active payments status to voided
+            foreach ($activePayments as $payment) {
+                $payment->update([
+                    'status' => 'voided',
+                    'void_reason' => $request->reason,
+                    'voided_by' => $currentUserId,
+                    'voided_at' => $now,
+                ]);
+            }
+
+            // 3. Handle First Invoice Deposit Status Reversal
             if (
                 $invoice->lease &&
                 $invoice->is_first_invoice &&
@@ -693,6 +723,8 @@ class InvoiceController extends Controller
                 $invoice->lease->update(['deposit_collected' => false]);
             }
 
+            // 4. Write Double-Entry Reversal General Ledger Transactions
+            // Reversal Transaction A (Neutralize the original Invoice Debit charge)
             Transaction::create([
                 'tenant_id' => $invoice->tenant_id,
                 'bed_id' => $bedId,
@@ -700,39 +732,61 @@ class InvoiceController extends Controller
                 'invoice_id' => $invoice->id,
                 'transaction_number' => $this->generateTransactionNumber(),
                 'type' => 'adjustment',
-                'entry_type' => 'debit',
-                'amount' => $removedAmount,
+                'entry_type' => 'credit',
+                'amount' => $invoice->total_amount,
                 'transaction_date' => $now->toDateString(),
-                'description' => 'Paid cash invoice ' . $invoice->invoice_number . ' reverted to UNPAID by Master Admin',
+                'description' => 'Invoice ' . $invoice->invoice_number . ' voided — original charge written off',
                 'notes' => $request->reason,
                 'metadata' => [
                     'action' => 'cancel_paid_cash_invoice',
-                    'cancelled_by' => $currentUserId,
-                    'cancelled_at' => $now->toISOString(),
-                    'invoice_status_from' => 'PAID',
-                    'invoice_status_to' => 'UNPAID',
-                    'removed_payment_ids' => $paymentIds,
-                    'removed_payments_snapshot' => $paymentsSnapshot,
-                    'removed_amount' => $removedAmount,
+                    'voided_by' => $currentUserId,
+                    'voided_at' => $now->toISOString(),
+                    'original_invoice_total' => $invoice->total_amount,
                 ],
             ]);
+
+            // Reversal Transaction B (Neutralize the active Payment Credits)
+            foreach ($activePayments as $payment) {
+                Transaction::create([
+                    'tenant_id' => $invoice->tenant_id,
+                    'bed_id' => $bedId,
+                    'lease_id' => $invoice->lease_id,
+                    'invoice_id' => $invoice->id,
+                    'payment_id' => $payment->id,
+                    'transaction_number' => $this->generateTransactionNumber(),
+                    'type' => 'adjustment',
+                    'entry_type' => 'debit',
+                    'amount' => $payment->amount,
+                    'transaction_date' => $now->toDateString(),
+                    'description' => 'Payment ' . $payment->payment_number . ' reversed due to invoice void',
+                    'notes' => $request->reason,
+                    'metadata' => [
+                        'action' => 'cancel_paid_cash_invoice',
+                        'voided_by' => $currentUserId,
+                        'voided_at' => $now->toISOString(),
+                        'reversed_payment_amount' => $payment->amount,
+                        'payment_number' => $payment->payment_number,
+                    ],
+                ]);
+            }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Invoice payment cancelled and invoice reverted to UNPAID.',
+                'message' => 'Paid cash invoice has been voided successfully. Offset entries posted.',
+                'invoice' => $invoice->fresh(),
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to cancel paid cash invoice: ' . $e->getMessage());
+            Log::error('Failed to void paid cash invoice: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to cancel paid cash invoice.',
+                'message' => 'Failed to void paid cash invoice: ' . $e->getMessage(),
             ], 500);
         }
     }
-
     /**
      * Mark invoice as paid (quick action - full payment).
      */
