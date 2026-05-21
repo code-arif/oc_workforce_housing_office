@@ -481,6 +481,8 @@ Route::controller(SettingController::class)->group(function () {
     Route::patch('setting/general', 'update')->name('setting.general.update');
     Route::get('setting/mail', 'mailIndex')->name('setting.mail.index');
     Route::patch('setting/mail', 'mailUpdate')->name('setting.mail.update');
+    Route::get('setting/stripe', 'stripeIndex')->name('setting.stripe.index');
+    Route::patch('setting/stripe', 'stripeUpdate')->name('setting.stripe.update');
 });
 
 /**

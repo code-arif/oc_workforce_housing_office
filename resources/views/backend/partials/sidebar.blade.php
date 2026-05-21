@@ -231,6 +231,9 @@
                             <li><a href="{{ route('setting.mail-templates.index') }}"
                                     class="slide-item {{ request()->routeIs('setting.mail-templates.*') ? 'active' : '' }}">Mail
                                     Templates</a></li>
+                            <li><a href="{{ route('setting.stripe.index') }}"
+                                    class="slide-item {{ request()->routeIs('setting.stripe.*') ? 'active' : '' }}">Stripe
+                                    Settings</a></li>
                             <li><a href="{{ route('system-monitor.index') }}"
                                     class="slide-item {{ request()->routeIs('system-monitor.*') ? 'active' : '' }}">System
                                     Monitor</a></li>
