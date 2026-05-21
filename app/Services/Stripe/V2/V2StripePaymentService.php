@@ -534,11 +534,20 @@ class V2StripePaymentService
         DB::beginTransaction();
 
         try {
-            $invoiceId = $metadata['invoice_id'];
-            $tenantId = $metadata['tenant_id'];
-            $baseAmount = floatval($metadata['base_amount'] ?? $metadata['payment_amount']);
+            $invoiceId = $metadata['invoice_id'] ?? null;
+            $tenantId = $metadata['tenant_id'] ?? null;
+
+            if (!$invoiceId) {
+                DB::rollBack();
+                Log::warning('Payment processing skipped: Missing invoice_id in metadata (Likely a Stripe test webhook)', [
+                    'session_or_intent_id' => $sessionOrIntent->id ?? 'unknown'
+                ]);
+                return ['success' => false, 'message' => 'Missing invoice_id in metadata'];
+            }
+
+            $baseAmount = floatval($metadata['base_amount'] ?? $metadata['payment_amount'] ?? 0);
             $processingFee = floatval($metadata['processing_fee'] ?? 0);
-            $totalCharge = floatval($metadata['total_charge'] ?? $metadata['payment_amount']);
+            $totalCharge = floatval($metadata['total_charge'] ?? $metadata['payment_amount'] ?? 0);
             $connectedAccountId = $metadata['connected_account_id'] ?? null;
 
             // Pessimistic Locking to prevent race conditions on partial payments
@@ -553,11 +562,20 @@ class V2StripePaymentService
                 throw new Exception('Unauthorized payment attempt');
             }
 
-            // Idempotency check
-            $existingPayment = Payment::where('gateway_transaction_id', $sessionOrIntent->id)->first();
+            // Idempotency check: check both gateway_transaction_id (session id) and stripe_payment_intent_id
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+            
+            $existingPayment = Payment::where(function($query) use ($sessionOrIntent, $stripePaymentIntentId) {
+                $query->where('gateway_transaction_id', $sessionOrIntent->id)
+                      ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+            })->first();
+
             if ($existingPayment) {
                 DB::rollBack();
-                Log::info('Payment already processed, skipping', ['session_id' => $sessionOrIntent->id]);
+                Log::info('Payment already processed, skipping', [
+                    'session_id' => $sessionOrIntent->id,
+                    'payment_intent_id' => $stripePaymentIntentId
+                ]);
                 return [
                     'success' => true, // Return true so webhook doesn't retry
                     'payment' => ['id' => $existingPayment->id],
@@ -740,6 +758,7 @@ class V2StripePaymentService
         }
 
         switch ($event->type) {
+            // Payment Intent Events
             case 'payment_intent.succeeded':
                 $intent = $event->data->object;
                 Log::info('PaymentIntent succeeded via webhook', [
@@ -755,6 +774,41 @@ class V2StripePaymentService
                 }
                 break;
 
+            case 'payment_intent.payment_failed':
+                $intent = $event->data->object;
+                Log::warning('PaymentIntent failed via webhook', [
+                    'intent_id' => $intent->id,
+                    'failure_message' => $intent->last_payment_error?->message ?? 'N/A',
+                ]);
+                break;
+
+            case 'payment_intent.amount_capturable_updated':
+            case 'payment_intent.canceled':
+            case 'payment_intent.created':
+            case 'payment_intent.partially_funded':
+            case 'payment_intent.processing':
+            case 'payment_intent.requires_action':
+                $intent = $event->data->object;
+                Log::info("PaymentIntent lifecycle event: {$event->type}", [
+                    'intent_id' => $intent->id,
+                    'status' => $intent->status ?? 'N/A'
+                ]);
+                break;
+
+            // Setup Intent Events
+            case 'setup_intent.canceled':
+            case 'setup_intent.created':
+            case 'setup_intent.requires_action':
+            case 'setup_intent.setup_failed':
+            case 'setup_intent.succeeded':
+                $intent = $event->data->object;
+                Log::info("SetupIntent lifecycle event: {$event->type}", [
+                    'setup_intent_id' => $intent->id,
+                    'status' => $intent->status ?? 'N/A'
+                ]);
+                break;
+
+            // Checkout Session Events
             case 'checkout.session.completed':
                 $session = $event->data->object;
                 Log::info('Checkout session completed via webhook', [
@@ -795,14 +849,6 @@ class V2StripePaymentService
                     'session_id' => $session->id,
                     'payment_status' => $session->payment_status,
                     'failure_message' => $session->payment_intent?->last_payment_error?->message ?? 'N/A',
-                ]);
-                break;
-
-            case 'payment_intent.payment_failed':
-                $intent = $event->data->object;
-                Log::warning('PaymentIntent failed via webhook', [
-                    'intent_id' => $intent->id,
-                    'failure_message' => $intent->last_payment_error?->message ?? 'N/A',
                 ]);
                 break;
 
