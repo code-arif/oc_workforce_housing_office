@@ -564,7 +564,7 @@ class V2StripePaymentService
 
             // Idempotency check: check both gateway_transaction_id (session id) and stripe_payment_intent_id
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
-            
+
             $existingPayment = Payment::where(function($query) use ($sessionOrIntent, $stripePaymentIntentId) {
                 $query->where('gateway_transaction_id', $sessionOrIntent->id)
                       ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
@@ -618,6 +618,14 @@ class V2StripePaymentService
                     'property_name' => $metadata['property_name'] ?? 'N/A',
                     'property_id' => $metadata['property_id'] ?? null,
                 ]
+            ]);
+
+            Log::info('Payment record created in database', [
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice->id,
+                'amount' => $payment->amount,
+                'processing_fee' => $payment->processing_fee,
+                'total_charged' => $payment->total_charged,
             ]);
 
             // Update invoice - ONLY credit base_amount towards balance
