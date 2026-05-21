@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Models\Lease\LeaseDocument;
 use App\Models\Payment;
 use App\Models\Property;
+use App\Models\Setting;
 use App\Models\Transaction;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,9 @@ class V2StripePaymentService
 
     public function __construct()
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        $setting = \App\Models\Setting::first();
+        $secret = $setting?->stripe_secret ?? config('services.stripe.secret');
+        Stripe::setApiKey($secret);
     }
 
     /**
@@ -413,10 +416,16 @@ class V2StripePaymentService
 
             // Calculate processing fee
             $processingFee = 0.00;
+
+            $setting = Setting::first();
+            $achFee = floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00));
+            $cardFeePercentage = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
+            $cardFeeFixed = floatval($setting?->stripe_card_fee_fixed ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
+
             if ($paymentMethodType === 'us_bank_account') {
-                $processingFee = 5.00; // Flat $5 for ACH
+                $processingFee = $achFee; // Flat fee for ACH
             } elseif ($paymentMethodType === 'card') {
-                $processingFee = ($baseAmount * 0.029) + 0.30; // 2.9% + $0.30 for Card
+                $processingFee = ($baseAmount * ($cardFeePercentage / 100)) + $cardFeeFixed; // Percentage + Fixed for Card
             }
 
             $totalCharge = round($baseAmount + $processingFee, 2);
