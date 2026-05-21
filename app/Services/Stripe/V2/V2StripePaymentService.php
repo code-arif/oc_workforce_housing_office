@@ -484,11 +484,31 @@ class V2StripePaymentService
                 'transfer_data' => [
                     'destination' => $connectedAccountId,
                 ],
-                'on_behalf_of' => $connectedAccountId,
             ];
 
-            if ($stripeCustomerId) {
-                $paymentIntentParams['customer'] = $stripeCustomerId;
+            // ACH (us_bank_account) requires a Customer and verification_method
+            if ($paymentMethodType === 'us_bank_account') {
+                $paymentIntentParams['payment_method_options'] = [
+                    'us_bank_account' => [
+                        'verification_method' => 'automatic',
+                        'financial_connections' => [
+                            'permissions' => ['payment_method'],
+                        ],
+                    ],
+                ];
+
+                // Customer is REQUIRED for ACH direct debit
+                if ($stripeCustomerId) {
+                    $paymentIntentParams['customer'] = $stripeCustomerId;
+                }
+            } else {
+                // on_behalf_of is safe for card but can fail for ACH
+                // if connected account lacks ACH capabilities
+                $paymentIntentParams['on_behalf_of'] = $connectedAccountId;
+
+                if ($stripeCustomerId) {
+                    $paymentIntentParams['customer'] = $stripeCustomerId;
+                }
             }
 
             $paymentIntent = PaymentIntent::create($paymentIntentParams);
