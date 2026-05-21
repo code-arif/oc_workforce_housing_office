@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Stripe\Checkout\Session;
+use Stripe\Customer;
 use Stripe\PaymentIntent;
 use Stripe\Stripe;
 use Stripe\Webhook;
@@ -26,7 +27,7 @@ class V2StripePaymentService
 
     public function __construct()
     {
-        $setting = \App\Models\Setting::first();
+        $setting = Setting::first();
         $secret = $setting?->stripe_secret ?? config('services.stripe.secret');
         Stripe::setApiKey($secret);
     }
@@ -434,6 +435,23 @@ class V2StripePaymentService
             $tenantProfile = $tenant->profile;
             $tenantAddress = $tenant->address;
 
+            // Resolve or create Stripe Customer on Platform for ACH direct debit requirements
+            $stripeCustomerId = null;
+            try {
+                $customers = Customer::all(['email' => $tenant->email, 'limit' => 1]);
+                if (count($customers->data) > 0) {
+                    $stripeCustomerId = $customers->data[0]->id;
+                } else {
+                    $newCustomer = Customer::create([
+                        'email' => $tenant->email,
+                        'name' => $tenantProfile ? trim(($tenantProfile->first_name ?? '') . ' ' . ($tenantProfile->last_name ?? '')) : 'Tenant',
+                    ]);
+                    $stripeCustomerId = $newCustomer->id;
+                }
+            } catch (Exception $e) {
+                Log::warning('Stripe customer creation/retrieval failed: ' . $e->getMessage());
+            }
+
             $metadata = [
                 'invoice_id' => (string) $invoice->id,
                 'tenant_id' => (string) $tenantId,
@@ -466,7 +484,12 @@ class V2StripePaymentService
                 'transfer_data' => [
                     'destination' => $connectedAccountId,
                 ],
+                'on_behalf_of' => $connectedAccountId,
             ];
+
+            if ($stripeCustomerId) {
+                $paymentIntentParams['customer'] = $stripeCustomerId;
+            }
 
             $paymentIntent = PaymentIntent::create($paymentIntentParams);
 
