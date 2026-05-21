@@ -773,6 +773,39 @@ class V2StripePaymentService
                 }
                 break;
 
+            case 'checkout.session.async_payment_succeeded':
+                $session = $event->data->object;
+                Log::info('Checkout session async payment succeeded via webhook', [
+                    'session_id' => $session->id,
+                    'payment_status' => $session->payment_status,
+                ]);
+
+                $result = $this->processPayment($session->metadata, $session);
+                if (!$result['success']) {
+                    Log::error('Webhook async payment processing failed', [
+                        'session_id' => $session->id,
+                        'error' => $result['message']
+                    ]);
+                }
+                break;
+
+            case 'checkout.session.async_payment_failed':
+                $session = $event->data->object;
+                Log::warning('Checkout session async payment failed via webhook', [
+                    'session_id' => $session->id,
+                    'payment_status' => $session->payment_status,
+                    'failure_message' => $session->payment_intent?->last_payment_error?->message ?? 'N/A',
+                ]);
+                break;
+
+            case 'payment_intent.payment_failed':
+                $intent = $event->data->object;
+                Log::warning('PaymentIntent failed via webhook', [
+                    'intent_id' => $intent->id,
+                    'failure_message' => $intent->last_payment_error?->message ?? 'N/A',
+                ]);
+                break;
+
             case 'transfer.created':
                 // Log when transfer to connected account is created
                 $transfer = $event->data->object;
