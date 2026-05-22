@@ -150,7 +150,7 @@ public function createPaymentIntent(Request $request)
             return $this->error([], $result['message'], 400);
         }
 
-        // Return ALL fields from the service — nothing stripped
+        // Return ALL fields from the service
         return $this->success([
             'client_secret'       => $result['client_secret'],
             'payment_intent_id'   => $result['payment_intent_id'],
