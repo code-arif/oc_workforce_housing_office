@@ -47,6 +47,7 @@ class TenantPaymentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'invoice_id' => 'required|exists:invoices,id',
+            'payment_method_type' => 'nullable|in:card,us_bank_account',
         ]);
 
         if ($validator->fails()) {
@@ -55,10 +56,12 @@ class TenantPaymentController extends Controller
 
         try {
             $tenant = $request->user();
+            $paymentMethodType = $request->input('payment_method_type', 'card');
 
             $result = $this->stripeService->createCheckoutSession(
                 $request->invoice_id,
-                $tenant->id
+                $tenant->id,
+                $paymentMethodType
             );
 
             if (!$result['success']) {
@@ -68,6 +71,7 @@ class TenantPaymentController extends Controller
             return $this->success([
                 'session_id' => $result['session_id'],
                 'checkout_url' => $result['checkout_url'],
+                'payment_method_type' => $paymentMethodType,
                 'invoice' => $result['invoice'],
                 'tenant' => $result['tenant'],
                 'lease' => $result['lease'],

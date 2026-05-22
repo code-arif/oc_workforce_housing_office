@@ -167,11 +167,20 @@ class V2StripePaymentService
     /**
      * Create Stripe checkout session (with Connect support)
      */
-    public function createCheckoutSession($invoiceId, $tenantId): array
+    public function createCheckoutSession($invoiceId, $tenantId, string $paymentMethodType = 'card'): array
     {
         DB::beginTransaction();
 
         try {
+            $allowedPaymentMethods = ['card', 'us_bank_account'];
+            if (!in_array($paymentMethodType, $allowedPaymentMethods, true)) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Invalid payment method type. Allowed values: card, us_bank_account.',
+                ];
+            }
+
             $invoice = Invoice::with([
                 'lease' => function ($q) {
                     $q->with(['property', 'season', 'assignments.bed.room']);
@@ -206,7 +215,20 @@ class V2StripePaymentService
                 return ['success' => false, 'message' => 'Invoice has no balance due'];
             }
 
-            $amountInCents = (int) round($paymentAmount * 100);
+            $setting       = Setting::first();
+            $processingFee = 0.00;
+
+            if ($paymentMethodType === 'us_bank_account') {
+                $achFlatFee    = round(floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00)), 2);
+                $processingFee = $achFlatFee;
+            } elseif ($paymentMethodType === 'card') {
+                $cardPct       = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
+                $cardFixed     = floatval($setting?->stripe_card_fee_fixed      ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
+                $processingFee = round(($paymentAmount * ($cardPct / 100)) + $cardFixed, 2);
+            }
+
+            $totalCharge = round($paymentAmount + $processingFee, 2);
+            $amountInCents = (int) round($totalCharge * 100);
 
             // Get connected account for this property
             $connectedAccountId = $this->getConnectedAccountId($invoice);
@@ -251,6 +273,8 @@ class V2StripePaymentService
                 'property_id' => (string) $lease->property_id,
                 'connected_account_id' => $connectedAccountId,
                 'payment_amount' => (string) $paymentAmount,
+                'processing_fee' => (string) $processingFee,
+                'total_charge' => (string) $totalCharge,
                 'invoice_number' => $invoice->invoice_number,
                 'invoice_type' => $invoice->type,
 
@@ -274,14 +298,20 @@ class V2StripePaymentService
                 'rent_amount' => (string) $lease->rent_amount,
                 'deposit_amount' => (string) $lease->deposit_amount,
                 'payment_frequency' => $lease->payment_frequency,
+                'payment_method_type' => $paymentMethodType,
             ];
 
             $successUrl = config('services.stripe.success_url', env('STRIPE_SUCCESS_URL'));
             $cancelUrl = config('services.stripe.cancel_url', env('STRIPE_CANCEL_URL'));
 
+            $paymentMethodTypes = ['card'];
+            if ($paymentMethodType === 'us_bank_account') {
+                $paymentMethodTypes = ['us_bank_account'];
+            }
+
             // Build session params
             $sessionParams = [
-                'payment_method_types' => ['card'],
+                'payment_method_types' => $paymentMethodTypes,
                 'line_items' => $lineItems,
                 'mode' => 'payment',
                 'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
@@ -311,7 +341,8 @@ class V2StripePaymentService
                 'session_id' => $session->id,
                 'connected_account' => $connectedAccountId,
                 'invoice_id' => $invoice->id,
-                'amount' => $paymentAmount,
+                'amount' => $totalCharge,
+                'processing_fee' => $processingFee,
             ]);
 
             return [
@@ -322,7 +353,9 @@ class V2StripePaymentService
                     'id' => $invoice->id,
                     'invoice_number' => $invoice->invoice_number,
                     'type' => $invoice->type,
-                    'amount' => $paymentAmount,
+                    'base_amount' => $paymentAmount,
+                    'processing_fee' => $processingFee,
+                    'total_amount' => $totalCharge,
                 ],
                 'tenant' => [
                     'name' => $metadata['tenant_name'],
@@ -859,7 +892,7 @@ class V2StripePaymentService
                 'success'             => true,
                 'client_secret'       => $paymentIntent->client_secret,
                 'payment_intent_id'   => $paymentIntent->id,
-                'payment_method_type' => $paymentMethodType, 
+                'payment_method_type' => $paymentMethodType,
 
                 // Amounts (for UI display)
                 'base_amount'         => $baseAmount,
