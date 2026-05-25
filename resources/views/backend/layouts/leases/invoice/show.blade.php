@@ -24,7 +24,6 @@
                                 </ol>
                             </nav>
                         </div>
-
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
 
@@ -49,9 +48,9 @@
 
                         @if ($canCancelPaidCash)
                             <button class="btn btn-outline-danger d-flex align-items-center justify-content-center"
-                                onclick="showCancelPaidCashModal()" title="Cancel mistaken paid cash invoice">
-                                <i class="fe fe-rotate-ccw me-2"></i>
-                                <span>Cancel Paid Cash</span>
+                                onclick="showCancelPaidCashModal()" title="Void paid cash invoice">
+                                <i class="fe fe-slash me-2"></i>
+                                <span>Void Paid Invoice</span>
                             </button>
                         @endif
 
@@ -768,34 +767,43 @@
         </div>
     </div>
 
-    {{-- CANCEL PAID CASH INVOICE MODAL --}}
+    {{-- VOID PAID CASH INVOICE MODAL --}}
     <div class="modal fade" id="cancelPaidCashModal" tabindex="-1" aria-labelledby="cancelPaidCashModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-danger">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="cancelPaidCashModalLabel">
-                        <i class="fe fe-alert-triangle me-2"></i>Cancel Paid Cash Invoice
+                        <i class="fe fe-alert-triangle me-2"></i>Void Paid Cash Invoice
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <strong><i class="fe fe-alert-circle me-1"></i>Important:</strong>
-                        This will remove existing cash payment records from Payment History and revert this invoice to
-                        <strong>UNPAID</strong>.
+                    <div class="alert alert-danger bg-danger-transparent text-danger mb-4">
+                        <h6 class="fw-bold mb-2"><i class="fe fe-alert-circle me-2"></i>CRITICAL ACCOUNTING WARNING</h6>
+                        <p class="small mb-0">You are about to <strong>permanently void</strong> a fully/partially paid cash invoice. This action is <strong>irreversible</strong> and will alter the lease's financial ledger.</p>
                     </div>
+
+                    <h6 class="fw-semibold text-dark mb-2"><i class="fe fe-list me-2"></i>Post-Void Accounting Impacts:</h6>
+                    <ul class="text-muted small ps-3 mb-4" style="list-style-type: square; line-height: 1.6;">
+                        <li>The invoice status will be permanently changed to <strong>CANCELLED</strong>.</li>
+                        <li>No further payments can be accepted for this invoice under any circumstances.</li>
+                        <li>Invoice balances (Total Amount Paid and Balance Due) will be instantly zeroed out (<strong>$0.00</strong>).</li>
+                        <li>Existing cash payment records will be marked as <strong>voided</strong> and excluded from payment history.</li>
+                        <li><strong>Standard Double-Entry Reversal adjustments</strong> (Credit Adjustment for original debit charge, Debit Adjustment for mistaken payment credit) will be posted to the general ledger.</li>
+                        <li>Voided cash collections will be <strong>fully excluded</strong> from all daily collection and rent reports, adjusting historical income tallies.</li>
+                    </ul>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
-                            Cancellation Reason <span class="text-danger">*</span>
+                            Reason for Voiding <span class="text-danger">*</span>
                         </label>
                         <textarea class="form-control" id="cancelPaidCashReason" rows="3" maxlength="500"
-                            placeholder="Enter why this paid cash invoice is being cancelled..."></textarea>
-                        <div class="form-text">This reason will be stored in the audit trail, max 500 characters.</div>
+                            placeholder="Provide a detailed explanation for this invoice void (e.g. entry error, double post)..." required></textarea>
+                        <div class="form-text">This audit reason will be permanently saved in the General Ledger metadata.</div>
                     </div>
 
-                    <div class="mb-0">
+                    <div class="mb-0 pt-2 border-top">
                         <div class="d-flex justify-content-between text-muted small">
                             <span>Invoice: <strong>{{ $invoice->invoice_number }}</strong></span>
                             <span>Paid Amount: <strong>${{ number_format($invoice->paid_amount ?? 0, 2) }}</strong></span>
@@ -813,8 +821,8 @@
 
                     <button type="button" class="btn btn-danger d-flex align-items-center justify-content-center"
                         id="confirmCancelPaidCashBtn" onclick="submitCancelPaidCashInvoice()">
-                        <i class="fe fe-rotate-ccw me-2"></i>
-                        <span>Confirm Cancellation</span>
+                        <i class="fe fe-slash me-2"></i>
+                        <span>Confirm Permanent Void</span>
                     </button>
 
                 </div>
@@ -1170,7 +1178,7 @@
         function submitCancelPaidCashInvoice() {
             const reason = document.getElementById('cancelPaidCashReason').value.trim();
             if (!reason) {
-                toastr.error('A reason is required to cancel this paid cash invoice.');
+                toastr.error('A reason is required to void this paid cash invoice.');
                 document.getElementById('cancelPaidCashReason').focus();
                 return;
             }
@@ -1188,20 +1196,20 @@
                 },
                 success: function(res) {
                     if (res.success) {
-                        toastr.success(res.message || 'Paid cash invoice cancelled successfully.');
+                        toastr.success(res.message || 'Paid cash invoice voided successfully.');
                         $('#cancelPaidCashModal').modal('hide');
                         setTimeout(() => location.reload(), 1500);
                     } else {
-                        toastr.error(res.message || 'Failed to cancel paid cash invoice.');
+                        toastr.error(res.message || 'Failed to void paid cash invoice.');
                         confirmBtn.disabled = false;
-                        confirmBtn.innerHTML = '<i class="fe fe-rotate-ccw me-2"></i>Confirm Cancellation';
+                        confirmBtn.innerHTML = '<i class="fe fe-slash me-2"></i>Confirm Permanent Void';
                     }
                 },
                 error: function(xhr) {
-                    const msg = xhr.responseJSON?.message || 'Failed to cancel paid cash invoice.';
+                    const msg = xhr.responseJSON?.message || 'Failed to void paid cash invoice.';
                     toastr.error(msg);
                     confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = '<i class="fe fe-rotate-ccw me-2"></i>Confirm Cancellation';
+                    confirmBtn.innerHTML = '<i class="fe fe-slash me-2"></i>Confirm Permanent Void';
                 }
             });
         }
