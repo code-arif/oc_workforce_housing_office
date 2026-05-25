@@ -83,7 +83,7 @@ class InvoiceController extends Controller
 
         $isSuperAdmin = $this->isSuperAdmin(Auth::id());
         $hasOnlyCashPayments = $invoice->payments->isNotEmpty() && $invoice->payments->every(function ($payment) {
-            return $payment->payment_method === 'cash';
+            return $payment->payment_method === 'cash' || $payment->payment_method === 'check';
         });
         $canCancelPaidCash = $isSuperAdmin && $invoice->status === 'PAID' && $hasOnlyCashPayments;
 
@@ -646,7 +646,7 @@ class InvoiceController extends Controller
             }
 
             $nonCashPayments = $invoice->payments->filter(function ($payment) {
-                return strtolower($payment->payment_method) !== 'cash';
+                return strtolower($payment->payment_method) !== 'cash' && strtolower($payment->payment_method) !== 'check';
             });
 
             if ($nonCashPayments->isNotEmpty()) {
