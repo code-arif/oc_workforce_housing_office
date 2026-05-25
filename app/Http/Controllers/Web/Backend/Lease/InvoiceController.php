@@ -496,7 +496,7 @@ class InvoiceController extends Controller
                 'total_paid' => $invoice->paid_amount,
                 'balance_due' => $invoice->balance_due,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve payments.'
