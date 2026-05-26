@@ -43,6 +43,8 @@ class RentReportController extends Controller
                     'invoices.balance_due',
                     'invoices.due_date',
                     'invoices.status',
+                    'invoices.stripe_payment_method',
+                    'invoices.stripe_exact_amount',
                     'invoices.notes',
                 ])
                 ->with([
@@ -148,10 +150,32 @@ class RentReportController extends Controller
                     $displayStatus = $status === 'CANCELLED' ? 'VOIDED' : $status;
                     return '<span class="badge ' . $badgeClass . '">' . $displayStatus . '</span>';
                 })
+                ->addColumn('stripe_method', function ($invoice) {
+                    if (!$invoice->stripe_payment_method) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    if ($invoice->stripe_payment_method === 'us_bank_account') {
+                        $methodName = 'ACH';
+                        $colorClass = 'bg-info';
+                    } else {
+                        $methodName = 'Card';
+                        $colorClass = 'bg-primary';
+                    }
+                    return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
+                })
+                ->addColumn('stripe_amount', function ($invoice) {
+                    if (!$invoice->stripe_exact_amount || $invoice->stripe_exact_amount <= 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return '<div class="fw-semibold text-success">$' . number_format((float)$invoice->stripe_exact_amount, 2) . '</div>';
+                })
+                ->addColumn('raw_stripe_amount', function ($invoice) {
+                    return $invoice->stripe_exact_amount ?: 0;
+                })
                 ->addColumn('notes', function ($invoice) {
                     return $invoice->notes ?? '';
                 })
-                ->rawColumns(['status'])
+                ->rawColumns(['status', 'stripe_method', 'stripe_amount'])
                 ->make(true);
         }
 
@@ -282,6 +306,8 @@ class RentReportController extends Controller
                 'outstanding_amount' => number_format($outstanding, 2),
                 'notes' => $invoice->notes ?? '',
                 'invoice_number' => $invoice->invoice_number ?? 'N/A',
+                'stripe_method' => $invoice->stripe_payment_method === 'us_bank_account' ? 'ACH' : ($invoice->stripe_payment_method ? 'Card' : 'N/A'),
+                'stripe_amount' => number_format((float)$invoice->stripe_exact_amount, 2),
                 'status' => $invoice->status === 'CANCELLED' ? 'VOIDED' : $invoice->status,
             ];
         }
