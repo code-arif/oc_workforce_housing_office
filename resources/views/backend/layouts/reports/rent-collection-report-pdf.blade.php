@@ -142,8 +142,8 @@
                 <th>Bed</th>
                 <th>Tenant</th>
                 <th>Date</th>
-                <th class="text-right">Amount</th>
-                <th class="text-right">Stripe Amount</th>
+                <th>Amount</th>
+                <th>Stripe Amount</th>
                 <th>Stripe Method</th>
                 <th>Method</th>
                 <th>Reference</th>
