@@ -216,7 +216,7 @@ class IncomeController extends Controller
                         return '<span class="text-muted">-</span>';
                     }
                     $methodName = $data->stripe_payment_method === 'us_bank_account' ? 'ACH' : 'Card';
-                    return '<span class="badge bg-secondary-transparent">' . $methodName . '</span>';
+                    return '<span class="badge p-3 bg-info">' . $methodName . '</span>';
                 })
                 ->addColumn('stripe_amount', function ($data) {
                     if (!$data->stripe_exact_amount || $data->stripe_exact_amount <= 0) {
