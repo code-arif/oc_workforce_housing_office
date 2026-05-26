@@ -215,8 +215,16 @@ class IncomeController extends Controller
                     if (!$data->stripe_payment_method) {
                         return '<span class="text-muted">-</span>';
                     }
-                    $methodName = $data->stripe_payment_method === 'us_bank_account' ? 'ACH' : 'Card';
-                    return '<span class="badge p-3 bg-info">' . $methodName . '</span>';
+                    
+                    if ($data->stripe_payment_method === 'us_bank_account') {
+                        $methodName = 'ACH';
+                        $colorClass = 'bg-info';
+                    } else {
+                        $methodName = 'Card';
+                        $colorClass = 'bg-primary';
+                    }
+                    
+                    return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
                 })
                 ->addColumn('stripe_amount', function ($data) {
                     if (!$data->stripe_exact_amount || $data->stripe_exact_amount <= 0) {
