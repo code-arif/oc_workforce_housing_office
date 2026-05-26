@@ -92,6 +92,11 @@ class Tenant extends Authenticatable implements JWTSubject
         return [];
     }
 
+    public function getRoleNames()
+    {
+        return collect(['Tenant']);
+    }
+
     /**
      * ----------------------------
      * Helper funciton for tenant
