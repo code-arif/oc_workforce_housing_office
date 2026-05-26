@@ -42,6 +42,8 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 $row['payment_date'],
                 $isVoid ? '$' . $row['amount'] . ' (VOID)' : '$' . $row['amount'],
                 $row['payment_method'],
+                $row['stripe_method'],
+                $row['stripe_amount'],
                 $row['reference_number'],
                 $row['invoice_number'],
                 $row['review_status'],
@@ -51,15 +53,15 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
         }
 
         // Empty row before summary
-        $rows[] = array_fill(0, 12, '');
+        $rows[] = array_fill(0, 14, '');
 
         // Summary section
-        $rows[] = ['', '', '', '', 'COLLECTION SUMMARY', '', '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Total Payments:', $this->summary['total_payments'], '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Total Collected:', '$' . number_format($this->summary['total_collected'], 2), '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Confirmed Amount:', '$' . number_format($this->summary['confirmed_total'], 2), '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Pending Review:', '$' . number_format($this->summary['pending_total'], 2), '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Disputed Amount:', '$' . number_format($this->summary['disputed_total'], 2), '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'COLLECTION SUMMARY', '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Total Payments:', $this->summary['total_payments'], '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Total Collected:', '$' . number_format($this->summary['total_collected'], 2), '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Confirmed Amount:', '$' . number_format($this->summary['confirmed_total'], 2), '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Pending Review:', '$' . number_format($this->summary['pending_total'], 2), '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Disputed Amount:', '$' . number_format($this->summary['disputed_total'], 2), '', '', '', '', '', '', '', ''];
 
         return $rows;
     }
@@ -74,6 +76,8 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
             'Payment Date',
             'Amount',
             'Method',
+            'Stripe Method',
+            'Stripe Amount ($)',
             'Reference #',
             'Invoice #',
             'Review Status',
@@ -92,11 +96,13 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
             'E' => 14,  // Payment Date
             'F' => 14,  // Amount
             'G' => 14,  // Method
-            'H' => 15,  // Reference #
-            'I' => 15,  // Invoice #
-            'J' => 14,  // Review Status
-            'K' => 16,  // Reviewed By
-            'L' => 18,  // Reviewed At
+            'H' => 14,  // Stripe Method
+            'I' => 16,  // Stripe Amount
+            'J' => 15,  // Reference #
+            'K' => 15,  // Invoice #
+            'L' => 14,  // Review Status
+            'M' => 16,  // Reviewed By
+            'N' => 18,  // Reviewed At
         ];
     }
 
@@ -121,6 +127,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
             ],
             // Money column right-aligned
             'F' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
+            'I' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
         ];
     }
 
@@ -138,7 +145,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 $summaryStartRow = $lastDataRow + 2;
 
                 // Add borders to data rows
-                $sheet->getStyle('A1:L' . $lastDataRow)->applyFromArray([
+                $sheet->getStyle('A1:N' . $lastDataRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -150,7 +157,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 // Style alternating rows with light background
                 for ($i = 2; $i <= $lastDataRow; $i++) {
                     if ($i % 2 == 0) {
-                        $sheet->getStyle('A' . $i . ':L' . $i)->applyFromArray([
+                        $sheet->getStyle('A' . $i . ':N' . $i)->applyFromArray([
                             'fill' => [
                                 'fillType' => Fill::FILL_SOLID,
                                 'startColor' => ['rgb' => 'F0F8FF'],
@@ -159,7 +166,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                     }
 
                     // Color code review status
-                    $cell = $sheet->getCell('J' . $i);
+                    $cell = $sheet->getCell('L' . $i);
                     $status = strtolower($cell->getValue());
                     
                     $statusColors = [
@@ -171,7 +178,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                     ];
                     
                     if (isset($statusColors[$status])) {
-                        $sheet->getStyle('J' . $i)->applyFromArray([
+                        $sheet->getStyle('L' . $i)->applyFromArray([
                             'font' => [
                                 'color' => ['rgb' => $status === 'pending' ? '000000' : 'FFFFFF'],
                                 'bold' => true,
@@ -185,8 +192,8 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                     }
 
                     if ($status === 'void') {
-                        $sheet->getStyle('A' . $i . ':L' . $i)->getFont()->setStrikethrough(true);
-                        $sheet->getStyle('A' . $i . ':L' . $i)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('dc3545'));
+                        $sheet->getStyle('A' . $i . ':N' . $i)->getFont()->setStrikethrough(true);
+                        $sheet->getStyle('A' . $i . ':N' . $i)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('dc3545'));
                     }
                 }
 

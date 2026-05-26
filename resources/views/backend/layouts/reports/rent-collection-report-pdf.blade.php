@@ -142,6 +142,8 @@
                 <th>Date</th>
                 <th class="text-right">Amount</th>
                 <th>Method</th>
+                <th>Stripe Method</th>
+                <th class="text-right">Stripe Amount</th>
                 <th>Reference</th>
                 <th>Invoice #</th>
                 <th>Status</th>
@@ -158,6 +160,8 @@
                 <td>{{ $row['payment_date'] }}</td>
                 <td class="text-right">${{ $row['amount'] }}</td>
                 <td>{{ $row['payment_method'] }}</td>
+                <td>{{ $row['stripe_method'] }}</td>
+                <td class="text-right">${{ $row['stripe_amount'] }}</td>
                 <td>{{ $row['reference_number'] }}</td>
                 <td>{{ $row['invoice_number'] }}</td>
                 <td>
@@ -175,7 +179,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="11" style="text-align: center; padding: 20px; color: #888;">
+                <td colspan="13" style="text-align: center; padding: 20px; color: #888;">
                     No payment data available for the selected filters.
                 </td>
             </tr>
@@ -186,7 +190,7 @@
             <tr>
                 <td colspan="5" style="text-align: right;">TOTAL COLLECTED:</td>
                 <td class="text-right">${{ number_format($summary['total_collected'], 2) }}</td>
-                <td colspan="5"></td>
+                <td colspan="7"></td>
             </tr>
         </tfoot>
         @endif

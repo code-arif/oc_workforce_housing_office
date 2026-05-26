@@ -387,6 +387,8 @@
                                         <th>Payment Date</th>
                                         <th class="text-end">Amount ($)</th>
                                         <th>Method</th>
+                                        <th>Stripe Method</th>
+                                        <th>Stripe Amount</th>
                                         <th>Invoice</th>
                                         <th>Review Status</th>
                                         <th>Reviewed By</th>
@@ -399,7 +401,7 @@
                                     <tr>
                                         <th colspan="6" class="text-end">Total Collected:</th>
                                         <th class="text-end" id="footerTotalCollected">$0.00</th>
-                                        <th colspan="5"></th>
+                                        <th colspan="7"></th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -492,6 +494,8 @@
                     { data: 'formatted_payment_date', name: 'payment_date' },
                     { data: 'formatted_amount', name: 'amount', className: 'text-end' },
                     { data: 'payment_method_badge', name: 'payment_method' },
+                    { data: 'stripe_method', name: 'stripe_method', orderable: false, searchable: false },
+                    { data: 'stripe_amount', name: 'stripe_amount', orderable: false, searchable: false },
                     { data: 'invoice_info', name: 'invoice_number' },
                     { data: 'review_status_badge', name: 'review_status' },
                     { data: 'reviewed_info', name: 'reviewed_by' },

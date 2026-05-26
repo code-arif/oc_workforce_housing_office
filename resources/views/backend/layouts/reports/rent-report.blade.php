@@ -200,15 +200,7 @@
                                         <h6 class="mb-0 fw-bold text-danger" id="summaryTotalOutstanding">$0.00</h6>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
-                                    <div class="icon-service-sm bg-primary-transparent text-primary flex-shrink-0">
-                                        <i class="fe fe-credit-card"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-muted mb-0 small">Paid via Stripe</p>
-                                        <h6 class="mb-0 fw-bold" id="summaryStripeAmount">$0.00</h6>
-                                    </div>
-                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -231,8 +223,6 @@
                                         <th>Due Date</th>
                                         <th class="text-end">Outstanding Amount ($)</th>
                                         <th>Invoice No.</th>
-                                        <th>Payment Method</th>
-                                        <th>Stripe Amount</th>
                                         <th>Status</th>
                                         <th>Note</th>
                                     </tr>
@@ -243,7 +233,7 @@
                                     <tr>
                                         <th colspan="4" class="text-end">Total Outstanding:</th>
                                         <th class="text-end" id="footerTotalOutstanding">$0.00</th>
-                                        <th colspan="5"></th>
+                                        <th colspan="3"></th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -315,16 +305,7 @@
                     data: 'invoice_number',
                     name: 'invoice_number'
                 },
-                {
-                    data: 'stripe_method',
-                    name: 'stripe_payment_method',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'stripe_amount',
-                    name: 'stripe_exact_amount'
-                },
+
                 {
                     data: 'status',
                     name: 'status',
@@ -351,14 +332,12 @@
 
             function calculateTotals() {
                 totalOutstanding = 0;
-                let totalStripeAmount = 0;
 
                 table.rows({
                     search: 'applied'
                 }).every(function () {
                     var data = this.data();
                     totalOutstanding += parseFloat(data.outstanding_amount.replace(/,/g, '')) || 0;
-                    totalStripeAmount += parseFloat(data.raw_stripe_amount) || 0;
                 });
 
                 // Update footer
@@ -369,7 +348,6 @@
                     search: 'applied'
                 }).count());
                 $('#summaryTotalOutstanding').text('$' + numberFormat(totalOutstanding));
-                $('#summaryStripeAmount').text('$' + numberFormat(totalStripeAmount));
             }
 
             function numberFormat(num) {
