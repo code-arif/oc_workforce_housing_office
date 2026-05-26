@@ -153,6 +153,8 @@
                                                 <th>Property</th>
                                                 <th>Due Date</th>
                                                 <th>Amount</th>
+                                                <th>Payment Method</th>
+                                                <th>Stripe Amount</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
@@ -236,6 +238,16 @@
                                         </div>
                                         <h4 class="mb-0 ms-4">${{ number_format($stats['paid'], 2) }}</h4>
                                     </div>
+                                    
+                                    <div class="stat-item mt-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <div class="color-indicator bg-primary me-2"></div>
+                                                <span class="text-muted">PAID VIA STRIPE</span>
+                                            </div>
+                                        </div>
+                                        <h4 class="mb-0 ms-4">${{ number_format($stats['stripe_collected_amount'], 2) }}</h4>
+                                    </div>
                                 </div>
 
                                 <hr class="my-4">
@@ -305,6 +317,17 @@
                     {
                         data: 'amount_info',
                         name: 'total_amount',
+                        orderable: true
+                    },
+                    {
+                        data: 'stripe_method',
+                        name: 'stripe_payment_method',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'stripe_amount',
+                        name: 'stripe_exact_amount',
                         orderable: true
                     },
                     {
