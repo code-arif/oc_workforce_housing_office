@@ -2,20 +2,23 @@
 
 namespace App\Services\Stripe\V2;
 
-use Exception;
-use Stripe\Stripe;
-use Stripe\Webhook;
-use App\Models\Invoice;
-use App\Models\Payment;
-use App\Models\Property;
-use App\Models\Transaction;
-use Stripe\Checkout\Session;
-use Illuminate\Support\Facades\DB;
-use App\Models\Lease\LeaseDocument;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use App\Mail\Tenant\Payment\PaymentSuccessAdminMail;
 use App\Mail\Tenant\Payment\PaymentSuccessTenantMail;
+use App\Models\Invoice;
+use App\Models\Lease\LeaseDocument;
+use App\Models\Payment;
+use App\Models\Property;
+use App\Models\Setting;
+use App\Models\Transaction;
+use Exception;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Stripe\Checkout\Session;
+use Stripe\Customer;
+use Stripe\PaymentIntent;
+use Stripe\Stripe;
+use Stripe\Webhook;
 
 class V2StripePaymentService
 {
@@ -24,7 +27,9 @@ class V2StripePaymentService
 
     public function __construct()
     {
-        Stripe::setApiKey(config('services.stripe.secret'));
+        $setting = Setting::first();
+        $secret = $setting?->stripe_secret ?? config('services.stripe.secret');
+        Stripe::setApiKey($secret);
     }
 
     /**
@@ -162,11 +167,20 @@ class V2StripePaymentService
     /**
      * Create Stripe checkout session (with Connect support)
      */
-    public function createCheckoutSession($invoiceId, $tenantId): array
+    public function createCheckoutSession($invoiceId, $tenantId, string $paymentMethodType = 'card'): array
     {
         DB::beginTransaction();
 
         try {
+            $allowedPaymentMethods = ['card', 'us_bank_account'];
+            if (!in_array($paymentMethodType, $allowedPaymentMethods, true)) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'Invalid payment method type. Allowed values: card, us_bank_account.',
+                ];
+            }
+
             $invoice = Invoice::with([
                 'lease' => function ($q) {
                     $q->with(['property', 'season', 'assignments.bed.room']);
@@ -201,7 +215,20 @@ class V2StripePaymentService
                 return ['success' => false, 'message' => 'Invoice has no balance due'];
             }
 
-            $amountInCents = (int) round($paymentAmount * 100);
+            $setting       = Setting::first();
+            $processingFee = 0.00;
+
+            if ($paymentMethodType === 'us_bank_account') {
+                $achFlatFee    = round(floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00)), 2);
+                $processingFee = $achFlatFee;
+            } elseif ($paymentMethodType === 'card') {
+                $cardPct       = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
+                $cardFixed     = floatval($setting?->stripe_card_fee_fixed      ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
+                $processingFee = round(($paymentAmount * ($cardPct / 100)) + $cardFixed, 2);
+            }
+
+            $totalCharge = round($paymentAmount + $processingFee, 2);
+            $amountInCents = (int) round($totalCharge * 100);
 
             // Get connected account for this property
             $connectedAccountId = $this->getConnectedAccountId($invoice);
@@ -246,6 +273,8 @@ class V2StripePaymentService
                 'property_id' => (string) $lease->property_id,
                 'connected_account_id' => $connectedAccountId,
                 'payment_amount' => (string) $paymentAmount,
+                'processing_fee' => (string) $processingFee,
+                'total_charge' => (string) $totalCharge,
                 'invoice_number' => $invoice->invoice_number,
                 'invoice_type' => $invoice->type,
 
@@ -269,14 +298,20 @@ class V2StripePaymentService
                 'rent_amount' => (string) $lease->rent_amount,
                 'deposit_amount' => (string) $lease->deposit_amount,
                 'payment_frequency' => $lease->payment_frequency,
+                'payment_method_type' => $paymentMethodType,
             ];
 
             $successUrl = config('services.stripe.success_url', env('STRIPE_SUCCESS_URL'));
             $cancelUrl = config('services.stripe.cancel_url', env('STRIPE_CANCEL_URL'));
 
+            $paymentMethodTypes = ['card'];
+            if ($paymentMethodType === 'us_bank_account') {
+                $paymentMethodTypes = ['us_bank_account'];
+            }
+
             // Build session params
             $sessionParams = [
-                'payment_method_types' => ['card'],
+                'payment_method_types' => $paymentMethodTypes,
                 'line_items' => $lineItems,
                 'mode' => 'payment',
                 'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
@@ -306,7 +341,8 @@ class V2StripePaymentService
                 'session_id' => $session->id,
                 'connected_account' => $connectedAccountId,
                 'invoice_id' => $invoice->id,
-                'amount' => $paymentAmount,
+                'amount' => $totalCharge,
+                'processing_fee' => $processingFee,
             ]);
 
             return [
@@ -317,7 +353,9 @@ class V2StripePaymentService
                     'id' => $invoice->id,
                     'invoice_number' => $invoice->invoice_number,
                     'type' => $invoice->type,
-                    'amount' => $paymentAmount,
+                    'base_amount' => $paymentAmount,
+                    'processing_fee' => $processingFee,
+                    'total_amount' => $totalCharge,
                 ],
                 'tenant' => [
                     'name' => $metadata['tenant_name'],
@@ -344,6 +382,579 @@ class V2StripePaymentService
     }
 
     /**
+     * Create Stripe Payment Intent for Element
+     */
+    // public function createPaymentIntent($invoiceId, $tenantId, $amountToPay = null, $paymentMethodType = 'card'): array
+    // {
+    //     DB::beginTransaction();
+
+    //     try {
+    //         $invoice = Invoice::with([
+    //             'lease' => function ($q) {
+    //                 $q->with(['property', 'season', 'assignments.bed.room']);
+    //             },
+    //             'tenant' => function ($q) {
+    //                 $q->with(['profile', 'address']);
+    //             }
+    //         ])
+    //             ->where('id', $invoiceId)
+    //             ->where('tenant_id', $tenantId)
+    //             ->lockForUpdate()
+    //             ->first();
+
+    //         if (!$invoice) {
+    //             DB::rollBack();
+    //             return ['success' => false, 'message' => 'Invoice not found'];
+    //         }
+
+    //         $eligibility = $this->checkPaymentEligibility($invoice, $tenantId);
+    //         if (!$eligibility['eligible']) {
+    //             DB::rollBack();
+    //             return ['success' => false, 'message' => $eligibility['reason']];
+    //         }
+
+    //         $lease = $invoice->lease;
+    //         $tenant = $invoice->tenant;
+    //         $assignment = $lease->assignments->where('is_current', true)->first();
+
+    //         // Handle partial payment amount
+    //         $baseAmount = floatval($invoice->balance_due);
+    //         if ($amountToPay !== null) {
+    //             $requestedAmount = floatval($amountToPay);
+    //             if ($requestedAmount <= 0) {
+    //                 DB::rollBack();
+    //                 return ['success' => false, 'message' => 'Payment amount must be greater than zero.'];
+    //             }
+    //             if ($requestedAmount > $baseAmount) {
+    //                 DB::rollBack();
+    //                 return ['success' => false, 'message' => 'Payment amount cannot exceed balance due.'];
+    //             }
+    //             $baseAmount = $requestedAmount;
+    //         }
+
+    //         if ($baseAmount <= 0) {
+    //             DB::rollBack();
+    //             return ['success' => false, 'message' => 'Invoice has no balance due'];
+    //         }
+
+    //         // Get connected account for this property
+    //         $connectedAccountId = $this->getConnectedAccountId($invoice);
+
+    //         if (!$connectedAccountId) {
+    //             DB::rollBack();
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'This property does not have a connected Stripe account. Please contact the admin.'
+    //             ];
+    //         }
+
+    //         // Calculate processing fee
+    //         $processingFee = 0.00;
+
+    //         $setting = Setting::first();
+    //         $achFee = floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00));
+    //         $cardFeePercentage = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
+    //         $cardFeeFixed = floatval($setting?->stripe_card_fee_fixed ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
+
+    //         if ($paymentMethodType === 'us_bank_account') {
+    //             $processingFee = $achFee; // Flat fee for ACH
+    //         } elseif ($paymentMethodType === 'card') {
+    //             $processingFee = ($baseAmount * ($cardFeePercentage / 100)) + $cardFeeFixed; // Percentage + Fixed for Card
+    //         }
+
+    //         $totalCharge = round($baseAmount + $processingFee, 2);
+    //         $amountInCents = (int) round($totalCharge * 100);
+
+    //         $tenantProfile = $tenant->profile;
+    //         $tenantAddress = $tenant->address;
+
+    //         // Resolve or create Stripe Customer on Platform for ACH direct debit requirements
+    //         $stripeCustomerId = null;
+    //         try {
+    //             $customers = Customer::all(['email' => $tenant->email, 'limit' => 1]);
+    //             if (count($customers->data) > 0) {
+    //                 $stripeCustomerId = $customers->data[0]->id;
+    //             } else {
+    //                 $newCustomer = Customer::create([
+    //                     'email' => $tenant->email,
+    //                     'name' => $tenantProfile ? trim(($tenantProfile->first_name ?? '') . ' ' . ($tenantProfile->last_name ?? '')) : 'Tenant',
+    //                 ]);
+    //                 $stripeCustomerId = $newCustomer->id;
+    //             }
+    //         } catch (Exception $e) {
+    //             Log::warning('Stripe customer creation/retrieval failed: ' . $e->getMessage());
+    //         }
+
+    //         $metadata = [
+    //             'invoice_id' => (string) $invoice->id,
+    //             'tenant_id' => (string) $tenantId,
+    //             'lease_id' => (string) $lease->id,
+    //             'property_id' => (string) $lease->property_id,
+    //             'connected_account_id' => $connectedAccountId,
+
+    //             'base_amount' => (string) $baseAmount,
+    //             'processing_fee' => (string) $processingFee,
+    //             'total_charge' => (string) $totalCharge,
+
+    //             'payment_method_type' => $paymentMethodType,
+    //             'invoice_number' => $invoice->invoice_number,
+    //             'invoice_type' => $invoice->type,
+    //             'property_name' => $lease->property->name ?? 'N/A',
+    //             'tenant_name' => $tenantProfile ? trim(($tenantProfile->first_name ?? '') . ' ' . ($tenantProfile->last_name ?? '')) : 'N/A',
+    //         ];
+
+    //         // Create PaymentIntent
+    //         $paymentIntentParams = [
+    //             'amount' => $amountInCents,
+    //             'currency' => 'usd',
+    //             'payment_method_types' => [$paymentMethodType],
+    //             'description' => sprintf(
+    //                 'Invoice %s - %s',
+    //                 $invoice->invoice_number,
+    //                 $lease->property->name ?? 'Property'
+    //             ),
+    //             'metadata' => $metadata,
+    //             'transfer_data' => [
+    //                 'destination' => $connectedAccountId,
+    //             ],
+    //         ];
+
+    //         // ACH (us_bank_account) requires a Customer and verification_method
+    //         if ($paymentMethodType === 'us_bank_account') {
+    //             $paymentIntentParams['payment_method_options'] = [
+    //                 'us_bank_account' => [
+    //                     'verification_method' => 'automatic',
+    //                     'financial_connections' => [
+    //                         'permissions' => ['payment_method'],
+    //                     ],
+    //                 ],
+    //             ];
+
+    //             // Customer is REQUIRED for ACH direct debit
+    //             if ($stripeCustomerId) {
+    //                 $paymentIntentParams['customer'] = $stripeCustomerId;
+    //             }
+    //         } else {
+    //             // on_behalf_of is safe for card but can fail for ACH
+    //             // if connected account lacks ACH capabilities
+    //             $paymentIntentParams['on_behalf_of'] = $connectedAccountId;
+
+    //             if ($stripeCustomerId) {
+    //                 $paymentIntentParams['customer'] = $stripeCustomerId;
+    //             }
+    //         }
+
+    //         $paymentIntent = PaymentIntent::create($paymentIntentParams);
+
+    //         DB::commit();
+
+    //         return [
+    //             'success' => true,
+    //             'client_secret' => $paymentIntent->client_secret,
+    //             'base_amount' => $baseAmount,
+    //             'processing_fee' => $processingFee,
+    //             'total_charge' => $totalCharge,
+    //             'invoice' => [
+    //                 'id' => $invoice->id,
+    //                 'invoice_number' => $invoice->invoice_number,
+    //                 'type' => $invoice->type,
+    //                 'balance_due' => floatval($invoice->balance_due),
+    //             ],
+    //             'tenant' => [
+    //                 'name' => $metadata['tenant_name'],
+    //                 'email' => $tenant->email,
+    //             ],
+    //             'lease' => [
+    //                 'property' => $metadata['property_name'],
+    //             ],
+    //         ];
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Stripe PaymentIntent creation failed: ' . $e->getMessage(), [
+    //             'invoice_id' => $invoiceId,
+    //             'trace' => $e->getTraceAsString(),
+    //         ]);
+
+    //         return [
+    //             'success' => false,
+    //             'message' => 'Failed to create payment intent: ' . $e->getMessage()
+    //         ];
+    //     }
+    // }
+
+
+
+    /**
+     * Create Stripe Payment Intent for Payment Element (Card + ACH/us_bank_account)
+     *
+     * Flow:
+     *  1. Validate invoice ownership & eligibility
+     *  2. Resolve or create Stripe Customer (required for ACH mandate)
+     *  3. Calculate processing fee based on payment method
+     *  4. Build PaymentIntent params per method type
+     *  5. Create PaymentIntent and return client_secret to frontend
+     *
+     * Notes:
+     *  - Card:          synchronous → webhook fires `payment_intent.succeeded` immediately
+     *  - ACH (us_bank): asynchronous → status = `processing` first, webhook fires 1–3 days later
+     *  - Both methods use Stripe Connect destination charges (transfer_data.destination)
+     */
+    public function createPaymentIntent(
+        int|string $invoiceId,
+        int|string $tenantId,
+        ?float     $amountToPay      = null,
+        string     $paymentMethodType = 'card'
+    ): array {
+        // 0. Sanitise & validate payment method type
+        $allowedMethods = ['card', 'us_bank_account'];
+
+        if (!in_array($paymentMethodType, $allowedMethods, true)) {
+            return [
+                'success' => false,
+                'message' => 'Invalid payment method type. Allowed: card, us_bank_account.',
+            ];
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // 1. Load Invoice with all needed relations
+            $invoice = Invoice::with([
+                'lease' => fn($q) => $q->with([
+                    'property',
+                    'season',
+                    'assignments.bed.room',
+                ]),
+                'tenant' => fn($q) => $q->with(['profile', 'address']),
+            ])
+                ->where('id', $invoiceId)
+                ->where('tenant_id', $tenantId)
+                ->lockForUpdate()           // Pessimistic lock — prevent race conditions
+                ->first();
+
+            if (!$invoice) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Invoice not found or access denied.'];
+            }
+
+            // 2. Eligibility check (signed lease, unpaid status, etc.)
+            $eligibility = $this->checkPaymentEligibility($invoice, $tenantId);
+            if (!$eligibility['eligible']) {
+                DB::rollBack();
+                return ['success' => false, 'message' => $eligibility['reason']];
+            }
+
+            $lease  = $invoice->lease;
+            $tenant = $invoice->tenant;
+
+            if (!$lease) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Lease not found for this invoice.'];
+            }
+
+            // 3. Resolve base amount
+            $balanceDue = round(floatval($invoice->balance_due), 2);
+
+            if ($balanceDue <= 0) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Invoice has no balance due.'];
+            }
+
+            if ($amountToPay !== null) {
+                $amountToPay = round(floatval($amountToPay), 2);
+
+                if ($amountToPay <= 0) {
+                    DB::rollBack();
+                    return ['success' => false, 'message' => 'Payment amount must be greater than zero.'];
+                }
+
+                if ($amountToPay > $balanceDue) {
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'message' => sprintf(
+                            'Payment amount ($%.2f) cannot exceed balance due ($%.2f).',
+                            $amountToPay,
+                            $balanceDue
+                        ),
+                    ];
+                }
+
+                $baseAmount = $amountToPay;
+            } else {
+                $baseAmount = $balanceDue;
+            }
+
+            // 4. Verify connected Stripe account for this property
+            $connectedAccountId = $this->getConnectedAccountId($invoice);
+
+            if (!$connectedAccountId) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'This property does not have an active Stripe account. Please contact the admin.',
+                ];
+            }
+
+            // 5. Calculate processing fee
+            $setting       = Setting::first();
+            $processingFee = 0.00;
+
+            if ($paymentMethodType === 'us_bank_account') {
+                // ACH: flat fee (e.g. $5.00)
+                $achFlatFee    = round(floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00)), 2);
+                $processingFee = $achFlatFee;
+            } elseif ($paymentMethodType === 'card') {
+                // Card: percentage + fixed (e.g. 2.9% + $0.30)
+                $cardPct       = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
+                $cardFixed     = floatval($setting?->stripe_card_fee_fixed      ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
+                $processingFee = round(($baseAmount * ($cardPct / 100)) + $cardFixed, 2);
+            }
+
+            $totalCharge   = round($baseAmount + $processingFee, 2);
+            $amountInCents = (int) round($totalCharge * 100); // Stripe requires integer cents
+
+            // Sanity guard — Stripe minimum is $0.50
+            if ($amountInCents < 50) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Total charge is below the Stripe minimum of $0.50.'];
+            }
+
+            // 6. Resolve Stripe Customer (required for ACH mandate, useful for card)
+            $tenantProfile   = $tenant->profile;
+            $tenantAddress   = $tenant->address;
+            $stripeCustomerId = null;
+
+            $tenantFullName = $tenantProfile
+                ? trim(
+                    ($tenantProfile->first_name  ?? '') . ' ' .
+                        ($tenantProfile->middle_name ?? '') . ' ' .
+                        ($tenantProfile->last_name   ?? '')
+                )
+                : 'Tenant';
+
+            try {
+                // Search for existing customer by email to avoid duplicates
+                $existingCustomers = Customer::all([
+                    'email' => $tenant->email,
+                    'limit' => 1,
+                ]);
+
+                if (!empty($existingCustomers->data)) {
+                    $stripeCustomerId = $existingCustomers->data[0]->id;
+
+                    Log::info('Existing Stripe customer found', [
+                        'customer_id' => $stripeCustomerId,
+                        'tenant_id'   => $tenantId,
+                    ]);
+                } else {
+                    $newCustomer = Customer::create([
+                        'email' => $tenant->email,
+                        'name'  => $tenantFullName,
+                        'phone' => $tenantProfile->phone ?? null,
+                        'address' => [
+                            'line1'       => $tenantAddress->address ?? null,
+                            'city'        => $tenantAddress->city    ?? null,
+                            'state'       => $tenantAddress->state   ?? null,
+                            'postal_code' => $tenantAddress->zip     ?? null,
+                            'country'     => $tenantAddress->country ?? 'US',
+                        ],
+                        'metadata' => [
+                            'tenant_id' => (string) $tenantId,
+                        ],
+                    ]);
+                    $stripeCustomerId = $newCustomer->id;
+
+                    Log::info('New Stripe customer created', [
+                        'customer_id' => $stripeCustomerId,
+                        'tenant_id'   => $tenantId,
+                    ]);
+                }
+            } catch (Exception $e) {
+                // Non-fatal for card. Fatal for ACH (customer is required).
+                Log::warning('Stripe customer resolve failed: ' . $e->getMessage(), [
+                    'tenant_id' => $tenantId,
+                ]);
+
+                if ($paymentMethodType === 'us_bank_account') {
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'message' => 'Unable to create Stripe customer required for ACH payment. Please try again.',
+                    ];
+                }
+            }
+
+            // 7. Build metadata (stored on PaymentIntent for webhook processing)
+            $assignment = $lease->assignments->where('is_current', true)->first();
+
+            $metadata = [
+                // Core identifiers
+                'invoice_id'           => (string) $invoice->id,
+                'tenant_id'            => (string) $tenantId,
+                'lease_id'             => (string) $lease->id,
+                'property_id'          => (string) $lease->property_id,
+                'connected_account_id' => $connectedAccountId,
+
+                // Amounts
+                'base_amount'          => (string) $baseAmount,
+                'processing_fee'       => (string) $processingFee,
+                'total_charge'         => (string) $totalCharge,
+
+                // Payment context
+                'payment_method_type'  => $paymentMethodType,
+                'invoice_number'       => $invoice->invoice_number,
+                'invoice_type'         => $invoice->type,
+
+                // Human-readable (for email/webhook logs)
+                'tenant_name'          => $tenantFullName,
+                'tenant_email'         => $tenant->email,
+                'property_name'        => $lease->property->name ?? 'N/A',
+                'unit'                 => $assignment?->bed->bed_label ?? 'N/A',
+            ];
+
+            // 8. Build PaymentIntent params
+            $paymentIntentParams = [
+                'amount'      => $amountInCents,
+                'currency'    => 'usd',
+                'description' => sprintf(
+                    '%s - Invoice %s (%s)',
+                    $invoice->type === 'DEPOSIT' ? 'Security Deposit' : 'Rent Payment',
+                    $invoice->invoice_number,
+                    $lease->property->name ?? 'Property'
+                ),
+                'metadata'        => $metadata,
+                // Destination charge → funds go to platform, then transferred to connected account
+                'transfer_data'   => [
+                    'destination' => $connectedAccountId,
+                ],
+                // Platform application fee (0 = no fee; configure PLATFORM_FEE_PERCENTAGE to enable)
+                ...(self::PLATFORM_FEE_PERCENTAGE > 0 ? [
+                    'application_fee_amount' => (int) round($amountInCents * (self::PLATFORM_FEE_PERCENTAGE / 100)),
+                ] : []),
+            ];
+
+            // 8a. Card-specific params
+            if ($paymentMethodType === 'card') {
+                $paymentIntentParams['payment_method_types'] = ['card'];
+
+                // on_behalf_of: makes the charge appear from the connected account's perspective
+                $paymentIntentParams['on_behalf_of'] = $connectedAccountId;
+
+                if ($stripeCustomerId) {
+                    $paymentIntentParams['customer'] = $stripeCustomerId;
+                }
+            }
+
+            // 8b. ACH (us_bank_account) specific params
+            if ($paymentMethodType === 'us_bank_account') {
+                $paymentIntentParams['payment_method_types'] = ['us_bank_account'];
+
+                // Customer is REQUIRED for ACH — mandate must be attached to a customer
+                if (!$stripeCustomerId) {
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'message' => 'A Stripe customer is required for ACH payments.',
+                    ];
+                }
+                $paymentIntentParams['customer'] = $stripeCustomerId;
+
+                // ACH options: use Financial Connections for instant bank verification
+                $paymentIntentParams['payment_method_options'] = [
+                    'us_bank_account' => [
+                        'verification_method'   => 'automatic', // instant via Financial Connections
+                        'financial_connections' => [
+                            'permissions' => ['payment_method', 'balances'],
+                        ],
+                    ],
+                ];
+            }
+
+            // 9. Create PaymentIntent
+            $paymentIntent = PaymentIntent::create($paymentIntentParams);
+
+            DB::commit();
+
+            Log::info('PaymentIntent created successfully', [
+                'payment_intent_id'    => $paymentIntent->id,
+                'invoice_id'           => $invoice->id,
+                'payment_method_type'  => $paymentMethodType,
+                'connected_account_id' => $connectedAccountId,
+                'base_amount'          => $baseAmount,
+                'processing_fee'       => $processingFee,
+                'total_charge'         => $totalCharge,
+                'amount_in_cents'      => $amountInCents,
+            ]);
+
+            // 10. Return response to frontend
+            return [
+                'success'             => true,
+                'client_secret'       => $paymentIntent->client_secret,
+                'payment_intent_id'   => $paymentIntent->id,
+                'payment_method_type' => $paymentMethodType,
+
+                // Amounts (for UI display)
+                'base_amount'         => $baseAmount,
+                'processing_fee'      => $processingFee,
+                'total_charge'        => $totalCharge,
+
+                // Context
+                'invoice' => [
+                    'id'             => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'type'           => $invoice->type,
+                    'balance_due'    => $balanceDue,
+                ],
+                'tenant' => [
+                    'name'  => $tenantFullName,
+                    'email' => $tenant->email,
+                ],
+                'lease' => [
+                    'property' => $lease->property->name ?? 'N/A',
+                    'unit'     => $assignment?->bed->bed_label ?? 'N/A',
+                ],
+
+                /*
+             * Frontend behaviour guide (read this in your React component):
+             *
+             *  payment_method_type = 'card'
+             *    → After confirmPayment() → status: 'succeeded' immediately
+             *    → Webhook: payment_intent.succeeded fires right away
+             *
+             *  payment_method_type = 'us_bank_account'
+             *    → After confirmPayment() → status: 'processing' (NORMAL — not an error)
+             *    → Bank transfer settles in 1–3 business days
+             *    → Webhook: payment_intent.succeeded fires when bank clears the transfer
+             *    → Show user: "Your payment is processing, you'll get a confirmation email."
+             */
+                '_frontend_hint' => [
+                    'is_async' => $paymentMethodType === 'us_bank_account',
+                    'expected_status' => $paymentMethodType === 'us_bank_account' ? 'processing' : 'succeeded',
+                    'redirect' => $paymentMethodType === 'us_bank_account' ? 'if_required' : 'always',
+                ],
+            ];
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            Log::error('PaymentIntent creation failed', [
+                'invoice_id'           => $invoiceId,
+                'tenant_id'            => $tenantId,
+                'payment_method_type'  => $paymentMethodType,
+                'error'                => $e->getMessage(),
+                'trace'                => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to create payment intent: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+
+
+    /**
      * Verify payment after Stripe redirect
      */
     public function verifyPayment($sessionId): array
@@ -366,17 +977,32 @@ class V2StripePaymentService
     /**
      * Process payment after successful Stripe payment
      */
-    private function processPayment($metadata, $session): array
+    private function processPayment($metadata, $sessionOrIntent): array
     {
         DB::beginTransaction();
 
         try {
-            $invoiceId = $metadata['invoice_id'];
-            $tenantId = $metadata['tenant_id'];
-            $paymentAmount = floatval($metadata['payment_amount']);
+            $invoiceId = $metadata['invoice_id'] ?? null;
+            $tenantId = $metadata['tenant_id'] ?? null;
+
+            if (!$invoiceId) {
+                DB::rollBack();
+                Log::warning('Payment processing skipped: Missing invoice_id in metadata (Likely a Stripe test webhook)', [
+                    'session_or_intent_id' => $sessionOrIntent->id ?? 'unknown'
+                ]);
+                return ['success' => false, 'message' => 'Missing invoice_id in metadata'];
+            }
+
+            $baseAmount = floatval($metadata['base_amount'] ?? $metadata['payment_amount'] ?? 0);
+            $processingFee = floatval($metadata['processing_fee'] ?? 0);
+            $totalCharge = floatval($metadata['total_charge'] ?? $metadata['payment_amount'] ?? 0);
             $connectedAccountId = $metadata['connected_account_id'] ?? null;
 
-            $invoice = Invoice::with(['lease', 'tenant.profile'])->findOrFail($invoiceId);
+            // Pessimistic Locking to prevent race conditions on partial payments
+            $invoice = Invoice::with(['lease', 'tenant.profile'])
+                ->lockForUpdate()
+                ->findOrFail($invoiceId);
+
             $lease = $invoice->lease;
             $tenant = $invoice->tenant;
 
@@ -384,11 +1010,20 @@ class V2StripePaymentService
                 throw new Exception('Unauthorized payment attempt');
             }
 
-            // Idempotency check
-            $existingPayment = Payment::where('gateway_transaction_id', $session->id)->first();
+            // Idempotency check: check both gateway_transaction_id (session id) and stripe_payment_intent_id
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+
+            $existingPayment = Payment::where(function ($query) use ($sessionOrIntent, $stripePaymentIntentId) {
+                $query->where('gateway_transaction_id', $sessionOrIntent->id)
+                    ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+            })->first();
+
             if ($existingPayment) {
                 DB::rollBack();
-                Log::info('Payment already processed, skipping', ['session_id' => $session->id]);
+                Log::info('Payment already processed, skipping', [
+                    'session_id' => $sessionOrIntent->id,
+                    'payment_intent_id' => $stripePaymentIntentId
+                ]);
                 return [
                     'success' => true, // Return true so webhook doesn't retry
                     'payment' => ['id' => $existingPayment->id],
@@ -398,17 +1033,23 @@ class V2StripePaymentService
 
             $bedId = $lease->assignments()->where('is_current', true)->first()?->bed_id ?? null;
 
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+
             $payment = Payment::create([
                 'invoice_id' => $invoice->id,
                 'tenant_id' => $tenantId,
                 'lease_id' => $lease->id,
                 'bed_id' => $bedId,
                 'payment_number' => 'PAY-' . strtoupper(uniqid()),
-                'amount' => $paymentAmount,
+                'amount' => $baseAmount,
+                'base_amount' => $baseAmount,
+                'processing_fee' => $processingFee,
+                'total_charged' => $totalCharge,
                 'payment_date' => now()->toDateString(),
                 'payment_method' => 'stripe',
-                'reference_number' => $session->payment_intent,
-                'gateway_transaction_id' => $session->id,
+                'reference_number' => $stripePaymentIntentId,
+                'gateway_transaction_id' => $sessionOrIntent->id,
+                'stripe_payment_intent_id' => $stripePaymentIntentId,
                 'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
                 'paid_by' => 'tenant',
                 'review_status' => 'confirmed', // Auto-confirm stripe payments
@@ -418,8 +1059,8 @@ class V2StripePaymentService
                     $invoice->invoice_number
                 ),
                 'metadata' => [
-                    'stripe_session_id' => $session->id,
-                    'stripe_payment_intent' => $session->payment_intent,
+                    'stripe_session_id' => $sessionOrIntent->id,
+                    'stripe_payment_intent' => $stripePaymentIntentId,
                     'connected_account_id' => $connectedAccountId,
                     'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
                     'property_name' => $metadata['property_name'] ?? 'N/A',
@@ -427,8 +1068,16 @@ class V2StripePaymentService
                 ]
             ]);
 
-            // Update invoice
-            $newPaidAmount = floatval($invoice->paid_amount) + $paymentAmount;
+            Log::info('Payment record created in database', [
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice->id,
+                'amount' => $payment->amount,
+                'processing_fee' => $payment->processing_fee,
+                'total_charged' => $payment->total_charged,
+            ]);
+
+            // Update invoice - ONLY credit base_amount towards balance
+            $newPaidAmount = floatval($invoice->paid_amount) + $baseAmount;
             $newBalance = floatval($invoice->total_amount) - $newPaidAmount;
             $status = 'PARTIAL';
             $paidAt = null;
@@ -459,7 +1108,7 @@ class V2StripePaymentService
                 'transaction_number' => 'TXN-' . strtoupper(uniqid()),
                 'type' => 'payment',
                 'entry_type' => 'credit',
-                'amount' => $paymentAmount,
+                'amount' => $baseAmount,
                 'transaction_date' => now()->toDateString(),
                 'description' => sprintf(
                     '%s payment for Invoice %s - %s (via Stripe Connect → %s)',
@@ -470,8 +1119,8 @@ class V2StripePaymentService
                 ),
                 'metadata' => [
                     'payment_method' => 'stripe',
-                    'stripe_session_id' => $session->id,
-                    'stripe_payment_intent' => $session->payment_intent,
+                    'stripe_session_id' => $sessionOrIntent->id,
+                    'stripe_payment_intent' => $stripePaymentIntentId,
                     'connected_account_id' => $connectedAccountId,
                 ]
             ]);
@@ -482,7 +1131,8 @@ class V2StripePaymentService
                 'payment_id' => $payment->id,
                 'invoice_id' => $invoice->id,
                 'connected_account' => $connectedAccountId,
-                'amount' => $paymentAmount,
+                'amount' => $baseAmount,
+                'processing_fee' => $processingFee,
             ]);
 
             $this->sendPaymentEmails($payment, $invoice, $tenant, $metadata);
@@ -492,7 +1142,7 @@ class V2StripePaymentService
                 'payment' => [
                     'id' => $payment->id,
                     'payment_number' => $payment->payment_number,
-                    'amount' => $paymentAmount,
+                    'amount' => $baseAmount,
                     'payment_date' => $payment->payment_date,
                     'payment_method' => 'stripe',
                     'invoice_type' => $invoice->type,
@@ -508,7 +1158,7 @@ class V2StripePaymentService
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Payment processing failed: ' . $e->getMessage(), [
-                'session_id' => $session->id ?? 'unknown',
+                'session_id' => $sessionOrIntent->id ?? 'unknown',
                 'trace' => $e->getTraceAsString()
             ]);
 
@@ -564,6 +1214,57 @@ class V2StripePaymentService
         }
 
         switch ($event->type) {
+            // Payment Intent Events
+            case 'payment_intent.succeeded':
+                $intent = $event->data->object;
+                Log::info('PaymentIntent succeeded via webhook', [
+                    'intent_id' => $intent->id,
+                ]);
+
+                $result = $this->processPayment($intent->metadata, $intent);
+                if (!$result['success']) {
+                    Log::error('Webhook payment processing failed for intent', [
+                        'intent_id' => $intent->id,
+                        'error' => $result['message']
+                    ]);
+                }
+                break;
+
+            case 'payment_intent.payment_failed':
+                $intent = $event->data->object;
+                Log::warning('PaymentIntent failed via webhook', [
+                    'intent_id' => $intent->id,
+                    'failure_message' => $intent->last_payment_error?->message ?? 'N/A',
+                ]);
+                break;
+
+            case 'payment_intent.amount_capturable_updated':
+            case 'payment_intent.canceled':
+            case 'payment_intent.created':
+            case 'payment_intent.partially_funded':
+            case 'payment_intent.processing':
+            case 'payment_intent.requires_action':
+                $intent = $event->data->object;
+                Log::info("PaymentIntent lifecycle event: {$event->type}", [
+                    'intent_id' => $intent->id,
+                    'status' => $intent->status ?? 'N/A'
+                ]);
+                break;
+
+            // Setup Intent Events
+            case 'setup_intent.canceled':
+            case 'setup_intent.created':
+            case 'setup_intent.requires_action':
+            case 'setup_intent.setup_failed':
+            case 'setup_intent.succeeded':
+                $intent = $event->data->object;
+                Log::info("SetupIntent lifecycle event: {$event->type}", [
+                    'setup_intent_id' => $intent->id,
+                    'status' => $intent->status ?? 'N/A'
+                ]);
+                break;
+
+            // Checkout Session Events
             case 'checkout.session.completed':
                 $session = $event->data->object;
                 Log::info('Checkout session completed via webhook', [
@@ -580,6 +1281,31 @@ class V2StripePaymentService
                         ]);
                     }
                 }
+                break;
+
+            case 'checkout.session.async_payment_succeeded':
+                $session = $event->data->object;
+                Log::info('Checkout session async payment succeeded via webhook', [
+                    'session_id' => $session->id,
+                    'payment_status' => $session->payment_status,
+                ]);
+
+                $result = $this->processPayment($session->metadata, $session);
+                if (!$result['success']) {
+                    Log::error('Webhook async payment processing failed', [
+                        'session_id' => $session->id,
+                        'error' => $result['message']
+                    ]);
+                }
+                break;
+
+            case 'checkout.session.async_payment_failed':
+                $session = $event->data->object;
+                Log::warning('Checkout session async payment failed via webhook', [
+                    'session_id' => $session->id,
+                    'payment_status' => $session->payment_status,
+                    'failure_message' => $session->payment_intent?->last_payment_error?->message ?? 'N/A',
+                ]);
                 break;
 
             case 'transfer.created':
