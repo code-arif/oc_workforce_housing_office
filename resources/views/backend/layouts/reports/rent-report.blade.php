@@ -326,12 +326,6 @@
                     name: 'stripe_exact_amount'
                 },
                 {
-                    data: 'raw_stripe_amount',
-                    name: 'raw_stripe_amount',
-                    visible: false,
-                    searchable: false
-                },
-                {
                     data: 'status',
                     name: 'status',
                     orderable: false,
