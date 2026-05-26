@@ -43,6 +43,7 @@ class IncomeController extends Controller
             'invoice_count' => Invoice::count(), // Total number of invoices
             'due_amount' => $unpaidAmount + $overdueAmount + $partialAmount, // Total amount due
             'collected_amount' => $paidAmount, // Total collected amount
+            'stripe_collected_amount' => Invoice::sum('stripe_exact_amount') ?? 0,
         ];
 
         $properties = Property::where('is_active', true)->get();
@@ -71,6 +72,8 @@ class IncomeController extends Controller
                     'invoices.balance_due',
                     'invoices.is_recurring',
                     'invoices.recurring_frequency',
+                    'invoices.stripe_payment_method',
+                    'invoices.stripe_exact_amount',
                     'invoices.created_at'
                 ])
                 ->with([
@@ -208,7 +211,28 @@ class IncomeController extends Controller
 
                     return '<span class="badge p-3 bg-' . $color . '">' . $label . '</span>';
                 })
-                ->rawColumns(['invoice_info', 'tenant_info', 'property_info', 'amount_info', 'due_date', 'status_badge'])
+                ->addColumn('stripe_method', function ($data) {
+                    if (!$data->stripe_payment_method) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    
+                    if ($data->stripe_payment_method === 'us_bank_account') {
+                        $methodName = 'ACH';
+                        $colorClass = 'bg-info';
+                    } else {
+                        $methodName = 'Card';
+                        $colorClass = 'bg-primary';
+                    }
+                    
+                    return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
+                })
+                ->addColumn('stripe_amount', function ($data) {
+                    if (!$data->stripe_exact_amount || $data->stripe_exact_amount <= 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return '<div class="fw-semibold text-success">$' . number_format((float)$data->stripe_exact_amount, 2) . '</div>';
+                })
+                ->rawColumns(['invoice_info', 'tenant_info', 'property_info', 'amount_info', 'due_date', 'status_badge', 'stripe_method', 'stripe_amount'])
                 ->make(true);
         }
     }

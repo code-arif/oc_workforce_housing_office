@@ -11,15 +11,17 @@ class Payment extends Model
     use LoggableActivity;
     protected $fillable = [
         'invoice_id', 'tenant_id', 'lease_id', 'bed_id',
-        'payment_number', 'amount', 'payment_date', 'payment_method',
-        'reference_number', 'gateway_transaction_id', 'payment_type',
-        'paid_by', 'recorded_by', 'note', 'metadata',
+        'payment_number', 'amount', 'base_amount', 'processing_fee', 'total_charged', 
+        'payment_date', 'deposit_date', 'payment_method',
+        'reference_number', 'gateway_transaction_id', 'stripe_payment_intent_id', 
+        'payment_type', 'paid_by', 'recorded_by', 'note', 'metadata',
         'review_status', 'reviewed_at', 'reviewed_by', 'review_note',
         'status', 'void_reason', 'voided_by', 'voided_at'
     ];
 
     protected $casts = [
         'payment_date' => 'date',
+        'deposit_date' => 'date',
         'metadata' => 'array',
         'reviewed_at' => 'datetime',
         'voided_at' => 'datetime',

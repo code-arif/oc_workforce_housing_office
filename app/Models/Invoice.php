@@ -32,6 +32,8 @@ class Invoice extends Model
         'cancelled_reason',
         'cancelled_by',
         'cancelled_at',
+        'stripe_payment_method',
+        'stripe_exact_amount',
     ];
 
     protected $casts = [

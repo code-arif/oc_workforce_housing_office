@@ -248,7 +248,7 @@
                                 <label for="filterProperty" class="form-label">Property</label>
                                 <select class="form-select select3" id="filterProperty">
                                     <option value="">All Properties</option>
-                                    @foreach($properties as $property)
+                                    @foreach ($properties as $property)
                                     <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
@@ -315,7 +315,7 @@
                                 <label for="filterProperty" class="form-label mb-1 small">Property</label>
                                 <select class="form-select form-select-sm select3" id="filterProperty">
                                     <option value="">All Properties</option>
-                                    @foreach($properties as $property)
+                                    @foreach ($properties as $property)
                                         <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
@@ -345,8 +345,8 @@
                             </div>
                             <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterDateFrom" class="form-label mb-1 small">From Date</label>
-                                <input type="text" class="form-control form-control-sm datepicker2" id="filterDateFrom"
-                                    placeholder="Start date...">
+                                <input type="text" class="form-control form-control-sm datepicker2"
+                                    id="filterDateFrom" placeholder="Start date...">
                             </div>
                             <div class="col-sm-6 col-md-4 col-xl">
                                 <label for="filterDateTo" class="form-label mb-1 small">To Date</label>
@@ -372,7 +372,8 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="collectionReportTable" style="width: 100%">
+                            <table class="table table-bordered table-hover" id="collectionReportTable"
+                                style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 40px;" class="text-center align-middle">
@@ -386,6 +387,8 @@
                                         <th>Tenant</th>
                                         <th>Payment Date</th>
                                         <th class="text-end">Amount ($)</th>
+                                        <th>Stripe Amount</th>
+                                        <th>Stripe Method</th>
                                         <th>Method</th>
                                         <th>Invoice</th>
                                         <th>Review Status</th>
@@ -399,7 +402,7 @@
                                     <tr>
                                         <th colspan="6" class="text-end">Total Collected:</th>
                                         <th class="text-end" id="footerTotalCollected">$0.00</th>
-                                        <th colspan="5"></th>
+                                        <th colspan="7"></th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -424,8 +427,7 @@
                     <input type="hidden" id="reviewNewStatus">
                     <div class="mb-3">
                         <label for="reviewNote" class="form-label">Note (Optional)</label>
-                        <textarea class="form-control" id="reviewNote" rows="3"
-                            placeholder="Add a note about this review action..."></textarea>
+                        <textarea class="form-control" id="reviewNote" rows="3" placeholder="Add a note about this review action..."></textarea>
                     </div>
                     <div class="alert alert-info mb-0">
                         <i class="fe fe-info me-2"></i>
@@ -442,9 +444,9 @@
 @endsection
 
 @push('scripts')
-    <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
+    <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             // Initialize Select2
             $('.select3').select2({
                 placeholder: 'Select Option',
@@ -468,7 +470,7 @@
                 serverSide: true,
                 ajax: {
                     url: "{{ route('reports.rent-collection.data') }}",
-                    data: function (d) {
+                    data: function(d) {
                         d.review_status = $('#filterReviewStatus').val();
                         d.property_id = $('#filterProperty').val();
                         d.tenant_id = $('#filterTenant').val();
@@ -477,39 +479,93 @@
                         d.date_to = parseDateForQuery($('#filterDateTo').val());
                     }
                 },
-                columns: [
-                    {
+                columns: [{
                         data: 'id',
                         orderable: false,
-                        render: function (data) {
+                        render: function(data) {
                             return `<div class="d-flex justify-content-center align-items-center"><input type="checkbox" class="form-check-input row-select m-0" value="${data}"></div>`;
                         }
                     },
-                    { data: 'payment_number', name: 'payment_number' },
-                    { data: 'property_name', name: 'property_name' },
-                    { data: 'bed_label', name: 'bed_label' },
-                    { data: 'tenant_name', name: 'tenant_name' },
-                    { data: 'formatted_payment_date', name: 'payment_date' },
-                    { data: 'formatted_amount', name: 'amount', className: 'text-end' },
-                    { data: 'payment_method_badge', name: 'payment_method' },
-                    { data: 'invoice_info', name: 'invoice_number' },
-                    { data: 'review_status_badge', name: 'review_status' },
-                    { data: 'reviewed_info', name: 'reviewed_by' },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                    {
+                        data: 'payment_number',
+                        name: 'payment_number'
+                    },
+                    {
+                        data: 'property_name',
+                        name: 'property_name'
+                    },
+                    {
+                        data: 'bed_label',
+                        name: 'bed_label'
+                    },
+                    {
+                        data: 'tenant_name',
+                        name: 'tenant_name'
+                    },
+                    {
+                        data: 'formatted_payment_date',
+                        name: 'payment_date'
+                    },
+                    {
+                        data: 'formatted_amount',
+                        name: 'amount',
+                        className: 'text-end'
+                    },
+                    {
+                        data: 'stripe_amount',
+                        name: 'stripe_amount',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'stripe_method',
+                        name: 'stripe_method',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'payment_method_badge',
+                        name: 'payment_method'
+                    },
+
+
+                    {
+                        data: 'invoice_info',
+                        name: 'invoice_number'
+                    },
+                    {
+                        data: 'review_status_badge',
+                        name: 'review_status'
+                    },
+                    {
+                        data: 'reviewed_info',
+                        name: 'reviewed_by'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
-                order: [[5, 'desc']],
+                order: [
+                    [5, 'desc']
+                ],
                 pageLength: 25,
-                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                lengthMenu: [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ],
                 dom: '<"row align-items-center mb-2"<"col-auto d-flex align-items-center gap-2"l<"bulk-actions-container ms-1">><"col-auto ms-auto"f>>rtip',
 
-                initComplete: function () {
+                initComplete: function() {
                     $('#bulkActionsGroup').appendTo('.bulk-actions-container').css('display', '');
                     // hide it again since no rows selected yet
                     if (selectedPayments.length === 0) {
                         $('#bulkActionsGroup').hide();
                     }
                 },
-                drawCallback: function (settings) {
+                drawCallback: function(settings) {
                     updateLastUpdated();
                     loadSummary();
                     updateSelectAllState();
@@ -517,7 +573,10 @@
             });
 
             function numberFormat(num) {
-                return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return num.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
             }
 
             function updateLastUpdated() {
@@ -529,14 +588,15 @@
                 $.ajax({
                     url: "{{ route('reports.rent-collection.summary') }}",
                     data: getFilterParams(),
-                    success: function (data) {
+                    success: function(data) {
                         $('#summaryTotalCollected').text('$' + numberFormat(data.total_amount || 0));
                         $('#summaryTotalPayments').text(data.total_payments || 0);
 
                         $('#summaryPendingAmount').text('$' + numberFormat(data.pending_amount || 0));
                         $('#summaryPendingCount').text(data.pending_review || 0);
 
-                        $('#summaryConfirmedAmount').text('$' + numberFormat(data.confirmed_amount || 0));
+                        $('#summaryConfirmedAmount').text('$' + numberFormat(data.confirmed_amount ||
+                            0));
                         $('#summaryConfirmedCount').text(data.confirmed || 0);
 
                         $('#summaryDisputedAmount').text('$' + numberFormat(data.disputed_amount || 0));
@@ -572,7 +632,8 @@
                 for (const [method, data] of Object.entries(methodData)) {
                     const icon = icons[method] || 'fe-circle';
                     const color = colors[method] || 'secondary';
-                    const label = method ? method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown';
+                    const label = method ? method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) :
+                        'Unknown';
 
                     html += `
                                     <div class="col-6">
@@ -628,33 +689,35 @@
             }
 
             // Filter change handlers
-            $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod, #filterDateFrom, #filterDateTo').on('change', function () {
-                table.ajax.reload();
-            });
+            $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod, #filterDateFrom, #filterDateTo')
+                .on('change', function() {
+                    table.ajax.reload();
+                });
 
             // Reset Filters
-            $('#resetFilters').on('click', function () {
-                $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod').val('').trigger('change');
+            $('#resetFilters').on('click', function() {
+                $('#filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod').val('')
+                    .trigger('change');
                 $('#filterDateFrom, #filterDateTo').val('');
                 table.ajax.reload();
             });
 
             // Select all checkbox
-            $('#selectAll').on('change', function () {
+            $('#selectAll').on('change', function() {
                 const isChecked = $(this).prop('checked');
                 $('.row-select').prop('checked', isChecked);
                 updateSelectedPayments();
             });
 
             // Individual row checkbox
-            $(document).on('change', '.row-select', function () {
+            $(document).on('change', '.row-select', function() {
                 updateSelectedPayments();
                 updateSelectAllState();
             });
 
             function updateSelectedPayments() {
                 selectedPayments = [];
-                $('.row-select:checked').each(function () {
+                $('.row-select:checked').each(function() {
                     selectedPayments.push($(this).val());
                 });
 
@@ -676,7 +739,7 @@
             }
 
             // Single review action
-            $(document).on('click', '.btn-review', function () {
+            $(document).on('click', '.btn-review', function() {
                 const paymentId = $(this).data('id');
                 const newStatus = $(this).data('status');
 
@@ -696,7 +759,7 @@
             });
 
             // Confirm review action
-            $('#confirmReviewBtn').on('click', function () {
+            $('#confirmReviewBtn').on('click', function() {
                 const paymentId = $('#reviewPaymentId').val();
                 const newStatus = $('#reviewNewStatus').val();
                 const note = $('#reviewNote').val();
@@ -709,19 +772,19 @@
                         status: newStatus,
                         note: note
                     },
-                    success: function (response) {
+                    success: function(response) {
                         $('#reviewNoteModal').modal('hide');
                         toastr.success(response.message);
                         table.ajax.reload(null, false);
                     },
-                    error: function (xhr) {
+                    error: function(xhr) {
                         toastr.error(xhr.responseJSON?.message || 'Failed to update status');
                     }
                 });
             });
 
             // Bulk action handlers
-            $(document).on('click', '.bulk-action', function (e) {
+            $(document).on('click', '.bulk-action', function(e) {
                 e.preventDefault();
 
                 if (selectedPayments.length === 0) {
@@ -737,7 +800,9 @@
                     'pending': 'Pending'
                 };
 
-                if (confirm(`Are you sure you want to mark ${selectedPayments.length} payment(s) as ${statusLabels[newStatus]}?`)) {
+                if (confirm(
+                        `Are you sure you want to mark ${selectedPayments.length} payment(s) as ${statusLabels[newStatus]}?`
+                    )) {
                     $.ajax({
                         url: "{{ route('reports.rent-collection.bulk-update') }}",
                         type: 'POST',
@@ -746,33 +811,36 @@
                             payment_ids: selectedPayments,
                             status: newStatus
                         },
-                        success: function (response) {
+                        success: function(response) {
                             toastr.success(response.message);
                             selectedPayments = [];
                             $('#bulkActionsGroup').hide();
                             $('#selectAll').prop('checked', false);
                             table.ajax.reload();
                         },
-                        error: function (xhr) {
-                            toastr.error(xhr.responseJSON?.message || 'Failed to update payments');
+                        error: function(xhr) {
+                            toastr.error(xhr.responseJSON?.message ||
+                                'Failed to update payments');
                         }
                     });
                 }
             });
 
             // Export PDF
-            $('#exportPdfBtn').on('click', function (e) {
+            $('#exportPdfBtn').on('click', function(e) {
                 e.preventDefault();
                 const params = getFilterQueryString();
-                const url = "{{ route('reports.rent-collection.export.pdf') }}" + (params ? '?' + params : '');
+                const url = "{{ route('reports.rent-collection.export.pdf') }}" + (params ? '?' + params :
+                    '');
                 window.location.href = url;
             });
 
             // Export Excel
-            $('#exportExcelBtn').on('click', function (e) {
+            $('#exportExcelBtn').on('click', function(e) {
                 e.preventDefault();
                 const params = getFilterQueryString();
-                const url = "{{ route('reports.rent-collection.export.excel') }}" + (params ? '?' + params : '');
+                const url = "{{ route('reports.rent-collection.export.excel') }}" + (params ? '?' +
+                    params : '');
                 window.location.href = url;
             });
 

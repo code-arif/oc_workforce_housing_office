@@ -63,7 +63,7 @@ class RentCollectionReportController extends Controller
                     'tenant:id,email' => [
                         'profile:id,tenant_id,first_name,middle_name,last_name'
                     ],
-                    'invoice:id,invoice_number,total_amount,due_date',
+                    'invoice:id,invoice_number,total_amount,due_date,stripe_payment_method,stripe_exact_amount',
                     'lease:id,property_id' => [
                         'property:id,name',
                         'assignments' => function ($q) {
@@ -195,6 +195,30 @@ class RentCollectionReportController extends Controller
                     }
                     return '<span class="text-muted">-</span>';
                 })
+                ->addColumn('stripe_method', function ($payment) {
+                    $invoice = $payment->invoice;
+                    if (!$invoice || !$invoice->stripe_payment_method) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    if ($invoice->stripe_payment_method === 'us_bank_account') {
+                        $methodName = 'ACH';
+                        $colorClass = 'bg-info';
+                    } else {
+                        $methodName = 'Card';
+                        $colorClass = 'bg-primary';
+                    }
+                    return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
+                })
+                ->addColumn('stripe_amount', function ($payment) {
+                    $invoice = $payment->invoice;
+                    if (!$invoice || !$invoice->stripe_exact_amount || $invoice->stripe_exact_amount <= 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return '<div class="fw-semibold text-success">$' . number_format((float)$invoice->stripe_exact_amount, 2) . '</div>';
+                })
+                ->addColumn('raw_stripe_amount', function ($payment) {
+                    return $payment->invoice->stripe_exact_amount ?? 0;
+                })
                 ->addColumn('invoice_info', function ($payment) {
                     if ($payment->invoice) {
                         return $payment->invoice->invoice_number . '<br><small class="text-muted">Due: ' .
@@ -221,7 +245,7 @@ class RentCollectionReportController extends Controller
                     $buttons .= '</div>';
                     return $buttons;
                 })
-                ->rawColumns(['formatted_amount', 'payment_method_badge', 'review_status_badge', 'reviewed_info', 'invoice_info', 'actions'])
+                ->rawColumns(['formatted_amount', 'payment_method_badge', 'review_status_badge', 'reviewed_info', 'invoice_info', 'actions', 'stripe_method', 'stripe_amount'])
                 ->make(true);
         }
 
@@ -441,7 +465,7 @@ class RentCollectionReportController extends Controller
                 'tenant:id,email' => [
                     'profile:id,tenant_id,first_name,middle_name,last_name'
                 ],
-                'invoice:id,invoice_number,total_amount,due_date',
+                'invoice:id,invoice_number,total_amount,due_date,stripe_payment_method,stripe_exact_amount',
                 'lease:id,property_id' => [
                     'property:id,name',
                     'assignments' => function ($q) {
@@ -542,6 +566,8 @@ class RentCollectionReportController extends Controller
                 'reviewed_by' => $isVoided ? ($payment->voidedBy?->name ?? '-') : ($payment->reviewedBy?->name ?? '-'),
                 'reviewed_at' => $isVoided ? ($payment->voided_at ? $payment->voided_at->format('M d, Y H:i') : '-') : ($payment->reviewed_at ? $payment->reviewed_at->format('M d, Y H:i') : '-'),
                 'note' => $isVoided ? 'VOIDED: ' . ($payment->void_reason ?? '') : ($payment->note ?? ''),
+                'stripe_method' => $payment->invoice?->stripe_payment_method === 'us_bank_account' ? 'ACH' : ($payment->invoice?->stripe_payment_method ? 'Card' : 'N/A'),
+                'stripe_amount' => number_format((float)($payment->invoice?->stripe_exact_amount ?? 0), 2),
                 'status' => $payment->status,
             ];
         }

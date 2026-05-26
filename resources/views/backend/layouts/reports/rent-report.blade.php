@@ -150,8 +150,8 @@
                                         <select class="form-select form-select-sm select3" id="tenantFilter">
                                             <option value="">Select Tenant</option>
                                             @foreach ($tenants as $tenant)
-                                                <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }}
-                                                    {{ $tenant->profile->last_name }}
+                                                <option value="{{ $tenant->id }}">{{ $tenant?->profile?->first_name }}
+                                                    {{ $tenant?->profile?->last_name }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -200,6 +200,7 @@
                                         <h6 class="mb-0 fw-bold text-danger" id="summaryTotalOutstanding">$0.00</h6>
                                     </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>
@@ -304,6 +305,7 @@
                     data: 'invoice_number',
                     name: 'invoice_number'
                 },
+
                 {
                     data: 'status',
                     name: 'status',

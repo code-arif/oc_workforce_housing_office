@@ -183,4 +183,96 @@ class SettingController extends Controller
 
         return $value;
     }
+
+    /**
+     * Update environment variables directly.
+     */
+    private function updateEnvVariables(array $envValues): void
+    {
+        $envPath = base_path('.env');
+
+        if (!file_exists($envPath) || !is_writable($envPath)) {
+            return;
+        }
+
+        $content = file_get_contents($envPath);
+
+        foreach ($envValues as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $formattedValue = $this->formatEnvValue($value);
+            // Allow optional spaces around the = sign when matching
+            $pattern = '/^' . preg_quote($key, '/') . '\s*=.*$/m';
+
+            if (preg_match($pattern, $content)) {
+                $content = preg_replace($pattern, $key . '=' . $formattedValue, $content);
+            } else {
+                $content .= PHP_EOL . $key . '=' . $formattedValue;
+            }
+        }
+
+        file_put_contents($envPath, $content);
+    }
+
+    /**
+     * Display the Stripe settings page.
+     */
+    public function stripeIndex(): View
+    {
+        $setting = Setting::latest('id')->first();
+        return view('backend.layouts.settings.stripe_settings', compact('setting'));
+    }
+
+    /**
+     * Update Stripe settings.
+     */
+    public function stripeUpdate(Request $request): RedirectResponse
+    {
+        $validatedData = $request->validate([
+            'stripe_key' => 'nullable|string|max:255',
+            'stripe_secret' => 'nullable|string|max:255',
+            'stripe_webhook_secret' => 'nullable|string|max:255',
+            'stripe_ach_fee' => 'nullable|numeric|min:0',
+            'stripe_card_fee_percentage' => 'nullable|numeric|min:0',
+            'stripe_card_fee_fixed' => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            $envValues = [
+                'STRIPE_KEY' => $validatedData['stripe_key'] ?? null,
+                'STRIPE_SECRET' => $validatedData['stripe_secret'] ?? null,
+                'STRIPE_WEBHOOK_SECRET' => $validatedData['stripe_webhook_secret'] ?? null,
+                'STRIPE_ACH_FEE' => $validatedData['stripe_ach_fee'] ?? null,
+                'STRIPE_CARD_FEE_PERCENTAGE' => $validatedData['stripe_card_fee_percentage'] ?? null,
+                'STRIPE_CARD_FEE_FIXED' => $validatedData['stripe_card_fee_fixed'] ?? null,
+            ];
+
+            // Persist to .env
+            $this->updateEnvVariables($envValues);
+
+            // Also persist to settings table so UI reads updated values immediately
+            Setting::updateOrCreate(
+                ['id' => 1],
+                [
+                    'stripe_key' => $validatedData['stripe_key'] ?? null,
+                    'stripe_secret' => $validatedData['stripe_secret'] ?? null,
+                    'stripe_webhook_secret' => $validatedData['stripe_webhook_secret'] ?? null,
+                    'stripe_ach_fee' => $validatedData['stripe_ach_fee'] ?? null,
+                    'stripe_card_fee_percentage' => $validatedData['stripe_card_fee_percentage'] ?? null,
+                    'stripe_card_fee_fixed' => $validatedData['stripe_card_fee_fixed'] ?? null,
+                ]
+            );
+
+            // Clear caches so new values are picked up immediately
+            Artisan::call('config:clear');
+            Artisan::call('view:clear');
+            Artisan::call('cache:clear');
+
+            return back()->with('t-success', 'Stripe settings updated successfully');
+        } catch (Exception $e) {
+            return back()->with('t-error', 'Failed to update Stripe settings: ' . $e->getMessage());
+        }
+    }
 }
