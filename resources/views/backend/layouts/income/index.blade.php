@@ -134,9 +134,9 @@
                                     <span class="text-muted" id="showingInfo">Showing invoices</span>
                                 </div>
                                 <div>
-                                    <button class="btn btn-light btn-sm me-2 d-inline-flex align-items-center">
+                                    {{-- <button class="btn btn-light btn-sm me-2 d-inline-flex align-items-center">
                                         <i class="fe fe-download me-1"></i> Export
-                                    </button>
+                                    </button> --}}
                                     <a href="{{ route('invoices.create') }}"
                                         class="btn btn-primary btn-sm d-inline-flex align-items-center">
                                         <i class="fe fe-plus me-1"></i> New Invoice
@@ -153,8 +153,8 @@
                                                 <th>Property</th>
                                                 <th>Due Date</th>
                                                 <th>Amount</th>
-                                                <th>Payment Method</th>
                                                 <th>Stripe Amount</th>
+                                                <th>Payment Method</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
@@ -238,7 +238,7 @@
                                         </div>
                                         <h4 class="mb-0 ms-4">${{ number_format($stats['paid'], 2) }}</h4>
                                     </div>
-                                    
+
                                     <div class="stat-item mt-3">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div class="d-flex align-items-center">
@@ -246,7 +246,8 @@
                                                 <span class="text-muted">PAID VIA STRIPE</span>
                                             </div>
                                         </div>
-                                        <h4 class="mb-0 ms-4">${{ number_format($stats['stripe_collected_amount'], 2) }}</h4>
+                                        <h4 class="mb-0 ms-4">${{ number_format($stats['stripe_collected_amount'], 2) }}
+                                        </h4>
                                     </div>
                                 </div>
 
@@ -320,15 +321,15 @@
                         orderable: true
                     },
                     {
+                        data: 'stripe_amount',
+                        name: 'stripe_exact_amount',
+                        orderable: true
+                    },
+                    {
                         data: 'stripe_method',
                         name: 'stripe_payment_method',
                         orderable: false,
                         searchable: false
-                    },
-                    {
-                        data: 'stripe_amount',
-                        name: 'stripe_exact_amount',
-                        orderable: true
                     },
                     {
                         data: 'status_badge',
