@@ -337,9 +337,9 @@
                                                     <div class="col-md-6">
                                                         <label class="form-label">Rent Due on <span
                                                                 class="text-danger">*</span></label>
-                                                        <div class="d-flex align-items-center"
-                                                            id="weeklyDueDayContainer">
-                                                            <select class="form-select" id="weekly_due_day" name="weekly_due_day">
+                                                        <div class="d-flex align-items-center" id="weeklyDueDayContainer"></div>
+                                                            <select class="form-select" id="weekly_due_day"
+                                                                name="weekly_due_day">
                                                                 <option value="1">Monday</option>
                                                                 <option value="2">Tuesday</option>
                                                                 <option value="3">Wednesday</option>
@@ -355,7 +355,8 @@
                                                         <label class="form-label">First Rental Invoice Due <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control datepicker2"
-                                                            id="weekly_first_invoice_date" name="weekly_first_invoice_date">
+                                                            id="weekly_first_invoice_date"
+                                                            name="weekly_first_invoice_date">
                                                         <small class="text-muted">First invoice will be created with this
                                                             due date</small>
                                                     </div>
