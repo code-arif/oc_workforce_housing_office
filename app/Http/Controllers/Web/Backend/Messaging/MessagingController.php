@@ -144,17 +144,45 @@ class MessagingController extends Controller
         $account = $this->getDefaultAccount($user);
 
         $folder = $request->get('folder', 'inbox');
+        $search = $request->get('search');
         $page = $request->get('page', 1);
 
-        $messages = EmailMessage::where('email_account_id', $account->id)
+        $query = EmailMessage::where('email_account_id', $account->id)
             ->where('folder', $folder)
-            ->with(['labels', 'attachmentFiles'])
-            ->orderBy('email_date', 'desc')
+            ->with(['labels', 'attachmentFiles']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                    ->orWhere('from_email', 'like', "%{$search}%")
+                    ->orWhere('body_text', 'like', "%{$search}%");
+            });
+        }
+
+        $messages = $query->orderBy('email_date', 'desc')
             ->paginate(50);
+
+        $formattedMessages = $messages->map(function ($message) {
+            return [
+                'id' => $message->id,
+                'is_read' => $message->is_read,
+                'is_starred' => $message->is_starred,
+                'from_name' => $message->from_name ?: $message->from_email,
+                'from_email' => $message->from_email,
+                'has_attachments' => $message->has_attachments,
+                'subject' => $message->subject ?: '(No Subject)',
+                'preview' => strip_tags(\Illuminate\Support\Str::limit($message->body_text ?: $message->body_html, 100)),
+                'date' => $message->email_date ? $message->email_date->diffForHumans() : '',
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $messages,
+            'data' => $formattedMessages,
+            'total' => $messages->total(),
+            'count' => $messages->count(),
+            'current_page' => $messages->currentPage(),
+            'last_page' => $messages->lastPage(),
         ]);
     }
 

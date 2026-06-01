@@ -229,7 +229,18 @@
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
-                                        <div class="ms-auto">
+                                        
+                                        <!-- Search input -->
+                                        <div class="ms-auto flex-grow-1 mx-3" style="max-width: 300px;">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search emails..." value="{{ request('search') }}">
+                                                <button class="btn btn-sm btn-primary" id="searchBtn" type="button">
+                                                    <i class="fa fa-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div class="ms-auto" id="paginationInfo">
                                             <span class="text-muted">1-{{ $messages->count() }} of
                                                 {{ $messages->total() }}</span>
                                         </div>
@@ -285,11 +296,13 @@
                                 </div>
 
                                 <!-- Pagination -->
-                                @if ($messages->hasPages())
-                                    <div class="p-3 border-top">
-                                        {{ $messages->links() }}
-                                    </div>
-                                @endif
+                                <div id="paginationContainer">
+                                    @if ($messages->hasPages())
+                                        <div class="p-3 border-top">
+                                            {{ $messages->links() }}
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -640,6 +653,123 @@
                     error: function() {
                         toastr.error('Action failed');
                     }
+                });
+            }
+
+            // Dynamic Search
+            let searchTimeout;
+            $('#searchInput').on('keyup', function(e) {
+                if (e.which == 13) return; // handled by keypress
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    performSearch();
+                }, 500);
+            });
+            
+            $('#searchInput').on('keypress', function(e) {
+                if(e.which == 13) {
+                    clearTimeout(searchTimeout);
+                    performSearch();
+                    e.preventDefault();
+                }
+            });
+
+            $('#searchBtn').click(function() {
+                performSearch();
+            });
+
+            function performSearch() {
+                const search = $('#searchInput').val();
+                const folder = '{{ $folder }}';
+                
+                // If search is cleared and we were searching, reload to restore correct pagination state
+                if (!search && window.location.search.includes('search=')) {
+                    window.location.href = '?folder=' + folder;
+                    return;
+                }
+                
+                $('#emailList').html(`
+                    <div class="text-center p-5">
+                        <i class="fa fa-spinner fa-spin fa-3x text-primary mb-3"></i>
+                        <p class="text-muted">Searching...</p>
+                    </div>
+                `);
+                
+                $.ajax({
+                    url: '{{ route('messaging.messages') }}',
+                    data: { folder: folder, search: search },
+                    success: function(response) {
+                        if (response.success) {
+                            renderEmails(response.data);
+                            
+                            // Update counts
+                            const paginationInfo = response.count > 0 ? `1-${response.count} of ${response.total}` : '0 of 0';
+                            $('#paginationInfo').html(`<span class="text-muted">${paginationInfo}</span>`);
+                            
+                            // hide pagination links if search is active since it requires server-rendered links right now
+                            if(search) {
+                               $('#paginationContainer').hide();
+                            } else {
+                               $('#paginationContainer').show();
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function renderEmails(messages) {
+                const container = $('#emailList');
+                container.empty();
+                
+                if (messages.length === 0) {
+                    container.html(`
+                        <div class="text-center p-5">
+                            <i class="fa fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No emails found</p>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                messages.forEach(function(message) {
+                    const unreadClass = !message.is_read ? 'unread' : '';
+                    const starClass = message.is_starred ? 'starred' : '';
+                    const attachmentHtml = message.has_attachments ? '<i class="fa fa-paperclip text-muted"></i>' : '';
+                    
+                    const html = `
+                        <div class="email-row p-3 border-bottom ${unreadClass}" data-id="${message.id}" onclick="viewEmail(${message.id})">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" onclick="event.stopPropagation()">
+                                    <input type="checkbox" class="email-checkbox email-select" value="${message.id}">
+                                </div>
+                                <div class="me-3" onclick="event.stopPropagation()">
+                                    <i class="fa fa-star star-icon ${starClass}" data-id="${message.id}" onclick="toggleStar(${message.id})"></i>
+                                </div>
+                                <div class="flex-grow-1" style="min-width: 0;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-grow-1" style="min-width: 0;">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <span class="email-subject me-2">${message.from_name}</span>
+                                                ${attachmentHtml}
+                                            </div>
+                                            <div class="email-preview text-truncate">
+                                                <span class="fw-semibold">${message.subject}</span> - ${message.preview}
+                                            </div>
+                                        </div>
+                                        <div class="ms-3 text-end text-muted" style="min-width: 80px;">
+                                            <small>${message.date}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.append(html);
+                });
+                
+                // Reattach event listeners for checkboxes
+                $('.email-select').change(function() {
+                    toggleBulkActions();
                 });
             }
 
