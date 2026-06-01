@@ -778,7 +778,7 @@
                                                     <div class="row">
                                                         <div class="col-md-4">
                                                             <div class="info-item">
-                                                                <span class="label">Monthly Rent</span>
+                                                                <span class="label">Rent</span>
                                                                 <span class="value text-success"
                                                                     id="finalRentAmount">$0.00</span>
                                                             </div>
