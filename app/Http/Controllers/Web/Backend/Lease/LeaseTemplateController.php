@@ -75,7 +75,7 @@ class LeaseTemplateController extends Controller
             'tenant_ssn' => 'XXX-XX-1234',
             'tenant_dob' => '01/15/1985',
             'tenant_id' => 'DL-123456789',
-            
+
             // Property info
             'property_name' => 'Sunrise Apartments',
             'property_address' => '456 Oak Avenue, Suite 100',
@@ -85,14 +85,14 @@ class LeaseTemplateController extends Controller
             'unit_number' => 'Unit 205',
             'room_number' => 'Room B',
             'bed_number' => 'Bed 2',
-            
+
             // Lease terms
             'lease_start_date' => '02/01/2026',
             'lease_end_date' => '01/31/2027',
             'move_in_date' => '02/01/2026',
             'move_out_date' => '01/31/2027',
             'lease_term' => '12 months',
-            
+
             // Financial
             'monthly_rent' => '$1,500.00',
             'security_deposit' => '$1,500.00',
@@ -102,19 +102,19 @@ class LeaseTemplateController extends Controller
             'late_fee' => '$50.00',
             'pet_deposit' => '$300.00',
             'parking_fee' => '$100.00',
-            
+
             // Dates
             'current_date' => date('m/d/Y'),
             'signature_date' => date('m/d/Y'),
             'effective_date' => date('m/d/Y'),
-            
+
             // Landlord info
             'landlord_name' => 'ABC Property Management LLC',
             'landlord_address' => '789 Business Blvd',
             'landlord_phone' => '(555) 987-6543',
             'landlord_email' => 'leasing@abcproperties.com',
             'manager_name' => 'Jane Smith',
-            
+
             // Emergency contact
             'emergency_contact' => 'Mary Doe',
             'emergency_phone' => '(555) 111-2222',
@@ -175,11 +175,11 @@ class LeaseTemplateController extends Controller
 
         $file = $request->file('template_file');
         $extension = strtolower($file->getClientOriginalExtension());
-        
+
         // Store the original file
         $documentPath = $file->store('lease-templates', 'public');
         $pdfPath = null;
-        
+
         // Convert DOCX to PDF for viewing, or use PDF directly
         if ($extension === 'docx') {
             $pdfPath = $this->convertDocxToPdf($file, $documentPath);
@@ -187,10 +187,10 @@ class LeaseTemplateController extends Controller
             // It's already a PDF
             $pdfPath = $documentPath;
         }
-        
+
         // Get total pages from PDF
         $totalPages = $this->getPdfPageCount(storage_path('app/public/' . $pdfPath));
-        
+
         // Get file metadata
         $metadata = [
             'file_size' => $file->getSize(),
@@ -214,7 +214,7 @@ class LeaseTemplateController extends Controller
         return redirect()->route('lease-templates.edit', $template->id)
             ->with('success', 'Template uploaded successfully. Now add placeholders to your document.');
     }
-    
+
     /**
      * Convert DOCX to PDF for viewing
      */
@@ -223,19 +223,19 @@ class LeaseTemplateController extends Controller
         try {
             $sourceFile = storage_path('app/public/' . $documentPath);
             $outputDir = storage_path('app/public/lease-templates/pdf');
-            
+
             if (!is_dir($outputDir)) {
                 mkdir($outputDir, 0755, true);
             }
-            
+
             $basename = pathinfo($documentPath, PATHINFO_FILENAME);
             $pdfFilename = $basename . '.pdf';
             $pdfPath = 'lease-templates/pdf/' . $pdfFilename;
             $outputFile = $outputDir . DIRECTORY_SEPARATOR . $pdfFilename;
-            
+
             // Try using LibreOffice for conversion (cross-platform)
             $libreOffice = $this->getLibreOfficePath();
-            
+
             if ($libreOffice) {
                 $command = sprintf(
                     '"%s" --headless --convert-to pdf --outdir "%s" "%s" 2>&1',
@@ -243,36 +243,36 @@ class LeaseTemplateController extends Controller
                     $outputDir,
                     $sourceFile
                 );
-                
+
                 exec($command, $output, $returnCode);
-                
+
                 if ($returnCode === 0 && file_exists($outputFile)) {
                     Log::info("DOCX converted to PDF successfully: {$outputFile}");
                     return $pdfPath;
                 }
             }
-            
+
             // Fallback: Use PhpWord to convert (basic conversion)
             $phpWord = IOFactory::load($sourceFile);
-            
+
             // Create PDF using dompdf via PhpWord
-            $pdfWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'PDF');
+            $pdfWriter = IOFactory::createWriter($phpWord, 'PDF');
             $pdfWriter->save($outputFile);
-            
+
             if (file_exists($outputFile)) {
                 return $pdfPath;
             }
-            
+
             // If all else fails, return the original path (will need manual handling)
             Log::warning("Could not convert DOCX to PDF, storing original");
             return $documentPath;
-            
+
         } catch (\Exception $e) {
             Log::error("DOCX to PDF conversion failed: " . $e->getMessage());
             return $documentPath;
         }
     }
-    
+
     /**
      * Get LibreOffice path based on OS
      */
@@ -283,25 +283,25 @@ class LeaseTemplateController extends Controller
             'C:\Program Files\LibreOffice\program\soffice.exe',
             'C:\Program Files (x86)\LibreOffice\program\soffice.exe',
         ];
-        
+
         // Linux/Mac paths
         $unixPaths = [
             '/usr/bin/libreoffice',
             '/usr/bin/soffice',
             '/Applications/LibreOffice.app/Contents/MacOS/soffice',
         ];
-        
+
         $paths = PHP_OS_FAMILY === 'Windows' ? $windowsPaths : $unixPaths;
-        
+
         foreach ($paths as $path) {
             if (file_exists($path)) {
                 return $path;
             }
         }
-        
+
         return null;
     }
-    
+
     /**
      * Get page count from PDF
      */
@@ -311,11 +311,11 @@ class LeaseTemplateController extends Controller
             if (!file_exists($pdfPath)) {
                 return 1;
             }
-            
+
             // Simple page count using file content
             $content = file_get_contents($pdfPath);
             $pageCount = preg_match_all("/\/Type\s*\/Page[^s]/", $content);
-            
+
             return max(1, $pageCount);
         } catch (\Exception $e) {
             Log::error("Error counting PDF pages: " . $e->getMessage());
@@ -336,46 +336,46 @@ class LeaseTemplateController extends Controller
     {
         $phpWord = IOFactory::load($file->getRealPath());
         $htmlWriter = IOFactory::createWriter($phpWord, 'HTML');
-        
+
         ob_start();
         $htmlWriter->save('php://output');
         $html = ob_get_clean();
-        
+
         return $html;
     }
 
     public function edit($id)
     {
         $template = LeaseTemplate::findOrFail($id);
-        
+
         return view('backend.layouts.leases.template.lease-templates.editor', compact('template'));
     }
 
     public function update(Request $request, $id)
     {
         $template = LeaseTemplate::findOrFail($id);
-        
+
         $updateData = [];
-        
+
         if ($request->has('name')) {
             $updateData['name'] = $request->name;
         }
-        
+
         if ($request->has('placeholders')) {
-            $placeholders = is_string($request->placeholders) 
-                ? json_decode($request->placeholders, true) 
+            $placeholders = is_string($request->placeholders)
+                ? json_decode($request->placeholders, true)
                 : $request->placeholders;
             $this->validateCustomFieldLabels($placeholders);
             $updateData['placeholders'] = $placeholders;
         }
-        
+
         if ($request->has('signatures')) {
-            $signatures = is_string($request->signatures) 
-                ? json_decode($request->signatures, true) 
+            $signatures = is_string($request->signatures)
+                ? json_decode($request->signatures, true)
                 : $request->signatures;
             $updateData['signatures'] = $signatures;
         }
-        
+
         $template->update($updateData);
 
         return response()->json([
@@ -404,7 +404,7 @@ class LeaseTemplateController extends Controller
     public function destroy($id)
     {
         $template = LeaseTemplate::findOrFail($id);
-        
+
         // Delete associated files
         if ($template->document_path) {
             Storage::disk('public')->delete($template->document_path);
@@ -412,7 +412,7 @@ class LeaseTemplateController extends Controller
         if ($template->pdf_path && $template->pdf_path !== $template->document_path) {
             Storage::disk('public')->delete($template->pdf_path);
         }
-        
+
         $template->delete();
 
         return redirect()->route('lease-templates.index')
@@ -426,21 +426,21 @@ class LeaseTemplateController extends Controller
     {
         $template = LeaseTemplate::findOrFail($id);
         $pdfPath = $template->pdf_path ?? $template->document_path;
-        
+
         if (!$pdfPath || !Storage::disk('public')->exists($pdfPath)) {
             abort(404, 'PDF not found');
         }
-        
+
         return response()->file(storage_path('app/public/' . $pdfPath));
     }
-    
+
     /**
      * Generate final lease document with filled placeholders
      */
     public function generateLease(Request $request, $id)
     {
         $template = LeaseTemplate::findOrFail($id);
-        
+
         $data = $request->validate([
             'tenant_name' => 'required|string',
             'tenant_email' => 'nullable|email',
@@ -452,20 +452,20 @@ class LeaseTemplateController extends Controller
             'security_deposit' => 'nullable|numeric',
             // Add more fields as needed
         ]);
-        
+
         // Get the PDF path
         $pdfPath = storage_path('app/public/' . ($template->pdf_path ?? $template->document_path));
-        
+
         if (!file_exists($pdfPath)) {
             return response()->json(['error' => 'Template PDF not found'], 404);
         }
-        
+
         // Generate PDF with placeholder values overlaid
         $outputPdf = $this->overlayPlaceholderValues($pdfPath, $template->placeholders ?? [], $data, $template->total_pages);
-        
+
         return response()->download($outputPdf, 'lease_' . time() . '.pdf');
     }
-    
+
     /**
      * Overlay placeholder values on PDF
      * Note: For production, install setasign/fpdi for best results
@@ -474,69 +474,69 @@ class LeaseTemplateController extends Controller
     private function overlayPlaceholderValues($pdfPath, $placeholders, $data, $totalPages)
     {
         $outputPath = storage_path('app/public/generated-leases/lease_' . time() . '.pdf');
-        
+
         $outputDir = dirname($outputPath);
         if (!is_dir($outputDir)) {
             mkdir($outputDir, 0755, true);
         }
-        
+
         // For the best PDF overlay, install setasign/fpdi package:
         // composer require setasign/fpdi
         // Then use the FPDI approach below:
-        
+
         // Check if FPDI is available
         if (class_exists('\setasign\Fpdi\Fpdi')) {
             return $this->overlayWithFpdi($pdfPath, $placeholders, $data, $outputPath);
         }
-        
+
         // Fallback: Copy original and add instructions
         // This is a simplified approach - for production use FPDI
         copy($pdfPath, $outputPath);
-        
+
         Log::warning("FPDI not installed. For proper PDF overlay, run: composer require setasign/fpdi");
-        
+
         return $outputPath;
     }
-    
+
     /**
      * Overlay using FPDI (when installed)
      */
     private function overlayWithFpdi($pdfPath, $placeholders, $data, $outputPath)
     {
         $pdf = new \setasign\Fpdi\Fpdi();
-        
+
         // Get page count
         $pageCount = $pdf->setSourceFile($pdfPath);
-        
+
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
-            
+
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
             $pdf->useTemplate($templateId);
-            
+
             // Filter placeholders for this page
             $pagePlaceholders = array_filter($placeholders, fn($p) => ($p['page'] ?? 1) == $pageNo);
-            
+
             foreach ($pagePlaceholders as $placeholder) {
                 $fieldName = $placeholder['field'] ?? '';
                 $value = $data[$fieldName] ?? '';
-                
+
                 if (empty($value)) continue;
-                
+
                 // Convert coordinates (PDF.js uses different coordinate system)
                 $x = ($placeholder['x'] ?? 0) * 0.264583; // Convert px to mm
                 $y = ($placeholder['y'] ?? 0) * 0.264583;
                 $fontSize = $placeholder['fontSize'] ?? 12;
-                
+
                 $pdf->SetFont('Helvetica', '', $fontSize * 0.75);
                 $pdf->SetXY($x, $y);
                 $pdf->Write(0, $value);
             }
         }
-        
+
         $pdf->Output($outputPath, 'F');
-        
+
         return $outputPath;
     }
 
@@ -566,7 +566,7 @@ class LeaseTemplateController extends Controller
     public function duplicate($id)
     {
         $template = LeaseTemplate::findOrFail($id);
-        
+
         $newTemplate = $template->replicate();
         $newTemplate->name = $template->name . ' (Copy)';
         $newTemplate->is_active = false;
@@ -582,7 +582,7 @@ class LeaseTemplateController extends Controller
     public function export($id)
     {
         $template = LeaseTemplate::findOrFail($id);
-        
+
         $exportData = [
             'name' => $template->name,
             'content' => $template->content,
