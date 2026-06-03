@@ -732,17 +732,17 @@
     function getNextOccurrenceOfDay(startDate, targetDayOfWeek) {
         // targetDayOfWeek: 1=Monday, 2=Tuesday, ..., 7=Sunday
         const date = new Date(startDate);
-        
+
         // Get current day of week (0=Sunday, 1=Monday, ..., 6=Saturday)
         let currentDay = date.getDay();
         // Convert to our format: 1=Monday, 2=Tuesday, ..., 7=Sunday
         currentDay = currentDay === 0 ? 7 : currentDay;
-        
+
         let daysToAdd = targetDayOfWeek - currentDay;
         if (daysToAdd <= 0) {
             daysToAdd += 7;
         }
-        
+
         date.setDate(date.getDate() + daysToAdd);
         return date;
     }
@@ -751,11 +751,11 @@
         // Calculate how many weeks fit between start and end dates
         const start = new Date(startDate + 'T00:00:00');
         const end = new Date(endDate + 'T00:00:00');
-        
+
         const diffTime = Math.abs(end - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         const weeks = Math.ceil(diffDays / 7);
-        
+
         return {
             weeks: weeks,
             totalAmount: weeklyAmount * weeks,
@@ -1245,8 +1245,8 @@
             due_day: isCustomPayment || isWeeklyPayment ? null : (parseInt($('#due_day').val()) || 1),
             weekly_due_day: isWeeklyPayment ? (parseInt($('#weekly_due_day').val()) || 5) : null,
             // ─── FIX #2: use getISOFromPicker so backend always gets yyyy-mm-dd ───
-            first_invoice_date: isCustomPayment ? null : (isWeeklyPayment ? 
-                (getISOFromPicker('#weekly_first_invoice_date') || null) : 
+            first_invoice_date: isCustomPayment ? null : (isWeeklyPayment ?
+                (getISOFromPicker('#weekly_first_invoice_date') || null) :
                 (getISOFromPicker('#first_invoice_date') || null)),
             deposit_collected: $('#deposit_collected').is(':checked'),
             custom_payments: isCustomPayment ? getCustomPayments() : [],

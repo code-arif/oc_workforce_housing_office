@@ -148,8 +148,10 @@
                                             $document = $lease->documents->first();
                                         @endphp
                                         @if ($document && $document->tenant_signed_at && $document->admin_signed_at)
-                                            <span class="badge bg-success-transparent text-success">
-                                                <i class="fe fe-check-circle me-1"></i> Signed Online
+                                            <span class="badge bg-success-transparent text-success d-inline-flex align-items-center px-2 py-1"
+                                                style="font-size:11px;">
+                                                <i class="fe fe-check-circle me-1"></i>
+                                                Signed Online
                                             </span>
                                         @elseif($document && $document->tenant_signed_at)
                                             <span class="badge bg-warning-transparent text-warning">
@@ -342,14 +344,16 @@
                                                         @if ($unpaidInvoices->count() > 0)
                                                             <div class="invoice-link-group mt-2">
                                                                 <span
-                                                                    class="badge bg-danger-transparent text-danger me-1"><i
-                                                                        class="fe fe-alert-circle"></i> Due:</span>
-                                                                @foreach ($unpaidInvoices as $invoice)
+                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1 me-1"
+                                                                    style="font-size:11px;">
+                                                                    <i class="fe fe-alert-circle me-1"></i>
+                                                                    Due Invoices:
+                                                                </span>
+                                                               @foreach ($unpaidInvoices as $invoice)
                                                                     <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                                        class="invoice-link unpaid">{{ $invoice->invoice_number }}</a>
-                                                                    @if (!$loop->last)
-                                                                        ,
-                                                                    @endif
+                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3 mb-2 text-decoration-none me-1">
+                                                                        {{ $invoice->invoice_number }}
+                                                                    </a>
                                                                 @endforeach
                                                             </div>
                                                         @endif
@@ -425,11 +429,11 @@
                                                     <p class="text-muted">All documents have been signed</p>
                                                     @if ($lease->documents->count() > 0)
                                                         <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $lease->documents->first()->id]) }}"
-                                                            class="btn btn-sm btn-outline-primary mt-2">
+                                                            class="btn btn-sm btn-outline-primary mt-2 d-inline-flex align-items-center">
                                                             <i class="fe fe-eye me-1"></i> View Signed Document
                                                         </a>
                                                     @else
-                                                        <button class="btn btn-sm btn-primary mt-2">
+                                                        <button class="btn btn-sm btn-primary mt-2 d-inline-flex align-items-center">
                                                             <i class="fe fe-plus me-1"></i> Sign a Document
                                                         </button>
                                                     @endif

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use PhpOffice\PhpWord\IOFactory;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\Lease\LeaseTemplate;
 
@@ -364,6 +365,7 @@ class LeaseTemplateController extends Controller
             $placeholders = is_string($request->placeholders) 
                 ? json_decode($request->placeholders, true) 
                 : $request->placeholders;
+            $this->validateCustomFieldLabels($placeholders);
             $updateData['placeholders'] = $placeholders;
         }
         
@@ -380,6 +382,23 @@ class LeaseTemplateController extends Controller
             'success' => true,
             'message' => 'Template saved successfully'
         ]);
+    }
+
+    /**
+     * Validate custom text field labels before saving.
+     */
+    private function validateCustomFieldLabels(array $placeholders)
+    {
+        foreach ($placeholders as $placeholder) {
+            if (($placeholder['type'] ?? '') === 'text_input') {
+                $label = trim($placeholder['label'] ?? '');
+                if ($label === '' || $label === 'Custom Text Input') {
+                    throw ValidationException::withMessages([
+                        'placeholders' => ['Each custom text field must have a specific label.']
+                    ]);
+                }
+            }
+        }
     }
 
     public function destroy($id)

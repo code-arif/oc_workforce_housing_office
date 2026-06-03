@@ -398,13 +398,18 @@
                 </div>
             </div>
             <div class="signature-modal-actions">
-                <button type="button" class="btn btn-outline-secondary" onclick="clearTextInput()">
+                <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+                    onclick="clearTextInput()">
                     <i class="fas fa-eraser me-1"></i> Clear
                 </button>
-                <button type="button" class="btn btn-outline-danger" onclick="closeTextInputModal()">
+
+                <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center"
+                    onclick="closeTextInputModal()">
                     <i class="fas fa-times me-1"></i> Cancel
                 </button>
-                <button type="button" class="btn btn-primary" onclick="saveTextInput()" id="saveTextBtn">
+
+                <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center"
+                    onclick="saveTextInput()" id="saveTextBtn">
                     <i class="fas fa-check me-1"></i> Save Text
                 </button>
             </div>
@@ -442,8 +447,7 @@
             // Ensure it's an object, not an array
             let customTextValues = (customTextValuesRaw && typeof customTextValuesRaw === 'object' && !Array
                     .isArray(customTextValuesRaw)) ?
-                customTextValuesRaw :
-                {};
+                customTextValuesRaw : {};
 
             if (!pdfUrl) {
                 console.warn('No PDF URL provided');
@@ -493,7 +497,7 @@
                     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                         renderPromise = renderPromise.then(() => {
                             return renderPage(pdf, pageNum, totalPages, placeholdersByPage[
-                                pageNum] || [], signaturesByPage[pageNum] || [],
+                                    pageNum] || [], signaturesByPage[pageNum] || [],
                                 textInputsByPage[pageNum] || []);
                         });
                     }
@@ -979,7 +983,7 @@
 
                 // Save to database
                 fetch('{{ route('lease-documents.update-custom-fields', ':id') }}'.replace(':id',
-                    documentId), {
+                        documentId), {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

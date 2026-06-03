@@ -1,8 +1,8 @@
-
 <style>
     .select2-container {
         width: 100% !important;
     }
+
     /* Progress Steps */
     .steps-container {
         display: flex;
@@ -84,7 +84,7 @@
     .card {
         border: 1px solid #e9ecef;
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .card-body {
@@ -322,7 +322,7 @@
         justify-content: space-between;
         align-items: center;
         z-index: 1000;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
     }
 
     /* Step Content */
@@ -414,7 +414,7 @@
     }
 
     .add-tenant-section .card:hover {
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         /* transform: translateY(-2px); */
     }
 

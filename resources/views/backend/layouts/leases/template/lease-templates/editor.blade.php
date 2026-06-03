@@ -138,7 +138,7 @@
                                         <div class="draggable-field signature-field" draggable="true" data-field="tenant_signature" data-label="Tenant Signature" data-type="signature">
                                             <i class="fas fa-grip-vertical"></i> Tenant Signature
                                         </div>
-                                        
+
                                         <div class="draggable-field" draggable="true" data-field="tenant_date_signed" data-label="Tenant Date Signed" data-type="date">
                                             <i class="fas fa-grip-vertical"></i> Tenant Date Signed
                                         </div>
@@ -251,7 +251,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h6 class="modal-title">Field Properties</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
@@ -259,8 +259,8 @@
                     <input type="text" class="form-control form-control-sm" id="fieldLabel" readonly>
                 </div>
                 <div class="mb-3" id="customLabelGroup" style="display: none;">
-                    <label class="form-label">Custom Label (for Text Input)</label>
-                    <input type="text" class="form-control form-control-sm" id="customLabel" placeholder="Enter custom label">
+                    <label class="form-label">Custom Label (for Text Input) <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-sm" id="customLabel" placeholder="Enter custom label" required>
                     <small class="text-muted">This label will be shown when filling out the lease</small>
                 </div>
                 <div class="mb-3">
@@ -537,7 +537,7 @@ $(document).ready(function() {
     // Template data
     const templateId = {{ $template->id }};
     const pdfUrl = "{{ $template->pdf_path ? asset('storage/' . $template->pdf_path) : asset('storage/' . $template->document_path) }}";
-    
+
     let pdfDoc = null;
     let currentPage = 1;
     let totalPages = 0;
@@ -560,13 +560,13 @@ $(document).ready(function() {
             pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
             totalPages = pdfDoc.numPages;
             $('#totalPages').text(totalPages);
-            
+
             // Render all pages
             await renderAllPages();
-            
+
             // Restore placed fields
             restorePlacedFields();
-            
+
         } catch (error) {
             console.error('Error loading PDF:', error);
             showNotification('Error loading document. Please try again.', 'error');
@@ -581,15 +581,15 @@ $(document).ready(function() {
         for (let i = 1; i <= totalPages; i++) {
             const page = await pdfDoc.getPage(i);
             const viewport = page.getViewport({ scale: scale });
-            
+
             // Create page wrapper
             const pageWrapper = $(`<div class="pdf-page-wrapper" data-page="${i}"></div>`);
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
-            
+
             canvas.height = viewport.height;
             canvas.width = viewport.width;
-            
+
             pageWrapper.append(canvas);
             viewer.append(pageWrapper);
 
@@ -648,7 +648,7 @@ $(document).ready(function() {
         const fieldId = `field_${fieldIdCounter}`;
         const isSignature = data.type === 'signature';
         const isTextInput = data.type === 'text_input';
-        
+
         let width, height;
         if (isSignature) {
             width = 180;
@@ -663,12 +663,13 @@ $(document).ready(function() {
 
         const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
         const displayLabel = isTextInput ? '[Text Input Area]' : data.label;
+        const fieldDataLabel = isTextInput ? '' : data.label;
 
         const placeholder = $(`
-            <div class="placed-placeholder ${extraClass}" 
+            <div class="placed-placeholder ${extraClass}"
                  id="${fieldId}"
                  data-field="${data.field}"
-                 data-label="${data.label}"
+                 data-label="${fieldDataLabel}"
                  data-type="${data.type}"
                  data-page="${pageNum}"
                  style="left: ${x}px; top: ${y}px; width: ${width}px; height: ${height}px;">
@@ -704,7 +705,8 @@ $(document).ready(function() {
         placedFields.push({
             id: fieldId,
             field: data.field,
-            label: data.label,
+            label: fieldDataLabel,
+            customLabel: '',
             type: data.type,
             page: pageNum,
             x: x,
@@ -715,6 +717,10 @@ $(document).ready(function() {
         });
 
         updatePlacedFieldsList();
+
+        if (isTextInput) {
+            openFieldProperties(placeholder);
+        }
     }
 
     // Single shared drag/resize state (prevents stacking handlers)
@@ -825,7 +831,7 @@ $(document).ready(function() {
             $('#fieldWidth').val(field.width);
             $('#fieldHeight').val(field.height);
             $('#fieldFontSize').val(field.fontSize || 12);
-            
+
             // Show custom label input for text_input fields
             if (field.type === 'text_input') {
                 $('#customLabelGroup').show();
@@ -833,7 +839,7 @@ $(document).ready(function() {
             } else {
                 $('#customLabelGroup').hide();
             }
-            
+
             $('#fieldPropertiesModal').modal('show');
         }
     }
@@ -847,19 +853,24 @@ $(document).ready(function() {
         const fontSize = parseInt($('#fieldFontSize').val());
 
         selectedField.css({ width, height });
-        
+
         const fieldId = selectedField.attr('id');
         const field = placedFields.find(f => f.id === fieldId);
         if (field) {
             field.width = width;
             field.height = height;
             field.fontSize = fontSize;
-            
+
             // Save custom label for text input fields
             if (field.type === 'text_input') {
-                const customLabel = $('#customLabel').val();
+                const customLabel = $('#customLabel').val().trim();
+                if (!customLabel) {
+                    showNotification('Custom field label is required.', 'error');
+                    return;
+                }
                 field.customLabel = customLabel;
-                field.label = customLabel || 'Custom Text Input';
+                field.label = customLabel;
+                selectedField.find('.field-label').text(customLabel);
             }
         }
 
@@ -870,12 +881,12 @@ $(document).ready(function() {
     // Delete field from modal
     $('#deleteFieldBtn').on('click', function() {
         if (!selectedField) return;
-        
+
         const fieldId = selectedField.attr('id');
         placedFields = placedFields.filter(f => f.id !== fieldId);
         selectedField.remove();
         selectedField = null;
-        
+
         $('#fieldPropertiesModal').modal('hide');
         updatePlacedFieldsList();
     });
@@ -883,7 +894,7 @@ $(document).ready(function() {
     // Update placed fields list
     function updatePlacedFieldsList() {
         const list = $('#placedFieldsList');
-        
+
         if (placedFields.length === 0) {
             list.html('<p class="text-muted small text-center py-3">No fields placed yet</p>');
             return;
@@ -921,9 +932,9 @@ $(document).ready(function() {
             const isTextInput = field.type === 'text_input';
             const extraClass = isSignature ? 'signature' : (isTextInput ? 'text-input' : '');
             const displayLabel = isTextInput ? (field.customLabel || '[Text Input Area]') : field.label;
-            
+
             const placeholder = $(`
-                <div class="placed-placeholder ${extraClass}" 
+                <div class="placed-placeholder ${extraClass}"
                      id="${field.id}"
                      data-field="${field.field}"
                      data-label="${field.label}"
@@ -1002,6 +1013,16 @@ $(document).ready(function() {
     $('#saveTemplateBtn').on('click', function() {
         const btn = $(this);
         const originalText = btn.html();
+
+        const invalidTextField = placedFields.find(f => f.type === 'text_input' && (!f.customLabel || !f.customLabel.trim() || f.label === 'Custom Text Input'));
+        if (invalidTextField) {
+            showNotification('Each custom text field must have a specific label before saving.', 'error');
+            const target = $(`#${invalidTextField.id}`);
+            if (target.length) {
+                openFieldProperties(target);
+            }
+            return;
+        }
 
         btn.prop('disabled', true);
         btn.html('<i class="fas fa-spinner fa-spin"></i> Saving...');

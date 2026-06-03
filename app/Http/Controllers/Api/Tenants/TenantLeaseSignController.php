@@ -84,6 +84,60 @@ class TenantLeaseSignController extends Controller
         }
     }
 
+
+    /**
+     * Sign lease document V2
+     */
+    public function signLeaseV2(Request $request, $leaseId)
+    {
+        $validator = Validator::make($request->all(), [
+            'signature' => 'required|string', // Base64 signature or digital signature
+            'signature_type' => 'nullable|in:digital,electronic,wet',
+            'ip_address' => 'nullable|ip',
+            'custom_fields' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationError($validator->errors());
+        }
+
+        try {
+            $tenant = $request->user();
+
+            if ($request->has('custom_fields')) {
+                $document = $this->signingService->getLeaseDocument($leaseId, $tenant->id);
+                if ($document) {
+                    $existingCustomFields = is_array($document->custom_fields) ? $document->custom_fields : [];
+                    $incomingCustomFields = is_array($request->custom_fields) ? $this->normalizeCustomFieldsInput($request->custom_fields) : [];
+                    $mergedCustomFields = array_replace_recursive($existingCustomFields, $incomingCustomFields);
+
+                    $document->update([
+                        'custom_fields' => $mergedCustomFields
+                    ]);
+                }
+            }
+
+            $result = $this->signingService->signLease(
+                $leaseId,
+                $tenant->id,
+                $request->signature,
+                $request->signature_type ?? 'digital',
+                $request->ip_address ?? $request->ip()
+            );
+
+            if (!$result['success']) {
+                return $this->error([], $result['message'], 400);
+            }
+
+            return $this->success([
+                'lease' => $result['lease'],
+                'document' => $result['document']
+            ], 'Lease signed successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
     /**
      * Check if lease can be signed
      */
@@ -152,6 +206,70 @@ class TenantLeaseSignController extends Controller
                 'admin_signature' => $document->admin_signature,
                 'can_sign' => !$document->tenant_signed_at && $document->lease?->status === 'PENDING_TENANT_SIGN',
             ], 'Document preview data retrieved successfully');
+        } catch (Exception $e) {
+            return $this->error([], $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get manual sign fields (Custom input fields and signature status)
+     */
+    public function getManualSignFields(Request $request, $leaseId)
+    {
+        try {
+            $tenant = $request->user();
+
+            $document = $this->signingService->getLeaseDocument($leaseId, $tenant->id);
+
+            if (!$document) {
+                return $this->error([], 'Document not found', 404);
+            }
+
+            $template = $document->leaseTemplate ?? $document->template;
+
+            $placeholders = [];
+            if ($template) {
+                $placeholders = is_array($template->placeholders)
+                    ? $template->placeholders
+                    : (json_decode($template->placeholders, true) ?? []);
+            }
+
+            $customInputFields = [];
+            $customTextCounter = 1;
+
+            foreach ($placeholders as $placeholder) {
+                if (isset($placeholder['type']) && $placeholder['type'] === 'text_input') {
+                    $fieldId = $placeholder['id'] ?? $placeholder['field'] ?? '';
+                    if ($fieldId) {
+                        $label = $placeholder['label'] ?? 'Custom Field';
+
+                        // If it's the default custom text label, append a number to make it unique and identifiable
+                        if ($label === 'Custom Text Input' || $label === 'Custom Field') {
+                            $label = $label . ' ' . $customTextCounter;
+                            $customTextCounter++;
+                        }
+
+                        $customInputFields[] = [
+                            'id' => $fieldId,
+                            'name' => $placeholder['field'] ?? '',
+                            'label' => $label,
+                            'page' => $placeholder['page'] ?? 1,
+                            'value' => $document->custom_fields[$fieldId] ?? '',
+                            'width' => $placeholder['width'] ?? 150,
+                            'height' => $placeholder['height'] ?? 20,
+                        ];
+                    }
+                }
+            }
+
+            return $this->success([
+                'document_id' => $document->id,
+                'custom_fields' => $customInputFields,
+                'is_tenant_signed' => (bool) $document->tenant_signed_at,
+                'is_admin_signed' => (bool) $document->admin_signed_at,
+                'tenant_signature' => $document->tenant_signature,
+                'can_sign' => !$document->tenant_signed_at && $document->lease?->status === 'PENDING_TENANT_SIGN',
+            ], 'Manual sign fields retrieved successfully');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
@@ -244,7 +362,7 @@ class TenantLeaseSignController extends Controller
 
             // Update custom fields
             $existingCustomFields = is_array($document->custom_fields) ? $document->custom_fields : [];
-            $incomingCustomFields = is_array($request->custom_fields) ? $request->custom_fields : [];
+            $incomingCustomFields = is_array($request->custom_fields) ? $this->normalizeCustomFieldsInput($request->custom_fields) : [];
             $mergedCustomFields = array_replace_recursive($existingCustomFields, $incomingCustomFields);
 
             $document->update([
@@ -259,6 +377,35 @@ class TenantLeaseSignController extends Controller
             Log::error('Failed to update custom fields: ' . $e->getMessage());
             return $this->error([], $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Normalize incoming custom field payloads for tenant signing.
+     *
+     * Accepts either a keyed map of field IDs => values or an array of objects
+     * like [{ id, name, value }, ...]. Returns a flat map keyed by field id.
+     */
+    private function normalizeCustomFieldsInput(array $customFields): array
+    {
+        // If payload is already a keyed map, return it as-is.
+        if (array_values($customFields) !== $customFields) {
+            return $customFields;
+        }
+
+        $normalized = [];
+        foreach ($customFields as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $fieldId = $item['id'] ?? $item['field'] ?? $item['name'] ?? null;
+            $value = $item['value'] ?? $item['answer'] ?? null;
+            if ($fieldId !== null) {
+                $normalized[$fieldId] = $value;
+            }
+        }
+
+        return $normalized;
     }
 
     /**
@@ -429,7 +576,7 @@ class TenantLeaseSignController extends Controller
 
                 // Position and write text
                 $pdf->SetXY($x, $y);
-                
+
                 // Use MultiCell for long text to enable wrapping
                 if (strlen($value) > 50) {
                     $pdf->MultiCell($width, 5, $value, 0, 'L');

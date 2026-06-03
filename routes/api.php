@@ -130,8 +130,10 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
             Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']); // done
             Route::post('/{leaseId}/sign', [TenantLeaseSignController::class, 'signLease']); // done
+            Route::post('/{leaseId}/sign-v2', [TenantLeaseSignController::class, 'signLeaseV2']); // done
             Route::get('/{leaseId}/eligibility', [TenantLeaseSignController::class, 'checkSigningEligibility']); // done
             Route::get('/{leaseId}/preview', [TenantLeaseSignController::class, 'previewDocument']); // done
+            Route::get('/{leaseId}/manual-sign-fields', [TenantLeaseSignController::class, 'getManualSignFields']); // manually retrieve custom fields and signing eligibility
             Route::get('/{leaseId}/download', [TenantLeaseSignController::class, 'downloadDocument'])->name('download'); // done
             Route::post('/{leaseId}/custom-fields', [TenantLeaseSignController::class, 'updateCustomFields']); // Save custom text input fields
         });
