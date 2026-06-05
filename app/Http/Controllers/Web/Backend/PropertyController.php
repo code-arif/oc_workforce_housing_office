@@ -86,26 +86,42 @@ class PropertyController extends Controller
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
-                    $buttons = '';
+                    $buttons = '<div class="btn-group" role="group">';
+
                     if (auth()->user()->can('property.show')) {
                         $buttons .= '
-                            <a href="' . route('property.show', $item->id) . '" class="btn btn-sm btn-info me-1" title="Show"><i class="bi bi-eye"></i></a>
+                            <a href="' . route('property.show', $item->id) . '"
+                            class="btn btn-sm btn-info"
+                            title="View">
+                                <i class="fe fe-eye"></i>
+                            </a>
                         ';
                     }
+
                     if (auth()->user()->can('property.edit')) {
                         $buttons .= '
-                            <button class="btn btn-sm btn-warning me-1" onclick="editProperty(' . $item->id . ')" title="Edit">
-                                <i class="bi bi-pencil"></i>
+                            <button type="button"
+                                    class="btn btn-sm btn-warning"
+                                    onclick="editProperty(' . $item->id . ')"
+                                    title="Edit">
+                                <i class="fe fe-edit"></i>
                             </button>
                         ';
                     }
+
                     if (auth()->user()->can('property.delete')) {
                         $buttons .= '
-                            <button class="btn btn-sm btn-danger" onclick="propertyDeleteConfirm(' . $item->id . ')" title="Delete">
-                                <i class="bi bi-trash"></i>
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="propertyDeleteConfirm(' . $item->id . ')"
+                                    title="Delete">
+                                <i class="fe fe-trash"></i>
                             </button>
                         ';
                     }
+
+                    $buttons .= '</div>';
+
                     return $buttons;
                 })
                 ->rawColumns(['name', 'rent', 'description', 'status', 'actions'])
@@ -191,13 +207,13 @@ class PropertyController extends Controller
             'room_id',
             Room::whereIn('unit_id', $property->units->pluck('id'))->pluck('id')
         )
-        ->where('is_occupied', true)
-        ->count();
+            ->where('is_occupied', true)
+            ->count();
 
         $availableBeds = $totalBeds - $occupiedBeds;
 
         // Calculate rental stats
-        $activeLeases = $property->leases->where('status', '!=','TERMINATED')->where('status', '!=', 'COMPLETED');
+        $activeLeases = $property->leases->where('status', '!=', 'TERMINATED')->where('status', '!=', 'COMPLETED');
         $totalMonthlyRent = $activeLeases->sum('rent_amount');
 
         // Calculate totals
@@ -378,7 +394,7 @@ class PropertyController extends Controller
     {
         try {
             $property = Property::onlyTrashed()->where('id', $id)->firstOrFail();
-            
+
             $property->restore();
 
             return response()->json([
@@ -400,10 +416,10 @@ class PropertyController extends Controller
     {
         try {
             $property = Property::onlyTrashed()->where('id', $id)->firstOrFail();
-            
+
             // Get property name before deletion
             $propertyName = $property->name;
-            
+
             // Force delete the property (permanently removes from database)
             $property->forceDelete();
 

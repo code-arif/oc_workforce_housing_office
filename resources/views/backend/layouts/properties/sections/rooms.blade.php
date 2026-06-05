@@ -8,8 +8,10 @@
                     <span class="badge bg-success fs-12" id="availableRooms">Available</span>
                     <span class="badge bg-danger fs-12" id="occupiedRooms">Occupied</span>
                 </h4>
-                <button class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="addRoomBtn">
-                    <i class="fe fe-plus me-1"></i> Add Room
+                <button class="btn btn-primary btn-sm d-inline-flex align-items-center justify-content-center gap-1"
+                    id="addRoomBtn">
+                    <i class="fe fe-plus lh-1"></i>
+                    <span>Add Room</span>
                 </button>
             </div>
 
@@ -45,17 +47,18 @@
 
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title text-white" id="roomModalLabel">Add Room</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">&times;</button>
                 </div>
 
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="form-group mb-3">
-                                <label for="property_id" class="form-label">Property <span class="text-danger">*</span></label>
+                                <label for="property_id" class="form-label">Property <span
+                                        class="text-danger">*</span></label>
                                 <select class="form-control" name="property_id" id="property_id" required>
                                     <option value="">Select Property</option>
-                                    @foreach(App\Models\Property::where('is_active', true)->get() as $property)
+                                    @foreach (App\Models\Property::where('is_active', true)->get() as $property)
                                         <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
@@ -72,14 +75,17 @@
                             </div>
 
                             <div class="form-group mb-3">
-                                <label for="room_number" class="form-label">Room Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="room_number" id="room_number" placeholder="Enter room number" required>
+                                <label for="room_number" class="form-label">Room Number <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="room_number" id="room_number"
+                                    placeholder="Enter room number" required>
                                 <div class="invalid-feedback"></div>
                             </div>
 
                             <div class="form-group mb-3">
                                 <label for="name" class="form-label">Room Name (Optional)</label>
-                                <input type="text" class="form-control" name="name" id="name" placeholder="Enter room name">
+                                <input type="text" class="form-control" name="name" id="name"
+                                    placeholder="Enter room name">
                                 <div class="invalid-feedback"></div>
                             </div>
 
@@ -97,11 +103,15 @@
                         <div class="col-lg-6">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="mb-0"><strong>Beds</strong></h6>
-                                <button type="button" class="btn btn-sm btn-success" id="addBedBtn">
-                                    <i class="fe fe-plus me-1"></i> Add Bed
+                                <button type="button"
+                                    class="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center gap-1"
+                                    id="addBedBtn">
+                                    <i class="fe fe-plus lh-1"></i>
+                                    <span>Add Bed</span>
                                 </button>
                             </div>
-                            <div id="bedContainer" class="border p-3" style="background-color: #f8f9fa; max-height: 400px; overflow-y: auto;">
+                            <div id="bedContainer" class="border p-3"
+                                style="background-color: #f8f9fa; max-height: 400px; overflow-y: auto;">
                                 <div class="bed-item-empty">No beds added. Click "Add Bed" to start.</div>
                             </div>
                         </div>
@@ -196,16 +206,44 @@
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('rooms.list') }}",
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false },
-                    { data: 'unit', name: 'unit', orderable: false },
-                    { data: 'room_number', name: 'room_number' },
-                    { data: 'beds_count', name: 'beds_count', orderable: false },
-                    { data: 'gender_designation', name: 'gender_designation' },
-                    { data: 'status', name: 'status', orderable: false },
-                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false
+                    },
+                    {
+                        data: 'unit',
+                        name: 'unit',
+                        orderable: false
+                    },
+                    {
+                        data: 'room_number',
+                        name: 'room_number'
+                    },
+                    {
+                        data: 'beds_count',
+                        name: 'beds_count',
+                        orderable: false
+                    },
+                    {
+                        data: 'gender_designation',
+                        name: 'gender_designation'
+                    },
+                    {
+                        data: 'status',
+                        name: 'status',
+                        orderable: false
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
                 ],
-                order: [[0, 'asc']],
+                order: [
+                    [0, 'asc']
+                ],
                 pageLength: 10,
             });
 
@@ -244,14 +282,15 @@
 
                     try {
                         const formData = new FormData(this);
-                        const url = isEditMode
-                            ? "{{ route('rooms.update', '') }}/" + editingId
-                            : "{{ route('rooms.store') }}";
+                        const url = isEditMode ?
+                            "{{ route('rooms.update', '') }}/" + editingId :
+                            "{{ route('rooms.store') }}";
 
                         const response = await axios.post(url, formData);
 
                         if (response.data.success) {
-                            window.showToast('success', response.data.message || 'Saved successfully!');
+                            window.showToast('success', response.data.message ||
+                                'Saved successfully!');
                             table.draw();
                             if (roomModal) roomModal.hide();
                             resetForm();
@@ -265,7 +304,8 @@
                                 const input = this.querySelector(`[name="${field}"]`);
                                 if (input) {
                                     input.classList.add('is-invalid');
-                                    const feedback = input.parentElement.querySelector('.invalid-feedback');
+                                    const feedback = input.parentElement.querySelector(
+                                        '.invalid-feedback');
                                     if (feedback) {
                                         feedback.textContent = errors[field][0];
                                     }
@@ -273,7 +313,8 @@
                             });
                             window.showToast('error', Object.values(errors).flat()[0]);
                         } else {
-                            window.showToast('error', error.response?.data?.message || 'Something went wrong!');
+                            window.showToast('error', error.response?.data?.message ||
+                                'Something went wrong!');
                         }
                     } finally {
                         submitBtn.disabled = false;
@@ -342,7 +383,8 @@
 
             function clearBeds() {
                 const bedContainer = document.getElementById('bedContainer');
-                bedContainer.innerHTML = '<div class="bed-item-empty">No beds added. Click "Add Bed" to start.</div>';
+                bedContainer.innerHTML =
+                    '<div class="bed-item-empty">No beds added. Click "Add Bed" to start.</div>';
                 bedCount = 0;
             }
 
@@ -369,9 +411,11 @@
                             }
 
                             document.getElementById('roomId').value = response.data.id;
-                            document.getElementById('room_number').value = response.data.room_number;
+                            document.getElementById('room_number').value = response.data
+                                .room_number;
                             document.getElementById('name').value = response.data.name || '';
-                            document.getElementById('gender_designation').value = response.data.gender_designation || '';
+                            document.getElementById('gender_designation').value = response.data
+                                .gender_designation || '';
 
                             document.getElementById('roomModalLabel').textContent = 'Edit Room';
                             document.getElementById('submitBtnText').textContent = 'Update';
@@ -407,11 +451,13 @@
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                             },
                             success: function(resp) {
-                                window.showToast('success', resp.message || 'Deleted successfully!');
+                                window.showToast('success', resp.message ||
+                                    'Deleted successfully!');
                                 table.draw();
                             },
                             error: function(error) {
-                                window.showToast('error', error.responseJSON?.message || 'Error deleting room');
+                                window.showToast('error', error.responseJSON?.message ||
+                                    'Error deleting room');
                             }
                         });
                     }
@@ -444,7 +490,8 @@
                                 }
                             },
                             error: function(xhr) {
-                                window.showToast('error', xhr.responseJSON?.message || 'Error toggling status');
+                                window.showToast('error', xhr.responseJSON?.message ||
+                                    'Error toggling status');
                             }
                         });
                     }
@@ -479,7 +526,8 @@
                         }
                     },
                     error: function(xhr) {
-                        window.showToast('error', xhr.responseJSON?.message || 'Error loading units');
+                        window.showToast('error', xhr.responseJSON?.message ||
+                            'Error loading units');
                     }
                 });
             };
@@ -493,7 +541,8 @@
             btn.closest('.bed-item').remove();
             const bedContainer = document.getElementById('bedContainer');
             if (bedContainer.children.length === 0) {
-                bedContainer.innerHTML = '<div class="bed-item-empty">No beds added. Click "Add Bed" to start.</div>';
+                bedContainer.innerHTML =
+                    '<div class="bed-item-empty">No beds added. Click "Add Bed" to start.</div>';
             }
         };
 

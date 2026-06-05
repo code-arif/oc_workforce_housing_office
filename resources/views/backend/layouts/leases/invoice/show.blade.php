@@ -419,8 +419,7 @@
                                                 class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="paymentAmount" name="amount"
-                                                min="0.01" step="0.01" max="{{ $balanceDue }}"
+                                            <input type="number" class="form-control" id="paymentAmount" name="amount" step="0.01" max="{{ $balanceDue }}"
                                                 value="{{ $balanceDue }}" required oninput="updateRemainingBalance()">
                                         </div>
                                         <div class="form-text">

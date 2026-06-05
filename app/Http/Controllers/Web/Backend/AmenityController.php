@@ -19,27 +19,36 @@ class AmenityController extends Controller
             // dd($beds);
             return DataTables::of($beds)
                 ->addIndexColumn()
-                ->addColumn('name', function($item) {
+                ->addColumn('name', function ($item) {
                     return '
                         <span class="fw-bold">' . $item->name . '</span>
-                    ' ;
+                    ';
                 })
                 // ->addColumn('room', fn($item) => $item->room->room_number ?? '---')
                 ->addColumn('status', function ($item) {
-                    $status = $item->is_active 
-                    ? '<button type="button" onclick="toggleAmenityStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
-                    : '<button type="button" onclick="toggleAmenityStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
-                    
+                    $status = $item->is_active
+                        ? '<button type="button" onclick="toggleAmenityStatus(' . $item->id . ')" class="badge bg-success">Active</button>'
+                        : '<button type="button" onclick="toggleAmenityStatus(' . $item->id . ')" class="badge bg-danger">Inactive</button>';
+
                     return $status;
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        <button class="btn btn-sm btn-warning me-1" onclick="editAmenity(' . $item->id . ')" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteAmenity(' . $item->id . ')" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button"
+                                    class="btn btn-sm btn-warning"
+                                    onclick="editAmenity(' . $item->id . ')"
+                                    title="Edit">
+                                <i class="fe fe-edit"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="deleteAmenity(' . $item->id . ')"
+                                    title="Delete">
+                                <i class="fe fe-trash"></i>
+                            </button>
+                        </div>
                     ';
                 })
                 ->rawColumns(['name', 'status', 'actions'])
@@ -68,7 +77,7 @@ class AmenityController extends Controller
         // dd($request->all());
 
         $validated['is_active'] = $request->has('is_active') ? true : false;
-        if(Amenities::where('name', $request->name)->exists()) {
+        if (Amenities::where('name', $request->name)->exists()) {
             return response()->json([
                 'error' => false,
                 'message' => 'Amenity already exists.',
@@ -124,7 +133,7 @@ class AmenityController extends Controller
         // dd($request->all());
 
         $validated['is_active'] = $request->has('is_active') ? true : false;
-        if(Amenities::where('name', $request->name)->where('id', '!=', $id)->exists()) {
+        if (Amenities::where('name', $request->name)->where('id', '!=', $id)->exists()) {
             return response()->json([
                 'error' => false,
                 'message' => 'Amenity already exists.',

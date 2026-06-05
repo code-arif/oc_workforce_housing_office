@@ -33,12 +33,21 @@ class UnitController extends Controller
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        <button class="btn btn-sm btn-warning me-1" onclick="editUnit(' . $item->id . ')" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button"
+                                    class="btn btn-sm btn-warning"
+                                    onclick="editUnit(' . $item->id . ')"
+                                    title="Edit">
+                                <i class="fe fe-edit"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="showDeleteConfirm(' . $item->id . ')"
+                                    title="Delete">
+                                <i class="fe fe-trash"></i>
+                            </button>
+                        </div>
                     ';
                 })
                 ->rawColumns(['status', 'actions'])
@@ -68,7 +77,7 @@ class UnitController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $validated['is_active'] = true ;
+        $validated['is_active'] = true;
 
         $exisingUnit = Unit::where('property_id', $validated['property_id'])->where('name', $validated['name'])->first();
 
@@ -107,7 +116,7 @@ class UnitController extends Controller
      */
     public function edit(string $id)
     {
-         try {
+        try {
             $unit = Unit::findOrFail($id);
 
             return response()->json([
@@ -168,7 +177,7 @@ class UnitController extends Controller
         try {
             $unit = Unit::findOrFail($id);
 
-            if($unit->rooms()->count() > 0) {
+            if ($unit->rooms()->count() > 0) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unit has rooms. You cannot delete it.',

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Web\Backend;
 
+use App\Http\Controllers\Controller;
 use App\Models\Bed;
 use App\Models\Room;
 use App\Models\Unit;
-
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
 use Yajra\DataTables\Facades\DataTables;
 
 class RoomController extends Controller
@@ -24,7 +24,7 @@ class RoomController extends Controller
             // dd($rooms);
             return DataTables::of($rooms)
                 ->addIndexColumn()
-                ->addColumn('room_number', function($item) {
+                ->addColumn('room_number', function ($item) {
                     return '
                         <a href="' . route('rooms.show', $item->id) . '" class="text-decoration-none fw-bold text-primary">
                             <span class="fw-bold">' . $item->room_number . '</span> <br>
@@ -37,17 +37,17 @@ class RoomController extends Controller
                     $totalBeds = $item->beds->count();
                     $occupiedBeds = $item->beds->where('is_occupied', true)->count();
                     $availableBeds = $totalBeds - $occupiedBeds;
-                    
-                    $bedsData = $item->beds->map(function($bed) {
+
+                    $bedsData = $item->beds->map(function ($bed) {
                         return [
                             'room' => $bed->room->room_number ?? '---',
                             'number' => $bed->bed_number ?? '---',
                             'is_occupied' => $bed->is_occupied
                         ];
                     })->toArray();
-                    
+
                     $bedsJson = htmlspecialchars(json_encode($bedsData), ENT_QUOTES, 'UTF-8');
-                    
+
                     return '<div class="d-flex gap-1 align-items-center" data-beds="' . $bedsJson . '" title="Hover for bed details">
                         <span class="badge bg-primary">' . $totalBeds . ' </span>
                         <span class="badge bg-success">' . $availableBeds . '</span>
@@ -55,24 +55,32 @@ class RoomController extends Controller
                     </div>';
                 })
                 ->addColumn('status', function ($item) {
-                    $status = $item->is_active 
-                    ? '<button type="button" onclick="toggleRoomStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
-                    : '<button type="button" onclick="toggleRoomStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
-                    
+                    $status = $item->is_active
+                        ? '<button type="button" onclick="toggleRoomStatus(' . $item->id . ')" class="badge bg-success">Available</button>'
+                        : '<button type="button" onclick="toggleRoomStatus(' . $item->id . ')" class="badge bg-danger">Unavailable</button>';
+
                     return $status;
                 })
                 ->addColumn('actions', function ($item) {
                     return '
-                        
-                        <button class="btn btn-sm btn-warning me-1" onclick="editRoom(' . $item->id . ')" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteRoom(' . $item->id . ')" title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button"
+                                    class="btn btn-sm btn-warning"
+                                    onclick="editRoom(' . $item->id . ')"
+                                    title="Edit">
+                                <i class="fe fe-edit"></i>
+                            </button>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="deleteRoom(' . $item->id . ')"
+                                    title="Delete">
+                                <i class="fe fe-trash"></i>
+                            </button>
+                        </div>
                     ';
                 })
-                ->rawColumns(['room_number','beds_count', 'status', 'actions'])
+                ->rawColumns(['room_number', 'beds_count', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -102,8 +110,8 @@ class RoomController extends Controller
         ]);
         // dd($request->all());
         $exsitingRoom = Room::where('unit_id', $validated['unit_id'])
-                ->where('room_number', $validated['room_number'])
-                ->exists();
+            ->where('room_number', $validated['room_number'])
+            ->exists();
 
         if ($exsitingRoom) {
             return response()->json([
@@ -150,11 +158,10 @@ class RoomController extends Controller
             // return redirect()->route('rooms.list')
             //     ->with('success', 'Room created successfully with ' . count(array_filter($validated['beds'] ?? [], fn($b) => !empty($b['bed_label']) || !empty($b['bed_number']))) . ' beds.');
             return response()->json(['success' => true, 'message' => 'Room created successfully.'], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('Room Creation Error' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error creating room: ' . $e->getMessage()], 500);
-            
         }
     }
 
@@ -166,7 +173,7 @@ class RoomController extends Controller
         try {
             $room = Room::with('beds')->findOrFail($id);
             return view('backend.layouts.properties.room.show', compact('room'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return redirect()->route('rooms.list')
                 ->with('error', 'Room not found.');
         }
@@ -180,8 +187,7 @@ class RoomController extends Controller
         try {
             $room = Room::with('beds', 'unit')->findOrFail($id);
             return response()->json(['success' => true, 'data' => $room]);
-            // return view('backend.layouts.properties.room.edit', compact('room'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => 'Room not found.'], 404);
         }
     }
@@ -204,7 +210,7 @@ class RoomController extends Controller
                 'beds.*.id' => 'nullable|numeric',
                 'beds.*.bed_number' => 'nullable|string|max:255',
             ]);
-           
+
             $exsitingRoom = Room::where('unit_id', $validated['unit_id'])
                 ->where('room_number', $validated['room_number'])
                 ->where('id', '!=', $id)
@@ -280,8 +286,7 @@ class RoomController extends Controller
                 'success' => true,
                 'message' => 'Room updated successfully.',
             ]);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
@@ -312,7 +317,7 @@ class RoomController extends Controller
                 'success' => true,
                 'message' => 'Room deleted successfully.',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting room: ' . $e->getMessage(),
@@ -331,7 +336,7 @@ class RoomController extends Controller
                 'success' => true,
                 'message' => 'Room status updated successfully.',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating Room status: ' . $e->getMessage(),
@@ -347,13 +352,11 @@ class RoomController extends Controller
                 'success' => true,
                 'data' => $units,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching units: ' . $e->getMessage(),
             ], 500);
         }
     }
-
-
 }

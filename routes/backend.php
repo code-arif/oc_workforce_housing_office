@@ -144,8 +144,7 @@ Route::prefix('property')->name('property.')->group(function () {
     });
 });
 
-
-
+// Lease seasson
 Route::prefix('seasons')->name('seasons.')->group(function () {
     // Legacy routes for create/edit operations
     Route::get('/list', [SeasonController::class, 'index'])->name('list');
@@ -158,6 +157,7 @@ Route::prefix('seasons')->name('seasons.')->group(function () {
     Route::get('/toggle-status/{id}', [SeasonController::class, 'toggleStatus'])->name('toggle.status');
 });
 
+// Amenities manage
 Route::prefix('amenities')->name('amenities.')->group(function () {
     Route::get('/list', [AmenityController::class, 'index'])->name('list');
     Route::post('/store', [AmenityController::class, 'store'])->name('store');
