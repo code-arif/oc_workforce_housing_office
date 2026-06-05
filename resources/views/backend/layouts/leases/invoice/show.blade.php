@@ -470,23 +470,25 @@
                                     <div class="mb-3">
                                         <label for="paymentDate" class="form-label">Payment Date <span
                                                 class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @hasanyrole('super admin|admin|manager') datepicker2 @endhasanyrole" id="paymentDate"
-                                            name="payment_date" value="{{ date('m/d/Y') }}" 
-                                            @unlessrole('super admin|admin|manager') readonly @endunlessrole
-                                            required>
+                                        <input type="text"
+                                            class="form-control @hasanyrole('super admin|admin|manager') datepicker2 @endhasanyrole"
+                                            id="paymentDate" name="payment_date" value="{{ date('m/d/Y') }}"
+                                            @unlessrole('super admin|admin|manager') readonly @endunlessrole required>
                                         @hasanyrole('super admin|admin|manager')
-                                        <div class="form-text text-muted small"><i class="fe fe-info me-1"></i>You have permission to backdate this payment.</div>
+                                            <div class="form-text text-muted small"><i class="fe fe-info me-1"></i>You have
+                                                permission to backdate this payment.</div>
                                         @endhasanyrole
                                     </div>
 
                                     @hasanyrole('super admin|admin|manager')
-                                    <!-- Bank Deposit Date (Admin/Manager only) -->
-                                    <div class="mb-3">
-                                        <label for="depositDate" class="form-label">Bank Deposit Date</label>
-                                        <input type="text" class="form-control datepicker2" id="depositDate"
-                                            name="deposit_date" value="" placeholder="Optional (e.g. MM/DD/YYYY)">
-                                        <div class="form-text text-muted small">Date the cash/check was actually deposited in the bank.</div>
-                                    </div>
+                                        <!-- Bank Deposit Date (Admin/Manager only) -->
+                                        <div class="mb-3">
+                                            <label for="depositDate" class="form-label">Bank Deposit Date</label>
+                                            <input type="text" class="form-control datepicker2" id="depositDate"
+                                                name="deposit_date" value="" placeholder="Optional (e.g. MM/DD/YYYY)">
+                                            <div class="form-text text-muted small">Date the cash/check was actually deposited
+                                                in the bank.</div>
+                                        </div>
                                     @endhasanyrole
 
                                     <!-- Payment Method -->
@@ -795,17 +797,25 @@
                 <div class="modal-body">
                     <div class="alert alert-danger bg-danger-transparent text-danger mb-4">
                         <h6 class="fw-bold mb-2"><i class="fe fe-alert-circle me-2"></i>CRITICAL ACCOUNTING WARNING</h6>
-                        <p class="small mb-0">You are about to <strong>permanently void</strong> a fully/partially paid cash invoice. This action is <strong>irreversible</strong> and will alter the lease's financial ledger.</p>
+                        <p class="small mb-0">You are about to <strong>permanently void</strong> a fully/partially paid
+                            cash invoice. This action is <strong>irreversible</strong> and will alter the lease's financial
+                            ledger.</p>
                     </div>
 
-                    <h6 class="fw-semibold text-dark mb-2"><i class="fe fe-list me-2"></i>Post-Void Accounting Impacts:</h6>
+                    <h6 class="fw-semibold text-dark mb-2"><i class="fe fe-list me-2"></i>Post-Void Accounting Impacts:
+                    </h6>
                     <ul class="text-muted small ps-3 mb-4" style="list-style-type: square; line-height: 1.6;">
                         <li>The invoice status will be permanently changed to <strong>CANCELLED</strong>.</li>
                         <li>No further payments can be accepted for this invoice under any circumstances.</li>
-                        <li>Invoice balances (Total Amount Paid and Balance Due) will be instantly zeroed out (<strong>$0.00</strong>).</li>
-                        <li>Existing cash payment records will be marked as <strong>voided</strong> and excluded from payment history.</li>
-                        <li><strong>Standard Double-Entry Reversal adjustments</strong> (Credit Adjustment for original debit charge, Debit Adjustment for mistaken payment credit) will be posted to the general ledger.</li>
-                        <li>Voided cash collections will be <strong>fully excluded</strong> from all daily collection and rent reports, adjusting historical income tallies.</li>
+                        <li>Invoice balances (Total Amount Paid and Balance Due) will be instantly zeroed out
+                            (<strong>$0.00</strong>).</li>
+                        <li>Existing cash payment records will be marked as <strong>voided</strong> and excluded from
+                            payment history.</li>
+                        <li><strong>Standard Double-Entry Reversal adjustments</strong> (Credit Adjustment for original
+                            debit charge, Debit Adjustment for mistaken payment credit) will be posted to the general
+                            ledger.</li>
+                        <li>Voided cash collections will be <strong>fully excluded</strong> from all daily collection and
+                            rent reports, adjusting historical income tallies.</li>
                     </ul>
 
                     <div class="mb-3">
@@ -814,7 +824,8 @@
                         </label>
                         <textarea class="form-control" id="cancelPaidCashReason" rows="3" maxlength="500"
                             placeholder="Provide a detailed explanation for this invoice void (e.g. entry error, double post)..." required></textarea>
-                        <div class="form-text">This audit reason will be permanently saved in the General Ledger metadata.</div>
+                        <div class="form-text">This audit reason will be permanently saved in the General Ledger metadata.
+                        </div>
                     </div>
 
                     <div class="mb-0 pt-2 border-top">

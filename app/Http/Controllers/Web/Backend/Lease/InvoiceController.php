@@ -29,7 +29,7 @@ class InvoiceController extends Controller
             'lease.tenant.profile',
             'lease.assignments.bed',
             'items.item',
-            'payments' => function($query) {
+            'payments' => function ($query) {
                 $query->orderBy('payment_date', 'desc');
             }
         ])->findOrFail($id);
@@ -172,7 +172,7 @@ class InvoiceController extends Controller
                 $updateData['total_amount'] = $newTotal;
                 $updateData['balance_due'] = max(0, $newTotal - ($invoice->paid_amount ?? 0));
 
-            // Amount adjustment (non-ITEM_SALE invoices)
+                // Amount adjustment (non-ITEM_SALE invoices)
             } elseif ($request->filled('amount') && $invoice->type !== 'ITEM_SALE') {
                 $newAmount = (float) $request->amount;
                 $newTotal  = $newAmount;
@@ -236,7 +236,6 @@ class InvoiceController extends Controller
                 'message' => 'Invoice updated successfully.',
                 'invoice' => $invoice->fresh()->load('items.item'),
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to update invoice: ' . $e->getMessage());
@@ -364,7 +363,7 @@ class InvoiceController extends Controller
                     'balance_due' => max(0, $newDepositBalance),
                     'status' => $depositStatus,
                     'paid_at' => $depositStatus === 'PAID' ? now() : null,
-                    'notes'=> $request->note ?? 'Deposit payment',
+                    'notes' => $request->note ?? 'Deposit payment',
                 ]);
 
                 // Mark deposit as collected if fully paid
@@ -489,7 +488,6 @@ class InvoiceController extends Controller
                 'payment' => $rentPayment ?? $depositPayment ?? null,
                 'invoice' => $invoice->fresh(),
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to store payment: ' . $e->getMessage());
@@ -508,7 +506,7 @@ class InvoiceController extends Controller
     public function getPayments($id)
     {
         try {
-            $invoice = Invoice::with(['payments' => function($query) {
+            $invoice = Invoice::with(['payments' => function ($query) {
                 $query->orderBy('payment_date', 'desc');
             }])->findOrFail($id);
 
@@ -594,7 +592,7 @@ class InvoiceController extends Controller
                     'amount'             => $invoice->paid_amount,
                     'transaction_date'   => $now->toDateString(),
                     'description'        => 'Audit: Invoice ' . $invoice->invoice_number . ' voided with $'
-                                            . number_format($invoice->paid_amount, 2) . ' in existing payments — manual refund required if applicable',
+                        . number_format($invoice->paid_amount, 2) . ' in existing payments — manual refund required if applicable',
                     'notes'              => $request->reason,
                     'metadata'           => [
                         'voided_by'      => auth()->id(),
@@ -620,7 +618,6 @@ class InvoiceController extends Controller
                 'had_payments' => (float) $invoice->paid_amount > 0,
                 'paid_amount'  => $invoice->paid_amount,
             ]);
-
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Failed to void invoice: ' . $e->getMessage());
@@ -629,7 +626,8 @@ class InvoiceController extends Controller
                 'message' => 'Failed to void invoice.',
             ], 500);
         }
-    }    /**
+    }
+    /**
      * Cancel a mistaken paid invoice cash payment and revert the invoice to CANCELLED/VOIDED with ledger reversals.
      */
     public function cancelPaidCashPayment(Request $request, $id)
@@ -777,7 +775,6 @@ class InvoiceController extends Controller
                 'message' => 'Paid cash invoice has been voided successfully. Offset entries posted.',
                 'invoice' => $invoice->fresh(),
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to void paid cash invoice: ' . $e->getMessage());
@@ -927,7 +924,7 @@ class InvoiceController extends Controller
             'lease.property',
             'lease.tenant.profile',
             'lease.assignments.bed',
-            'payments' => function($query) {
+            'payments' => function ($query) {
                 $query->orderBy('payment_date', 'desc');
             }
         ])->findOrFail($id);
