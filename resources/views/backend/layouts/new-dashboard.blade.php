@@ -23,7 +23,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -39,10 +39,10 @@
             --ink-200: #d1d5db;
             --ink-100: #f3f4f6;
             --ink-50: #f9fafb;
-            --accent: #6366f1;
-            --accent-light: #818cf8;
-            --accent-glow: rgba(99, 102, 241, 0.18);
-            --accent-bg: #eef2ff;
+            --accent: #D9A600;
+            --accent-light: #EBB610;
+            --accent-glow: rgba(217, 166, 0, 0.18);
+            --accent-bg: rgba(217, 166, 0, 0.08);
             --teal: #0d9488;
             --teal-bg: #f0fdfa;
             --amber: #d97706;
@@ -71,12 +71,8 @@
             box-sizing: border-box;
         }
 
-        /* body,
-            * {
-                font-family: 'Sora', sans-serif !important;
-            } */
-
         .db-canvas {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--canvas);
             min-height: 100vh;
             padding: 0 28px 60px;
@@ -97,7 +93,7 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse 60% 80% at 75% 50%, rgba(99, 102, 241, 0.22) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 80% at 75% 50%, rgba(217, 166, 0, 0.22) 0%, transparent 70%),
                 radial-gradient(ellipse 40% 60% at 20% 80%, rgba(13, 148, 136, 0.15) 0%, transparent 60%);
         }
 

@@ -49,7 +49,7 @@
                 {{-- Applications --}}
                 @can('applications.list')
                     <li class="slide">
-                        <a class="side-menu__item {{ request()->routeIs('#') ? 'has-link' : '' }}"
+                        <a class="side-menu__item {{ request()->routeIs('tenants.applications.*') ? 'has-link' : '' }}"
                             href="{{ route('tenants.applications.index') }}">
                             <i class="fa-solid fa-clipboard-list"></i>
                             <span class="side-menu__label">Applications</span>
@@ -81,19 +81,19 @@
                         <ul class="slide-menu">
                             @can('seasons.list')
                                 <li>
-                                    <a href="{{ route('seasons.list') }}" class="slide-item">Seasons</a>
+                                    <a href="{{ route('seasons.list') }}" class="slide-item {{ request()->routeIs('seasons.*') ? 'active' : '' }}">Seasons</a>
                                 </li>
                             @endcan
 
                             @can('lease.template.list')
                                 <li>
-                                    <a href="{{ route('lease-templates.index') }}" class="slide-item">Lease Templates</a>
+                                    <a href="{{ route('lease-templates.index') }}" class="slide-item {{ request()->routeIs('lease-templates.*') ? 'active' : '' }}">Lease Templates</a>
                                 </li>
                             @endcan
 
                             @can('lease.list')
                                 <li>
-                                    <a href="{{ route('leases.index') }}" class="slide-item">Leases</a>
+                                    <a href="{{ route('leases.index') }}" class="slide-item {{ request()->routeIs('leases.*') ? 'active' : '' }}">Leases</a>
                                 </li>
                             @endcan
                         </ul>
@@ -118,29 +118,29 @@
                     {{-- Frontend --}}
                     <li class="slide">
 
-                        <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                        <a class="side-menu__item {{ request()->routeIs('cms.*', 'messaging.*', 'maintanance.*', 'items.*', 'faq.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                             <i class="fa-solid fa-layer-group"></i>
                             <span class="side-menu__label">Platforms</span>
                             <i class="angle fa fa-angle-right ms-auto"></i>
                         </a>
                         <ul class="slide-menu">
                             <li><a href="{{ route('cms.index') }}"
-                                    class="slide-item {{ request()->routeIs('cms.index') ? 'has-link' : '' }}">CMS</a></li>
+                                    class="slide-item {{ request()->routeIs('cms.index') ? 'active' : '' }}">CMS</a></li>
                             <li><a href="{{ route('messaging.index') }}"
-                                    class="slide-item {{ request()->routeIs('messaging.index') ? 'has-link' : '' }}">Messaging</a>
+                                    class="slide-item {{ request()->routeIs('messaging.index') ? 'active' : '' }}">Messaging</a>
                             </li>
                             {{-- Maintanence --}}
                             <li>
                                 <a
-                                    class="slide-item {{ request()->routeIs('maintanance.index') ? 'has-link' : '' }}"href="{{ route('maintanance.index') }}"> Maintanence
+                                    class="slide-item {{ request()->routeIs('maintanance.index') ? 'active' : '' }}" href="{{ route('maintanance.index') }}"> Maintanence
                                 </a>
                             </li>
                             {{-- Items & FAQ --}}
                             <li><a href="{{ route('items.index') }}"
-                                    class="slide-item {{ request()->routeIs('items.*') ? 'has-link' : '' }}">Item Lists</a>
+                                    class="slide-item {{ request()->routeIs('items.*') ? 'active' : '' }}">Item Lists</a>
                             </li>
                             <li><a href="{{ route('faq.index') }}"
-                                    class="slide-item {{ request()->routeIs('faq.*') ? 'has-link' : '' }}">FAQ</a></li>
+                                    class="slide-item {{ request()->routeIs('faq.*') ? 'active' : '' }}">FAQ</a></li>
                         </ul>
                     </li>
                 @endcan
@@ -149,7 +149,7 @@
                 {{-- Reports --}}
                 @can('reports.list')
                     <li class="slide">
-                        <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                        <a class="side-menu__item {{ request()->routeIs('reports.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                             <i class="fa-solid fa-explosion"></i>
                             <span class="side-menu__label">Reports</span>
                             <i class="angle fa fa-angle-right ms-auto"></i>
@@ -164,7 +164,8 @@
                             <li><a href="{{ route('reports.rent-collection.index') }}"
                                     class="slide-item {{ request()->routeIs('reports.rent-collection.*') ? 'active' : '' }}">Rent
                                     Collection</a></li>
-                            <li><a href="{{ route('reports.tenant.index') }}" class="slide-item">Tenant Reports</a></li>
+                            <li><a href="{{ route('reports.tenant.index') }}"
+                                    class="slide-item {{ request()->routeIs('reports.tenant.*') ? 'active' : '' }}">Tenant Reports</a></li>
                             {{-- <li><a href="#" class="slide-item">Lease Reports</a></li> --}}
                         </ul>
                     </li>
@@ -174,21 +175,21 @@
                     'user-management.permissions.list'])
                     {{-- User Management --}}
                     <li class="slide">
-                        <a class="side-menu__item" data-bs-toggle="slide" href="#">
+                        <a class="side-menu__item {{ request()->routeIs('user-management.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
                             <i class="fa-solid fa-users-gear"></i>
                             <span class="side-menu__label">User Management</span>
                             <i class="angle fa fa-angle-right ms-auto"></i>
                         </a>
                         <ul class="slide-menu">
                             @can('user-management.users.list')
-                                <li><a href="{{ route('user-management.users.index') }}" class="slide-item">Users</a></li>
+                                <li><a href="{{ route('user-management.users.index') }}" class="slide-item {{ request()->routeIs('user-management.users.*') ? 'active' : '' }}">Users</a></li>
                             @endcan
                             @can('user-management.roles.list')
-                                <li><a href="{{ route('user-management.roles.index') }}" class="slide-item">Roles</a></li>
+                                <li><a href="{{ route('user-management.roles.index') }}" class="slide-item {{ request()->routeIs('user-management.roles.*') ? 'active' : '' }}">Roles</a></li>
                             @endcan
                             @can('user-management.permissions.list')
                                 <li><a href="{{ route('user-management.permissions.index') }}"
-                                        class="slide-item">Permissions</a></li>
+                                        class="slide-item {{ request()->routeIs('user-management.permissions.*') ? 'active' : '' }}">Permissions</a></li>
                             @endcan
                         </ul>
                     </li>
@@ -196,7 +197,7 @@
 
                 {{-- Activity logs --}}
                 <li class="slide">
-                    <a class="side-menu__item {{ request()->routeIs('system-monitor.activity-logs.*') ? 'has-link' : '' }}"
+                    <a class="side-menu__item {{ request()->routeIs('activity-logs.*') ? 'has-link' : '' }}"
                         href="{{ route('activity-logs.index') }}">
                         <i class="fa-solid fa-desktop"></i>
                         <span class="side-menu__label">Activity Logs</span>
@@ -256,111 +257,178 @@
 
 {{-- sidebar style --}}
 <style>
-    .slide i {
-        margin-top: 8px;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    /* Premium Sidebar Styling */
+    .app-sidebar {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        box-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.08); 
     }
 
-    /* Base menu item styling */
+    .side-menu {
+        padding-top: 15px; 
+    }
+
+    /* Section Headers */
+    .side-menu h3 {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        margin: 25px 20px 10px;
+        color: #9CA3AF;
+    }
+
+    /* Base Menu Item */
     .side-menu__item {
         display: flex;
         align-items: center;
-        padding: 10px 15px;
-        color: #333;
+        padding: 12px 18px;
+        color: #4B5563;
+        font-size: 14.5px;
         font-weight: 500;
         text-decoration: none;
-        transition: all 0.3s ease;
-        border-radius: 6px;
-        margin: 2px 8px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 8px;
+        margin: 4px 12px;
+        border: 1px solid transparent;
+        position: relative;
+        overflow: hidden;
     }
 
+    /* Hover effect */
     .side-menu__item:hover {
-        background-color: rgba(217, 166, 0, 0.1);
+        background: linear-gradient(118deg, rgba(217, 166, 0, 0.08), rgba(217, 166, 0, 0.02));
         color: #D9A600;
+        transform: translateX(4px);
     }
 
-    /* Active link styling */
-    .side-menu__item.has-link {
-        background-color: rgba(217, 166, 0, 0.15);
+    /* Active Link */
+    .side-menu__item.has-link,
+    .side-menu__item[aria-expanded="true"] {
+        background: linear-gradient(118deg, rgba(217, 166, 0, 0.12), rgba(217, 166, 0, 0.03));
         color: #D9A600;
         font-weight: 600;
-        border-left: 3px solid #D9A600;
+        border-color: rgba(217, 166, 0, 0.2);
+        box-shadow: 0 2px 6px 0 rgba(217, 166, 0, 0.1);
     }
 
-    .side-menu__item.has-link:hover {
-        background-color: rgba(217, 166, 0, 0.2);
-        color: #D9A600;
+    /* Active Indication line */
+    .side-menu__item.has-link::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 10%;
+        height: 80%;
+        width: 4px;
+        background-color: #D9A600;
+        border-radius: 0 4px 4px 0;
     }
 
-    /* Icon alignment fix */
-    .side-menu__item i,
+    /* Default Icons */
+    .side-menu__item i:not(.angle),
     .side-menu__item svg {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
+        font-size: 18px;
         flex-shrink: 0;
-        display: inline-block;
-        text-align: center;
-        margin-right: 10px;
-        color: inherit;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: #6B7280;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 0;
     }
 
-    /* Active link icon color */
-    .side-menu__item.has-link i {
+    /* Active Icons */
+    .side-menu__item:hover i:not(.angle),
+    .side-menu__item.has-link i:not(.angle),
+    .side-menu__item[aria-expanded="true"] i:not(.angle) {
         color: #D9A600;
+        transform: scale(1.1);
     }
 
-    /* Label */
-    .side-menu__label {
-        flex: 1;
-        display: inline-block;
-    }
-
-    /* Submenu items */
-    .slide-menu {
-        padding-left: 20px;
-    }
-
-    .slide-menu .slide-item {
-        display: block;
-        padding: 8px 15px;
-        color: #555;
+    /* Dropdown Arrow */
+    .side-menu__item .angle {
+        margin-left: auto;
         font-size: 14px;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        border-radius: 4px;
-        margin: 2px 0;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #9CA3AF;
+        margin-top: 0;
     }
 
-    .slide-menu .slide-item:hover {
-        background-color: rgba(217, 166, 0, 0.1);
-        color: #D9A600;
-    }
-
-    /* Active submenu item */
-    .slide-menu .slide-item.active {
-        background-color: rgba(217, 166, 0, 0.15);
-        color: #D9A600;
-        font-weight: 500;
-    }
-
-    /* Optional: heading styling */
-    .side-menu h3 {
-        font-size: 13px;
-        text-transform: uppercase;
-        margin: 20px 15px 10px;
-        color: #777;
-        letter-spacing: 0.5px;
-    }
-
-    /* Settings menu arrow color when active */
     .side-menu__item[aria-expanded="true"] .angle,
     .side-menu__item.active .angle {
         color: #D9A600;
         transform: rotate(90deg);
     }
 
-    /* Settings menu when expanded */
-    .side-menu__item[aria-expanded="true"] {
-        background-color: rgba(217, 166, 0, 0.1);
-        color: #D9A600;
+    /* Submenus */
+    .slide-menu {
+        padding-left: 20px;
+        margin: 4px 0;
+        position: relative;
     }
+
+    /* Submenu Item */
+    .slide-menu .slide-item {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px 8px 30px; /* added left padding for the indicator */
+        color: #6B7280;
+        font-size: 13.5px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 6px;
+        margin: 2px 12px 2px 6px;
+        position: relative;
+    }
+
+    /* Clean up any default theme injected icons or pseudo elements */
+    .app-sidebar .side-menu .slide-menu .slide-item::after,
+    .app-sidebar .side-menu .slide-menu .slide-item i {
+        display: none !important;
+        content: none !important;
+    }
+
+    /* Submenu Sleek Dash Indicator - Enforced */
+    .app-sidebar .side-menu .slide-menu .slide-item::before {
+        content: '' !important;
+        position: absolute !important;
+        left: 12px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 6px !important;
+        height: 2px !important;
+        background-color: #D1D5DB !important;
+        background-image: none !important;
+        border: none !important;
+        border-radius: 2px !important;
+        transition: all 0.2s ease !important;
+        font-family: inherit !important;
+        font-size: 0 !important;
+    }
+
+    .app-sidebar .side-menu .slide-menu .slide-item:hover {
+        background-color: rgba(217, 166, 0, 0.05);
+        color: #D9A600;
+        transform: translateX(4px);
+    }
+
+    /* Expand the dash on hover/active */
+    .app-sidebar .side-menu .slide-menu .slide-item:hover::before,
+    .app-sidebar .side-menu .slide-menu .slide-item.active::before {
+        background-color: #D9A600 !important;
+        width: 10px !important;
+    }
+
+    /* Active Submenu Item */
+    .slide-menu .slide-item.active {
+        color: #D9A600;
+        font-weight: 600;
+        background-color: rgba(217, 166, 0, 0.08);
+    }
+
 </style>
