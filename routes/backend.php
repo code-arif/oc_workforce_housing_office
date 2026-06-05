@@ -333,7 +333,7 @@ Route::group([], function () {
     // Approve single email application
     Route::post('/applications/{id}/approve-single', [ApplicationController::class, 'approveSingleEmail'])->name('tenants.applications.approve.single');
 
-    // Approve reservation application
+    // Approve reservation applicatio
     // Route::post('/applications/{id}/approve-reservation', [ApplicationController::class, 'approveReservation'])->name('tenants.applications.approve.reservation');
 
     // Reject any application
