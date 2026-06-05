@@ -253,10 +253,10 @@ class TenantLeaseSignController extends Controller
                             'id' => $fieldId,
                             'name' => $placeholder['field'] ?? '',
                             'label' => $label,
-                            'page' => $placeholder['page'] ?? 1,
+                            // 'page' => $placeholder['page'] ?? 1,
                             'value' => $document->custom_fields[$fieldId] ?? '',
-                            'width' => $placeholder['width'] ?? 150,
-                            'height' => $placeholder['height'] ?? 20,
+                            // 'width' => $placeholder['width'] ?? 150,
+                            // 'height' => $placeholder['height'] ?? 20,
                         ];
                     }
                 }
