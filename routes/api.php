@@ -125,7 +125,6 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/payments', [TenantDashboardController::class, 'paymentHistory']); // ISSUE
         Route::get('/transactions', [TenantDashboardController::class, 'transactions']); // ISSUE
 
-
         // Lease Signing Routes
         Route::prefix('lease-signing')->name('lease.signing.')->group(function () {
             Route::get('/{leaseId}/document', [TenantLeaseSignController::class, 'getLeaseDocument']); // done
