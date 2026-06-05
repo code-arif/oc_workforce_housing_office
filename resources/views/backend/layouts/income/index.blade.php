@@ -8,14 +8,19 @@
             <div class="main-container container-fluid">
 
                 <!-- Page Header -->
-                <div class="page-header">
+                <div class="page-header d-flex justify-content-between align-items-center">
                     <div>
-                        <h1 class="page-title">Income</h1>
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Invoices</li>
-                        </ol>
+                        <h1 class="page-title mb-0">Income</h1>
                     </div>
+
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('dashboard') }}">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            Invoices
+                        </li>
+                    </ol>
                 </div>
 
                 <!-- Statistics Cards -->
