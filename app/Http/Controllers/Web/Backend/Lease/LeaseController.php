@@ -222,20 +222,22 @@ class LeaseController extends Controller
                     $actions = [];
 
                     if (in_array($data->status, ['ACTIVE', 'PENDING_TENANT_SIGN', 'PENDING_ADMIN_SIGN'])) {
-                        $actions[] = '<button type="button"
-                            class="btn btn-sm btn-warning terminate-lease-btn"
-                            data-id="' . $data->id . '"
-                            title="Terminate Lease">
+                        $actions[] = '
+                        <button type="button"
+                                class="btn btn-sm btn-warning terminate-lease-btn"
+                                data-id="' . $data->id . '"
+                                title="Terminate Lease">
                             <i class="fe fe-x-circle"></i>
                         </button>';
-                    }
+                                }
 
-                    if (in_array($data->status, ['PENDING_TENANT_SIGN', 'DRAFT'])) {
-                        $actions[] = '<button type="button"
-                            class="btn btn-sm btn-danger delete-lease-btn"
-                            data-id="' . $data->id . '"
-                            title="Delete Lease">
-                            <i class="fe fe-trash-2"></i>
+                                if (in_array($data->status, ['PENDING_TENANT_SIGN', 'DRAFT'])) {
+                                    $actions[] = '
+                        <button type="button"
+                                class="btn btn-sm btn-danger delete-lease-btn"
+                                data-id="' . $data->id . '"
+                                title="Delete Lease">
+                            <i class="fe fe-trash"></i>
                         </button>';
                     }
 
@@ -243,7 +245,7 @@ class LeaseController extends Controller
                         return '<span class="text-muted">-</span>';
                     }
 
-                    return '<div class="d-flex justify-content-center gap-1">' . implode('', $actions) . '</div>';
+                    return '<div class="btn-group" role="group">' . implode('', $actions) . '</div>';
                 })
                 ->rawColumns(['status_badge', 'property_unit', 'address', 'tenant_name', 'dates', 'rent', 'signature_status', 'actions'])
                 ->make(true);

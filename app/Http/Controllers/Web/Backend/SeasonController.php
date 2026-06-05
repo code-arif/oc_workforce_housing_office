@@ -44,23 +44,31 @@ class SeasonController extends Controller
                     return $badge;
                 })
                 ->addColumn('actions', function ($item) {
-                    $buttons = '';
+                    $buttons = '<div class="btn-group" role="group">';
 
                     if (auth()->user()->can('seasons.edit')) {
                         $buttons .= '
-                            <button class="btn btn-sm btn-warning me-1" onclick="editSeason(' . $item->id . ')" title="Edit">
-                                <i class="bi bi-pencil"></i>
+                            <button type="button"
+                                    class="btn btn-sm btn-warning"
+                                    onclick="editSeason(' . $item->id . ')"
+                                    title="Edit">
+                                <i class="fe fe-edit"></i>
+                            </button>
+                        ';
+                                    }
+
+                                    if (auth()->user()->can('seasons.delete')) {
+                                        $buttons .= '
+                            <button type="button"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="showDeleteConfirm(' . $item->id . ')"
+                                    title="Delete">
+                                <i class="fe fe-trash"></i>
                             </button>
                         ';
                     }
 
-                    if (auth()->user()->can('seasons.delete')) {
-                        $buttons .= '
-                            <button class="btn btn-sm btn-danger" onclick="showDeleteConfirm(' . $item->id . ')" title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        ';
-                    }
+                    $buttons .= '</div>';
 
                     return $buttons;
                 })
@@ -89,7 +97,7 @@ class SeasonController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         $validated['blanket_start_date'] = date('Y-m-d', strtotime($validated['blanket_start_date']));
         $validated['blanket_end_date'] = date('Y-m-d', strtotime($validated['blanket_end_date']));
         $validated['is_active'] = $request->has('is_active') ? true : false;
@@ -132,7 +140,7 @@ class SeasonController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         $validated['blanket_start_date'] = date('Y-m-d', strtotime($validated['blanket_start_date']));
         $validated['blanket_end_date'] = date('Y-m-d', strtotime($validated['blanket_end_date']));
         $validated['is_active'] = $request->has('is_active') ? true : false;

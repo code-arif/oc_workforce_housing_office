@@ -20,32 +20,46 @@ class MailTemplateController extends Controller
     {
         if ($request->ajax()) {
             $templates = MailTemplate::latest();
-            
+
             return DataTables::of($templates)
                 ->addIndexColumn()
                 ->addColumn('status', function ($row) {
                     $checked = $row->status ? 'checked' : '';
-                    return '<div class="form-check form-switch">
-                        <input class="form-check-input status-toggle" type="checkbox" 
-                            data-id="' . $row->id . '" ' . $checked . '>
-                    </div>';
+
+                    return '
+                        <div class="d-flex justify-content-center align-items-center">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input status-toggle"
+                                    type="checkbox"
+                                    data-id="' . $row->id . '"
+                                    ' . $checked . '>
+                            </div>
+                        </div>
+                    ';
                 })
+
                 ->addColumn('action', function ($row) {
-                    return '<div class="btn-group">
-                        <a href="' . route('setting.mail-templates.edit', $row->slug) . '" 
-                            class="btn btn-sm btn-primary" title="Edit">
-                            <i class="fa fa-edit"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-danger delete-btn" 
-                            data-id="' . $row->id . '" title="Delete">
-                            <i class="fa fa-trash"></i>
-                        </button>
-                    </div>';
+                    return '
+                        <div class="btn-group" role="group">
+                            <a href="' . route('setting.mail-templates.edit', $row->slug) . '"
+                            class="btn btn-sm btn-warning"
+                            title="Edit">
+                                <i class="fe fe-edit"></i>
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-danger delete-btn"
+                                    data-id="' . $row->id . '"
+                                    title="Delete">
+                                <i class="fe fe-trash"></i>
+                            </button>
+                        </div>
+                    ';
                 })
                 ->rawColumns(['status', 'action'])
                 ->make(true);
         }
-        
+
         return view('backend.layouts.settings.mail-templates.index');
     }
 
