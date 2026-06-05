@@ -247,7 +247,7 @@ class IncomeController extends Controller
                 $q->where('status', 'ACTIVE');
             })
             ->get();
-        $items = Item::where('status', true)->get();
+        $items = Item::where('status', true)->orderBy('name', 'asc')->get();
         // return $tenants;exit();
 
         return view('backend.layouts.income.create-invoice', compact('tenants', 'items'));

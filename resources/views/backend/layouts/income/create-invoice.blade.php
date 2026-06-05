@@ -440,7 +440,17 @@
                         </td>
                     </tr>
                 `;
-                $('#invoiceItemsBody').append(newRow);
+                const $newRow = $(newRow);
+                $('#invoiceItemsBody').append($newRow);
+                
+                if (typeof $.fn.select2 !== 'undefined') {
+                    $newRow.find('.item-select').select2({
+                        placeholder: 'Select Invoice Type',
+                        allowClear: true,
+                        width: '100%'
+                    });
+                }
+                
                 itemIndex++;
             });
 
@@ -627,6 +637,13 @@
             if ($('.select3').length && typeof $.fn.select2 !== 'undefined') {
                 $('.select3').select2({
                     placeholder: 'Select a tenant',
+                    allowClear: true,
+                    width: '100%'
+                });
+            }
+            if ($('.item-select').length && typeof $.fn.select2 !== 'undefined') {
+                $('.item-select').select2({
+                    placeholder: 'Select Invoice Type',
                     allowClear: true,
                     width: '100%'
                 });
