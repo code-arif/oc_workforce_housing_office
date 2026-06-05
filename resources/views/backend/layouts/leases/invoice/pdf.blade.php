@@ -97,6 +97,25 @@
             color: #ffffff;
         }
 
+        .voided-banner {
+            background: #fff3cd;
+            border: 1px dashed #dc3545;
+            color: #842029;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .voided-banner-title {
+            font-weight: bold;
+            color: #842029;
+        }
+
+        .voided-reason {
+            color: #6c757d;
+        }
+
         /* Info Section */
         .info-section {
             padding: 15px 0;
@@ -425,10 +444,25 @@
                             <div class="info-value text-success">{{ date('M d, Y', strtotime($invoice->paid_at)) }}</div>
                         </div>
                         @endif
+                        @if($invoice->cancelled_at)
+                        <div>
+                            <div class="info-label">Voided On</div>
+                            <div class="info-value text-danger">{{ date('M d, Y', strtotime($invoice->cancelled_at)) }}</div>
+                        </div>
+                        @endif
                     </td>
                 </tr>
             </table>
         </div>
+
+        @if($invoice->status === 'CANCELLED')
+        <div class="voided-banner">
+            <span class="voided-banner-title">This invoice has been VOIDED</span>
+            @if($invoice->cancelled_reason)
+                <span class="voided-reason"> - Reason: {{ $invoice->cancelled_reason }}</span>
+            @endif
+        </div>
+        @endif
 
         <!-- Lease Info Banner -->
         <div class="lease-banner">

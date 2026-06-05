@@ -924,6 +924,7 @@ class InvoiceController extends Controller
             'lease.property',
             'lease.tenant.profile',
             'lease.assignments.bed',
+            'items.item',
             'payments' => function ($query) {
                 $query->orderBy('payment_date', 'desc');
             }
