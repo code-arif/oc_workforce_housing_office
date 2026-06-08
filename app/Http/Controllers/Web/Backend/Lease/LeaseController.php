@@ -703,13 +703,13 @@ class LeaseController extends Controller
      */
     private function generateWeeklyInvoices(Lease $lease, int $tenantId, int $weeklyDueDay, ?string $firstInvoiceDate = null, bool $depositCollected = false, ?string $depositDueDate = null)
     {
-        $startDate = new \DateTime($lease->start_date);
-        $endDate = new \DateTime($lease->end_date);
+        $startDate = new DateTime($lease->start_date);
+        $endDate = new DateTime($lease->end_date);
         $isMonthToMonth = ($lease->start_date === $lease->end_date);
 
         // Use first invoice date or calculate from start date
         $currentDate = $firstInvoiceDate
-            ? new \DateTime($firstInvoiceDate)
+            ? new DateTime($firstInvoiceDate)
             : $this->getNextOccurrenceOfDay($startDate, $weeklyDueDay);
 
         $invoiceNumber = 1;
