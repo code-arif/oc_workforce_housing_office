@@ -185,6 +185,7 @@
                             <table class="table table-bordered table-hover" id="propertyReportTable" style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
+                                        <th width="3%">SL</th>
                                         <th>Property Name</th>
                                         <th>Unit</th>
                                         <th>Tenant Name</th>
@@ -198,7 +199,7 @@
                                 </tbody>
                                 <tfoot class="table-secondary">
                                     <tr>
-                                        <th colspan="3" class="text-end">Totals:</th>
+                                        <th colspan="4" class="text-end">Totals:</th>
                                         <th class="text-end" id="footerSecurityDeposit">$0.00</th>
                                         <th class="text-end" id="footerTotalDue">$0.00</th>
                                         <th class="text-end" id="footerTotalPaid">$0.00</th>
@@ -255,6 +256,7 @@
                 }
             },
             columns: [
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                 { data: 'property_name', name: 'property_name' },
                 { data: 'bed_label', name: 'bed_label' },
                 { data: 'tenant_name', name: 'tenant_name' },
