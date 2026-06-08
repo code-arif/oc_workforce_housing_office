@@ -662,7 +662,7 @@ class LeaseController extends Controller
                 Invoice::create([
                     'lease_id' => $lease->id,
                     'tenant_id' => $tenantId,
-                    'invoice_number' => str_replace('INV-', 'DEP-', $invoiceNumberStr),
+                    'invoice_number' => 'DEP-' . $lease->id . '-' . $tenantId . '-000',
                     'amount' => $lease->deposit_amount,
                     'total_amount' => $lease->deposit_amount,
                     'balance_due' => $lease->deposit_amount,
@@ -734,7 +734,7 @@ class LeaseController extends Controller
                 Invoice::create([
                     'lease_id' => $lease->id,
                     'tenant_id' => $tenantId,
-                    'invoice_number' => str_replace('INV-', 'DEP-', $invoiceNumberStr),
+                    'invoice_number' => 'DEP-' . $lease->id . '-' . $tenantId . '-000',
                     'amount' => $lease->deposit_amount,
                     'total_amount' => $lease->deposit_amount,
                     'balance_due' => $lease->deposit_amount,
@@ -812,7 +812,7 @@ class LeaseController extends Controller
                 Invoice::create([
                     'lease_id' => $lease->id,
                     'tenant_id' => $tenantId,
-                    'invoice_number' => str_replace('INV-', 'DEP-', $invoiceNumberStr),
+                    'invoice_number' => 'DEP-' . $lease->id . '-' . $tenantId . '-000',
                     'amount' => $lease->deposit_amount,
                     'total_amount' => $lease->deposit_amount,
                     'balance_due' => $lease->deposit_amount,
