@@ -51,7 +51,10 @@ class PropertyReportController extends Controller
                     'assignments' => function ($q) {
                         $q->where('is_current', true)->with('bed:id,bed_label');
                     },
-                    'invoices:id,lease_id,total_amount,paid_amount,status'
+                    'invoices' => function ($q) {
+                        $q->select('id', 'lease_id', 'total_amount', 'paid_amount', 'status')
+                          ->where('type', '!=', 'DEPOSIT');
+                    }
                 ])
                 ->whereIn('leases.status', ['ACTIVE', 'COMPLETED', 'TERMINATED']);
 
@@ -178,7 +181,10 @@ class PropertyReportController extends Controller
                 'assignments' => function ($q) {
                     $q->where('is_current', true)->with('bed:id,bed_label');
                 },
-                'invoices:id,lease_id,total_amount,paid_amount,status'
+                'invoices' => function ($q) {
+                    $q->select('id', 'lease_id', 'total_amount', 'paid_amount', 'status')
+                      ->where('type', '!=', 'DEPOSIT');
+                }
             ])
             ->whereIn('status', ['ACTIVE', 'COMPLETED', 'TERMINATED']);
 

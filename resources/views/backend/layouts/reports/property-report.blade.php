@@ -30,40 +30,102 @@
                     </div>
                 </div>
 
-                <!-- Filter Card -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h4 class="card-title mb-0"><i class="fe fe-filter me-2"></i>Filter Report</h4>
+                <!-- Summary Cards -->
+                <div class="row mb-4" id="summaryCards">
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card overflow-hidden">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted fw-semibold mb-1">Total Leases</p>
+                                        <h3 class="mb-0 fw-bold" id="summaryTotalLeases">0</h3>
+                                    </div>
+                                    <div class="icon-service bg-primary-transparent text-primary rounded-circle p-3">
+                                        <i class="fe fe-file-text fs-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-2">
-                                <label for="filterProperty" class="form-label">Property</label>
-                                <select class="form-select select3" id="filterProperty" name="property_id">
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card overflow-hidden">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted fw-semibold mb-1">Total Due</p>
+                                        <h3 class="mb-0 fw-bold text-info" id="summaryTotalDue">$0.00</h3>
+                                    </div>
+                                    <div class="icon-service bg-info-transparent text-info rounded-circle p-3">
+                                        <i class="fe fe-dollar-sign fs-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card overflow-hidden">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted fw-semibold mb-1">Total Paid</p>
+                                        <h3 class="mb-0 fw-bold text-success" id="summaryTotalPaid">$0.00</h3>
+                                    </div>
+                                    <div class="icon-service bg-success-transparent text-success rounded-circle p-3">
+                                        <i class="fe fe-check-circle fs-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-lg-6 col-md-6">
+                        <div class="card overflow-hidden">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted fw-semibold mb-1">Balance Owed</p>
+                                        <h3 class="mb-0 fw-bold text-danger" id="summaryBalance">$0.00</h3>
+                                    </div>
+                                    <div class="icon-service bg-danger-transparent text-danger rounded-circle p-3">
+                                        <i class="fe fe-alert-circle fs-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Card -->
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-body py-3">
+                        <h4 class="card-title fw-semibold mb-3 fs-15"><i class="fe fe-filter me-2 text-primary"></i>Filter Report</h4>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-12 col-md">
+                                <label for="filterProperty" class="form-label fw-semibold text-muted mb-1 fs-12">Property</label>
+                                <select class="form-select form-select-sm select3" id="filterProperty" name="property_id">
                                     <option value="">All Properties</option>
                                     @foreach($properties as $property)
                                         <option value="{{ $property->id }}">{{ $property->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Unit</label>
-                                <select class="form-select select3" id="bedFilter">
+                            <div class="col-12 col-md">
+                                <label class="form-label fw-semibold text-muted mb-1 fs-12">Unit</label>
+                                <select class="form-select form-select-sm select3" id="bedFilter">
                                     <option value="">All Beds</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Tenant</label>
-                                <select class="form-select select3" id="tenantFilter">
+                            <div class="col-12 col-md">
+                                <label class="form-label fw-semibold text-muted mb-1 fs-12">Tenant</label>
+                                <select class="form-select form-select-sm select3" id="tenantFilter">
                                     <option value="">Select Tenant</option>
                                     @foreach ($tenants as $tenant)
                                         <option value="{{ $tenant->id }}">{{ $tenant->profile->first_name }} {{ $tenant->profile->last_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-2">
-                                <label for="filterSeason" class="form-label">Season</label>
-                                <select class="form-select" id="filterSeason" name="season">
+                            <div class="col-12 col-md">
+                                <label for="filterSeason" class="form-label fw-semibold text-muted mb-1 fs-12">Season</label>
+                                <select class="form-select form-select-sm select3" id="filterSeason" name="season">
                                     <option value="">Select Season</option>
                                     @foreach ($seasons as $season)
                                     <option value="{{ $season->id }}">{{ $season->name }}</option>
@@ -71,93 +133,27 @@
                                     <option value="custom">Custom Dates</option>
                                 </select>
                             </div>
-                            <div class="col-md-2 customDateContainer" style="display: none;">
-                                <label for="filterDateFrom" class="form-label">Date From</label>
-                                <input type="text" class="form-control datepicker2" id="filterDateFrom" name="date_from" placeholder="Search by start date...">
+
+                            <!-- Custom Dates Row -->
+                            <div class="col-12 col-md customDateContainer" style="display: none;">
+                                <label for="filterDateFrom" class="form-label fw-semibold text-muted mb-1 fs-12">Date From</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="fe fe-calendar text-muted"></i></span>
+                                    <input type="text" class="form-control datepicker2 border-start-0 ps-0" id="filterDateFrom" name="date_from" placeholder="Start date...">
+                                </div>
                             </div>
-                            <div class="col-md-2 customDateContainer" style="display: none;">
-                                <label for="filterDateTo" class="form-label">Date To</label>
-                                <input type="text" class="form-control datepicker2" id="filterDateTo" name="date_to" placeholder="Search by end date...">
+                            <div class="col-12 col-md customDateContainer" style="display: none;">
+                                <label for="filterDateTo" class="form-label fw-semibold text-muted mb-1 fs-12">Date To</label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white"><i class="fe fe-calendar text-muted"></i></span>
+                                    <input type="text" class="form-control datepicker2 border-start-0 ps-0" id="filterDateTo" name="date_to" placeholder="End date...">
+                                </div>
                             </div>
-                            <div class="col-md-2 d-flex align-items-end gap-2">
-                                {{-- <button type="button" class="btn btn-primary" id="applyFilters">
-                                    <i class="fe fe-search me-1"></i> Apply
-                                </button> --}}
-                                <button type="button" class="btn btn-outline-secondary" id="resetFilters">
+
+                            <div class="col-12 col-md-auto ms-xl-auto mt-3 mt-md-0 d-flex align-items-end">
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-3 shadow-sm w-100" id="resetFilters">
                                     <i class="fe fe-refresh-cw me-1"></i> Reset
                                 </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Summary Cards -->
-                <div class="row mb-4" id="summaryCards">
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted mb-1">Total Leases</p>
-                                        <h3 class="mb-0" id="summaryTotalLeases">0</h3>
-                                    </div>
-                                    <div class="ms-3">
-                                        <div class="icon-service bg-primary-transparent text-primary">
-                                            <i class="fe fe-file-text"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted mb-1">Total Due</p>
-                                        <h3 class="mb-0 text-info" id="summaryTotalDue">$0.00</h3>
-                                    </div>
-                                    <div class="ms-3">
-                                        <div class="icon-service bg-info-transparent text-info">
-                                            <i class="fe fe-dollar-sign"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted mb-1">Total Paid</p>
-                                        <h3 class="mb-0 text-success" id="summaryTotalPaid">$0.00</h3>
-                                    </div>
-                                    <div class="ms-3">
-                                        <div class="icon-service bg-success-transparent text-success">
-                                            <i class="fe fe-check-circle"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="flex-grow-1">
-                                        <p class="text-muted mb-1">Balance Owed</p>
-                                        <h3 class="mb-0 text-danger" id="summaryBalance">$0.00</h3>
-                                    </div>
-                                    <div class="ms-3">
-                                        <div class="icon-service bg-danger-transparent text-danger">
-                                            <i class="fe fe-alert-circle"></i>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -335,7 +331,7 @@
                     type: 'GET',
                     success: function(response) {
                         console.log(response);
-                        
+
                         response.data.forEach(function(bed) {
                             $('#bedFilter').append(
                                 `<option value="${bed.id}">${bed.bed_label}</option>`
@@ -401,15 +397,15 @@
         justify-content: center;
         font-size: 22px;
     }
-    
+
     #propertyReportTable tfoot th {
         font-weight: 600;
     }
-    
+
     .card-title i {
         opacity: 0.7;
     }
-    
+
     .filter-card .form-label {
         font-weight: 500;
         font-size: 13px;
