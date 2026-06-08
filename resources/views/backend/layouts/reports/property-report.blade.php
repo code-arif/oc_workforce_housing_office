@@ -32,8 +32,8 @@
 
                 <!-- Summary Cards -->
                 <div class="row mb-4" id="summaryCards">
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card overflow-hidden">
+                    <div class="col-xl col-lg-4 col-md-6 mb-3 mb-xl-0">
+                        <div class="card overflow-hidden h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
@@ -47,8 +47,23 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card overflow-hidden">
+                    <div class="col-xl col-lg-4 col-md-6 mb-3 mb-xl-0">
+                        <div class="card overflow-hidden h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted fw-semibold mb-1">Security Deposit</p>
+                                        <h3 class="mb-0 fw-bold text-warning" id="summarySecurityDeposit">$0.00</h3>
+                                    </div>
+                                    <div class="icon-service bg-warning-transparent text-warning rounded-circle p-3">
+                                        <i class="fe fe-shield fs-4"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl col-lg-4 col-md-6 mb-3 mb-xl-0">
+                        <div class="card overflow-hidden h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
@@ -62,8 +77,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card overflow-hidden">
+                    <div class="col-xl col-lg-6 col-md-6 mb-3 mb-xl-0">
+                        <div class="card overflow-hidden h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
@@ -77,8 +92,8 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-3 col-lg-6 col-md-6">
-                        <div class="card overflow-hidden">
+                    <div class="col-xl col-lg-6 col-md-6 mb-3 mb-xl-0">
+                        <div class="card overflow-hidden h-100">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
@@ -173,6 +188,7 @@
                                         <th>Property Name</th>
                                         <th>Unit</th>
                                         <th>Tenant Name</th>
+                                        <th class="text-end">Security Deposit ($)</th>
                                         <th class="text-end">Total Due ($)</th>
                                         <th class="text-end">Total Paid ($)</th>
                                         <th class="text-end">Balance Owed ($)</th>
@@ -183,6 +199,7 @@
                                 <tfoot class="table-secondary">
                                     <tr>
                                         <th colspan="3" class="text-end">Totals:</th>
+                                        <th class="text-end" id="footerSecurityDeposit">$0.00</th>
                                         <th class="text-end" id="footerTotalDue">$0.00</th>
                                         <th class="text-end" id="footerTotalPaid">$0.00</th>
                                         <th class="text-end" id="footerBalance">$0.00</th>
@@ -219,6 +236,7 @@
         let totalDue = 0;
         let totalPaid = 0;
         let totalBalance = 0;
+        let totalSecurityDeposit = 0;
 
         // Initialize DataTable
         var table = $('#propertyReportTable').DataTable({
@@ -240,6 +258,7 @@
                 { data: 'property_name', name: 'property_name' },
                 { data: 'bed_label', name: 'bed_label' },
                 { data: 'tenant_name', name: 'tenant_name' },
+                { data: 'security_deposit', name: 'security_deposit', className: 'text-end' },
                 { data: 'total_due', name: 'total_due', className: 'text-end' },
                 { data: 'total_paid', name: 'total_paid', className: 'text-end' },
                 { data: 'balance_owed', name: 'balance_owed', className: 'text-end' }
@@ -259,21 +278,25 @@
             totalDue = 0;
             totalPaid = 0;
             totalBalance = 0;
+            totalSecurityDeposit = 0;
 
             table.rows({ search: 'applied' }).every(function() {
                 var data = this.data();
+                totalSecurityDeposit += parseFloat(data.security_deposit.replace(/,/g, '')) || 0;
                 totalDue += parseFloat(data.total_due.replace(/,/g, '')) || 0;
                 totalPaid += parseFloat(data.total_paid.replace(/,/g, '')) || 0;
                 totalBalance += parseFloat(data.balance_owed.replace(/,/g, '')) || 0;
             });
 
             // Update footer
+            $('#footerSecurityDeposit').text('$' + numberFormat(totalSecurityDeposit));
             $('#footerTotalDue').text('$' + numberFormat(totalDue));
             $('#footerTotalPaid').text('$' + numberFormat(totalPaid));
             $('#footerBalance').text('$' + numberFormat(totalBalance));
 
             // Update summary cards
             $('#summaryTotalLeases').text(table.rows({ search: 'applied' }).count());
+            $('#summarySecurityDeposit').text('$' + numberFormat(totalSecurityDeposit));
             $('#summaryTotalDue').text('$' + numberFormat(totalDue));
             $('#summaryTotalPaid').text('$' + numberFormat(totalPaid));
             $('#summaryBalance').text('$' + numberFormat(totalBalance));

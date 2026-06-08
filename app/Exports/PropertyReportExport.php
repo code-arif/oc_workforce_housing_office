@@ -37,6 +37,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
                 $row['property_name'],
                 $row['bed_label'],
                 $row['tenant_name'],
+                '$' . $row['security_deposit'],
                 '$' . $row['total_due'],
                 '$' . $row['total_paid'],
                 '$' . $row['balance_owed'],
@@ -44,14 +45,15 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
         }
 
         // Empty row before summary
-        $rows[] = ['', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', '', '', ''];
 
         // Summary rows
-        $rows[] = ['', '', 'SUMMARY', '', '', ''];
-        $rows[] = ['', '', 'Total Leases:', $this->summary['total_leases'], '', ''];
-        $rows[] = ['', '', 'Total Due:', '$' . number_format($this->summary['total_due'], 2), '', ''];
-        $rows[] = ['', '', 'Total Paid:', '$' . number_format($this->summary['total_paid'], 2), '', ''];
-        $rows[] = ['', '', 'Balance Owed:', '$' . number_format($this->summary['total_balance'], 2), '', ''];
+        $rows[] = ['', '', 'SUMMARY', '', '', '', ''];
+        $rows[] = ['', '', 'Total Leases:', $this->summary['total_leases'], '', '', ''];
+        $rows[] = ['', '', 'Security Deposit:', '$' . number_format($this->summary['total_security_deposit'], 2), '', '', ''];
+        $rows[] = ['', '', 'Total Due:', '$' . number_format($this->summary['total_due'], 2), '', '', ''];
+        $rows[] = ['', '', 'Total Paid:', '$' . number_format($this->summary['total_paid'], 2), '', '', ''];
+        $rows[] = ['', '', 'Balance Owed:', '$' . number_format($this->summary['total_balance'], 2), '', '', ''];
 
         return $rows;
     }
@@ -62,6 +64,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
             'Property Name',
             'Unit',
             'Tenant Name',
+            'Security Deposit',
             'Total Due',
             'Total Paid',
             'Balance Owed',
@@ -74,9 +77,10 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
             'A' => 25,
             'B' => 15,
             'C' => 25,
-            'D' => 15,
+            'D' => 20,
             'E' => 15,
             'F' => 15,
+            'G' => 15,
         ];
     }
 
@@ -103,6 +107,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
             'D' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
             'E' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
             'F' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
+            'G' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
         ];
     }
 
@@ -120,7 +125,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
                 $summaryStartRow = $lastDataRow + 2;
 
                 // Add borders to data rows
-                $sheet->getStyle('A1:F' . $lastDataRow)->applyFromArray([
+                $sheet->getStyle('A1:G' . $lastDataRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -132,7 +137,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
                 // Style alternating rows with light gray background
                 for ($i = 2; $i <= $lastDataRow; $i++) {
                     if ($i % 2 == 0) {
-                        $sheet->getStyle('A' . $i . ':F' . $i)->applyFromArray([
+                        $sheet->getStyle('A' . $i . ':G' . $i)->applyFromArray([
                             'fill' => [
                                 'fillType' => Fill::FILL_SOLID,
                                 'startColor' => ['rgb' => 'F8F9FA'],
@@ -151,7 +156,7 @@ class PropertyReportExport implements FromArray, WithHeadings, WithStyles, WithC
                 ]);
 
                 // Bold summary labels and values
-                for ($i = $summaryStartRow + 1; $i <= $summaryStartRow + 4; $i++) {
+                for ($i = $summaryStartRow + 1; $i <= $summaryStartRow + 5; $i++) {
                     $sheet->getStyle('C' . $i)->applyFromArray([
                         'font' => ['bold' => true],
                     ]);

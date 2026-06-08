@@ -187,6 +187,7 @@
                 <th>Property Name</th>
                 <th>Unit</th>
                 <th>Tenant Name</th>
+                <th class="text-right">Security Deposit</th>
                 <th class="text-right">Total Due</th>
                 <th class="text-right">Total Paid</th>
                 <th class="text-right">Balance Owed</th>
@@ -198,13 +199,14 @@
                 <td>{{ $row['property_name'] }}</td>
                 <td>{{ $row['bed_label'] }}</td>
                 <td>{{ $row['tenant_name'] }}</td>
+                <td class="text-right">${{ $row['security_deposit'] }}</td>
                 <td class="text-right">${{ $row['total_due'] }}</td>
                 <td class="text-right">${{ $row['total_paid'] }}</td>
                 <td class="text-right">${{ $row['balance_owed'] }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" style="text-align: center; padding: 20px; color: #888;">
+                <td colspan="7" style="text-align: center; padding: 20px; color: #888;">
                     No data available for the selected filters.
                 </td>
             </tr>
@@ -214,6 +216,7 @@
         <tfoot>
             <tr>
                 <td colspan="3" style="text-align: right;">TOTALS:</td>
+                <td class="text-right">${{ number_format($summary['total_security_deposit'], 2) }}</td>
                 <td class="text-right">${{ number_format($summary['total_due'], 2) }}</td>
                 <td class="text-right">${{ number_format($summary['total_paid'], 2) }}</td>
                 <td class="text-right">${{ number_format($summary['total_balance'], 2) }}</td>

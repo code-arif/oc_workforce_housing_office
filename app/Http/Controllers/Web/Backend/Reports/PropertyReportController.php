@@ -52,8 +52,7 @@ class PropertyReportController extends Controller
                         $q->where('is_current', true)->with('bed:id,bed_label');
                     },
                     'invoices' => function ($q) {
-                        $q->select('id', 'lease_id', 'total_amount', 'paid_amount', 'status')
-                          ->where('type', '!=', 'DEPOSIT');
+                        $q->select('id', 'lease_id', 'total_amount', 'paid_amount', 'status', 'type');
                     }
                 ])
                 ->whereIn('leases.status', ['ACTIVE', 'COMPLETED', 'TERMINATED']);
@@ -94,6 +93,7 @@ class PropertyReportController extends Controller
             }
 
             return DataTables::of($query)
+                ->addIndexColumn()
                 ->addColumn('property_name', function ($lease) {
                     return $lease->property?->name ?? 'N/A';
                 })
@@ -108,17 +108,21 @@ class PropertyReportController extends Controller
                     }
                     return 'N/A';
                 })
+                ->addColumn('security_deposit', function ($lease) {
+                    $securityDeposit = $lease->invoices->where('type', 'DEPOSIT')->sum('total_amount');
+                    return number_format($securityDeposit, 2);
+                })
                 ->addColumn('total_due', function ($lease) {
-                    $totalDue = $lease->invoices->sum('total_amount');
+                    $totalDue = $lease->invoices->where('type', '!=', 'DEPOSIT')->sum('total_amount');
                     return number_format($totalDue, 2);
                 })
                 ->addColumn('total_paid', function ($lease) {
-                    $totalPaid = $lease->invoices->sum('paid_amount');
+                    $totalPaid = $lease->invoices->where('type', '!=', 'DEPOSIT')->sum('paid_amount');
                     return number_format($totalPaid, 2);
                 })
                 ->addColumn('balance_owed', function ($lease) {
-                    $totalDue = $lease->invoices->sum('total_amount');
-                    $totalPaid = $lease->invoices->sum('paid_amount');
+                    $totalDue = $lease->invoices->where('type', '!=', 'DEPOSIT')->sum('total_amount');
+                    $totalPaid = $lease->invoices->where('type', '!=', 'DEPOSIT')->sum('paid_amount');
                     $balance = $totalDue - $totalPaid;
                     return number_format($balance, 2);
                 })
@@ -182,8 +186,7 @@ class PropertyReportController extends Controller
                     $q->where('is_current', true)->with('bed:id,bed_label');
                 },
                 'invoices' => function ($q) {
-                    $q->select('id', 'lease_id', 'total_amount', 'paid_amount', 'status')
-                      ->where('type', '!=', 'DEPOSIT');
+                    $q->select('id', 'lease_id', 'total_amount', 'paid_amount', 'status', 'type');
                 }
             ])
             ->whereIn('status', ['ACTIVE', 'COMPLETED', 'TERMINATED']);
@@ -230,6 +233,7 @@ class PropertyReportController extends Controller
         $reportData = [];
         $totalDue = 0;
         $totalPaid = 0;
+        $totalSecurityDeposit = 0;
 
         foreach ($leases as $lease) {
             $profile = $lease->tenant?->profile;
@@ -240,17 +244,23 @@ class PropertyReportController extends Controller
             $assignment = $lease->assignments->first();
             $bedLabel = $assignment?->bed?->bed_label ?? 'N/A';
 
-            $leaseTotalDue = $lease->invoices->sum('total_amount');
-            $leaseTotalPaid = $lease->invoices->sum('paid_amount');
+            $nonDepositInvoices = $lease->invoices->where('type', '!=', 'DEPOSIT');
+            $depositInvoices = $lease->invoices->where('type', 'DEPOSIT');
+
+            $leaseTotalDue = $nonDepositInvoices->sum('total_amount');
+            $leaseTotalPaid = $nonDepositInvoices->sum('paid_amount');
             $leaseBalance = $leaseTotalDue - $leaseTotalPaid;
+            $leaseSecurityDeposit = $depositInvoices->sum('total_amount');
 
             $totalDue += $leaseTotalDue;
             $totalPaid += $leaseTotalPaid;
+            $totalSecurityDeposit += $leaseSecurityDeposit;
 
             $reportData[] = [
                 'property_name' => $lease->property?->name ?? 'N/A',
                 'bed_label' => $bedLabel,
                 'tenant_name' => $tenantName,
+                'security_deposit' => number_format($leaseSecurityDeposit, 2),
                 'total_due' => number_format($leaseTotalDue, 2),
                 'total_paid' => number_format($leaseTotalPaid, 2),
                 'balance_owed' => number_format($leaseBalance, 2),
@@ -261,6 +271,7 @@ class PropertyReportController extends Controller
             'reportData' => $reportData,
             'summary' => [
                 'total_leases' => count($reportData),
+                'total_security_deposit' => $totalSecurityDeposit,
                 'total_due' => $totalDue,
                 'total_paid' => $totalPaid,
                 'total_balance' => $totalDue - $totalPaid,
