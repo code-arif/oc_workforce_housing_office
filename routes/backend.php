@@ -626,7 +626,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         // DELETE
         Route::delete('/delete/{id}', [ItemController::class, 'destroy'])->name('delete');
 
-        // STATUS TOGGLE (ACTIVE / INACTIVE)
+        // STATUS TOGGLE
         Route::post('/status/{id}', [ItemController::class, 'status'])->name('status');
         //active data show
         Route::get('/items/active', [ItemController::class, 'activeItems']);
