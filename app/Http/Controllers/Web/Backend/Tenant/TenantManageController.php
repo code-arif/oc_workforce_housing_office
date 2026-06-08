@@ -97,8 +97,6 @@ class TenantManageController extends Controller
                 if ($request->tab === 'under_review') {
                     // Show only tenants under review (pending, processing, under_review)
                     $query->whereIn('tenants.status', ['pending', 'processing', 'under_review']);
-                } elseif ($request->tab === 'all') {
-                    $query->whereIn('tenants.status', ['approved']);
                 }
                 // For 'all' tab, no additional filtering needed
             }

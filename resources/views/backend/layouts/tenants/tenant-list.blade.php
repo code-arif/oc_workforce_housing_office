@@ -798,11 +798,11 @@
         .nav-tabs-custom .nav-link {
             border: none;
             border-bottom: 3px solid transparent;
-            color: #D9A600;
+            color: #6c757d;
             font-weight: 600;
             padding: 12px 24px;
             transition: all 0.3s ease;
-            background: transparent
+            background: transparent;
         }
 
         .nav-tabs-custom .nav-link:hover {
@@ -811,10 +811,9 @@
         }
 
         .nav-tabs-custom .nav-link.active {
-            color: #ffffff !important;
+            color: #D9A600 !important;
             border-bottom-color: #D9A600 !important;
-            background: var(--primary-bg-color);
-            ;
+            background: transparent;
         }
 
         .filter-card {
