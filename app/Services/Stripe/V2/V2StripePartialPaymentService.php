@@ -225,7 +225,7 @@ class V2StripePartialPaymentService
                 $baseAmount = $balanceDue;
             }
 
-            $setting       = Setting::first();
+            $setting = Setting::first();
             $processingFee = 0.00;
 
             if ($paymentMethodType === 'us_bank_account') {
