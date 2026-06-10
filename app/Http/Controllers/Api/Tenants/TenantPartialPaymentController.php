@@ -159,24 +159,6 @@ class TenantPartialPaymentController extends Controller
     }
 
     /**
-     * Webhook handler for Stripe events (Partial Payment flow)
-     */
-    public function handleWebhook(Request $request)
-    {
-        try {
-            $result = $this->stripeService->handleWebhook($request);
-
-            if (!$result['success']) {
-                return response()->json(['error' => $result['message']], 400);
-            }
-
-            return response()->json(['success' => true]);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
      * Get payment history
      */
     public function getPaymentHistory(Request $request)

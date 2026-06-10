@@ -1035,6 +1035,8 @@ class V2StripePaymentService
 
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
 
+            $isPartial = isset($metadata['partial_payment']) && $metadata['partial_payment'] === 'true';
+
             $payment = Payment::create([
                 'invoice_id' => $invoice->id,
                 'tenant_id' => $tenantId,
@@ -1054,8 +1056,9 @@ class V2StripePaymentService
                 'paid_by' => 'tenant',
                 'review_status' => 'confirmed', // Auto-confirm stripe payments
                 'note' => sprintf(
-                    '%s payment via Stripe - Invoice %s',
+                    '%s%s payment via Stripe - Invoice %s',
                     $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
+                    $isPartial ? ' partial' : '',
                     $invoice->invoice_number
                 ),
                 'metadata' => [
@@ -1065,6 +1068,7 @@ class V2StripePaymentService
                     'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
                     'property_name' => $metadata['property_name'] ?? 'N/A',
                     'property_id' => $metadata['property_id'] ?? null,
+                    'partial_payment' => $isPartial ? 'true' : 'false',
                 ]
             ]);
 
@@ -1113,8 +1117,9 @@ class V2StripePaymentService
                 'amount' => $baseAmount,
                 'transaction_date' => now()->toDateString(),
                 'description' => sprintf(
-                    '%s payment for Invoice %s - %s (via Stripe Connect → %s)',
+                    '%s%s payment for Invoice %s - %s (via Stripe Connect → %s)',
                     $invoice->type === 'DEPOSIT' ? 'Deposit' : 'Rent',
+                    $isPartial ? ' partial' : '',
                     $invoice->invoice_number,
                     $metadata['property_name'] ?? 'Property',
                     $connectedAccountId ?? 'platform'
@@ -1124,6 +1129,7 @@ class V2StripePaymentService
                     'stripe_session_id' => $sessionOrIntent->id,
                     'stripe_payment_intent' => $stripePaymentIntentId,
                     'connected_account_id' => $connectedAccountId,
+                    'partial_payment' => $isPartial ? 'true' : 'false',
                 ]
             ]);
 
@@ -1216,56 +1222,6 @@ class V2StripePaymentService
         }
 
         switch ($event->type) {
-            // Payment Intent Events
-            case 'payment_intent.succeeded':
-                $intent = $event->data->object;
-                Log::info('PaymentIntent succeeded via webhook', [
-                    'intent_id' => $intent->id,
-                ]);
-
-                $result = $this->processPayment($intent->metadata, $intent);
-                if (!$result['success']) {
-                    Log::error('Webhook payment processing failed for intent', [
-                        'intent_id' => $intent->id,
-                        'error' => $result['message']
-                    ]);
-                }
-                break;
-
-            case 'payment_intent.payment_failed':
-                $intent = $event->data->object;
-                Log::warning('PaymentIntent failed via webhook', [
-                    'intent_id' => $intent->id,
-                    'failure_message' => $intent->last_payment_error?->message ?? 'N/A',
-                ]);
-                break;
-
-            case 'payment_intent.amount_capturable_updated':
-            case 'payment_intent.canceled':
-            case 'payment_intent.created':
-            case 'payment_intent.partially_funded':
-            case 'payment_intent.processing':
-            case 'payment_intent.requires_action':
-                $intent = $event->data->object;
-                Log::info("PaymentIntent lifecycle event: {$event->type}", [
-                    'intent_id' => $intent->id,
-                    'status' => $intent->status ?? 'N/A'
-                ]);
-                break;
-
-            // Setup Intent Events
-            case 'setup_intent.canceled':
-            case 'setup_intent.created':
-            case 'setup_intent.requires_action':
-            case 'setup_intent.setup_failed':
-            case 'setup_intent.succeeded':
-                $intent = $event->data->object;
-                Log::info("SetupIntent lifecycle event: {$event->type}", [
-                    'setup_intent_id' => $intent->id,
-                    'status' => $intent->status ?? 'N/A'
-                ]);
-                break;
-
             // Checkout Session Events
             case 'checkout.session.completed':
                 $session = $event->data->object;
@@ -1306,7 +1262,7 @@ class V2StripePaymentService
                 Log::warning('Checkout session async payment failed via webhook', [
                     'session_id' => $session->id,
                     'payment_status' => $session->payment_status,
-                    'failure_message' => $session->payment_intent?->last_payment_error?->message ?? 'N/A',
+                    'failure_message' => $session->payment_intent->last_payment_error->message ?? 'N/A',
                 ]);
                 break;
 

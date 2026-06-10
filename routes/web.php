@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\Tenants\TenantPartialPaymentController;
 use App\Http\Controllers\Api\Tenants\TenantPaymentController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -106,6 +105,5 @@ Route::get('/mail-test', function(){
 
 // Handle webhook
 Route::post('/stripe/webhook', [TenantPaymentController::class, 'handleWebhook']);
-Route::post('/stripe/partial-webhook', [TenantPartialPaymentController::class, 'handleWebhook']);
 
 require __DIR__ . '/auth.php';
