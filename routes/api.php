@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Tenants\TenantFormController;
 use App\Http\Controllers\Api\Tenants\ApplicationController;
 use App\Http\Controllers\Api\Tenants\MaintananceController;
 use App\Http\Controllers\Api\Tenants\TenantPaymentController;
+use App\Http\Controllers\Api\Tenants\TenantPartialPaymentController;
 
 use App\Http\Controllers\Api\Tenants\TenantProfileController;
 use App\Http\Controllers\Api\Tenants\TenantPasswordController;
@@ -86,7 +87,6 @@ Route::group(['middleware' => 'guest:api'], function () {
     });
 });
 
-
 Route::group(['middleware' => 'auth:api'], function () {
     // Protected Tenant Routes
     Route::prefix('v1/tenant')->group(function () {
@@ -143,6 +143,15 @@ Route::group(['middleware' => 'auth:api'], function () {
             Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession']); // ISSUE
             Route::post('/intent/create', [TenantPaymentController::class, 'createPaymentIntent']); // New Phase 3 endpoint
             Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
+        });
+
+        // Partial Payment Routes (Stripe)
+        Route::prefix('partial-payments')->name('partial-payments.')->group(function () {
+            Route::get('/invoice/{invoiceId}/details', [TenantPartialPaymentController::class, 'getPaymentDetails']);
+            Route::post('/checkout/create', [TenantPartialPaymentController::class, 'createCheckoutSession']);
+            Route::post('/intent/create', [TenantPartialPaymentController::class, 'createPaymentIntent']);
+            Route::post('/verify', [TenantPartialPaymentController::class, 'verifyPayment']);
+            Route::get('/history', [TenantPartialPaymentController::class, 'getPaymentHistory']);
         });
 
         // Maintance routes
