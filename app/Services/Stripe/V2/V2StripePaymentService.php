@@ -1231,11 +1231,18 @@ class V2StripePaymentService
                 ]);
 
                 if ($session->payment_status === 'paid') {
-                    $result = $this->processPayment($session->metadata, $session);
+                    // Route to multi-invoice handler if this is a bulk-payment session
+                    if (($session->metadata['bulk_payment'] ?? '') === 'true') {
+                        $multiService = app(V2StripeMultiPaymentService::class);
+                        $result = $multiService->processMultiInvoicePayment($session->metadata, $session);
+                    } else {
+                        $result = $this->processPayment($session->metadata, $session);
+                    }
+
                     if (!$result['success']) {
                         Log::error('Webhook payment processing failed', [
                             'session_id' => $session->id,
-                            'error' => $result['message']
+                            'error'      => $result['message']
                         ]);
                     }
                 }
@@ -1248,11 +1255,18 @@ class V2StripePaymentService
                     'payment_status' => $session->payment_status,
                 ]);
 
-                $result = $this->processPayment($session->metadata, $session);
+                // Route to multi-invoice handler if this is a bulk-payment session
+                if (($session->metadata['bulk_payment'] ?? '') === 'true') {
+                    $multiService = app(V2StripeMultiPaymentService::class);
+                    $result = $multiService->processMultiInvoicePayment($session->metadata, $session);
+                } else {
+                    $result = $this->processPayment($session->metadata, $session);
+                }
+
                 if (!$result['success']) {
                     Log::error('Webhook async payment processing failed', [
                         'session_id' => $session->id,
-                        'error' => $result['message']
+                        'error'      => $result['message']
                     ]);
                 }
                 break;

@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Tenants\ApplicationController;
 use App\Http\Controllers\Api\Tenants\MaintananceController;
 use App\Http\Controllers\Api\Tenants\TenantPaymentController;
 use App\Http\Controllers\Api\Tenants\TenantPartialPaymentController;
+use App\Http\Controllers\Api\Tenants\TenantMultiPaymentController;
 
 use App\Http\Controllers\Api\Tenants\TenantProfileController;
 use App\Http\Controllers\Api\Tenants\TenantPasswordController;
@@ -152,6 +153,13 @@ Route::group(['middleware' => 'auth:api'], function () {
             Route::post('/intent/create', [TenantPartialPaymentController::class, 'createPaymentIntent']);
             Route::post('/verify', [TenantPartialPaymentController::class, 'verifyPayment']);
             Route::get('/history', [TenantPartialPaymentController::class, 'getPaymentHistory']);
+        });
+
+        // Multi-Invoice Bulk Payment Routes (Stripe)
+        Route::prefix('multi-payments')->name('multi-payments.')->group(function () {
+            Route::post('/details',[TenantMultiPaymentController::class, 'getPaymentDetails']);
+            Route::post('/checkout/create',[TenantMultiPaymentController::class, 'createCheckoutSession']);
+            Route::post('/verify',[TenantMultiPaymentController::class, 'verifyPayment']);
         });
 
         // Maintance routes
