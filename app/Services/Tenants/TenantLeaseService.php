@@ -288,16 +288,13 @@ class TenantLeaseService
             $isFirstInvoice = $firstInvoice && $firstInvoice->id === $invoice->id;
 
             // Payment logic
-            $canPayment = false;
+            // $canPayment = false;
             $blockReason = null;
 
             if (!$leaseSigned) {
                 $blockReason = 'Lease must be signed before making payments';
             } elseif ($invoice->status === 'PAID') {
                 $blockReason = 'Invoice already paid';
-            } elseif ($invoice->id === $firstUnpaidInvoiceId) {
-                // Only the first unpaid invoice can be paid
-                $canPayment = true;
             } else {
                 $blockReason = 'Previous invoice must be paid first';
             }
@@ -318,7 +315,7 @@ class TenantLeaseService
                     'property_name' => $invoice->lease->property->name ?? 'N/A',
                     'is_signed' => $leaseSigned,
                 ],
-                'can_make_payment' => $canPayment,
+                // 'can_make_payment' => $canPayment,
                 'payment_blocked_reason' => $blockReason,
                 'is_first_invoice' => $isFirstInvoice,
                 'includes_deposit' => $invoice->includes_deposit,
