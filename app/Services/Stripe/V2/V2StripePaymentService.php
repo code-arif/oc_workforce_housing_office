@@ -1191,7 +1191,7 @@ class V2StripePaymentService
             }
 
             $invoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
-            
+
             // Only update if it's currently unpaid/overdue/partial
             if (in_array($invoice->status, ['UNPAID', 'OVERDUE', 'PARTIAL'])) {
                 $invoice->update(['status' => 'PROCESSING']);
@@ -1226,13 +1226,13 @@ class V2StripePaymentService
             }
 
             $invoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
-            
+
             // Revert back from PROCESSING
             if ($invoice->status === 'PROCESSING') {
                 // If there are previous partial payments, we might want to revert to PARTIAL
                 $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
                 $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
-                
+
                 $invoice->update(['status' => $status]);
             }
 
@@ -1334,7 +1334,7 @@ class V2StripePaymentService
                     if (!$result['success']) {
                         Log::error('Webhook mark as processing failed', [
                             'session_id' => $session->id,
-                            'error'      => $result['message']
+                            'error' => $result['message']
                         ]);
                     }
                 }
