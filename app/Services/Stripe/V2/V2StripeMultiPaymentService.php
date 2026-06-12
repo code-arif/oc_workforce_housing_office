@@ -372,11 +372,13 @@ class V2StripeMultiPaymentService
         try {
             $session = Session::retrieve($sessionId);
 
-            if ($session->payment_status !== 'paid') {
-                return ['success' => false, 'message' => 'Payment not completed.'];
+            if ($session->payment_status === 'paid') {
+                return $this->processMultiInvoicePayment($session->metadata, $session);
+            } elseif ($session->payment_status === 'processing') {
+                return $this->markMultiInvoiceAsProcessing($session->metadata, $session);
             }
 
-            return $this->processMultiInvoicePayment($session->metadata, $session);
+            return ['success' => false, 'message' => 'Payment not completed.'];
         } catch (Exception $e) {
             Log::error('[MultiPayment] verifyPayment failed: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Payment verification failed: ' . $e->getMessage()];
@@ -600,7 +602,6 @@ class V2StripeMultiPaymentService
                 'connected_account'  => $connectedAccountId,
             ]);
 
-            // Send one combined email
             $this->sendBulkPaymentEmails($processedPayments, $processedInvoices, $tenant, $metadata, $totalCharge);
 
             return [
@@ -617,6 +618,86 @@ class V2StripeMultiPaymentService
                 'trace'      => $e->getTraceAsString(),
             ]);
             return ['success' => false, 'message' => 'Multi-invoice payment processing failed: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Mark multi invoices as PROCESSING for async payments (ACH)
+     */
+    public function markMultiInvoiceAsProcessing($metadata, $sessionOrIntent): array
+    {
+        DB::beginTransaction();
+        try {
+            $invoiceIdsStr = $metadata['invoice_ids'] ?? null;
+            if (!$invoiceIdsStr) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Missing invoice_ids in metadata.'];
+            }
+
+            $invoiceIds = array_map('intval', explode(',', $invoiceIdsStr));
+            $invoices = Invoice::lockForUpdate()->whereIn('id', $invoiceIds)->get();
+
+            $processedInvoices = [];
+            foreach ($invoices as $invoice) {
+                if (in_array($invoice->status, ['UNPAID', 'OVERDUE', 'PARTIAL'])) {
+                    $invoice->update(['status' => 'PROCESSING']);
+                }
+                $processedInvoices[] = ['id' => $invoice->id, 'status' => 'PROCESSING'];
+            }
+
+            DB::commit();
+
+            Log::info('[MultiPayment] Invoices marked as PROCESSING', [
+                'invoice_ids' => $invoiceIdsStr,
+                'session_id'  => $sessionOrIntent->id ?? 'unknown'
+            ]);
+
+            return ['success' => true, 'invoices' => $processedInvoices];
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('[MultiPayment] Mark multi invoice as processing failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to mark invoices as processing'];
+        }
+    }
+
+    /**
+     * Mark multi invoices as UNPAID (Failed async payment)
+     */
+    public function markMultiInvoiceAsFailed($metadata, $sessionOrIntent): array
+    {
+        DB::beginTransaction();
+        try {
+            $invoiceIdsStr = $metadata['invoice_ids'] ?? null;
+            if (!$invoiceIdsStr) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Missing invoice_ids in metadata.'];
+            }
+
+            $invoiceIds = array_map('intval', explode(',', $invoiceIdsStr));
+            $invoices = Invoice::lockForUpdate()->whereIn('id', $invoiceIds)->get();
+
+            $processedInvoices = [];
+            foreach ($invoices as $invoice) {
+                if ($invoice->status === 'PROCESSING') {
+                    $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
+                    $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
+                    $invoice->update(['status' => $status]);
+                }
+                $processedInvoices[] = ['id' => $invoice->id, 'status' => $invoice->status];
+            }
+
+            DB::commit();
+
+            Log::warning('[MultiPayment] Invoices payment failed, statuses reverted', [
+                'invoice_ids' => $invoiceIdsStr,
+                'session_id'  => $sessionOrIntent->id ?? 'unknown'
+            ]);
+
+            return ['success' => true, 'invoices' => $processedInvoices];
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('[MultiPayment] Mark multi invoice as failed failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to mark invoices as failed'];
         }
     }
 

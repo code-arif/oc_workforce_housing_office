@@ -89,6 +89,11 @@ class Invoice extends Model
         return $this->status === 'PARTIAL';
     }
 
+    public function isProcessing()
+    {
+        return $this->status === 'PROCESSING';
+    }
+
     public function updatePaymentStatus()
     {
         $totalPaid = $this->payments()->where('status', '!=', 'voided')->sum('amount');
@@ -122,6 +127,6 @@ class Invoice extends Model
 
     public function scopeUnpaid($query)
     {
-        return $query->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
+        return $query->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'PROCESSING']);
     }
 }

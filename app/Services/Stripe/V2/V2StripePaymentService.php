@@ -962,12 +962,15 @@ class V2StripePaymentService
         try {
             $session = Session::retrieve($sessionId);
 
-            if ($session->payment_status !== 'paid') {
-                return ['success' => false, 'message' => 'Payment not completed'];
+            if ($session->payment_status === 'paid') {
+                $metadata = $session->metadata;
+                return $this->processPayment($metadata, $session);
+            } elseif ($session->payment_status === 'processing') {
+                $metadata = $session->metadata;
+                return $this->markAsProcessing($metadata, $session);
             }
 
-            $metadata = $session->metadata;
-            return $this->processPayment($metadata, $session);
+            return ['success' => false, 'message' => 'Payment not completed'];
         } catch (Exception $e) {
             Log::error('Payment verification failed: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Payment verification failed: ' . $e->getMessage()];
@@ -1175,6 +1178,80 @@ class V2StripePaymentService
     }
 
     /**
+     * Mark invoice as PROCESSING for async payments (ACH)
+     */
+    public function markAsProcessing($metadata, $sessionOrIntent): array
+    {
+        DB::beginTransaction();
+        try {
+            $invoiceId = $metadata['invoice_id'] ?? null;
+            if (!$invoiceId) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Missing invoice_id in metadata'];
+            }
+
+            $invoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
+            
+            // Only update if it's currently unpaid/overdue/partial
+            if (in_array($invoice->status, ['UNPAID', 'OVERDUE', 'PARTIAL'])) {
+                $invoice->update(['status' => 'PROCESSING']);
+            }
+
+            DB::commit();
+
+            Log::info('Invoice marked as PROCESSING', [
+                'invoice_id' => $invoice->id,
+                'session_id' => $sessionOrIntent->id ?? 'unknown'
+            ]);
+
+            return ['success' => true, 'invoice' => ['id' => $invoice->id, 'status' => 'PROCESSING']];
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Mark as processing failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to mark as processing'];
+        }
+    }
+
+    /**
+     * Mark invoice as UNPAID (Failed async payment)
+     */
+    public function markAsFailed($metadata, $sessionOrIntent): array
+    {
+        DB::beginTransaction();
+        try {
+            $invoiceId = $metadata['invoice_id'] ?? null;
+            if (!$invoiceId) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'Missing invoice_id in metadata'];
+            }
+
+            $invoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
+            
+            // Revert back from PROCESSING
+            if ($invoice->status === 'PROCESSING') {
+                // If there are previous partial payments, we might want to revert to PARTIAL
+                $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
+                $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
+                
+                $invoice->update(['status' => $status]);
+            }
+
+            DB::commit();
+
+            Log::warning('Invoice payment failed, status reverted', [
+                'invoice_id' => $invoice->id,
+                'session_id' => $sessionOrIntent->id ?? 'unknown'
+            ]);
+
+            return ['success' => true, 'invoice' => ['id' => $invoice->id, 'status' => $invoice->status]];
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Mark as failed failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to mark as failed'];
+        }
+    }
+
+    /**
      * Send payment success emails
      */
     private function sendPaymentEmails($payment, $invoice, $tenant, $metadata): void
@@ -1245,6 +1322,21 @@ class V2StripePaymentService
                             'error'      => $result['message']
                         ]);
                     }
+                } elseif ($session->payment_status === 'processing') {
+                    // Route to multi-invoice handler if this is a bulk-payment session
+                    if (($session->metadata['bulk_payment'] ?? '') === 'true') {
+                        $multiService = app(V2StripeMultiPaymentService::class);
+                        $result = $multiService->markMultiInvoiceAsProcessing($session->metadata, $session);
+                    } else {
+                        $result = $this->markAsProcessing($session->metadata, $session);
+                    }
+
+                    if (!$result['success']) {
+                        Log::error('Webhook mark as processing failed', [
+                            'session_id' => $session->id,
+                            'error'      => $result['message']
+                        ]);
+                    }
                 }
                 break;
 
@@ -1278,6 +1370,13 @@ class V2StripePaymentService
                     'payment_status' => $session->payment_status,
                     'failure_message' => $session->payment_intent->last_payment_error->message ?? 'N/A',
                 ]);
+
+                if (($session->metadata['bulk_payment'] ?? '') === 'true') {
+                    $multiService = app(V2StripeMultiPaymentService::class);
+                    $multiService->markMultiInvoiceAsFailed($session->metadata, $session);
+                } else {
+                    $this->markAsFailed($session->metadata, $session);
+                }
                 break;
 
             case 'transfer.created':
