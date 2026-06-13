@@ -300,18 +300,18 @@ class V2StripeMultiPaymentService
 
             $sessionParams = [
                 'payment_method_types' => $paymentMethodTypes,
-                'line_items'           => $lineItems,
-                'mode'                 => 'payment',
-                'success_url'          => $successUrl . '?session_id={CHECKOUT_SESSION_ID}&is_multi_payment=1&payment_method_type=' . $paymentMethodType,
-                'cancel_url'           => $cancelUrl . '&is_multi_payment=1&payment_method_type=' . $paymentMethodType,
-                'customer_email'       => $tenant->email,
-                'client_reference_id'  => 'multi_' . implode('_', $invoices->pluck('id')->toArray()),
-                'metadata'             => $metadata,
+                'line_items' => $lineItems,
+                'mode' => 'payment',
+                'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}&is_multi_payment=1&payment_method_type=' . $paymentMethodType,
+                'cancel_url' => $cancelUrl . '&is_multi_payment=1&payment_method_type=' . $paymentMethodType,
+                'customer_email' => $tenant->email,
+                'client_reference_id' => 'multi_' . implode('_', $invoices->pluck('id')->toArray()),
+                'metadata' => $metadata,
                 'payment_intent_data'  => [
                     'transfer_data' => [
                         'destination' => $connectedAccountId,
                     ],
-                    'metadata'      => $metadata,
+                    'metadata' => $metadata,
                 ],
             ];
 
@@ -326,38 +326,38 @@ class V2StripeMultiPaymentService
             DB::commit();
 
             Log::info('[MultiPayment] Stripe multi-invoice checkout session created', [
-                'session_id'          => $session->id,
-                'invoice_ids'         => $invoiceIdsStr,
-                'connected_account'   => $connectedAccountId,
-                'total_charge'        => $totalCharge,
-                'processing_fee'      => $processingFee,
+                'session_id' => $session->id,
+                'invoice_ids' => $invoiceIdsStr,
+                'connected_account' => $connectedAccountId,
+                'total_charge' => $totalCharge,
+                'processing_fee' => $processingFee,
             ]);
 
             return [
-                'success'      => true,
-                'session_id'   => $session->id,
+                'success' => true,
+                'session_id' => $session->id,
                 'checkout_url' => $session->url,
-                'summary'      => [
-                    'invoice_count'     => $invoices->count(),
-                    'invoice_numbers'   => $invoices->pluck('invoice_number'),
+                'summary' => [
+                    'invoice_count' => $invoices->count(),
+                    'invoice_numbers' => $invoices->pluck('invoice_number'),
                     'total_base_amount' => $totalBaseAmount,
-                    'processing_fee'    => $processingFee,
-                    'total_charge'      => $totalCharge,
+                    'processing_fee' => $processingFee,
+                    'total_charge' => $totalCharge,
                 ],
                 'tenant' => [
-                    'name'  => $tenantFullName,
+                    'name' => $tenantFullName,
                     'email' => $tenant->email,
                 ],
                 'lease' => [
                     'property' => $lease->property->name ?? 'N/A',
-                    'unit'     => $assignment?->bed?->bed_label ?? 'N/A',
+                    'unit' => $assignment?->bed?->bed_label ?? 'N/A',
                 ],
             ];
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('[MultiPayment] Checkout session creation failed: ' . $e->getMessage(), [
                 'invoice_ids' => $invoiceIds,
-                'trace'       => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return ['success' => false, 'message' => 'Failed to create payment session: ' . $e->getMessage()];
         }
