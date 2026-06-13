@@ -229,11 +229,11 @@ class V2StripePartialPaymentService
             $processingFee = 0.00;
 
             if ($paymentMethodType === 'us_bank_account') {
-                $achFlatFee    = round(floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00)), 2);
+                $achFlatFee = round(floatval($setting?->stripe_ach_fee ?? env('STRIPE_ACH_FEE', 5.00)), 2);
                 $processingFee = $achFlatFee;
             } elseif ($paymentMethodType === 'card') {
-                $cardPct       = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
-                $cardFixed     = floatval($setting?->stripe_card_fee_fixed      ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
+                $cardPct = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
+                $cardFixed = floatval($setting?->stripe_card_fee_fixed      ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
                 $processingFee = round(($baseAmount * ($cardPct / 100)) + $cardFixed, 2);
             }
 
@@ -332,8 +332,8 @@ class V2StripePartialPaymentService
                 'payment_method_types' => $paymentMethodTypes,
                 'line_items' => $lineItems,
                 'mode' => 'payment',
-                'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
-                'cancel_url' => $cancelUrl,
+                'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}&payment_type=' . $paymentMethodType . '&invoice_ids=&status=success',
+                'cancel_url' => $cancelUrl . '&payment_type=' . $paymentMethodType . '&invoice_ids=&status=cancel',
                 'customer_email' => $tenant->email,
                 'client_reference_id' => (string) $invoice->id,
                 'metadata' => $metadata,
