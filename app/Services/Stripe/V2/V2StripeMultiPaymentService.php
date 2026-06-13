@@ -193,19 +193,19 @@ class V2StripeMultiPaymentService
             }
 
             // 5. Tenant / lease context (from first invoice)
-            $firstInvoice  = $invoices->first();
-            $lease         = $firstInvoice->lease;
-            $tenant        = $firstInvoice->tenant;
+            $firstInvoice = $invoices->first();
+            $lease = $firstInvoice->lease;
+            $tenant = $firstInvoice->tenant;
             $tenantProfile = $tenant->profile;
             $tenantAddress = $tenant->address;
-            $assignment    = $lease->assignments->where('is_current', true)->first();
+            $assignment = $lease->assignments->where('is_current', true)->first();
 
             $tenantFullName = $tenantProfile
                 ? trim(($tenantProfile->first_name ?? '') . ' ' . ($tenantProfile->middle_name ?? '') . ' ' . ($tenantProfile->last_name ?? ''))
                 : 'Tenant';
 
             // 6. Calculate amounts
-            $setting         = Setting::first();
+            $setting = Setting::first();
             $totalBaseAmount = round($invoices->sum(fn($i) => floatval($i->balance_due)), 2);
 
             if ($totalBaseAmount <= 0) {
@@ -214,7 +214,7 @@ class V2StripeMultiPaymentService
             }
 
             $processingFee = $this->calculateProcessingFee($totalBaseAmount, $paymentMethodType, $setting);
-            $totalCharge   = round($totalBaseAmount + $processingFee, 2);
+            $totalCharge = round($totalBaseAmount + $processingFee, 2);
             $amountInCents = (int) round($totalCharge * 100);
 
             if ($amountInCents < 50) {
@@ -227,10 +227,10 @@ class V2StripeMultiPaymentService
                 $invoiceAmountCents = (int) round(floatval($invoice->balance_due) * 100);
                 return [
                     'price_data' => [
-                        'currency'     => 'usd',
-                        'unit_amount'  => $invoiceAmountCents,
+                        'currency' => 'usd',
+                        'unit_amount' => $invoiceAmountCents,
                         'product_data' => [
-                            'name'        => ($invoice->type === 'DEPOSIT' ? 'Security Deposit' : 'Rent Payment') . ' — Invoice ' . $invoice->invoice_number,
+                            'name' => ($invoice->type === 'DEPOSIT' ? 'Security Deposit' : 'Rent Payment') . ' — Invoice ' . $invoice->invoice_number,
                             'description' => sprintf(
                                 'Due: %s | Balance: $%.2f',
                                 $invoice->due_date?->format('M d, Y') ?? 'N/A',
@@ -246,10 +246,10 @@ class V2StripeMultiPaymentService
             if ($processingFee > 0) {
                 $lineItems[] = [
                     'price_data' => [
-                        'currency'     => 'usd',
-                        'unit_amount'  => (int) round($processingFee * 100),
+                        'currency' => 'usd',
+                        'unit_amount' => (int) round($processingFee * 100),
                         'product_data' => [
-                            'name'        => 'Processing Fee',
+                            'name' => 'Processing Fee',
                             'description' => $paymentMethodType === 'us_bank_account'
                                 ? 'ACH Bank Transfer Processing Fee'
                                 : 'Card Processing Fee (2.9% + $0.30)',
@@ -260,41 +260,41 @@ class V2StripeMultiPaymentService
             }
 
             // 8. Build metadata
-            $invoiceIdsStr     = implode(',', $invoices->pluck('id')->toArray());
+            $invoiceIdsStr = implode(',', $invoices->pluck('id')->toArray());
             $invoiceNumbersStr = implode(',', $invoices->pluck('invoice_number')->toArray());
             $invoiceAmountsStr = implode(',', $invoices->map(fn($i) => number_format(floatval($i->balance_due), 2, '.', ''))->toArray());
 
             $metadata = [
                 // Multi-payment markers
-                'bulk_payment'         => 'true',
-                'invoice_ids'          => $invoiceIdsStr,
-                'invoice_count'        => (string) $invoices->count(),
-                'invoice_numbers'      => $invoiceNumbersStr,
-                'invoice_amounts'      => $invoiceAmountsStr,  // per-invoice base amounts
+                'bulk_payment' => 'true',
+                'invoice_ids' => $invoiceIdsStr,
+                'invoice_count' => (string) $invoices->count(),
+                'invoice_numbers' => $invoiceNumbersStr,
+                'invoice_amounts' => $invoiceAmountsStr,  // per-invoice base amounts
 
                 // Amounts
-                'total_base_amount'    => (string) $totalBaseAmount,
-                'base_amount'          => (string) $totalBaseAmount,  // fallback for shared processPayment
-                'processing_fee'       => (string) $processingFee,
-                'total_charge'         => (string) $totalCharge,
+                'total_base_amount' => (string) $totalBaseAmount,
+                'base_amount' => (string) $totalBaseAmount,  // fallback for shared processPayment
+                'processing_fee' => (string) $processingFee,
+                'total_charge' => (string) $totalCharge,
 
                 // Context
-                'tenant_id'            => (string) $tenantId,
-                'lease_id'             => (string) $lease->id,
-                'property_id'          => (string) $lease->property_id,
+                'tenant_id' => (string) $tenantId,
+                'lease_id' => (string) $lease->id,
+                'property_id' => (string) $lease->property_id,
                 'connected_account_id' => $connectedAccountId,
-                'payment_method_type'  => $paymentMethodType,
+                'payment_method_type' => $paymentMethodType,
 
                 // Human-readable
-                'tenant_name'          => $tenantFullName,
-                'tenant_email'         => $tenant->email,
-                'property_name'        => $lease->property->name ?? 'N/A',
-                'unit'                 => $assignment?->bed?->bed_label ?? 'N/A',
+                'tenant_name' => $tenantFullName,
+                'tenant_email' => $tenant->email,
+                'property_name' => $lease->property->name ?? 'N/A',
+                'unit' => $assignment?->bed?->bed_label ?? 'N/A',
             ];
 
             // 9. Build session params
             $successUrl = config('services.stripe.success_url', env('STRIPE_SUCCESS_URL'));
-            $cancelUrl  = config('services.stripe.cancel_url', env('STRIPE_CANCEL_URL'));
+            $cancelUrl = config('services.stripe.cancel_url', env('STRIPE_CANCEL_URL'));
 
             $paymentMethodTypes = $paymentMethodType === 'us_bank_account' ? ['us_bank_account'] : ['card'];
 
