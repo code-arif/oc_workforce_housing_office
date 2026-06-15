@@ -148,11 +148,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
         // Partial Payment Routes (Stripe)
         Route::prefix('partial-payments')->name('partial-payments.')->group(function () {
-            Route::get('/invoice/{invoiceId}/details', [TenantPartialPaymentController::class, 'getPaymentDetails']);
+            // Route::get('/invoice/{invoiceId}/details', [TenantPartialPaymentController::class, 'getPaymentDetails']);
             Route::post('/checkout/create', [TenantPartialPaymentController::class, 'createCheckoutSession']);
-            Route::post('/intent/create', [TenantPartialPaymentController::class, 'createPaymentIntent']);
-            Route::post('/verify', [TenantPartialPaymentController::class, 'verifyPayment']);
-            Route::get('/history', [TenantPartialPaymentController::class, 'getPaymentHistory']);
+            // Route::post('/intent/create', [TenantPartialPaymentController::class, 'createPaymentIntent']);
+            // Route::post('/verify', [TenantPartialPaymentController::class, 'verifyPayment']);
+            // Route::get('/history', [TenantPartialPaymentController::class, 'getPaymentHistory']);
         });
 
         // Multi-Invoice Bulk Payment Routes (Stripe)
