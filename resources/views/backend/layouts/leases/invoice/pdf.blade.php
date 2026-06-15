@@ -566,16 +566,50 @@
                     <tr>
                         <th>Date</th>
                         <th>Amount</th>
+                        <th>Stripe Amount</th>
                         <th>Payment Method</th>
                         <th>Note</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($invoice->payments as $payment)
+                    @php
+                        $stripeAmount = null;
+                        if (strtolower($payment->payment_method) === 'stripe') {
+                            if (isset($payment->total_charged) && $payment->total_charged > 0) {
+                                $stripeAmount = $payment->total_charged;
+                            } elseif (isset($payment->base_amount) && isset($payment->processing_fee)) {
+                                $stripeAmount = $payment->base_amount + $payment->processing_fee;
+                            } elseif (is_array($payment->metadata) && isset($payment->metadata['total_charge'])) {
+                                $stripeAmount = $payment->metadata['total_charge'];
+                            } else {
+                                $stripeAmount = $payment->amount; // Fallback
+                            }
+                        }
+                        
+                        $methodLabel = ucfirst($payment->payment_method ?? 'N/A');
+                        
+                        if (strtolower($payment->payment_method) === 'stripe') {
+                            $methodLabel = 'Stripe';
+                            $stripeMethodType = $payment->metadata['stripe_payment_method_type'] ?? $payment->metadata['payment_method_type'] ?? null;
+                            if ($stripeMethodType) {
+                                $methodLabel .= ' (' . ucwords(str_replace('_', ' ', $stripeMethodType)) . ')';
+                            }
+                        } elseif (strtolower($payment->payment_method) === 'bank_transfer') {
+                            $methodLabel = 'Bank Transfer';
+                        }
+                    @endphp
                     <tr>
                         <td>{{ date('M d, Y', strtotime($payment->payment_date)) }}</td>
                         <td class="text-success" style="font-weight: bold;">${{ number_format($payment->amount, 2) }}</td>
-                        <td>{{ ucfirst($payment->payment_method ?? 'N/A') }}</td>
+                        <td>
+                            @if($stripeAmount)
+                                <span style="color: #0d6efd; font-weight: bold;">${{ number_format($stripeAmount, 2) }}</span>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>{{ $methodLabel }}</td>
                         <td>{{ $payment->note ?? '-' }}</td>
                     </tr>
                     @endforeach
