@@ -215,22 +215,15 @@ class RentCollectionReportController extends Controller
                     return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
                 })
                 ->addColumn('stripe_amount', function ($payment) {
-                    // Read from payment's total_charged (per-payment), fall back to invoice's stripe_exact_amount
-                    $amount = $payment->total_charged;
-                    if ($amount === null || $amount === 0) {
-                        $amount = $payment->amount;
-                    }
+                    // Show exact amount charged on Stripe: total_charged > base_amount+fee > amount
+                    $amount = $this->getStripeTotalCharged($payment);
                     if (!$amount || $amount <= 0) {
                         return '<span class="text-muted">-</span>';
                     }
                     return '<div class="fw-semibold text-success">$' . number_format((float)$amount, 2) . '</div>';
                 })
                 ->addColumn('raw_stripe_amount', function ($payment) {
-                    $amount = $payment->total_charged;
-                    if ($amount === null || $amount === 0) {
-                        $amount = $payment->amount;
-                    }
-                    return $amount ?? 0;
+                    return $this->getStripeTotalCharged($payment);
                 })
                 ->addColumn('invoice_info', function ($payment) {
                     if ($payment->invoice) {
@@ -580,7 +573,7 @@ class RentCollectionReportController extends Controller
                 'reviewed_at' => $isVoided ? ($payment->voided_at ? $payment->voided_at->format('M d, Y H:i') : '-') : ($payment->reviewed_at ? $payment->reviewed_at->format('M d, Y H:i') : '-'),
                 'note' => $isVoided ? 'VOIDED: ' . ($payment->void_reason ?? '') : ($payment->note ?? ''),
                 'stripe_method' => ($payment->metadata['stripe_payment_method_type'] ?? $payment->invoice?->stripe_payment_method) === 'us_bank_account' ? 'ACH' : (($payment->metadata['stripe_payment_method_type'] ?? $payment->invoice?->stripe_payment_method) ? 'Card' : 'N/A'),
-                'stripe_amount' => number_format((float)(($payment->total_charged ?? $payment->amount) ?: 0), 2),
+                'stripe_amount' => number_format((float)($this->getStripeTotalCharged($payment) ?: 0), 2),
                 'status' => $payment->status,
             ];
         }
@@ -596,6 +589,29 @@ class RentCollectionReportController extends Controller
             ],
             'filters' => $filters,
         ];
+    }
+
+    /**
+     * Get the exact total amount charged on Stripe for a payment.
+     * Priority: total_charged > base_amount + processing_fee > amount
+     */
+    private function getStripeTotalCharged($payment): float
+    {
+        // 1. Use total_charged if available (new records)
+        if ($payment->total_charged !== null && $payment->total_charged > 0) {
+            return (float) $payment->total_charged;
+        }
+
+        // 2. Calculate from base_amount + processing_fee (records with fee columns but no total_charged)
+        if ($payment->base_amount !== null && $payment->processing_fee !== null) {
+            $calculated = (float) $payment->base_amount + (float) $payment->processing_fee;
+            if ($calculated > 0) {
+                return round($calculated, 2);
+            }
+        }
+
+        // 3. Fallback to amount
+        return (float) ($payment->amount ?? 0);
     }
 
     private function normalizeRequestDate($date)
