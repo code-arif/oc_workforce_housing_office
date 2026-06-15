@@ -381,6 +381,7 @@
                                                 <input type="checkbox" class="form-check-input m-0" id="selectAll">
                                             </div>
                                         </th>
+                                        <th>ID</th>
                                         <th>Payment #</th>
                                         <th>Property</th>
                                         <th>Bed</th>
@@ -400,7 +401,7 @@
                                 </tbody>
                                 <tfoot class="table-secondary">
                                     <tr>
-                                        <th colspan="6" class="text-end">Total Collected:</th>
+                                        <th colspan="7" class="text-end">Total Collected:</th>
                                         <th class="text-end" id="footerTotalCollected">$0.00</th>
                                         <th colspan="7"></th>
                                     </tr>
