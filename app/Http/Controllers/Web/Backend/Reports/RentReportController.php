@@ -59,8 +59,7 @@ class RentReportController extends Controller
                 ->whereHas('lease', function ($q) {
                     $q->where('status', 'ACTIVE');
                 })
-                ->whereIn('invoices.status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
-                ->orderBy('id', 'desc');
+                ->whereIn('invoices.status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
 
             // Property filter
             if ($request->filled('property_id')) {
