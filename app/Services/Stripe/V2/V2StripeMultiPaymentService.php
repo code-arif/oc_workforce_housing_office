@@ -513,6 +513,7 @@ class V2StripeMultiPaymentService
                         'tenant_name'          => $metadata['tenant_name'] ?? 'N/A',
                         'property_name'        => $metadata['property_name'] ?? 'N/A',
                         'property_id'          => $metadata['property_id'] ?? null,
+                        'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
                     ],
                 ]);
 
@@ -533,7 +534,7 @@ class V2StripeMultiPaymentService
                     'balance_due'          => max(0, $newBalance),
                     'status'               => $status,
                     'paid_at'              => $paidAt,
-                    'stripe_payment_method'=> $metadata['payment_method_type'] ?? $invoice->stripe_payment_method,
+                    'stripe_payment_method'=> $invoice->stripe_payment_method ?? ($metadata['payment_method_type'] ?? 'card'),
                     'stripe_exact_amount'  => round(floatval($invoice->stripe_exact_amount) + $invoiceTotalCharge, 2),
                 ]);
 

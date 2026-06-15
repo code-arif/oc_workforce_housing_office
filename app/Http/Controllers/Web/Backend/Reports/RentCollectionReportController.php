@@ -196,11 +196,16 @@ class RentCollectionReportController extends Controller
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('stripe_method', function ($payment) {
-                    $invoice = $payment->invoice;
-                    if (!$invoice || !$invoice->stripe_payment_method) {
+                    // Read payment method type from payment metadata first, fall back to invoice
+                    $paymentMethodType = $payment->metadata['stripe_payment_method_type'] ?? null;
+                    if (!$paymentMethodType) {
+                        $invoice = $payment->invoice;
+                        $paymentMethodType = $invoice?->stripe_payment_method ?? null;
+                    }
+                    if (!$paymentMethodType) {
                         return '<span class="text-muted">-</span>';
                     }
-                    if ($invoice->stripe_payment_method === 'us_bank_account') {
+                    if ($paymentMethodType === 'us_bank_account') {
                         $methodName = 'ACH';
                         $colorClass = 'bg-info';
                     } else {
@@ -210,14 +215,22 @@ class RentCollectionReportController extends Controller
                     return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
                 })
                 ->addColumn('stripe_amount', function ($payment) {
-                    $invoice = $payment->invoice;
-                    if (!$invoice || !$invoice->stripe_exact_amount || $invoice->stripe_exact_amount <= 0) {
+                    // Read from payment's total_charged (per-payment), fall back to invoice's stripe_exact_amount
+                    $amount = $payment->total_charged;
+                    if ($amount === null || $amount === 0) {
+                        $amount = $payment->amount;
+                    }
+                    if (!$amount || $amount <= 0) {
                         return '<span class="text-muted">-</span>';
                     }
-                    return '<div class="fw-semibold text-success">$' . number_format((float)$invoice->stripe_exact_amount, 2) . '</div>';
+                    return '<div class="fw-semibold text-success">$' . number_format((float)$amount, 2) . '</div>';
                 })
                 ->addColumn('raw_stripe_amount', function ($payment) {
-                    return $payment->invoice->stripe_exact_amount ?? 0;
+                    $amount = $payment->total_charged;
+                    if ($amount === null || $amount === 0) {
+                        $amount = $payment->amount;
+                    }
+                    return $amount ?? 0;
                 })
                 ->addColumn('invoice_info', function ($payment) {
                     if ($payment->invoice) {
@@ -566,8 +579,8 @@ class RentCollectionReportController extends Controller
                 'reviewed_by' => $isVoided ? ($payment->voidedBy?->name ?? '-') : ($payment->reviewedBy?->name ?? '-'),
                 'reviewed_at' => $isVoided ? ($payment->voided_at ? $payment->voided_at->format('M d, Y H:i') : '-') : ($payment->reviewed_at ? $payment->reviewed_at->format('M d, Y H:i') : '-'),
                 'note' => $isVoided ? 'VOIDED: ' . ($payment->void_reason ?? '') : ($payment->note ?? ''),
-                'stripe_method' => $payment->invoice?->stripe_payment_method === 'us_bank_account' ? 'ACH' : ($payment->invoice?->stripe_payment_method ? 'Card' : 'N/A'),
-                'stripe_amount' => number_format((float)($payment->invoice?->stripe_exact_amount ?? 0), 2),
+                'stripe_method' => ($payment->metadata['stripe_payment_method_type'] ?? $payment->invoice?->stripe_payment_method) === 'us_bank_account' ? 'ACH' : (($payment->metadata['stripe_payment_method_type'] ?? $payment->invoice?->stripe_payment_method) ? 'Card' : 'N/A'),
+                'stripe_amount' => number_format((float)(($payment->total_charged ?? $payment->amount) ?: 0), 2),
                 'status' => $payment->status,
             ];
         }
