@@ -395,7 +395,8 @@ class V2StripeMultiPaymentService
 
         try {
             // 1. Extract core metadata
-            $invoiceIdsStr  = $metadata['invoice_ids'] ?? null;
+            // Support both multi-payment (invoice_ids) and single/partial payment (invoice_id)
+            $invoiceIdsStr  = $metadata['invoice_ids'] ?? $metadata['invoice_id'] ?? null;
             $tenantId       = $metadata['tenant_id']   ?? null;
 
             if (!$invoiceIdsStr || !$tenantId) {
@@ -628,7 +629,8 @@ class V2StripeMultiPaymentService
     {
         DB::beginTransaction();
         try {
-            $invoiceIdsStr = $metadata['invoice_ids'] ?? null;
+            // Support both multi-payment (invoice_ids) and single/partial payment (invoice_id)
+            $invoiceIdsStr = $metadata['invoice_ids'] ?? $metadata['invoice_id'] ?? null;
             if (!$invoiceIdsStr) {
                 DB::rollBack();
                 return ['success' => false, 'message' => 'Missing invoice_ids in metadata.'];
@@ -667,7 +669,8 @@ class V2StripeMultiPaymentService
     {
         DB::beginTransaction();
         try {
-            $invoiceIdsStr = $metadata['invoice_ids'] ?? null;
+            // Support both multi-payment (invoice_ids) and single/partial payment (invoice_id)
+            $invoiceIdsStr = $metadata['invoice_ids'] ?? $metadata['invoice_id'] ?? null;
             if (!$invoiceIdsStr) {
                 DB::rollBack();
                 return ['success' => false, 'message' => 'Missing invoice_ids in metadata.'];
