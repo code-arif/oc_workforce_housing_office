@@ -482,9 +482,16 @@
                 columns: [{
                         data: 'id',
                         orderable: false,
+                        searchable: false,
                         render: function(data) {
                             return `<div class="d-flex justify-content-center align-items-center"><input type="checkbox" class="form-check-input row-select m-0" value="${data}"></div>`;
                         }
+                    },
+                    {
+                        data: 'id',
+                        name: 'payments.id',
+                        visible: false,
+                        searchable: false
                     },
                     {
                         data: 'payment_number',
@@ -549,7 +556,7 @@
                     }
                 ],
                 order: [
-                    [5, 'desc']
+                    [1, 'desc'] // Sort by the hidden ID column (newest first)
                 ],
                 pageLength: 25,
                 lengthMenu: [

@@ -58,6 +58,10 @@ class RentCollectionReportController extends Controller
                     'payments.void_reason',
                     'payments.voided_by',
                     'payments.voided_at',
+                    'payments.base_amount',
+                    'payments.processing_fee',
+                    'payments.total_charged',
+                    'payments.metadata',
                 ])
                 ->with([
                     'tenant:id,email' => [
@@ -484,6 +488,9 @@ class RentCollectionReportController extends Controller
                 ],
                 'reviewedBy:id,name',
                 'voidedBy:id,name'
+            ])
+            ->select([
+                'payments.*'
             ]);
 
         $filters = [];
