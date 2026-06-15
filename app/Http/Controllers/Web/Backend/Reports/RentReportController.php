@@ -257,7 +257,7 @@ class RentReportController extends Controller
             $filters['date_to'] = date('M d, Y', strtotime($request->date_to));
         }
 
-        $invoices = $query->orderBy('id', 'desc')->get();
+        $invoices = $query->orderBy('due_date', 'desc')->orderBy('id', 'desc')->get();
 
         $reportData = [];
         $totalOutstanding = 0;

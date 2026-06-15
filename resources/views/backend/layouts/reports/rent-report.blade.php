@@ -317,6 +317,7 @@
                     name: 'notes'
                 }
                 ],
+                order: [[3, 'desc']],
                 pageLength: 25,
                 lengthMenu: [
                     [10, 25, 50, 100, -1],
