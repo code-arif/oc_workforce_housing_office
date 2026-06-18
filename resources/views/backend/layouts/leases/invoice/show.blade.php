@@ -351,14 +351,14 @@
                                                                 $stripeAmount = $payment->amount; // Fallback
                                                             }
                                                         }
-                                                        
+
                                                         $methodBadgeClass = 'bg-secondary';
                                                         $methodLabel = ucfirst($payment->payment_method ?? 'N/A');
-                                                        
+
                                                         if (strtolower($payment->payment_method) === 'stripe') {
                                                             $methodBadgeClass = 'bg-primary text-white';
                                                             $methodLabel = 'Stripe';
-                                                            
+
                                                             $stripeMethodType = $payment->metadata['stripe_payment_method_type'] ?? $payment->metadata['payment_method_type'] ?? null;
                                                             if ($stripeMethodType) {
                                                                 $methodLabel .= ' (' . ucwords(str_replace('_', ' ', $stripeMethodType)) . ')';
@@ -463,7 +463,7 @@
                                                 class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="paymentAmount" name="amount" step="0.01" max="{{ $balanceDue }}"
+                                            <input type="number" class="form-control" id="paymentAmount" name="amount" step="0.01" min="0.01" max="{{ $balanceDue }}"
                                                 value="{{ $balanceDue }}" required oninput="updateRemainingBalance()">
                                         </div>
                                         <div class="form-text">
