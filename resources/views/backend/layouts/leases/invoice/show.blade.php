@@ -463,8 +463,8 @@
                                                 class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" id="paymentAmount" name="amount" step="any" max="{{ $balanceDue }}"
-                                                value="{{ $balanceDue }}" required oninput="updateRemainingBalance()">
+                                            <input type="number" class="form-control" id="paymentAmount" name="amount" step="any" max="{{ round($balanceDue, 2) }}"
+                                                value="{{ round($balanceDue, 2) }}" required oninput="updateRemainingBalance()">
                                         </div>
                                         <div class="form-text">
                                             Maximum: ${{ number_format($balanceDue, 2) }}
@@ -477,23 +477,23 @@
                                         <div class="d-flex gap-2 flex-wrap">
                                             @if ($balanceDue >= 100)
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="setPaymentAmount({{ min(100, $balanceDue) }})">
+                                                    onclick="setPaymentAmount({{ min(100, round($balanceDue, 2)) }})">
                                                     $100
                                                 </button>
                                             @endif
                                             @if ($balanceDue >= 500)
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="setPaymentAmount({{ min(500, $balanceDue) }})">
+                                                    onclick="setPaymentAmount({{ min(500, round($balanceDue, 2)) }})">
                                                     $500
                                                 </button>
                                             @endif
                                             @if ($balanceDue > 0)
                                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                                    onclick="setPaymentAmount({{ $balanceDue / 2 }})">
+                                                    onclick="setPaymentAmount({{ round($balanceDue / 2, 2) }})">
                                                     50% (${{ number_format($balanceDue / 2, 2) }})
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-outline-success"
-                                                    onclick="setPaymentAmount({{ $balanceDue }})">
+                                                    onclick="setPaymentAmount({{ round($balanceDue, 2) }})">
                                                     Full (${{ number_format($balanceDue, 2) }})
                                                 </button>
                                             @endif
@@ -909,7 +909,7 @@
             todayHighlight: true,
             width: 300
         });
-        const balanceDue = {{ $balanceDue }};
+        const balanceDue = {{ round($balanceDue, 2) }};
 
         function showPaymentForm() {
             document.getElementById('paymentSection').style.display = 'block';
