@@ -298,7 +298,7 @@
                 </div> --}}
 
                 <!-- Filter Card -->
-                <div class="card mb-3">
+                <div class="card mb-3" id="filterCard">
                     <div class="card-body py-2 px-3">
                         <div class="row g-2 align-items-end">
                             <div class="col-sm-6 col-md-4 col-xl">
@@ -638,9 +638,13 @@
                         $('#bulkActionsGroup').hide();
                     }
 
+                    // Initial column width sync with staggered delays
                     setTimeout(function() {
                         api.columns.adjust();
-                    }, 0);
+                        setTimeout(function() {
+                            api.columns.adjust();
+                        }, 200);
+                    }, 100);
                 },
                 drawCallback: function(settings) {
                     const api = this.api();
@@ -649,10 +653,21 @@
                     loadSummary();
                     updateSelectAllState();
 
+                    // Sync header/body column widths after draw
                     setTimeout(function() {
                         api.columns.adjust();
-                    }, 0);
+                    }, 100);
                 }
+            });
+
+            // Re-sync columns after each server-side data load (xhr)
+            table.on('xhr', function() {
+                setTimeout(function() {
+                    table.columns.adjust();
+                    setTimeout(function() {
+                        table.columns.adjust();
+                    }, 200);
+                }, 100);
             });
 
             $(window).on('resize.collectionReportTable', function() {
@@ -984,7 +999,6 @@
 
         #collectionReportTable {
             min-width: 1660px;
-            table-layout: fixed;
         }
 
         #collectionReportTable th,
@@ -1151,6 +1165,20 @@
         #paymentMethodsBreakdown .border {
             min-height: unset;
             background-color: #fff;
+        }
+
+        /* Fix Select2 and Datepicker dropdowns appearing behind DataTable sticky header */
+        .select2-container--open .select2-dropdown,
+        .datepicker-dropdown {
+            z-index: 9999 !important;
+        }
+
+        /* Ensure filter card doesn't clip the Select2 dropdown */
+        #filterCard {
+            overflow: visible !important;
+        }
+        #filterCard .card-body {
+            overflow: visible !important;
         }
 
         /* DataTable controls cleanup */
