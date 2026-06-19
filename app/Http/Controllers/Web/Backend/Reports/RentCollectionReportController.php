@@ -223,15 +223,24 @@ class RentCollectionReportController extends Controller
                     return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
                 })
                 ->addColumn('stripe_amount', function ($payment) {
-                    // Show exact amount charged on Stripe: total_charged > base_amount+fee > amount
                     $amount = $this->getStripeTotalCharged($payment);
                     if (!$amount || $amount <= 0) {
                         return '<span class="text-muted">-</span>';
                     }
                     return '<div class="fw-semibold text-success">$' . number_format((float)$amount, 2) . '</div>';
                 })
+                ->addColumn('stripe_fees', function ($payment) {
+                    $fees = (float)($payment->processing_fee ?? 0);
+                    if ($fees <= 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    return '<div class="fw-semibold text-danger">$' . number_format($fees, 2) . '</div>';
+                })
                 ->addColumn('raw_stripe_amount', function ($payment) {
                     return $this->getStripeTotalCharged($payment);
+                })
+                ->addColumn('raw_stripe_fees', function ($payment) {
+                    return (float)($payment->processing_fee ?? 0);
                 })
                 ->addColumn('invoice_info', function ($payment) {
                     if ($payment->invoice) {
@@ -259,7 +268,7 @@ class RentCollectionReportController extends Controller
                     $buttons .= '</div>';
                     return $buttons;
                 })
-                ->rawColumns(['formatted_amount', 'payment_method_badge', 'review_status_badge', 'reviewed_info', 'invoice_info', 'actions', 'stripe_method', 'stripe_amount'])
+                ->rawColumns(['formatted_amount', 'payment_method_badge', 'review_status_badge', 'reviewed_info', 'invoice_info', 'actions', 'stripe_method', 'stripe_amount', 'stripe_fees'])
                 ->make(true);
         }
 
@@ -406,10 +415,15 @@ class RentCollectionReportController extends Controller
             ->get()
             ->sum(fn ($payment) => $this->getStripeTotalCharged($payment));
 
+        $stripeTotalFees = (clone $activeQuery)
+            ->get()
+            ->sum(fn ($payment) => (float)($payment->processing_fee ?? 0));
+
         $summary = [
             'total_payments' => $activeQuery->count(),
             'total_amount' => $activeQuery->sum('amount'),
             'total_stripe_amount' => $stripeTotalAmount,
+            'total_stripe_fees' => $stripeTotalFees,
             'pending_review' => (clone $activeQuery)->where(function($q) {
                 $q->where('review_status', 'pending')->orWhereNull('review_status');
             })->count(),
@@ -590,6 +604,7 @@ class RentCollectionReportController extends Controller
                 'note' => $isVoided ? 'VOIDED: ' . ($payment->void_reason ?? '') : ($payment->note ?? ''),
                 'stripe_method' => $this->resolveStripeMethod($payment),
                 'stripe_amount' => number_format((float)($this->getStripeTotalCharged($payment) ?: 0), 2),
+                'stripe_fees' => number_format((float)($payment->processing_fee ?? 0), 2),
                 'status' => $payment->status,
             ];
         }

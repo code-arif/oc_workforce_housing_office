@@ -385,6 +385,7 @@
                                         <th>Payment Date</th>
                                         <th class="text-end">Amount ($)</th>
                                         <th>Stripe Amount</th>
+                                        <th class="text-end">Stripe Fees</th>
                                         <th>Stripe Method</th>
                                         <th>Method</th>
                                         <th>Invoice</th>
@@ -516,6 +517,13 @@
                         className: 'text-end'
                     },
                     {
+                        data: 'stripe_fees',
+                        name: 'stripe_fees',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-end'
+                    },
+                    {
                         data: 'stripe_method',
                         name: 'stripe_method',
                         orderable: false,
@@ -594,22 +602,26 @@
                     },
                     {
                         targets: [9],
-                        width: '130px'
-                    },
-                    {
-                        targets: [10],
                         width: '110px'
                     },
                     {
+                        targets: [10],
+                        width: '130px'
+                    },
+                    {
                         targets: [11],
+                        width: '110px'
+                    },
+                    {
+                        targets: [12],
                         width: '150px'
                     },
                     {
-                        targets: [12, 13],
+                        targets: [13, 14],
                         width: '150px'
                     },
                     {
-                        targets: [14],
+                        targets: [15],
                         width: '120px'
                     }
                 ],
@@ -622,13 +634,17 @@
                     $('#collectionReportTotals').html(`
                         <div class="collection-last-updated text-muted small" id="lastUpdated">Last updated: --</div>
                         <div class="collection-totals-group">
-                            <div class="collection-total-item">
+                            <div class="collection-total-item bg-primary-transparent text-primary px-3 py-2 rounded-3">
                                 <span>Total Collected</span>
                                 <strong id="footerTotalCollected">$0.00</strong>
                             </div>
-                            <div class="collection-total-item">
+                            <div class="collection-total-item bg-primary-transparent text-primary px-3 py-2 rounded-3">
                                 <span>Stripe Amount</span>
                                 <strong class="text-success" id="footerTotalStripeAmount">$0.00</strong>
+                            </div>
+                            <div class="collection-total-item bg-primary-transparent text-primary px-3 py-2 rounded-3">
+                                <span>Stripe Fees</span>
+                                <strong class="text-danger" id="footerTotalStripeFees">$0.00</strong>
                             </div>
                         </div>
                     `);
@@ -707,6 +723,8 @@
 
                         $('#footerTotalCollected').text('$' + numberFormat(data.total_amount || 0));
                         $('#footerTotalStripeAmount').text('$' + numberFormat(data.total_stripe_amount ||
+                            0));
+                        $('#footerTotalStripeFees').text('$' + numberFormat(data.total_stripe_fees ||
                             0));
 
                         // Update payment methods breakdown

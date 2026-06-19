@@ -144,6 +144,7 @@
                 <th>Date</th>
                 <th>Amount</th>
                 <th>Stripe Amount</th>
+                <th>Stripe Fees</th>
                 <th>Stripe Method</th>
                 <th>Method</th>
                 <th>Reference</th>
@@ -160,9 +161,6 @@
                     <td>{{ $row['bed_label'] }}</td>
                     <td>{{ $row['tenant_name'] }}</td>
                     <td>{{ $row['payment_date'] }}</td>
-                    <td class="text-right">${{ $row['amount'] }}</td>
-                    <td class="text-right">${{ $row['stripe_amount'] }}</td>
-                    <td>{{ $row['stripe_method'] }}</td>
                     <td>{{ $row['payment_method'] }}</td>
                     <td>{{ $row['reference_number'] }}</td>
                     <td>{{ $row['invoice_number'] }}</td>
@@ -181,7 +179,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="13" style="text-align: center; padding: 20px; color: #888;">
+                    <td colspan="14" style="text-align: center; padding: 20px; color: #888;">
                         No payment data available for the selected filters.
                     </td>
                 </tr>
@@ -192,7 +190,9 @@
                 <tr>
                     <td colspan="5" style="text-align: right;">TOTAL COLLECTED:</td>
                     <td class="text-right">${{ number_format($summary['total_collected'], 2) }}</td>
-                    <td colspan="7"></td>
+                    <td class="text-right">${{ number_format($summary['total_stripe_amount'] ?? 0, 2) }}</td>
+                    <td class="text-right">${{ number_format($summary['total_stripe_fees'] ?? 0, 2) }}</td>
+                    <td colspan="6"></td>
                 </tr>
             </tfoot>
         @endif

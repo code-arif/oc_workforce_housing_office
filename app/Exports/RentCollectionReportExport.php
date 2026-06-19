@@ -44,6 +44,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 $row['payment_method'],
                 $row['stripe_method'],
                 $row['stripe_amount'],
+                '$' . ($row['stripe_fees'] ?? '0.00'),
                 $row['reference_number'],
                 $row['invoice_number'],
                 $row['review_status'],
@@ -53,15 +54,16 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
         }
 
         // Empty row before summary
-        $rows[] = array_fill(0, 14, '');
+        $rows[] = array_fill(0, 15, '');
 
         // Summary section
-        $rows[] = ['', '', '', '', 'COLLECTION SUMMARY', '', '', '', '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Total Payments:', $this->summary['total_payments'], '', '', '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Total Collected:', '$' . number_format($this->summary['total_collected'], 2), '', '', '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Confirmed Amount:', '$' . number_format($this->summary['confirmed_total'], 2), '', '', '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Pending Review:', '$' . number_format($this->summary['pending_total'], 2), '', '', '', '', '', '', '', ''];
-        $rows[] = ['', '', '', '', 'Disputed Amount:', '$' . number_format($this->summary['disputed_total'], 2), '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'COLLECTION SUMMARY', '', '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Total Payments:', $this->summary['total_payments'], '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Total Collected:', '$' . number_format($this->summary['total_collected'], 2), '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Total Stripe Fees:', '$' . number_format($this->summary['total_stripe_fees'] ?? 0, 2), '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Confirmed Amount:', '$' . number_format($this->summary['confirmed_total'], 2), '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Pending Review:', '$' . number_format($this->summary['pending_total'], 2), '', '', '', '', '', '', '', '', ''];
+        $rows[] = ['', '', '', '', 'Disputed Amount:', '$' . number_format($this->summary['disputed_total'], 2), '', '', '', '', '', '', '', '', ''];
 
         return $rows;
     }
@@ -78,6 +80,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
             'Method',
             'Stripe Method',
             'Stripe Amount ($)',
+            'Stripe Fees ($)',
             'Reference #',
             'Invoice #',
             'Review Status',
@@ -98,11 +101,12 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
             'G' => 14,  // Method
             'H' => 14,  // Stripe Method
             'I' => 16,  // Stripe Amount
-            'J' => 15,  // Reference #
-            'K' => 15,  // Invoice #
-            'L' => 14,  // Review Status
-            'M' => 16,  // Reviewed By
-            'N' => 18,  // Reviewed At
+            'J' => 14,  // Stripe Fees
+            'K' => 15,  // Reference #
+            'L' => 15,  // Invoice #
+            'M' => 14,  // Review Status
+            'N' => 16,  // Reviewed By
+            'O' => 18,  // Reviewed At
         ];
     }
 
@@ -128,6 +132,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
             // Money column right-aligned
             'F' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
             'I' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
+            'J' => ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT]],
         ];
     }
 
@@ -145,7 +150,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 $summaryStartRow = $lastDataRow + 2;
 
                 // Add borders to data rows
-                $sheet->getStyle('A1:N' . $lastDataRow)->applyFromArray([
+                $sheet->getStyle('A1:O' . $lastDataRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -157,7 +162,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 // Style alternating rows with light background
                 for ($i = 2; $i <= $lastDataRow; $i++) {
                     if ($i % 2 == 0) {
-                        $sheet->getStyle('A' . $i . ':N' . $i)->applyFromArray([
+                        $sheet->getStyle('A' . $i . ':O' . $i)->applyFromArray([
                             'fill' => [
                                 'fillType' => Fill::FILL_SOLID,
                                 'startColor' => ['rgb' => 'F0F8FF'],
@@ -166,7 +171,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                     }
 
                     // Color code review status
-                    $cell = $sheet->getCell('L' . $i);
+                    $cell = $sheet->getCell('M' . $i);
                     $status = strtolower($cell->getValue());
                     
                     $statusColors = [
@@ -178,7 +183,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                     ];
                     
                     if (isset($statusColors[$status])) {
-                        $sheet->getStyle('L' . $i)->applyFromArray([
+                        $sheet->getStyle('M' . $i)->applyFromArray([
                             'font' => [
                                 'color' => ['rgb' => $status === 'pending' ? '000000' : 'FFFFFF'],
                                 'bold' => true,
@@ -192,8 +197,8 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                     }
 
                     if ($status === 'void') {
-                        $sheet->getStyle('A' . $i . ':N' . $i)->getFont()->setStrikethrough(true);
-                        $sheet->getStyle('A' . $i . ':N' . $i)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('dc3545'));
+                        $sheet->getStyle('A' . $i . ':O' . $i)->getFont()->setStrikethrough(true);
+                        $sheet->getStyle('A' . $i . ':O' . $i)->getFont()->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('dc3545'));
                     }
                 }
 
@@ -207,7 +212,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 ]);
 
                 // Style summary labels and values
-                for ($i = $summaryStartRow + 1; $i <= $summaryStartRow + 5; $i++) {
+                for ($i = $summaryStartRow + 1; $i <= $summaryStartRow + 6; $i++) {
                     $sheet->getStyle('E' . $i)->applyFromArray([
                         'font' => ['bold' => true],
                         'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
@@ -218,7 +223,7 @@ class RentCollectionReportExport implements FromArray, WithHeadings, WithStyles,
                 }
 
                 // Add summary borders
-                $sheet->getStyle('E' . $summaryStartRow . ':F' . ($summaryStartRow + 5))->applyFromArray([
+                $sheet->getStyle('E' . $summaryStartRow . ':F' . ($summaryStartRow + 6))->applyFromArray([
                     'borders' => [
                         'outline' => [
                             'borderStyle' => Border::BORDER_MEDIUM,
