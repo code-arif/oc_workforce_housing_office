@@ -37,14 +37,14 @@
     }
 
     .step-item.active .step-circle {
-        background: #4285f4;
-        border-color: #4285f4;
+        background: var(--primary-bg-color);
+        border-color: var(--primary-bg-color);
         color: #fff;
     }
 
     .step-item.completed .step-circle {
-        background: #4285f4;
-        border-color: #4285f4;
+        background: var(--primary-bg-color);
+        border-color: var(--primary-bg-color);
         color: #fff;
     }
 
@@ -59,7 +59,7 @@
     }
 
     .step-item.active .step-label {
-        color: #4285f4;
+        color: var(--primary-bg-color);
     }
 
     .step-line {
@@ -77,7 +77,7 @@
     }
 
     .step-item.completed .step-line {
-        background: #4285f4;
+        background: var(--primary-bg-color);
     }
 
     /* Card Layout */
@@ -101,8 +101,8 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: #e3f2fd;
-        color: #2196F3;
+        background: #fffbe6;
+        color: var(--primary-bg-color);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -142,8 +142,8 @@
     }
 
     .lease-type-card.active {
-        border-color: #4285f4;
-        background: #e3f2fd;
+        border-color: var(--primary-bg-color);
+        background: #fffbe6;
     }
 
     .lease-type-header {
@@ -155,7 +155,7 @@
 
     .lease-type-header i {
         font-size: 32px;
-        color: #4285f4;
+        color: var(--primary-bg-color);
     }
 
     .lease-type-header .badge {
@@ -248,7 +248,7 @@
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: #4285f4;
+        background: var(--primary-bg-color);
         color: #fff;
         display: flex;
         align-items: center;
@@ -349,8 +349,8 @@
     /* Form Controls */
     .form-control:focus,
     .form-select:focus {
-        border-color: #4285f4;
-        box-shadow: 0 0 0 0.2rem rgba(66, 133, 244, 0.25);
+        border-color: var(--primary-bg-color);
+        box-shadow: 0 0 0 0.2rem rgba(217, 166, 0, 0.25);
     }
 
     /* Responsive */

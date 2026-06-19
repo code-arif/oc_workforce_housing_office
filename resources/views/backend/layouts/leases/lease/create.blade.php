@@ -175,7 +175,7 @@
                                                         <label class="form-label">Expected Move in Date <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control datepicker2"
-                                                            id="actual_move_in" name="actual_move_in" required>
+                                                            id="actual_move_in" name="actual_move_in" placeholder="MM/DD/YYYY" required>
                                                         <small class="text-muted"></small>
                                                     </div>
                                                     {{-- <div class="col-md-6">
@@ -197,13 +197,13 @@
                                                     <label class="form-label">Lease Begin Date <span
                                                             class="text-danger">*</span></label>
                                                     <input type="text" class="form-control datepicker2"
-                                                        id="start_date" name="start_date" required>
+                                                        id="start_date" name="start_date" placeholder="MM/DD/YYYY" required>
                                                     {{-- <small class="text-muted" id="startDateHint"></small> --}}
                                                 </div>
                                                 <div class="col-md-6" id="endDateField">
                                                     <label class="form-label">Lease End Date <span class="text-danger"
                                                             id="endDateRequired">*</span></label>
-                                                    <input type="text" class="form-control datepicker2" id="end_date"
+                                                    <input type="text" class="form-control datepicker2" placeholder="MM/DD/YYYY" id="end_date"
                                                         name="end_date">
                                                     {{-- <small class="text-muted" id="endDateHint"></small> --}}
                                                 </div>
@@ -326,7 +326,7 @@
                                                         <label class="form-label">First Rental Invoice Due <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control datepicker2"
-                                                            id="first_invoice_date" name="first_invoice_date" required>
+                                                            id="first_invoice_date" name="first_invoice_date" placeholder="MM/DD/YYYY" required>
                                                         <small class="text-muted">First invoice will be created with this
                                                             due date</small>
                                                     </div>
@@ -356,7 +356,7 @@
                                                     <label class="form-label">First Rental Invoice Due <span
                                                             class="text-danger">*</span></label>
                                                     <input type="text" class="form-control datepicker2"
-                                                        id="weekly_first_invoice_date" name="weekly_first_invoice_date">
+                                                        id="weekly_first_invoice_date" name="weekly_first_invoice_date" placeholder="MM/DD/YYYY">
                                                     <small class="text-muted">First invoice will be created with this
                                                         due date</small>
                                                 </div>
@@ -427,7 +427,6 @@
                                     </div>
                                 </div>
                             </div>
-                    </div>
 
                     <!-- STEP 3: ADD TENANTS -->
                     <div class="step-content" id="step-3">
@@ -879,6 +878,7 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
 
                     <!-- RIGHT SIDEBAR - RENTAL SUMMARY -->
