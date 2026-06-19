@@ -252,8 +252,8 @@ class InvoiceController extends Controller
     public function storePayment(Request $request, $id)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'payment_date' => 'required|date|before_or_equal:today',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_date' => 'required|date',
             'deposit_date' => 'nullable|date',
             'payment_method' => 'required|in:cash,check,bank_transfer,credit_card,debit_card,online,stripe,paypal,other',
             'reference_number' => 'nullable|string|max:255',
