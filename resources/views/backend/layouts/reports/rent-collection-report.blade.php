@@ -366,17 +366,13 @@
 
                 <!-- Report Table -->
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="card-title mb-0"><i class="fe fe-list me-2"></i>Payment Collection Details</h4>
-                        <span class="text-muted small" id="lastUpdated"></span>
-                    </div>
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover" id="collectionReportTable"
+                        <div class="collection-report-table-wrap">
+                            <table class="table table-bordered table-hover text-nowrap" id="collectionReportTable"
                                 style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 40px;" class="text-center align-middle">
+                                        <th class="dt-select-col text-center align-middle">
                                             <div class="d-flex justify-content-center align-items-center">
                                                 <input type="checkbox" class="form-check-input m-0" id="selectAll">
                                             </div>
@@ -399,13 +395,6 @@
                                 </thead>
                                 <tbody>
                                 </tbody>
-                                <tfoot class="table-secondary">
-                                    <tr>
-                                        <th colspan="7" class="text-end">Total Collected:</th>
-                                        <th class="text-end" id="footerTotalCollected">$0.00</th>
-                                        <th colspan="7"></th>
-                                    </tr>
-                                </tfoot>
                             </table>
                         </div>
                     </div>
@@ -523,7 +512,8 @@
                         data: 'stripe_amount',
                         name: 'stripe_amount',
                         orderable: false,
-                        searchable: false
+                        searchable: false,
+                        className: 'text-end'
                     },
                     {
                         data: 'stripe_method',
@@ -560,24 +550,113 @@
                     [1, 'desc'] // Sort by the hidden ID column (newest first)
                 ],
                 pageLength: 25,
+                scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
                 lengthMenu: [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
                 ],
-                dom: '<"row align-items-center mb-2"<"col-auto d-flex align-items-center gap-2"l<"bulk-actions-container ms-1">><"col-auto ms-auto"f>>rtip',
+                columnDefs: [{
+                        targets: 0,
+                        width: '64px',
+                        className: 'dt-select-col text-center align-middle'
+                    },
+                    {
+                        targets: 1,
+                        visible: false,
+                        searchable: false,
+                        width: '0px'
+                    },
+                    {
+                        targets: [2],
+                        width: '170px'
+                    },
+                    {
+                        targets: [3],
+                        width: '150px'
+                    },
+                    {
+                        targets: [4],
+                        width: '80px'
+                    },
+                    {
+                        targets: [5],
+                        width: '150px'
+                    },
+                    {
+                        targets: [6],
+                        width: '145px'
+                    },
+                    {
+                        targets: [7, 8],
+                        width: '135px'
+                    },
+                    {
+                        targets: [9],
+                        width: '130px'
+                    },
+                    {
+                        targets: [10],
+                        width: '110px'
+                    },
+                    {
+                        targets: [11],
+                        width: '150px'
+                    },
+                    {
+                        targets: [12, 13],
+                        width: '150px'
+                    },
+                    {
+                        targets: [14],
+                        width: '120px'
+                    }
+                ],
+                dom: '<"row align-items-center mb-3"<"col-auto d-flex align-items-center gap-2"l<"bulk-actions-container ms-1">><"col-auto ms-auto"f>>rt<"#collectionReportTotals.collection-totals-bar">ip',
 
                 initComplete: function() {
+                    const api = this.api();
+
                     $('#bulkActionsGroup').appendTo('.bulk-actions-container').css('display', '');
+                    $('#collectionReportTotals').html(`
+                        <div class="collection-last-updated text-muted small" id="lastUpdated">Last updated: --</div>
+                        <div class="collection-totals-group">
+                            <div class="collection-total-item">
+                                <span>Total Collected</span>
+                                <strong id="footerTotalCollected">$0.00</strong>
+                            </div>
+                            <div class="collection-total-item">
+                                <span>Stripe Amount</span>
+                                <strong class="text-success" id="footerTotalStripeAmount">$0.00</strong>
+                            </div>
+                        </div>
+                    `);
+                    updateLastUpdated();
                     // hide it again since no rows selected yet
                     if (selectedPayments.length === 0) {
                         $('#bulkActionsGroup').hide();
                     }
+
+                    setTimeout(function() {
+                        api.columns.adjust();
+                    }, 0);
                 },
                 drawCallback: function(settings) {
+                    const api = this.api();
+
                     updateLastUpdated();
                     loadSummary();
                     updateSelectAllState();
+
+                    setTimeout(function() {
+                        api.columns.adjust();
+                    }, 0);
                 }
+            });
+
+            $(window).on('resize.collectionReportTable', function() {
+                table.columns.adjust();
             });
 
             function numberFormat(num) {
@@ -589,7 +668,8 @@
 
             function updateLastUpdated() {
                 const now = new Date();
-                $('#lastUpdated').text('Last updated: ' + now.toLocaleTimeString());
+                $('#lastUpdated').text('Last updated: ' + now.toLocaleDateString() + ' ' + now
+                    .toLocaleTimeString());
             }
 
             function loadSummary() {
@@ -611,6 +691,8 @@
                         $('#summaryDisputedCount').text(data.disputed || 0);
 
                         $('#footerTotalCollected').text('$' + numberFormat(data.total_amount || 0));
+                        $('#footerTotalStripeAmount').text('$' + numberFormat(data.total_stripe_amount ||
+                            0));
 
                         // Update payment methods breakdown
                         updatePaymentMethodsBreakdown(data.by_method || {});
@@ -896,8 +978,130 @@
             background-color: #fff;
         }
 
-        #collectionReportTable tfoot th {
-            font-weight: 600;
+        .collection-report-table-wrap {
+            width: 100%;
+        }
+
+        #collectionReportTable {
+            min-width: 1660px;
+            table-layout: fixed;
+        }
+
+        #collectionReportTable th,
+        #collectionReportTable td {
+            vertical-align: middle;
+            padding: 0.8rem 0.75rem;
+        }
+
+        #collectionReportTable th {
+            white-space: nowrap;
+        }
+
+        #collectionReportTable td,
+        #collectionReportTable td small,
+        #collectionReportTable td .badge {
+            white-space: nowrap;
+        }
+
+        #collectionReportTable .dt-select-col,
+        .dataTables_scrollHead .dt-select-col,
+        .dataTables_scrollBody .dt-select-col {
+            width: 64px !important;
+            min-width: 64px !important;
+            max-width: 64px !important;
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+            text-align: center;
+        }
+
+        .dataTables_wrapper .dataTables_scroll {
+            width: 100%;
+        }
+
+        .dataTables_wrapper .dataTables_scrollHead {
+            position: sticky !important;
+            top: 0;
+            z-index: 20;
+            background: #fff;
+            box-shadow: 0 1px 0 #e9edf4;
+        }
+
+        .dataTables_wrapper .dataTables_scrollHead,
+        .dataTables_wrapper .dataTables_scrollBody {
+            border-color: #e9edf4;
+        }
+
+        .dataTables_wrapper .dataTables_scrollBody {
+            border-bottom: 1px solid #e9edf4;
+            overflow-x: auto !important;
+        }
+
+        .dataTables_wrapper .dataTables_scrollBody thead tr,
+        .dataTables_wrapper .dataTables_scrollBody thead th {
+            height: 0 !important;
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-top: 0 !important;
+            border-bottom: 0 !important;
+            line-height: 0 !important;
+            overflow: hidden !important;
+        }
+
+        .dataTables_wrapper .dataTables_scrollBody thead th *,
+        .dataTables_wrapper .dataTables_scrollBody thead th::before,
+        .dataTables_wrapper .dataTables_scrollBody thead th::after {
+            display: none !important;
+        }
+
+        .dataTables_wrapper .dataTables_scrollHead table,
+        .dataTables_wrapper .dataTables_scrollBody table {
+            margin-bottom: 0 !important;
+        }
+
+        .collection-totals-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 0.75rem 1rem;
+            margin-top: 0.75rem;
+            background: #f8fafc;
+            border: 1px solid #e9edf4;
+            border-radius: 6px;
+        }
+
+        .collection-last-updated {
+            flex: 1 1 220px;
+        }
+
+        .collection-totals-group {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 1rem;
+            flex: 1 1 auto;
+            flex-wrap: wrap;
+        }
+
+        .collection-total-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 190px;
+            justify-content: space-between;
+            font-size: 0.92rem;
+        }
+
+        .collection-total-item span {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .collection-total-item strong {
+            color: #111827;
+            font-weight: 700;
         }
 
         .card-title i {
@@ -953,13 +1157,19 @@
         .dataTables_wrapper .dataTables_length select {
             display: inline-block;
             width: auto;
-            padding: 0.25rem 1.8rem 0.25rem 0.5rem;
+            min-width: 72px;
+            height: 34px;
+            margin: 0 0.35rem;
+            padding: 0.35rem 2rem 0.35rem 0.75rem;
             font-size: 0.875rem;
         }
 
         .dataTables_wrapper .dataTables_filter input {
+            min-width: 210px;
+            height: 34px;
+            margin-left: 0.5rem;
             font-size: 0.875rem;
-            padding: 0.25rem 0.5rem;
+            padding: 0.35rem 0.75rem;
         }
 
         .dataTables_wrapper .dataTables_length,

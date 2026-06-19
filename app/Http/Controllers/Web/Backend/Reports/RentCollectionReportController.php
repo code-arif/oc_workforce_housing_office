@@ -402,9 +402,14 @@ class RentCollectionReportController extends Controller
         // Clone and filter out voided payments for all financial statistics
         $activeQuery = (clone $query)->where('payments.status', '!=', 'voided');
 
+        $stripeTotalAmount = (clone $activeQuery)
+            ->get()
+            ->sum(fn ($payment) => $this->getStripeTotalCharged($payment));
+
         $summary = [
             'total_payments' => $activeQuery->count(),
             'total_amount' => $activeQuery->sum('amount'),
+            'total_stripe_amount' => $stripeTotalAmount,
             'pending_review' => (clone $activeQuery)->where(function($q) {
                 $q->where('review_status', 'pending')->orWhereNull('review_status');
             })->count(),
