@@ -9,7 +9,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class LeaseFullySignedMail extends Mailable implements ShouldQueue
+class AdminSignedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -23,20 +23,22 @@ class LeaseFullySignedMail extends Mailable implements ShouldQueue
         $this->lease    = $lease;
         $this->tenant   = $lease->tenant;
         $this->property = $lease->property;
-        $this->bed      = $lease->assignments()->where('is_current', true)->first()?->bed ?? null;
+        $this->bed      = $lease->assignments()
+            ->where('is_current', true)
+            ->first()?->bed;
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Lease is Fully Signed — Welcome! - ' . config('app.name'),
+            subject: 'Lease Ready For Your Signature - ' . config('app.name')
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.tenant.lease-fully-signed',
+            view: 'emails.tenant.admin-signed'
         );
     }
 
@@ -46,16 +48,15 @@ class LeaseFullySignedMail extends Mailable implements ShouldQueue
             ->from(config('mail.from.address'), config('mail.from.name'))
             ->replyTo(config('mail.admin_email'), 'Tenant Support')
             ->with([
-                'tenant'       => $this->tenant,
-                'property'     => $this->property,
-                'bed'          => $this->bed,
-                'lease'        => $this->lease,
-                'dashboardUrl' => config('app.frontend_url', 'http://localhost:3000') . '/dashboard',
-                'paymentsUrl'  => config('app.frontend_url', 'http://localhost:3000') . '/dashboard/invoices',
-                'companyName'  => config('app.name', 'OC Workforce Housing'),
+                'tenant' => $this->tenant,
+                'property' => $this->property,
+                'bed' => $this->bed,
+                'lease' => $this->lease,
+                'dashboardUrl' => config('app.frontend_url') . '/dashboard',
+                'companyName' => config('app.name'),
                 'companyEmail' => config('mail.admin_email'),
-                'companyPhone' => config('app.phone', '(443) 336-5182'),
-                'currentYear'  => now()->year,
+                'companyPhone' => config('app.phone'),
+                'currentYear' => now()->year,
             ]);
     }
 
