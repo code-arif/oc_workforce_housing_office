@@ -603,7 +603,7 @@ class TenantLeaseService
     public function tenantHasActiveLease($tenantId)
     {
         return Lease::where('tenant_id', $tenantId)
-            ->where('status', 'ACTIVE')
+            ->where('status', 'ACTIVE')->orWhere('status', 'COMPLETED')
             ->exists();
     }
 }
