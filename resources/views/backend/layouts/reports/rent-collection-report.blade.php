@@ -43,7 +43,7 @@
                                 <i class="fe fe-download me-2"></i> Export Report
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i
+                                <li><a class="dropdown-item" href="#" id="exportPdfBtn" target="_blank"><i
                                             class="fe fe-file-text me-2 text-danger"></i> Export as PDF</a></li>
                                 <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i
                                             class="fe fe-file me-2 text-success"></i> Export as Excel</a></li>
@@ -368,8 +368,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="collection-report-table-wrap">
-                            <table class="table table-bordered table-hover text-nowrap" id="collectionReportTable"
-                                style="width: 100%">
+                            <table class="table table-bordered table-hover text-nowrap" id="collectionReportTable" style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
                                         <th class="dt-select-col text-center align-middle">
@@ -391,7 +390,7 @@
                                         <th>Invoice</th>
                                         <th>Review Status</th>
                                         <th>Reviewed By</th>
-                                        <th style="width: 120px;">Actions</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -560,69 +559,24 @@
                 pageLength: 25,
                 scrollX: true,
                 scrollCollapse: true,
-                autoWidth: false,
                 lengthMenu: [
                     [10, 25, 50, 100, -1],
                     [10, 25, 50, 100, "All"]
                 ],
                 columnDefs: [{
                         targets: 0,
-                        width: '64px',
+                        width: '40px',
                         className: 'dt-select-col text-center align-middle'
                     },
                     {
                         targets: 1,
                         visible: false,
                         searchable: false,
-                        width: '0px'
-                    },
-                    {
-                        targets: [2],
-                        width: '170px'
-                    },
-                    {
-                        targets: [3],
-                        width: '150px'
-                    },
-                    {
-                        targets: [4],
-                        width: '80px'
-                    },
-                    {
-                        targets: [5],
-                        width: '150px'
-                    },
-                    {
-                        targets: [6],
-                        width: '145px'
-                    },
-                    {
-                        targets: [7, 8],
-                        width: '135px'
-                    },
-                    {
-                        targets: [9],
-                        width: '110px'
-                    },
-                    {
-                        targets: [10],
-                        width: '130px'
-                    },
-                    {
-                        targets: [11],
-                        width: '110px'
-                    },
-                    {
-                        targets: [12],
-                        width: '150px'
-                    },
-                    {
-                        targets: [13, 14],
-                        width: '150px'
                     },
                     {
                         targets: [15],
-                        width: '120px'
+                        orderable: false,
+                        searchable: false
                     }
                 ],
                 dom: '<"row align-items-center mb-3"<"col-auto d-flex align-items-center gap-2"l<"bulk-actions-container ms-1">><"col-auto ms-auto"f>>rt<"#collectionReportTotals.collection-totals-bar">ip',
@@ -1048,6 +1002,12 @@
 
         .dataTables_wrapper .dataTables_scroll {
             width: 100%;
+        }
+
+        .collection-report-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .dataTables_wrapper .dataTables_scrollHead {
