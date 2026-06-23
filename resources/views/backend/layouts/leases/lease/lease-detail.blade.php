@@ -358,7 +358,7 @@
                                                             <div
                                                                 class="invoice-link-group d-flex align-items-center flex-wrap gap-1">
                                                                 <span
-                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3">
+                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1">
                                                                     <i class="fe fe-alert-circle me-1"></i>
                                                                     Due Invoices:
                                                                 </span>
