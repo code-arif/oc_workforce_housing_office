@@ -1355,7 +1355,7 @@
                 height: calc(100vh - 70px);
                 background: #f8fafc;
                 margin: 15px 0px;
-                border-radius: 16px;
+                border-radius: 8px;
                 overflow: hidden;
                 box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
             }
@@ -1395,7 +1395,7 @@
             .lease-header {
                 background: #ffffff;
                 padding: 24px;
-                border-radius: 16px;
+                border-radius: 8px;
                 margin-bottom: 30px;
                 border: 1px solid #e2e8f0;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 10px 30px -10px rgba(0, 0, 0, 0.03);
@@ -1405,7 +1405,7 @@
             .info-card {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 12px;
+                border-radius: 8px;
                 overflow: hidden;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
                 transition: all 0.2s ease-in-out;
@@ -1546,7 +1546,7 @@
             .detail-card {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 16px;
+                border-radius: 8px;
                 overflow: hidden;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
                 transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -1586,7 +1586,7 @@
             .document-card {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 10px;
+                border-radius: 8px;
                 padding: 20px;
                 margin-bottom: 15px;
                 transition: border-color 0.2s;
@@ -1604,7 +1604,7 @@
                 width: 48px;
                 height: 48px;
                 background: rgba(186, 151, 121, 0.1);
-                border-radius: 10px;
+                border-radius: 8px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1662,7 +1662,7 @@
             .invoice-card {
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 12px;
+                border-radius: 8px;
                 padding: 18px 20px;
                 display: flex;
                 align-items: center;
