@@ -325,7 +325,7 @@
                                                             class="stat-value">${{ number_format($outstanding, 2) }}</span>
                                                     </div>
                                                 </div>
-                                                @if ($lease->status == 'ACTIVE')
+                                                @if ($lease->status == 'ACTIVE' || $lease->status == "PENDING_TENANT_SIGN" || $lease->status == "PENDING_ADMIN_SIGN" || $lease->status == "COMPLETED" || $lease->status == "DRAFT" || $lease->status == "TERMINATED")
                                                     <div class="invoice-links mt-3">
                                                         @if ($paidInvoices->count() > 0)
                                                             <div class="invoice-link-group">
