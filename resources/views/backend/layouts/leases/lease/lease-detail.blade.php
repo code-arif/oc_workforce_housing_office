@@ -928,7 +928,7 @@
 
 @push('scripts')
     <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
-        <script>
+    <script>
             $('.datepicker2').each(function() {
                 const value = $(this).val();
 
@@ -1328,7 +1328,7 @@
                     }
                 });
             });
-        </script>
+    </script>
 @endpush
 
 @push('styles')
@@ -1652,6 +1652,7 @@
                 border-bottom: none;
             }
 
+            /* Invoice List inside sections */
             .invoice-list {
                 display: flex;
                 flex-direction: column;
@@ -1889,5 +1890,5 @@
                     margin-bottom: 16px;
                 }
             }
-        </style>
-@endpush)
+    </style>
+@endpush
