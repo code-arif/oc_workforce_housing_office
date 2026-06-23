@@ -365,7 +365,7 @@
 
                                                                 @foreach ($unpaidInvoices as $invoice)
                                                                     <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3 text-decoration-none">
+                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3">
                                                                         {{ $invoice->invoice_number }}
                                                                     </a>
                                                                 @endforeach
