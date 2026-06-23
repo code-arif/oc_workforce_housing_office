@@ -500,7 +500,7 @@
 
                                 <!-- Right Column: Invoices & History -->
                                 <div class="col-lg-6">
-                                    @if ($lease->status == 'ACTIVE')
+                                    @if ($lease->status == 'ACTIVE' || $lease->status == "PENDING_TENANT_SIGN" || $lease->status == "PENDING_ADMIN_SIGN" || $lease->status == "COMPLETED" || $lease->status == "DRAFT" || $lease->status == "TERMINATED")
                                         <!-- Rent Invoices Card -->
                                         <div class="detail-card mb-4">
                                             <div class="card-header d-flex justify-content-between align-items-center">
