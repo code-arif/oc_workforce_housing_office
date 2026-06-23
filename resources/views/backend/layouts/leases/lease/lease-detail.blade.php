@@ -342,7 +342,7 @@
                                                                 <span
                                                                     class="badge bg-success-transparent text-success d-inline-flex align-items-center px-2 py-1">
                                                                     <i class="fe fe-check-circle me-1"></i>
-                                                                    Paid:
+                                                                    Paid Invoices:
                                                                 </span>
 
                                                                 @foreach ($paidInvoices as $invoice)
@@ -358,14 +358,14 @@
                                                             <div
                                                                 class="invoice-link-group d-flex align-items-center flex-wrap gap-1">
                                                                 <span
-                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1">
+                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3">
                                                                     <i class="fe fe-alert-circle me-1"></i>
                                                                     Due Invoices:
                                                                 </span>
 
                                                                 @foreach ($unpaidInvoices as $invoice)
                                                                     <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1 text-decoration-none">
+                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3 text-decoration-none">
                                                                         {{ $invoice->invoice_number }}
                                                                     </a>
                                                                 @endforeach
