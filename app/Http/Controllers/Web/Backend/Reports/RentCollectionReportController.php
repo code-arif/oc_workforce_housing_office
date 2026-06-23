@@ -561,6 +561,8 @@ class RentCollectionReportController extends Controller
         $confirmedTotal = 0;
         $pendingTotal = 0;
         $disputedTotal = 0;
+        $totalStripeAmount = 0;
+        $totalStripeFees = 0;
 
         foreach ($payments as $payment) {
             $profile = $payment->tenant?->profile;
@@ -575,6 +577,8 @@ class RentCollectionReportController extends Controller
 
             if (!$isVoided) {
                 $totalCollected += $payment->amount;
+                $totalStripeAmount += $this->getStripeTotalCharged($payment);
+                $totalStripeFees += (float)($payment->processing_fee ?? 0);
 
                 switch ($payment->review_status) {
                     case 'confirmed':
@@ -614,6 +618,8 @@ class RentCollectionReportController extends Controller
             'summary' => [
                 'total_payments' => count($reportData),
                 'total_collected' => $totalCollected,
+                'total_stripe_amount' => $totalStripeAmount,
+                'total_stripe_fees' => $totalStripeFees,
                 'confirmed_total' => $confirmedTotal,
                 'pending_total' => $pendingTotal,
                 'disputed_total' => $disputedTotal,

@@ -141,15 +141,14 @@
                 <th>Property</th>
                 <th>Bed</th>
                 <th>Tenant</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Stripe Amount</th>
-                <th>Stripe Fees</th>
+                <th>Payment Date</th>
+                <th class="text-right">Amount ($)</th>
+                <th class="text-right">Stripe Amount</th>
+                <th class="text-right">Stripe Fees</th>
                 <th>Stripe Method</th>
                 <th>Method</th>
-                <th>Reference</th>
-                <th>Invoice #</th>
-                <th>Status</th>
+                <th>Invoice</th>
+                <th>Review Status</th>
                 <th>Reviewed By</th>
             </tr>
         </thead>
@@ -161,8 +160,29 @@
                     <td>{{ $row['bed_label'] }}</td>
                     <td>{{ $row['tenant_name'] }}</td>
                     <td>{{ $row['payment_date'] }}</td>
+                    <td class="text-right">
+                        @if($row['status'] === 'voided')
+                            <del class="text-danger" style="color: #dc3545; font-weight: bold;">${{ $row['amount'] }}</del><br><small style="color: #dc3545; font-weight: bold;">VOID</small>
+                        @else
+                            ${{ $row['amount'] }}
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if((float)str_replace(',', '', $row['stripe_amount']) > 0)
+                            ${{ $row['stripe_amount'] }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td class="text-right">
+                        @if((float)str_replace(',', '', $row['stripe_fees']) > 0)
+                            ${{ $row['stripe_fees'] }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>{{ $row['stripe_method'] }}</td>
                     <td>{{ $row['payment_method'] }}</td>
-                    <td>{{ $row['reference_number'] }}</td>
                     <td>{{ $row['invoice_number'] }}</td>
                     <td>
                         @php
@@ -170,6 +190,7 @@
                                 'confirmed' => 'status-confirmed',
                                 'reviewed' => 'status-reviewed',
                                 'disputed' => 'status-disputed',
+                                'void' => 'status-disputed',
                                 default => 'status-pending',
                             };
                         @endphp
@@ -179,7 +200,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="14" style="text-align: center; padding: 20px; color: #888;">
+                    <td colspan="13" style="text-align: center; padding: 20px; color: #888;">
                         No payment data available for the selected filters.
                     </td>
                 </tr>
@@ -192,7 +213,7 @@
                     <td class="text-right">${{ number_format($summary['total_collected'], 2) }}</td>
                     <td class="text-right">${{ number_format($summary['total_stripe_amount'] ?? 0, 2) }}</td>
                     <td class="text-right">${{ number_format($summary['total_stripe_fees'] ?? 0, 2) }}</td>
-                    <td colspan="6"></td>
+                    <td colspan="5"></td>
                 </tr>
             </tfoot>
         @endif
