@@ -1652,7 +1652,6 @@
                 border-bottom: none;
             }
 
-            /* Invoice List inside sections */
             .invoice-list {
                 display: flex;
                 flex-direction: column;
