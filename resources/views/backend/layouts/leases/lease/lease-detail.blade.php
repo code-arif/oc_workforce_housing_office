@@ -100,7 +100,7 @@
                                 <h4 class="mb-0">Lease Detail</h4>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                @if($quickSignDocument)
+                                @if ($quickSignDocument)
                                     <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $quickSignDocument->id, 'quick_admin_sign' => 1]) }}"
                                         class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1">
                                         <i class="fe fe-edit-3"></i>
@@ -148,7 +148,8 @@
                                             $document = $lease->documents->first();
                                         @endphp
                                         @if ($document && $document->tenant_signed_at && $document->admin_signed_at)
-                                            <span class="badge bg-success-transparent text-success d-inline-flex align-items-center px-2 py-1"
+                                            <span
+                                                class="badge bg-success-transparent text-success d-inline-flex align-items-center px-2 py-1"
                                                 style="font-size:11px;">
                                                 <i class="fe fe-check-circle me-1"></i>
                                                 Signed Online
@@ -317,7 +318,8 @@
                                                     </div>
                                                     <div class="invoice-stat-item text-success">
                                                         <span class="stat-label">Total Paid</span>
-                                                        <span class="stat-value">${{ number_format($totalPaid, 2) }}</span>
+                                                        <span
+                                                            class="stat-value">${{ number_format($totalPaid, 2) }}</span>
                                                     </div>
                                                     <div class="invoice-stat-item text-danger">
                                                         <span class="stat-label">Outstanding</span>
@@ -325,38 +327,51 @@
                                                             class="stat-value">${{ number_format($outstanding, 2) }}</span>
                                                     </div>
                                                 </div>
-                                                @if ($lease->status == 'ACTIVE' || $lease->status == "PENDING_TENANT_SIGN" || $lease->status == "PENDING_ADMIN_SIGN" || $lease->status == "COMPLETED" || $lease->status == "DRAFT" || $lease->status == "TERMINATED")
+                                                @if (
+                                                    $lease->status == 'ACTIVE' ||
+                                                        $lease->status == 'PENDING_TENANT_SIGN' ||
+                                                        $lease->status == 'PENDING_ADMIN_SIGN' ||
+                                                        $lease->status == 'COMPLETED' ||
+                                                        $lease->status == 'DRAFT' ||
+                                                        $lease->status == 'TERMINATED')
                                                     <div class="invoice-links mt-3">
+
                                                         @if ($paidInvoices->count() > 0)
-                                                            <div class="invoice-link-group">
+                                                            <div
+                                                                class="invoice-link-group d-flex align-items-center flex-wrap gap-1 mb-2">
                                                                 <span
-                                                                    class="badge bg-success-transparent text-success me-1"><i
-                                                                        class="fe fe-check-circle"></i> Paid:</span>
+                                                                    class="badge bg-success-transparent text-success d-inline-flex align-items-center px-2 py-1">
+                                                                    <i class="fe fe-check-circle me-1"></i>
+                                                                    Paid:
+                                                                </span>
+
                                                                 @foreach ($paidInvoices as $invoice)
                                                                     <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                                        class="invoice-link paid">{{ $invoice->invoice_number }}</a>
-                                                                    @if (!$loop->last)
-                                                                        ,
-                                                                    @endif
-                                                                @endforeach
-                                                            </div>
-                                                        @endif
-                                                        @if ($unpaidInvoices->count() > 0)
-                                                            <div class="invoice-link-group mt-2">
-                                                                <span
-                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1 me-1"
-                                                                    style="font-size:11px;">
-                                                                    <i class="fe fe-alert-circle me-1"></i>
-                                                                    Due Invoices:
-                                                                </span>
-                                                               @foreach ($unpaidInvoices as $invoice)
-                                                                    <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center p-3 mb-2 text-decoration-none me-1">
+                                                                        class="badge bg-success-transparent text-success d-inline-flex align-items-center px-2 py-1 text-decoration-none">
                                                                         {{ $invoice->invoice_number }}
                                                                     </a>
                                                                 @endforeach
                                                             </div>
                                                         @endif
+
+                                                        @if ($unpaidInvoices->count() > 0)
+                                                            <div
+                                                                class="invoice-link-group d-flex align-items-center flex-wrap gap-1">
+                                                                <span
+                                                                    class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1">
+                                                                    <i class="fe fe-alert-circle me-1"></i>
+                                                                    Due Invoices:
+                                                                </span>
+
+                                                                @foreach ($unpaidInvoices as $invoice)
+                                                                    <a href="{{ route('invoices.show', $invoice->id) }}"
+                                                                        class="badge bg-danger-transparent text-danger d-inline-flex align-items-center px-2 py-1 text-decoration-none">
+                                                                        {{ $invoice->invoice_number }}
+                                                                    </a>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+
                                                     </div>
                                                 @endif
                                             </div>
@@ -382,43 +397,47 @@
                                         <div class="card-body">
                                             @if ($openLeaseDocuments->count() > 0)
                                                 @foreach ($openLeaseDocuments as $doc)
-                                                        <div class="document-card">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="document-icon">
-                                                                    <i class="fe fe-file-text"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1 ms-3">
-                                                                    <h6 class="mb-1">
-                                                                        {{ $doc->template ? $doc->template->name : 'Lease Agreement' }}
-                                                                    </h6>
-                                                                    <div class="document-status">
-                                                                        @if (!$doc->tenant_signed_at)
-                                                                            <span class="badge badge-sm bg-warning text-dark">Pending Tenant
-                                                                                Signature</span>
-                                                                        @elseif(!$doc->admin_signed_at)
-                                                                            <span class="badge badge-sm bg-info text-white">Pending Admin
-                                                                                Signature</span>
-                                                                        @endif
-                                                                    </div>
-                                                                </div>
-                                                                <div class="d-flex gap-2">
-                                                                    <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}"
-                                                                        class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
-                                                                        title="Preview Document">
-                                                                        <i class="fe fe-eye"></i>
-                                                                        <span>Sign Document</span>
-                                                                    </a>
-                                                                    @if(!$doc->admin_signed_at)
-                                                                        <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id, 'quick_admin_sign' => 1]) }}"
-                                                                            class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
-                                                                            title="Open preview with admin signature pad">
-                                                                            <i class="fe fe-edit-3"></i>
-                                                                            <span>Quick Admin Sign</span>
-                                                                        </a>
+                                                    <div class="document-card">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="document-icon">
+                                                                <i class="fe fe-file-text"></i>
+                                                            </div>
+                                                            <div class="flex-grow-1 ms-3">
+                                                                <h6 class="mb-1">
+                                                                    {{ $doc->template ? $doc->template->name : 'Lease Agreement' }}
+                                                                </h6>
+                                                                <div class="document-status">
+                                                                    @if (!$doc->tenant_signed_at)
+                                                                        <span
+                                                                            class="badge badge-sm bg-warning text-dark">Pending
+                                                                            Tenant
+                                                                            Signature</span>
+                                                                    @elseif(!$doc->admin_signed_at)
+                                                                        <span
+                                                                            class="badge badge-sm bg-info text-white">Pending
+                                                                            Admin
+                                                                            Signature</span>
                                                                     @endif
                                                                 </div>
                                                             </div>
+                                                            <div class="d-flex gap-2">
+                                                                <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id]) }}"
+                                                                    class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                                                                    title="Preview Document">
+                                                                    <i class="fe fe-eye"></i>
+                                                                    <span>Sign Document</span>
+                                                                </a>
+                                                                @if (!$doc->admin_signed_at)
+                                                                    <a href="{{ route('lease-documents.preview-for-lease', ['leaseId' => $lease->id, 'documentId' => $doc->id, 'quick_admin_sign' => 1]) }}"
+                                                                        class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+                                                                        title="Open preview with admin signature pad">
+                                                                        <i class="fe fe-edit-3"></i>
+                                                                        <span>Quick Admin Sign</span>
+                                                                    </a>
+                                                                @endif
+                                                            </div>
                                                         </div>
+                                                    </div>
                                                 @endforeach
                                             @else
                                                 <div class="empty-state">
@@ -433,7 +452,8 @@
                                                             <i class="fe fe-eye me-1"></i> View Signed Document
                                                         </a>
                                                     @else
-                                                        <button class="btn btn-sm btn-primary mt-2 d-inline-flex align-items-center">
+                                                        <button
+                                                            class="btn btn-sm btn-primary mt-2 d-inline-flex align-items-center">
                                                             <i class="fe fe-plus me-1"></i> Sign a Document
                                                         </button>
                                                     @endif
@@ -456,9 +476,9 @@
                                         <div class="card-body">
                                             <div class="document-section">
                                                 @if ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null)->count() > 0)
-                                                <div class="completed-docs-list">
-                                                    @foreach ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null) as $doc)
-                                                        <div class="completed-doc-item">
+                                                    <div class="completed-docs-list">
+                                                        @foreach ($lease->documents->where('tenant_signed_at', '!=', null)->where('admin_signed_at', '!=', null) as $doc)
+<div class="completed-doc-item">
                                                             <div class="d-flex align-items-center justify-content-between">
                                                                 <div class="d-flex align-items-center">
                                                                     <i class="fe fe-file-text text-success me-2"></i>
@@ -486,10 +506,10 @@
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    @endforeach
+@endforeach
                                                 </div>
-                                                @else
-                                                <div class="empty-state-small">
+@else
+<div class="empty-state-small">
                                                     <p class="text-muted mb-0">No completed documents</p>
                                                 </div>
                                                 @endif
@@ -500,7 +520,13 @@
 
                                 <!-- Right Column: Invoices & History -->
                                 <div class="col-lg-6">
-                                    @if ($lease->status == 'ACTIVE' || $lease->status == "PENDING_TENANT_SIGN" || $lease->status == "PENDING_ADMIN_SIGN" || $lease->status == "COMPLETED" || $lease->status == "DRAFT" || $lease->status == "TERMINATED")
+                                    @if (
+                                        $lease->status == 'ACTIVE' ||
+                                            $lease->status == 'PENDING_TENANT_SIGN' ||
+                                            $lease->status == 'PENDING_ADMIN_SIGN' ||
+                                            $lease->status == 'COMPLETED' ||
+                                            $lease->status == 'DRAFT' ||
+                                            $lease->status == 'TERMINATED')
                                         <!-- Rent Invoices Card -->
                                         <div class="detail-card mb-4">
                                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -524,81 +550,77 @@
                                                             $firstInvoice = $rentInvoices->first();
                                                         @endphp
                                                         @foreach ($rentInvoices as $index => $invoice)
-                                                            @php
-                                                                $isFirstInvoice = $invoice->id === $firstInvoice->id;
-                                                                $hasDeposit = $isFirstInvoice && $lease->deposit_amount > 0;
-                                                                $totalAmount =
-                                                                    $invoice->amount +
-                                                                    ($hasDeposit && !$lease->deposit_collected
-                                                                        ? $lease->deposit_amount
-                                                                        : 0);
-                                                            @endphp
+@php
+    $isFirstInvoice = $invoice->id === $firstInvoice->id;
+    $hasDeposit = $isFirstInvoice && $lease->deposit_amount > 0;
+    $totalAmount = $invoice->amount + ($hasDeposit && !$lease->deposit_collected ? $lease->deposit_amount : 0);
+@endphp
                                                             <a href="{{ route('invoices.show', $invoice->id) }}"
                                                                 class="invoice-card {{ $isFirstInvoice && $hasDeposit ? 'has-deposit' : '' }}">
                                                                 <div class="invoice-left">
                                                                     <div
                                                                         class="invoice-icon {{ $invoice->status == 'PAID' ? 'paid' : ($invoice->isOverdue() ? 'overdue' : 'pending') }}">
                                                                         @if ($invoice->status == 'PAID')
-                                                                            <i class="fe fe-check"></i>
-                                                                        @elseif($invoice->isOverdue())
-                                                                            <i class="fe fe-alert-circle"></i>
-                                                                        @else
-                                                                            <i class="fe fe-clock"></i>
-                                                                        @endif
+<i class="fe fe-check"></i>
+@elseif($invoice->isOverdue())
+<i class="fe fe-alert-circle"></i>
+@else
+<i class="fe fe-clock"></i>
+@endif
                                                                     </div>
                                                                     <div class="invoice-details">
                                                                         <h6 class="invoice-title">
                                                                             {{ $invoice->invoice_number ?? 'INV-' . str_pad($invoice->id, 5, '0', STR_PAD_LEFT) }}
                                                                             @if ($isFirstInvoice && $hasDeposit)
-                                                                                <span class="badge bg-info-light text-info ms-2">+
+<span class="badge bg-info-light text-info ms-2">+
                                                                                     Deposit</span>
-                                                                            @endif
+@endif
                                                                         </h6>
                                                                         <span class="invoice-date">Due:
                                                                             {{ date('M d, Y', strtotime($invoice->due_date)) }}</span>
                                                                         @if ($isFirstInvoice && $hasDeposit && !$lease->deposit_collected)
-                                                                            <span class="deposit-note">
+<span class="deposit-note">
                                                                                 <i class="fe fe-shield"></i> Includes security
                                                                                 deposit
                                                                             </span>
-                                                                        @endif
+@endif
                                                                     </div>
                                                                 </div>
                                                                 <div class="invoice-right">
                                                                     <span class="invoice-amount">Due:
                                                                         ${{ number_format($totalAmount, 2) }}</span>
                                                                     @if ($isFirstInvoice && $hasDeposit)
-                                                                        <div class="amount-breakdown">
+<div class="amount-breakdown">
                                                                             <small class="text-muted">Rent:
                                                                                 ${{ number_format($invoice->amount, 2) }}</small>
                                                                             @if (!$lease->deposit_collected)
-                                                                                <small class="text-warning">Deposit:
+<small class="text-warning">Deposit:
                                                                                     ${{ number_format($lease->deposit_amount, 2) }}</small>
-                                                                            @else
-                                                                                <small class="text-success">Deposit:
+@else
+<small class="text-success">Deposit:
                                                                                     Collected</small>
-                                                                            @endif
+@endif
                                                                         </div>
-                                                                    @endif
+@endif
                                                                     @if ($invoice->status == 'PAID')
-                                                                        <span class="invoice-status paid">Paid</span>
-                                                                    @elseif($invoice->isOverdue())
-                                                                        <span class="invoice-status overdue">Overdue</span>
-                                                                    @elseif($invoice->status == 'CANCELLED')
-                                                                        <span class="invoice-status cancelled">Cancelled</span>
-                                                                    @elseif($invoice->status == 'PARTIAL')
-                                                                        <span class="invoice-status partial">Partially Paid</span>
-                                                                    @else
-                                                                        <span class="invoice-status pending">Unpaid</span>
-                                                                    @endif
+<span class="invoice-status paid">Paid</span>
+@elseif($invoice->isOverdue())
+<span class="invoice-status overdue">Overdue</span>
+@elseif($invoice->status == 'CANCELLED')
+<span class="invoice-status cancelled">Cancelled</span>
+@elseif($invoice->status == 'PARTIAL')
+<span class="invoice-status partial">Partially Paid</span>
+@else
+<span class="invoice-status pending">Unpaid</span>
+@endif
                                                                 </div>
                                                                 <div class="invoice-arrow">
                                                                     <i class="fe fe-chevron-right"></i>
                                                                 </div>
                                                             </a>
-                                                        @endforeach
-                                                    @else
-                                                        <div class="empty-invoice-state">
+@endforeach
+@else
+<div class="empty-invoice-state">
                                                             <i class="fe fe-inbox"></i>
                                                             <p>No rent invoices generated yet</p>
                                                         </div>
@@ -606,8 +628,8 @@
                                                 </div>
                                             </div>
                                         </div>
-                                    @else
-                                        <!-- Rent Invoices Card -->
+@else
+<!-- Rent Invoices Card -->
                                         <div class="detail-card mb-4">
                                             <div class="card-header d-flex justify-content-between align-items-center">
                                                 <h5 class="card-title mb-0">
@@ -906,967 +928,967 @@
 
 @push('scripts')
     <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
-    <script>
-        $('.datepicker2').each(function() {
-            const value = $(this).val();
+        <script>
+            $('.datepicker2').each(function() {
+                const value = $(this).val();
 
-            $(this).datepicker({
-                format: 'm/d/yyyy',
-                autoclose: true,
+                $(this).datepicker({
+                    format: 'm/d/yyyy',
+                    autoclose: true,
 
+                });
+
+                if (value) {
+                    $(this).datepicker('setDate', value);
+                }
+            });
+            // Search functionality
+            $('#leaseSearch').on('keyup', function() {
+                const value = $(this).val().toLowerCase();
+                $('.lease-item').filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
             });
 
-            if (value) {
-                $(this).datepicker('setDate', value);
-            }
-        });
-        // Search functionality
-        $('#leaseSearch').on('keyup', function() {
-            const value = $(this).val().toLowerCase();
-            $('.lease-item').filter(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-            });
-        });
+            $(document).on('click', '#changeBedBtn', function(e) {
+                e.preventDefault();
+                let leaseId = $(this).data('lease-id');
 
-        $(document).on('click', '#changeBedBtn', function(e) {
-            e.preventDefault();
-            let leaseId = $(this).data('lease-id');
+                // Reset modal state
+                $('#changeBedId').val(leaseId);
+                $('#changeBedLoading').show();
+                $('#changeBedContent').hide();
+                $('#changeBedSubmitBtn').hide();
+                $('#noBedAvailable').hide();
+                $('#changeBedForm')[0].reset();
+                $('#newBedId').empty().append('<option value="">-- Select Available Bed --</option>');
 
-            // Reset modal state
-            $('#changeBedId').val(leaseId);
-            $('#changeBedLoading').show();
-            $('#changeBedContent').hide();
-            $('#changeBedSubmitBtn').hide();
-            $('#noBedAvailable').hide();
-            $('#changeBedForm')[0].reset();
-            $('#newBedId').empty().append('<option value="">-- Select Available Bed --</option>');
+                $('#changeBedModal').modal('show');
 
-            $('#changeBedModal').modal('show');
+                // Fetch lease change bed data
+                $.ajax({
+                    url: `{{ url('admin/leases') }}/${leaseId}/change-bed-data`,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#changeBedLoading').hide();
+                        $('#changeBedContent').show();
 
-            // Fetch lease change bed data
-            $.ajax({
-                url: `{{ url('admin/leases') }}/${leaseId}/change-bed-data`,
-                type: 'GET',
-                success: function(response) {
-                    $('#changeBedLoading').hide();
-                    $('#changeBedContent').show();
+                        if (response.success) {
+                            const lease = response.lease;
 
-                    if (response.success) {
-                        const lease = response.lease;
+                            // Populate lease summary
+                            $('#changeBedTenant').text(lease.tenant_name);
+                            $('#changeBedProperty').text(lease.property_name);
+                            $('#changeBedCurrent').text(lease.current_bed_label);
+                            $('#changeBedPeriod').text(lease.start_date + ' - ' + lease.end_date);
+                            $('#changeBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString(
+                                'en-US', {
+                                    minimumFractionDigits: 2
+                                }));
 
-                        // Populate lease summary
-                        $('#changeBedTenant').text(lease.tenant_name);
-                        $('#changeBedProperty').text(lease.property_name);
-                        $('#changeBedCurrent').text(lease.current_bed_label);
-                        $('#changeBedPeriod').text(lease.start_date + ' - ' + lease.end_date);
-                        $('#changeBedRent').text('$' + parseFloat(lease.rent_amount).toLocaleString(
-                            'en-US', {
-                                minimumFractionDigits: 2
-                            }));
+                            // Set default effective date to today
+                            const today = new Date().toISOString().split('T')[0];
+                            $('#effectiveDate').val(today);
 
-                        // Set default effective date to today
-                        const today = new Date().toISOString().split('T')[0];
-                        $('#effectiveDate').val(today);
-
-                        // Populate available beds dropdown
-                        const availableBeds = response.available_beds.filter(bed => !bed.is_current);
-                        if (availableBeds.length > 0) {
-                            availableBeds.forEach(function(bed) {
-                                const rentInfo = bed.base_rent ?
-                                    ` - $${parseFloat(bed.base_rent).toLocaleString('en-US', {minimumFractionDigits: 2})}/month` :
-                                    '';
-                                $('#newBedId').append(
-                                    `<option value="${bed.id}">${bed.bed_label}</option>`);
-                            });
-                            $('#changeBedSubmitBtn').show();
-                            $('#noBedAvailable').hide();
+                            // Populate available beds dropdown
+                            const availableBeds = response.available_beds.filter(bed => !bed.is_current);
+                            if (availableBeds.length > 0) {
+                                availableBeds.forEach(function(bed) {
+                                    const rentInfo = bed.base_rent ?
+                                        ` - $${parseFloat(bed.base_rent).toLocaleString('en-US', {minimumFractionDigits: 2})}/month` :
+                                        '';
+                                    $('#newBedId').append(
+                                        `<option value="${bed.id}">${bed.bed_label}</option>`);
+                                });
+                                $('#changeBedSubmitBtn').show();
+                                $('#noBedAvailable').hide();
+                            } else {
+                                $('#noBedAvailable').show();
+                                $('#changeBedSubmitBtn').hide();
+                            }
                         } else {
-                            $('#noBedAvailable').show();
-                            $('#changeBedSubmitBtn').hide();
+                            toastr.error(response.message || 'Failed to load lease data');
+                            $('#changeBedModal').modal('hide');
                         }
-                    } else {
-                        toastr.error(response.message || 'Failed to load lease data');
+                    },
+                    error: function(xhr) {
+                        $('#changeBedLoading').hide();
+                        const response = xhr.responseJSON;
+                        toastr.error(response?.message || 'Failed to load lease data. Please try again.');
                         $('#changeBedModal').modal('hide');
                     }
-                },
-                error: function(xhr) {
-                    $('#changeBedLoading').hide();
-                    const response = xhr.responseJSON;
-                    toastr.error(response?.message || 'Failed to load lease data. Please try again.');
-                    $('#changeBedModal').modal('hide');
-                }
+                });
             });
-        });
 
-        // Handle change bed form submission
-        $('#changeBedForm').on('submit', function(e) {
-            e.preventDefault();
+            // Handle change bed form submission
+            $('#changeBedForm').on('submit', function(e) {
+                e.preventDefault();
 
-            const leaseId = $('#changeBedId').val();
-            const newBedId = $('#newBedId').val();
-            const effectiveDate = $('#effectiveDate').val();
+                const leaseId = $('#changeBedId').val();
+                const newBedId = $('#newBedId').val();
+                const effectiveDate = $('#effectiveDate').val();
 
-            if (!newBedId) {
-                toastr.error('Please select a new bed');
-                return;
-            }
+                if (!newBedId) {
+                    toastr.error('Please select a new bed');
+                    return;
+                }
 
-            if (!effectiveDate) {
-                toastr.error('Please select an effective date');
-                return;
-            }
+                if (!effectiveDate) {
+                    toastr.error('Please select an effective date');
+                    return;
+                }
 
-            // Show loading state
-            $('#changeBedSpinner').removeClass('d-none');
-            $('#changeBedSubmitBtn').prop('disabled', true);
+                // Show loading state
+                $('#changeBedSpinner').removeClass('d-none');
+                $('#changeBedSubmitBtn').prop('disabled', true);
 
-            $.ajax({
-                url: `{{ url('admin/leases') }}/${leaseId}/change-bed`,
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    new_bed_id: newBedId,
-                    effective_date: effectiveDate,
-                    notes: $('#changeBedNotes').val()
-                },
-                success: function(response) {
-                    $('#changeBedSpinner').addClass('d-none');
-                    $('#changeBedSubmitBtn').prop('disabled', false);
+                $.ajax({
+                    url: `{{ url('admin/leases') }}/${leaseId}/change-bed`,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        new_bed_id: newBedId,
+                        effective_date: effectiveDate,
+                        notes: $('#changeBedNotes').val()
+                    },
+                    success: function(response) {
+                        $('#changeBedSpinner').addClass('d-none');
+                        $('#changeBedSubmitBtn').prop('disabled', false);
 
-                    if (response.success) {
-                        toastr.success(response.message || 'Bed changed successfully');
-                        $('#changeBedModal').modal('hide');
+                        if (response.success) {
+                            toastr.success(response.message || 'Bed changed successfully');
+                            $('#changeBedModal').modal('hide');
 
-                        // Reload the page to reflect changes
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        toastr.error(response.message || 'Failed to change bed');
+                            // Reload the page to reflect changes
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            toastr.error(response.message || 'Failed to change bed');
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#changeBedSpinner').addClass('d-none');
+                        $('#changeBedSubmitBtn').prop('disabled', false);
+
+                        const response = xhr.responseJSON;
+                        toastr.error(response?.message || 'An error occurred while changing the bed');
                     }
-                },
-                error: function(xhr) {
-                    $('#changeBedSpinner').addClass('d-none');
-                    $('#changeBedSubmitBtn').prop('disabled', false);
-
-                    const response = xhr.responseJSON;
-                    toastr.error(response?.message || 'An error occurred while changing the bed');
-                }
+                });
             });
-        });
 
-        // Manual Close Lease Modal Handler
-        $(document).on('click', '#manuallyCloseLease', function(e) {
-            e.preventDefault();
-            let leaseId = $(this).data('lease-id');
+            // Manual Close Lease Modal Handler
+            $(document).on('click', '#manuallyCloseLease', function(e) {
+                e.preventDefault();
+                let leaseId = $(this).data('lease-id');
 
-            // Reset modal state
-            $('#closeLeaseId').val(leaseId);
-            $('#closeLeaseLoading').show();
-            $('#closeLeaseContent').hide();
-            $('#closeLeaseSubmitBtn').hide();
-            $('#unpaidInvoicesSection').hide();
-            $('#closeLeaseFormSection').hide();
-            $('#closeLeaseForm')[0].reset();
+                // Reset modal state
+                $('#closeLeaseId').val(leaseId);
+                $('#closeLeaseLoading').show();
+                $('#closeLeaseContent').hide();
+                $('#closeLeaseSubmitBtn').hide();
+                $('#unpaidInvoicesSection').hide();
+                $('#closeLeaseFormSection').hide();
+                $('#closeLeaseForm')[0].reset();
 
-            $('#closeLeaseModal').modal('show');
+                $('#closeLeaseModal').modal('show');
 
-            // Fetch lease close data
-            $.ajax({
-                url: `{{ url('admin/leases') }}/${leaseId}/close-data`,
-                type: 'GET',
-                success: function(response) {
-                    $('#closeLeaseLoading').hide();
-                    $('#closeLeaseContent').show();
+                // Fetch lease close data
+                $.ajax({
+                    url: `{{ url('admin/leases') }}/${leaseId}/close-data`,
+                    type: 'GET',
+                    success: function(response) {
+                        $('#closeLeaseLoading').hide();
+                        $('#closeLeaseContent').show();
 
-                    if (response.success) {
-                        const lease = response.lease;
+                        if (response.success) {
+                            const lease = response.lease;
 
-                        // Populate lease summary
-                        $('#closeLeaseTenant').text(lease.tenant_name);
-                        $('#closeLeaseProperty').text(lease.property_name);
-                        $('#closeLeaseBed').text(lease.bed_label);
-                        $('#closeLeaseStart').text(lease.start_date);
-                        $('#closeLeaseEnd').text(lease.end_date);
-                        $('#closeLeaseRent').text('$' + parseFloat(lease.rent_amount).toLocaleString(
-                            'en-US', {
-                                minimumFractionDigits: 2
-                            }));
+                            // Populate lease summary
+                            $('#closeLeaseTenant').text(lease.tenant_name);
+                            $('#closeLeaseProperty').text(lease.property_name);
+                            $('#closeLeaseBed').text(lease.bed_label);
+                            $('#closeLeaseStart').text(lease.start_date);
+                            $('#closeLeaseEnd').text(lease.end_date);
+                            $('#closeLeaseRent').text('$' + parseFloat(lease.rent_amount).toLocaleString(
+                                'en-US', {
+                                    minimumFractionDigits: 2
+                                }));
 
-                        // Set default end date to today
-                        const today = new Date().toISOString().split('T')[0];
-                        $('#newEndDate').val(today);
-                        $('#newEndDate').attr('max', lease.original_end_date);
+                            // Set default end date to today
+                            const today = new Date().toISOString().split('T')[0];
+                            $('#newEndDate').val(today);
+                            $('#newEndDate').attr('max', lease.original_end_date);
 
-                        // Check for unpaid invoices
-                        if (response.unpaid_invoices && response.unpaid_invoices.length > 0) {
-                            $('#unpaidInvoicesSection').show();
-                            $('#closeLeaseFormSection').hide();
-                            $('#closeLeaseSubmitBtn').hide();
+                            // Check for unpaid invoices
+                            if (response.unpaid_invoices && response.unpaid_invoices.length > 0) {
+                                $('#unpaidInvoicesSection').show();
+                                $('#closeLeaseFormSection').hide();
+                                $('#closeLeaseSubmitBtn').hide();
 
-                            // Build unpaid invoices list
-                            let invoicesHtml =
-                                '<div class="table-responsive"><table class="table table-sm table-bordered mb-0">';
-                            invoicesHtml +=
-                                '<thead><tr><th>Invoice #</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                                // Build unpaid invoices list
+                                let invoicesHtml =
+                                    '<div class="table-responsive"><table class="table table-sm table-bordered mb-0">';
+                                invoicesHtml +=
+                                    '<thead><tr><th>Invoice #</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>';
 
-                            response.unpaid_invoices.forEach(function(invoice) {
-                                invoicesHtml += `<tr>
+                                response.unpaid_invoices.forEach(function(invoice) {
+                                    invoicesHtml += `<tr>
                         <td><strong>${invoice.invoice_number}</strong></td>
                         <td>${invoice.due_date}</td>
                         <td>$${parseFloat(invoice.balance_due).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
                         <td><span class="badge bg-${invoice.status === 'OVERDUE' ? 'danger' : 'warning'}">${invoice.status}</span></td>
                         <td><a href="{{ url('admin/invoices') }}/${invoice.id}" class="btn btn-xs btn-outline-primary" target="_blank">View</a></td>
                     </tr>`;
-                            });
+                                });
 
-                            invoicesHtml += '</tbody></table></div>';
-                            $('#unpaidInvoicesList').html(invoicesHtml);
+                                invoicesHtml += '</tbody></table></div>';
+                                $('#unpaidInvoicesList').html(invoicesHtml);
+                            } else {
+                                $('#unpaidInvoicesSection').hide();
+                                $('#closeLeaseFormSection').show();
+                                $('#closeLeaseSubmitBtn').show();
+                            }
                         } else {
-                            $('#unpaidInvoicesSection').hide();
-                            $('#closeLeaseFormSection').show();
-                            $('#closeLeaseSubmitBtn').show();
+                            toastr.error(response.message || 'Failed to load lease data');
+                            $('#closeLeaseModal').modal('hide');
                         }
-                    } else {
-                        toastr.error(response.message || 'Failed to load lease data');
+                    },
+                    error: function(xhr) {
+                        $('#closeLeaseLoading').hide();
+                        toastr.error('Failed to load lease data. Please try again.');
                         $('#closeLeaseModal').modal('hide');
                     }
-                },
-                error: function(xhr) {
-                    $('#closeLeaseLoading').hide();
-                    toastr.error('Failed to load lease data. Please try again.');
-                    $('#closeLeaseModal').modal('hide');
-                }
+                });
             });
-        });
 
-        // Handle close lease form submission
-        $('#closeLeaseForm').on('submit', function(e) {
-            e.preventDefault();
+            // Handle close lease form submission
+            $('#closeLeaseForm').on('submit', function(e) {
+                e.preventDefault();
 
-            const leaseId = $('#closeLeaseId').val();
-            const endDate = $('#newEndDate').val();
+                const leaseId = $('#closeLeaseId').val();
+                const endDate = $('#newEndDate').val();
 
-            if (!endDate) {
-                toastr.error('Please select an end date');
-                return;
+                if (!endDate) {
+                    toastr.error('Please select an end date');
+                    return;
+                }
+
+                // Show loading state
+                $('#closeLeaseSpinner').removeClass('d-none');
+                $('#closeLeaseSubmitBtn').prop('disabled', true);
+
+                $.ajax({
+                    url: `{{ url('admin/leases') }}/${leaseId}/close`,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        end_date: endDate,
+                        close_reason: $('#closeReason').val(),
+                        notes: $('#closeNotes').val(),
+                        send_notifications: $('#sendNotifications').is(':checked') ? 1 : 0
+                    },
+                    success: function(response) {
+                        $('#closeLeaseSpinner').addClass('d-none');
+                        $('#closeLeaseSubmitBtn').prop('disabled', false);
+
+                        if (response.success) {
+                            toastr.success(response.message || 'Lease closed successfully');
+                            $('#closeLeaseModal').modal('hide');
+
+                            // Reload the page to reflect changes
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            toastr.error(response.message || 'Failed to close lease');
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#closeLeaseSpinner').addClass('d-none');
+                        $('#closeLeaseSubmitBtn').prop('disabled', false);
+
+                        const response = xhr.responseJSON;
+                        toastr.error(response?.message || 'An error occurred while closing the lease');
+                    }
+                });
+            });
+
+            // Load lease details via AJAX
+            function loadLeaseDetails(leaseId) {
+                NProgress.start();
+
+                // Update active state in sidebar
+                $('.lease-item').removeClass('active');
+                $(`.lease-item[data-lease-id="${leaseId}"]`).addClass('active');
+
+                // Update URL without page reload
+                const newUrl = `{{ route('leases.show', ':id') }}`.replace(':id', leaseId);
+                window.history.pushState({
+                    leaseId: leaseId
+                }, '', newUrl);
+
+                // Fetch lease details
+                $.ajax({
+                    url: `{{ route('leases.details', ':id') }}`.replace(':id', leaseId),
+                    type: 'GET',
+                    success: function(response) {
+                        NProgress.done();
+                        if (response.success) {
+                            updateLeaseDetails(response.lease);
+                        }
+                    },
+                    error: function() {
+                        NProgress.done();
+                        toastr.error('Failed to load lease details');
+                    }
+                });
             }
 
-            // Show loading state
-            $('#closeLeaseSpinner').removeClass('d-none');
-            $('#closeLeaseSubmitBtn').prop('disabled', true);
+            // Update lease details in the DOM
+            function updateLeaseDetails(lease) {
+                // Update header
+                $('.lease-property-title').text(`${lease.property_name} | ${lease.unit}`);
+                $('.lease-dates-header span').text(`${lease.start_date} - ${lease.end_date}`);
+                $('.lease-rent-amount').text(`$${lease.rent_amount}`);
+                $('.lease-payment-frequency').text(`${lease.payment_frequency} Rent`);
 
-            $.ajax({
-                url: `{{ url('admin/leases') }}/${leaseId}/close`,
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    end_date: endDate,
-                    close_reason: $('#closeReason').val(),
-                    notes: $('#closeNotes').val(),
-                    send_notifications: $('#sendNotifications').is(':checked') ? 1 : 0
-                },
-                success: function(response) {
-                    $('#closeLeaseSpinner').addClass('d-none');
-                    $('#closeLeaseSubmitBtn').prop('disabled', false);
+                // Update tenant info
+                $('.tenant-avatar').attr('src', lease.avatar);
+                $('.tenant-name').text(lease.tenant_name);
+                $('.tenant-contact').html(`<i class="fe fe-phone me-1"></i> ${lease.tenant_phone}`);
+                $('.tenant-email').html(`<i class="fe fe-mail me-1"></i> ${lease.tenant_email}`);
 
-                    if (response.success) {
-                        toastr.success(response.message || 'Lease closed successfully');
-                        $('#closeLeaseModal').modal('hide');
-
-                        // Reload the page to reflect changes
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        toastr.error(response.message || 'Failed to close lease');
-                    }
-                },
-                error: function(xhr) {
-                    $('#closeLeaseSpinner').addClass('d-none');
-                    $('#closeLeaseSubmitBtn').prop('disabled', false);
-
-                    const response = xhr.responseJSON;
-                    toastr.error(response?.message || 'An error occurred while closing the lease');
-                }
-            });
-        });
-
-        // Load lease details via AJAX
-        function loadLeaseDetails(leaseId) {
-            NProgress.start();
-
-            // Update active state in sidebar
-            $('.lease-item').removeClass('active');
-            $(`.lease-item[data-lease-id="${leaseId}"]`).addClass('active');
-
-            // Update URL without page reload
-            const newUrl = `{{ route('leases.show', ':id') }}`.replace(':id', leaseId);
-            window.history.pushState({
-                leaseId: leaseId
-            }, '', newUrl);
-
-            // Fetch lease details
-            $.ajax({
-                url: `{{ route('leases.details', ':id') }}`.replace(':id', leaseId),
-                type: 'GET',
-                success: function(response) {
-                    NProgress.done();
-                    if (response.success) {
-                        updateLeaseDetails(response.lease);
-                    }
-                },
-                error: function() {
-                    NProgress.done();
-                    toastr.error('Failed to load lease details');
-                }
-            });
-        }
-
-        // Update lease details in the DOM
-        function updateLeaseDetails(lease) {
-            // Update header
-            $('.lease-property-title').text(`${lease.property_name} | ${lease.unit}`);
-            $('.lease-dates-header span').text(`${lease.start_date} - ${lease.end_date}`);
-            $('.lease-rent-amount').text(`$${lease.rent_amount}`);
-            $('.lease-payment-frequency').text(`${lease.payment_frequency} Rent`);
-
-            // Update tenant info
-            $('.tenant-avatar').attr('src', lease.avatar);
-            $('.tenant-name').text(lease.tenant_name);
-            $('.tenant-contact').html(`<i class="fe fe-phone me-1"></i> ${lease.tenant_phone}`);
-            $('.tenant-email').html(`<i class="fe fe-mail me-1"></i> ${lease.tenant_email}`);
-
-            // Update status badge
-            const statusColors = {
-                'DRAFT': 'secondary',
-                'PENDING_TENANT_SIGN': 'warning',
-                'PENDING_ADMIN_SIGN': 'info',
-                'ACTIVE': 'success',
-                'TERMINATED': 'danger',
-                'COMPLETED': 'dark'
-            };
-            const statusColor = statusColors[lease.status] || 'secondary';
-            const statusLabel = lease.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            $('.lease-status-badge').attr('class', `badge bg-${statusColor} me-3 fs-6 lease-status-badge`).text(
-                statusLabel);
-        }
-
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', function(event) {
-            if (event.state && event.state.leaseId) {
-                loadLeaseDetails(event.state.leaseId);
-            } else {
-                window.location.href = '{{ route('leases.index') }}';
+                // Update status badge
+                const statusColors = {
+                    'DRAFT': 'secondary',
+                    'PENDING_TENANT_SIGN': 'warning',
+                    'PENDING_ADMIN_SIGN': 'info',
+                    'ACTIVE': 'success',
+                    'TERMINATED': 'danger',
+                    'COMPLETED': 'dark'
+                };
+                const statusColor = statusColors[lease.status] || 'secondary';
+                const statusLabel = lease.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                $('.lease-status-badge').attr('class', `badge bg-${statusColor} me-3 fs-6 lease-status-badge`).text(
+                    statusLabel);
             }
-        });
 
-        // Initialize state for current page
-        window.history.replaceState({
-            leaseId: {{ $lease->id }}
-        }, '', window.location.href);
-
-        // Toggle sidebar on mobile
-        function toggleSidebar() {
-            $('.lease-sidebar').toggleClass('show');
-        }
-
-        // Close sidebar when clicking outside on mobile
-        $(document).on('click', function(e) {
-            if ($(window).width() < 992) {
-                if (!$(e.target).closest('.lease-sidebar, .mobile-sidebar-toggle').length) {
-                    $('.lease-sidebar').removeClass('show');
-                }
-            }
-        });
-
-        // Collapse/expand sections are handled elegantly via native CSS with aria-expanded rotation.
-
-        $('#resendSignatureMail').click(function(e) {
-            e.preventDefault();
-            const url = $(this).attr('href');
-            NProgress.start();
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}'
-                },
-                success: function(response) {
-                    NProgress.done();
-                    if (response.success) {
-                        toastr.success('Signature request email resent successfully');
-                    } else {
-                        toastr.error('Failed to resend signature request email');
-                    }
-                },
-                error: function() {
-                    NProgress.done();
-                    toastr.error('An error occurred while resending the email');
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', function(event) {
+                if (event.state && event.state.leaseId) {
+                    loadLeaseDetails(event.state.leaseId);
+                } else {
+                    window.location.href = '{{ route('leases.index') }}';
                 }
             });
-        });
-    </script>
+
+            // Initialize state for current page
+            window.history.replaceState({
+                leaseId: {{ $lease->id }}
+            }, '', window.location.href);
+
+            // Toggle sidebar on mobile
+            function toggleSidebar() {
+                $('.lease-sidebar').toggleClass('show');
+            }
+
+            // Close sidebar when clicking outside on mobile
+            $(document).on('click', function(e) {
+                if ($(window).width() < 992) {
+                    if (!$(e.target).closest('.lease-sidebar, .mobile-sidebar-toggle').length) {
+                        $('.lease-sidebar').removeClass('show');
+                    }
+                }
+            });
+
+            // Collapse/expand sections are handled elegantly via native CSS with aria-expanded rotation.
+
+            $('#resendSignatureMail').click(function(e) {
+                e.preventDefault();
+                const url = $(this).attr('href');
+                NProgress.start();
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        NProgress.done();
+                        if (response.success) {
+                            toastr.success('Signature request email resent successfully');
+                        } else {
+                            toastr.error('Failed to resend signature request email');
+                        }
+                    },
+                    error: function() {
+                        NProgress.done();
+                        toastr.error('An error occurred while resending the email');
+                    }
+                });
+            });
+        </script>
 @endpush
 
 @push('styles')
     <style>
-        /* Color utilities */
-        .bg-warning-light {
-            background: rgba(186, 151, 121, 0.15) !important;
-            color: #ba9779 !important;
-        }
-
-        .bg-success-light {
-            background: rgba(34, 197, 94, 0.15) !important;
-            color: #16a34a !important;
-        }
-
-        .bg-info-light {
-            background: rgba(59, 130, 246, 0.15) !important;
-            color: #2563eb !important;
-        }
-
-        /* Lease Detail Container */
-        .lease-detail-container {
-            display: flex;
-            height: calc(100vh - 70px);
-            background: #f8fafc;
-            margin: 15px 0px;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Right Content */
-        .lease-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #f8fafc;
-        }
-
-        .content-header {
-            padding: 20px 30px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #ffffff;
-        }
-
-        .content-header h4 {
-            font-weight: 700;
-            color: #0f172a;
-            margin: 0;
-            font-size: 1.25rem;
-        }
-
-        .lease-detail-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
-        }
-
-        /* Lease Header Banner */
-        .lease-header {
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 16px;
-            margin-bottom: 30px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 10px 30px -10px rgba(0, 0, 0, 0.03);
-        }
-
-        /* Info Cards */
-        .info-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
-            transition: all 0.2s ease-in-out;
-        }
-
-        .info-card:hover {
-            box-shadow: 0 10px 25px -5px rgba(186, 151, 121, 0.12);
-            border-color: #ba9779;
-        }
-
-        .info-card-header {
-            background: #fafafa;
-            padding: 12px 16px;
-            font-weight: 600;
-            font-size: 12px;
-            color: #475569;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-bottom: 1px solid #e2e8f0;
-            /* border-top: 3px solid #ba9779; */
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .info-card-header i {
-            font-size: 14px;
-            color: #ba9779;
-        }
-
-        .info-card-body {
-            padding: 16px;
-        }
-
-        /* Specific summaries styling */
-        .tenant-name {
-            color: #0f172a;
-            font-weight: 700;
-        }
-
-        .lease-property-title {
-            color: #0f172a;
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .property-detail-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: #475569;
-        }
-
-        .property-detail-item i {
-            width: 16px;
-            text-align: center;
-            color: #ba9779;
-        }
-
-        /* Invoice summary styles */
-        .invoice-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .invoice-stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #334155;
-        }
-
-        .invoice-stat-item .stat-label {
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .invoice-stat-item .stat-value {
-            font-weight: 700;
-        }
-
-        .invoice-stat-item.text-success {
-            background: rgba(34, 197, 94, 0.06);
-            border-color: rgba(34, 197, 94, 0.15);
-            color: #16a34a !important;
-        }
-
-        .invoice-stat-item.text-danger {
-            background: rgba(239, 68, 68, 0.06);
-            border-color: rgba(239, 68, 68, 0.15);
-            color: #dc2626 !important;
-        }
-
-        .invoice-links {
-            border-top: 1px solid #e2e8f0;
-            padding-top: 12px;
-        }
-
-        .invoice-link-group {
-            font-size: 12px;
-            line-height: 1.8;
-            color: #475569;
-        }
-
-        .invoice-link {
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .invoice-link.paid {
-            color: #16a34a;
-        }
-
-        .invoice-link.paid:hover {
-            color: #15803d;
-            text-decoration: underline;
-        }
-
-        .invoice-link.unpaid {
-            color: #dc2626;
-        }
-
-        .invoice-link.unpaid:hover {
-            color: #b91c1c;
-            text-decoration: underline;
-        }
-
-        /* Detail Cards */
-        .detail-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .detail-card:hover {
-            border-color: #ba9779;
-            box-shadow: 0 10px 25px -5px rgba(186, 151, 121, 0.06);
-        }
-
-        .detail-card .card-header {
-            padding: 20px 24px;
-            background: #fafafa;
-            border-bottom: 1px solid #e2e8f0;
-            /* border-top: 3px solid #ba9779; */
-        }
-
-        .detail-card .card-title {
-            font-weight: 700;
-            color: #0f172a;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-        }
-
-        .detail-card .card-title i {
-            color: #ba9779;
-            font-size: 16px;
-        }
-
-        .detail-card .card-body {
-            padding: 24px;
-            background: #ffffff;
-        }
-
-        /* Document Cards inside sections */
-        .document-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: border-color 0.2s;
-        }
-
-        .document-card:hover {
-            border-color: #ba9779;
-        }
-
-        .document-card:last-child {
-            margin-bottom: 0;
-        }
-
-        .document-icon {
-            width: 48px;
-            height: 48px;
-            background: rgba(186, 151, 121, 0.1);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ba9779;
-            font-size: 22px;
-        }
-
-        /* Empty States */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .empty-state-icon {
-            width: 72px;
-            height: 72px;
-            background: rgba(34, 197, 94, 0.08);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-            color: #16a34a;
-            font-size: 32px;
-        }
-
-        .empty-state-small {
-            text-align: center;
-            padding: 20px;
-            color: #64748b;
-        }
-
-        /* Completed Docs List */
-        .completed-doc-item {
-            padding: 16px;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background-color 0.2s;
-        }
-
-        .completed-doc-item:hover {
-            background-color: #f8fafc;
-        }
-
-        .completed-doc-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Invoice List inside sections */
-        .invoice-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .invoice-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            transition: all 0.2s ease-in-out;
-            position: relative;
-        }
-
-        .invoice-card:hover {
-            border-color: #ba9779;
-            box-shadow: 0 6px 20px -5px rgba(186, 151, 121, 0.12);
-            text-decoration: none;
-        }
-
-        .invoice-card.has-deposit {
-            border-left: 4px solid #ba9779;
-        }
-
-        .invoice-left {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            flex: 1;
-        }
-
-        .invoice-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            flex-shrink: 0;
-        }
-
-        .invoice-icon.paid {
-            background: rgba(34, 197, 94, 0.08);
-            color: #16a34a;
-        }
-
-        .invoice-icon.pending {
-            background: rgba(234, 179, 8, 0.08);
-            color: #ca8a04;
-        }
-
-        .invoice-icon.overdue {
-            background: rgba(239, 68, 68, 0.08);
-            color: #dc2626;
-        }
-
-        .invoice-title {
-            font-weight: 600;
-            font-size: 14px;
-            color: #0f172a;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .invoice-date {
-            font-size: 12px;
-            color: #64748b;
-            display: block;
-        }
-
-        .deposit-note {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            color: #ba9779;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        .invoice-right {
-            text-align: right;
-            margin-right: 15px;
-        }
-
-        .invoice-amount {
-            display: block;
-            font-size: 16px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 2px;
-        }
-
-        .amount-breakdown {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-            margin-bottom: 4px;
-        }
-
-        .amount-breakdown small {
-            font-size: 11px;
-        }
-
-        .invoice-status {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 20px;
-            display: inline-block;
-            text-transform: uppercase;
-        }
-
-        .invoice-status.paid {
-            background: rgba(34, 197, 94, 0.08);
-            color: #16a34a;
-        }
-
-        .invoice-status.pending {
-            background: rgba(234, 179, 8, 0.08);
-            color: #ca8a04;
-        }
-
-        .invoice-status.overdue {
-            background: rgba(239, 68, 68, 0.08);
-            color: #dc2626;
-        }
-
-        .invoice-arrow {
-            color: #94a3b8;
-            font-size: 16px;
-            transition: transform 0.2s;
-        }
-
-        .invoice-card:hover .invoice-arrow {
-            color: #ba9779;
-            transform: translateX(4px);
-        }
-
-        /* Timeline Section (History) */
-        .timeline-section {
-            position: relative;
-            padding-left: 32px;
-            margin-top: 10px;
-        }
-
-        .timeline-item {
-            position: relative;
-            padding-bottom: 24px;
-        }
-
-        .timeline-item:last-child {
-            padding-bottom: 0;
-        }
-
-        .timeline-item:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            left: -21px;
-            top: 24px;
-            width: 2px;
-            height: calc(100% - 24px);
-            background: #e2e8f0;
-        }
-
-        .timeline-icon {
-            position: absolute;
-            left: -32px;
-            top: 0;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 11px;
-        }
-
-        .timeline-content {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 14px 16px;
-        }
-
-        .timeline-content h6 {
-            color: #0f172a;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        /* Custom buttons styling to fit golden theme */
-        .btn-outline-primary {
-            border-color: #ba9779;
-            color: #ba9779;
-        }
-        .btn-outline-primary:hover {
-            background-color: #ba9779;
-            border-color: #ba9779;
-            color: #fff;
-        }
-        .btn-primary {
-            background-color: #ba9779;
-            border-color: #ba9779;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            background-color: #a38162;
-            border-color: #a38162;
-            color: #fff;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 991px) {
-            .lease-detail-content {
-                padding: 20px;
+            /* Color utilities */
+            .bg-warning-light {
+                background: rgba(186, 151, 121, 0.15) !important;
+                color: #ba9779 !important;
+            }
+
+            .bg-success-light {
+                background: rgba(34, 197, 94, 0.15) !important;
+                color: #16a34a !important;
+            }
+
+            .bg-info-light {
+                background: rgba(59, 130, 246, 0.15) !important;
+                color: #2563eb !important;
+            }
+
+            /* Lease Detail Container */
+            .lease-detail-container {
+                display: flex;
+                height: calc(100vh - 70px);
+                background: #f8fafc;
+                margin: 15px 0px;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            }
+
+            /* Right Content */
+            .lease-content {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                background: #f8fafc;
             }
 
             .content-header {
-                padding: 15px 20px;
+                padding: 20px 30px;
+                border-bottom: 1px solid #e2e8f0;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: #ffffff;
             }
-        }
 
-        @media (max-width: 767px) {
-            .lease-header .row > div {
-                margin-bottom: 16px;
+            .content-header h4 {
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0;
+                font-size: 1.25rem;
             }
-        }
-    </style>
-@endpush
+
+            .lease-detail-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 30px;
+            }
+
+            /* Lease Header Banner */
+            .lease-header {
+                background: #ffffff;
+                padding: 24px;
+                border-radius: 16px;
+                margin-bottom: 30px;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 10px 30px -10px rgba(0, 0, 0, 0.03);
+            }
+
+            /* Info Cards */
+            .info-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
+                transition: all 0.2s ease-in-out;
+            }
+
+            .info-card:hover {
+                box-shadow: 0 10px 25px -5px rgba(186, 151, 121, 0.12);
+                border-color: #ba9779;
+            }
+
+            .info-card-header {
+                background: #fafafa;
+                padding: 12px 16px;
+                font-weight: 600;
+                font-size: 12px;
+                color: #475569;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                border-bottom: 1px solid #e2e8f0;
+                /* border-top: 3px solid #ba9779; */
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .info-card-header i {
+                font-size: 14px;
+                color: #ba9779;
+            }
+
+            .info-card-body {
+                padding: 16px;
+            }
+
+            /* Specific summaries styling */
+            .tenant-name {
+                color: #0f172a;
+                font-weight: 700;
+            }
+
+            .lease-property-title {
+                color: #0f172a;
+                font-weight: 700;
+                font-size: 1rem;
+            }
+
+            .property-detail-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+                font-size: 14px;
+                color: #475569;
+            }
+
+            .property-detail-item i {
+                width: 16px;
+                text-align: center;
+                color: #ba9779;
+            }
+
+            /* Invoice summary styles */
+            .invoice-stats {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .invoice-stat-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 12px;
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 13px;
+                color: #334155;
+            }
+
+            .invoice-stat-item .stat-label {
+                color: #64748b;
+                font-weight: 500;
+            }
+
+            .invoice-stat-item .stat-value {
+                font-weight: 700;
+            }
+
+            .invoice-stat-item.text-success {
+                background: rgba(34, 197, 94, 0.06);
+                border-color: rgba(34, 197, 94, 0.15);
+                color: #16a34a !important;
+            }
+
+            .invoice-stat-item.text-danger {
+                background: rgba(239, 68, 68, 0.06);
+                border-color: rgba(239, 68, 68, 0.15);
+                color: #dc2626 !important;
+            }
+
+            .invoice-links {
+                border-top: 1px solid #e2e8f0;
+                padding-top: 12px;
+            }
+
+            .invoice-link-group {
+                font-size: 12px;
+                line-height: 1.8;
+                color: #475569;
+            }
+
+            .invoice-link {
+                font-weight: 600;
+                text-decoration: none;
+                transition: all 0.2s;
+            }
+
+            .invoice-link.paid {
+                color: #16a34a;
+            }
+
+            .invoice-link.paid:hover {
+                color: #15803d;
+                text-decoration: underline;
+            }
+
+            .invoice-link.unpaid {
+                color: #dc2626;
+            }
+
+            .invoice-link.unpaid:hover {
+                color: #b91c1c;
+                text-decoration: underline;
+            }
+
+            /* Detail Cards */
+            .detail-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 0, 0, 0.02);
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .detail-card:hover {
+                border-color: #ba9779;
+                box-shadow: 0 10px 25px -5px rgba(186, 151, 121, 0.06);
+            }
+
+            .detail-card .card-header {
+                padding: 20px 24px;
+                background: #fafafa;
+                border-bottom: 1px solid #e2e8f0;
+                /* border-top: 3px solid #ba9779; */
+            }
+
+            .detail-card .card-title {
+                font-weight: 700;
+                color: #0f172a;
+                font-size: 15px;
+                display: flex;
+                align-items: center;
+            }
+
+            .detail-card .card-title i {
+                color: #ba9779;
+                font-size: 16px;
+            }
+
+            .detail-card .card-body {
+                padding: 24px;
+                background: #ffffff;
+            }
+
+            /* Document Cards inside sections */
+            .document-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 15px;
+                transition: border-color 0.2s;
+            }
+
+            .document-card:hover {
+                border-color: #ba9779;
+            }
+
+            .document-card:last-child {
+                margin-bottom: 0;
+            }
+
+            .document-icon {
+                width: 48px;
+                height: 48px;
+                background: rgba(186, 151, 121, 0.1);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #ba9779;
+                font-size: 22px;
+            }
+
+            /* Empty States */
+            .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+            }
+
+            .empty-state-icon {
+                width: 72px;
+                height: 72px;
+                background: rgba(34, 197, 94, 0.08);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 16px;
+                color: #16a34a;
+                font-size: 32px;
+            }
+
+            .empty-state-small {
+                text-align: center;
+                padding: 20px;
+                color: #64748b;
+            }
+
+            /* Completed Docs List */
+            .completed-doc-item {
+                padding: 16px;
+                border-bottom: 1px solid #f1f5f9;
+                transition: background-color 0.2s;
+            }
+
+            .completed-doc-item:hover {
+                background-color: #f8fafc;
+            }
+
+            .completed-doc-item:last-child {
+                border-bottom: none;
+            }
+
+            /* Invoice List inside sections */
+            .invoice-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .invoice-card {
+                background: #ffffff;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 18px 20px;
+                display: flex;
+                align-items: center;
+                text-decoration: none;
+                transition: all 0.2s ease-in-out;
+                position: relative;
+            }
+
+            .invoice-card:hover {
+                border-color: #ba9779;
+                box-shadow: 0 6px 20px -5px rgba(186, 151, 121, 0.12);
+                text-decoration: none;
+            }
+
+            .invoice-card.has-deposit {
+                border-left: 4px solid #ba9779;
+            }
+
+            .invoice-left {
+                display: flex;
+                align-items: flex-start;
+                gap: 15px;
+                flex: 1;
+            }
+
+            .invoice-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+
+            .invoice-icon.paid {
+                background: rgba(34, 197, 94, 0.08);
+                color: #16a34a;
+            }
+
+            .invoice-icon.pending {
+                background: rgba(234, 179, 8, 0.08);
+                color: #ca8a04;
+            }
+
+            .invoice-icon.overdue {
+                background: rgba(239, 68, 68, 0.08);
+                color: #dc2626;
+            }
+
+            .invoice-title {
+                font-weight: 600;
+                font-size: 14px;
+                color: #0f172a;
+                margin-bottom: 2px;
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .invoice-date {
+                font-size: 12px;
+                color: #64748b;
+                display: block;
+            }
+
+            .deposit-note {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 12px;
+                color: #ba9779;
+                margin-top: 4px;
+                font-weight: 500;
+            }
+
+            .invoice-right {
+                text-align: right;
+                margin-right: 15px;
+            }
+
+            .invoice-amount {
+                display: block;
+                font-size: 16px;
+                font-weight: 700;
+                color: #0f172a;
+                margin-bottom: 2px;
+            }
+
+            .amount-breakdown {
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+                margin-bottom: 4px;
+            }
+
+            .amount-breakdown small {
+                font-size: 11px;
+            }
+
+            .invoice-status {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 2px 10px;
+                border-radius: 20px;
+                display: inline-block;
+                text-transform: uppercase;
+            }
+
+            .invoice-status.paid {
+                background: rgba(34, 197, 94, 0.08);
+                color: #16a34a;
+            }
+
+            .invoice-status.pending {
+                background: rgba(234, 179, 8, 0.08);
+                color: #ca8a04;
+            }
+
+            .invoice-status.overdue {
+                background: rgba(239, 68, 68, 0.08);
+                color: #dc2626;
+            }
+
+            .invoice-arrow {
+                color: #94a3b8;
+                font-size: 16px;
+                transition: transform 0.2s;
+            }
+
+            .invoice-card:hover .invoice-arrow {
+                color: #ba9779;
+                transform: translateX(4px);
+            }
+
+            /* Timeline Section (History) */
+            .timeline-section {
+                position: relative;
+                padding-left: 32px;
+                margin-top: 10px;
+            }
+
+            .timeline-item {
+                position: relative;
+                padding-bottom: 24px;
+            }
+
+            .timeline-item:last-child {
+                padding-bottom: 0;
+            }
+
+            .timeline-item:not(:last-child)::after {
+                content: '';
+                position: absolute;
+                left: -21px;
+                top: 24px;
+                width: 2px;
+                height: calc(100% - 24px);
+                background: #e2e8f0;
+            }
+
+            .timeline-icon {
+                position: absolute;
+                left: -32px;
+                top: 0;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-size: 11px;
+            }
+
+            .timeline-content {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 14px 16px;
+            }
+
+            .timeline-content h6 {
+                color: #0f172a;
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+
+            /* Custom buttons styling to fit golden theme */
+            .btn-outline-primary {
+                border-color: #ba9779;
+                color: #ba9779;
+            }
+            .btn-outline-primary:hover {
+                background-color: #ba9779;
+                border-color: #ba9779;
+                color: #fff;
+            }
+            .btn-primary {
+                background-color: #ba9779;
+                border-color: #ba9779;
+                color: #fff;
+            }
+            .btn-primary:hover {
+                background-color: #a38162;
+                border-color: #a38162;
+                color: #fff;
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 991px) {
+                .lease-detail-content {
+                    padding: 20px;
+                }
+
+                .content-header {
+                    padding: 15px 20px;
+                }
+            }
+
+            @media (max-width: 767px) {
+                .lease-header .row > div {
+                    margin-bottom: 16px;
+                }
+            }
+        </style>
+@endpush)
