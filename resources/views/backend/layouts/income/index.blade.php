@@ -119,6 +119,7 @@
                                             <option value="UNPAID">Unpaid</option>
                                             <option value="PARTIAL">Partial</option>
                                             <option value="PAID">Paid</option>
+                                            <option value="PROCESSING">Processing</option>
                                             <option value="OVERDUE">Overdue</option>
                                             <option value="CANCELLED">Voided</option>
                                         </select>

@@ -92,6 +92,12 @@
             background: rgba(244, 67, 54, 0.25);
             color: #ef9a9a;
         }
+
+        .status-processing {
+            background: #C71E00;
+            color: white;
+        }
+
         .status-voided {
             background: rgba(109, 109, 109, 0.25);
             color: #ffffff;
@@ -396,6 +402,8 @@
                         <span class="status-badge status-voided">! Void/Cancelled</span>
                     @elseif($invoice->isOverdue())
                         <span class="status-badge status-overdue">! Overdue</span>
+                    @elseif($invoice->status == 'PROCESSING')
+                        <span class="status-badge status-processing">Processing</span>
                     @else
                         <span class="status-badge status-unpaid">Unpaid</span>
                     @endif
@@ -586,9 +594,9 @@
                                 $stripeAmount = $payment->amount; // Fallback
                             }
                         }
-                        
+
                         $methodLabel = ucfirst($payment->payment_method ?? 'N/A');
-                        
+
                         if (strtolower($payment->payment_method) === 'stripe') {
                             $methodLabel = 'Stripe';
                             $stripeMethodType = $payment->metadata['stripe_payment_method_type'] ?? $payment->metadata['payment_method_type'] ?? null;

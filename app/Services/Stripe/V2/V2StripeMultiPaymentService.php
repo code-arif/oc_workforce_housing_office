@@ -397,7 +397,7 @@ class V2StripeMultiPaymentService
             // 1. Extract core metadata
             // Support both multi-payment (invoice_ids) and single/partial payment (invoice_id)
             $invoiceIdsStr  = $metadata['invoice_ids'] ?? $metadata['invoice_id'] ?? null;
-            $tenantId       = $metadata['tenant_id']   ?? null;
+            $tenantId = $metadata['tenant_id']   ?? null;
 
             if (!$invoiceIdsStr || !$tenantId) {
                 DB::rollBack();
@@ -407,15 +407,15 @@ class V2StripeMultiPaymentService
                 return ['success' => false, 'message' => 'Missing invoice_ids or tenant_id in metadata.'];
             }
 
-            $invoiceIds         = array_map('intval', explode(',', $invoiceIdsStr));
+            $invoiceIds = array_map('intval', explode(',', $invoiceIdsStr));
             $invoiceAmountsStr  = $metadata['invoice_amounts'] ?? '';
-            $invoiceAmounts     = !empty($invoiceAmountsStr)
+            $invoiceAmounts = !empty($invoiceAmountsStr)
                 ? array_map('floatval', explode(',', $invoiceAmountsStr))
                 : [];
 
             $connectedAccountId = $metadata['connected_account_id'] ?? null;
-            $processingFee      = floatval($metadata['processing_fee'] ?? 0);
-            $totalCharge        = floatval($metadata['total_charge'] ?? $metadata['total_base_amount'] ?? 0);
+            $processingFee = floatval($metadata['processing_fee'] ?? 0);
+            $totalCharge = floatval($metadata['total_charge'] ?? $metadata['total_base_amount'] ?? 0);
 
             // 2. Global idempotency check — already processed this session for ANY of the invoices?
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
@@ -428,12 +428,12 @@ class V2StripeMultiPaymentService
             if ($alreadyExists) {
                 DB::rollBack();
                 Log::info('[MultiPayment] Payment already processed (idempotency skip)', [
-                    'session_id'   => $sessionOrIntent->id,
+                    'session_id' => $sessionOrIntent->id,
                     'invoice_ids'  => $invoiceIdsStr,
                 ]);
                 return [
-                    'success'    => true,
-                    'message'    => 'Payment already processed.',
+                    'success' => true,
+                    'message' => 'Payment already processed.',
                     'invoice_ids' => $invoiceIds,
                 ];
             }
@@ -451,9 +451,9 @@ class V2StripeMultiPaymentService
             }
 
             $firstInvoice = $invoices->first();
-            $lease        = $firstInvoice->lease;
-            $tenant       = $firstInvoice->tenant;
-            $bedId        = $lease->assignments()->where('is_current', true)->first()?->bed_id ?? null;
+            $lease = $firstInvoice->lease;
+            $tenant = $firstInvoice->tenant;
+            $bedId = $lease->assignments()->where('is_current', true)->first()?->bed_id ?? null;
 
             // 4. Process each invoice individually
             $processedPayments = [];
@@ -482,37 +482,37 @@ class V2StripeMultiPaymentService
                 }
 
                 $payment = Payment::create([
-                    'invoice_id'               => $invoice->id,
-                    'tenant_id'                => $tenantId,
-                    'lease_id'                 => $lease->id,
-                    'bed_id'                   => $bedId,
-                    'payment_number'           => 'PAY-' . strtoupper(uniqid()),
-                    'amount'                   => $invoiceBaseAmount,
-                    'base_amount'              => $invoiceBaseAmount,
-                    'processing_fee'           => $invoiceProcessingFee,
-                    'total_charged'            => $invoiceTotalCharge,
-                    'payment_date'             => now()->toDateString(),
-                    'payment_method'           => 'stripe',
-                    'reference_number'         => $stripePaymentIntentId,
-                    'gateway_transaction_id'   => $sessionOrIntent->id,
+                    'invoice_id' => $invoice->id,
+                    'tenant_id' => $tenantId,
+                    'lease_id' => $lease->id,
+                    'bed_id' => $bedId,
+                    'payment_number' => 'PAY-' . strtoupper(uniqid()),
+                    'amount' => $invoiceBaseAmount,
+                    'base_amount' => $invoiceBaseAmount,
+                    'processing_fee' => $invoiceProcessingFee,
+                    'total_charged' => $invoiceTotalCharge,
+                    'payment_date' => now()->toDateString(),
+                    'payment_method' => 'stripe',
+                    'reference_number' => $stripePaymentIntentId,
+                    'gateway_transaction_id' => $sessionOrIntent->id,
                     'stripe_payment_intent_id' => $stripePaymentIntentId,
-                    'payment_type'             => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
-                    'paid_by'                  => 'tenant',
-                    'review_status'            => 'confirmed',
-                    'note'                     => sprintf(
+                    'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
+                    'paid_by' => 'tenant',
+                    'review_status' => 'confirmed',
+                    'note' => sprintf(
                         '%s payment via Stripe (bulk) - Invoice %s',
                         $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
                         $invoice->invoice_number
                     ),
                     'metadata' => [
-                        'stripe_session_id'    => $sessionOrIntent->id,
-                        'stripe_payment_intent'=> $stripePaymentIntentId,
+                        'stripe_session_id' => $sessionOrIntent->id,
+                        'stripe_payment_intent' => $stripePaymentIntentId,
                         'connected_account_id' => $connectedAccountId,
-                        'bulk_payment'         => 'true',
-                        'all_invoice_ids'      => $invoiceIdsStr,
-                        'tenant_name'          => $metadata['tenant_name'] ?? 'N/A',
-                        'property_name'        => $metadata['property_name'] ?? 'N/A',
-                        'property_id'          => $metadata['property_id'] ?? null,
+                        'bulk_payment' => 'true',
+                        'all_invoice_ids' => $invoiceIdsStr,
+                        'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
+                        'property_name' => $metadata['property_name'] ?? 'N/A',
+                        'property_id' => $metadata['property_id'] ?? null,
                         'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
                     ],
                 ]);
@@ -520,22 +520,22 @@ class V2StripeMultiPaymentService
                 // Update invoice balance
                 $newPaidAmount = round(floatval($invoice->paid_amount) + $invoiceBaseAmount, 2);
                 $newBalance    = round(floatval($invoice->total_amount) - $newPaidAmount, 2);
-                $status        = 'PARTIAL';
-                $paidAt        = null;
+                $status = 'PARTIAL';
+                $paidAt = null;
 
                 if ($newBalance <= 0.01) {
-                    $status   = 'PAID';
-                    $paidAt   = now();
+                    $status = 'PAID';
+                    $paidAt = now();
                     $newBalance = 0;
                 }
 
                 $invoice->update([
-                    'paid_amount'          => $newPaidAmount,
-                    'balance_due'          => max(0, $newBalance),
-                    'status'               => $status,
-                    'paid_at'              => $paidAt,
-                    'stripe_payment_method'=> $invoice->stripe_payment_method ?? ($metadata['payment_method_type'] ?? 'card'),
-                    'stripe_exact_amount'  => round(floatval($invoice->stripe_exact_amount) + $invoiceTotalCharge, 2),
+                    'paid_amount' => $newPaidAmount,
+                    'balance_due' => max(0, $newBalance),
+                    'status' => $status,
+                    'paid_at' => $paidAt,
+                    'stripe_payment_method' => $invoice->stripe_payment_method ?? ($metadata['payment_method_type'] ?? 'card'),
+                    'stripe_exact_amount' => round(floatval($invoice->stripe_exact_amount) + $invoiceTotalCharge, 2),
                 ]);
 
                 // Mark deposit collected on lease if applicable
@@ -545,17 +545,17 @@ class V2StripeMultiPaymentService
 
                 // Create transaction record
                 Transaction::create([
-                    'tenant_id'          => $tenantId,
-                    'bed_id'             => $bedId,
-                    'lease_id'           => $lease->id,
-                    'invoice_id'         => $invoice->id,
-                    'payment_id'         => $payment->id,
+                    'tenant_id' => $tenantId,
+                    'bed_id' => $bedId,
+                    'lease_id' => $lease->id,
+                    'invoice_id' => $invoice->id,
+                    'payment_id' => $payment->id,
                     'transaction_number' => 'TXN-' . strtoupper(uniqid()),
-                    'type'               => 'payment',
-                    'entry_type'         => 'credit',
-                    'amount'             => $invoiceBaseAmount,
-                    'transaction_date'   => now()->toDateString(),
-                    'description'        => sprintf(
+                    'type' => 'payment',
+                    'entry_type' => 'credit',
+                    'amount' => $invoiceBaseAmount,
+                    'transaction_date' => now()->toDateString(),
+                    'description' => sprintf(
                         '%s payment (bulk) for Invoice %s - %s (via Stripe Connect → %s)',
                         $invoice->type === 'DEPOSIT' ? 'Deposit' : 'Rent',
                         $invoice->invoice_number,
@@ -563,61 +563,61 @@ class V2StripeMultiPaymentService
                         $connectedAccountId ?? 'platform'
                     ),
                     'metadata' => [
-                        'payment_method'       => 'stripe',
-                        'stripe_session_id'    => $sessionOrIntent->id,
-                        'stripe_payment_intent'=> $stripePaymentIntentId,
+                        'payment_method' => 'stripe',
+                        'stripe_session_id' => $sessionOrIntent->id,
+                        'stripe_payment_intent' => $stripePaymentIntentId,
                         'connected_account_id' => $connectedAccountId,
-                        'bulk_payment'         => 'true',
-                        'all_invoice_ids'      => $invoiceIdsStr,
+                        'bulk_payment' => 'true',
+                        'all_invoice_ids' => $invoiceIdsStr,
                     ],
                 ]);
 
                 $processedPayments[] = [
-                    'id'             => $payment->id,
+                    'id' => $payment->id,
                     'payment_number' => $payment->payment_number,
-                    'invoice_id'     => $invoice->id,
+                    'invoice_id' => $invoice->id,
                     'invoice_number' => $invoice->invoice_number,
-                    'amount'         => $invoiceBaseAmount,
+                    'amount' => $invoiceBaseAmount,
                 ];
 
                 $processedInvoices[] = [
-                    'id'             => $invoice->id,
+                    'id' => $invoice->id,
                     'invoice_number' => $invoice->invoice_number,
-                    'status'         => $invoice->status,
-                    'paid_amount'    => $invoice->paid_amount,
-                    'balance_due'    => $invoice->balance_due,
+                    'status' => $invoice->status,
+                    'paid_amount' => $invoice->paid_amount,
+                    'balance_due' => $invoice->balance_due,
                 ];
 
                 Log::info('[MultiPayment] Invoice payment processed', [
-                    'payment_id'  => $payment->id,
-                    'invoice_id'  => $invoice->id,
-                    'amount'      => $invoiceBaseAmount,
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $invoiceBaseAmount,
                 ]);
             }
 
             DB::commit();
 
             Log::info('[MultiPayment] All invoices processed successfully', [
-                'session_id'         => $sessionOrIntent->id,
-                'invoice_ids'        => $invoiceIdsStr,
-                'total_charge'       => $totalCharge,
-                'connected_account'  => $connectedAccountId,
+                'session_id' => $sessionOrIntent->id,
+                'invoice_ids' => $invoiceIdsStr,
+                'total_charge' => $totalCharge,
+                'connected_account' => $connectedAccountId,
             ]);
 
             $this->sendBulkPaymentEmails($processedPayments, $processedInvoices, $tenant, $metadata, $totalCharge);
 
             return [
-                'success'          => true,
-                'payments'         => $processedPayments,
-                'invoices'         => $processedInvoices,
-                'total_charged'    => $totalCharge,
-                'processing_fee'   => $processingFee,
+                'success' => true,
+                'payments' => $processedPayments,
+                'invoices' => $processedInvoices,
+                'total_charged' => $totalCharge,
+                'processing_fee' => $processingFee,
             ];
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('[MultiPayment] processMultiInvoicePayment failed: ' . $e->getMessage(), [
                 'session_id' => $sessionOrIntent->id ?? 'unknown',
-                'trace'      => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return ['success' => false, 'message' => 'Multi-invoice payment processing failed: ' . $e->getMessage()];
         }

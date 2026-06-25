@@ -116,6 +116,10 @@
                                         <span class="status-badge overdue">
                                             <i class="fe fe-alert-circle me-1"></i> Overdue
                                         </span>
+                                    @elseif($invoice->status == 'PROCESSING')
+                                        <span class="status-badge processing">
+                                            <i class="fe fe-loader me-1"></i> Processing
+                                        </span>
                                     @else
                                         <span class="status-badge unpaid">
                                             <i class="fe fe-clock me-1"></i> Unpaid
@@ -1347,6 +1351,11 @@
         .status-badge.overdue {
             background: rgba(244, 67, 54, 0.2);
             color: #ef9a9a;
+        }
+
+        .status-badge.processing {
+            background: #C71E00;
+            color: white;
         }
 
         .status-badge.cancelled {
