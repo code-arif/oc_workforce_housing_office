@@ -523,7 +523,14 @@ class TenantManageController extends Controller
         $invoices = Invoice::where('tenant_id', $id)
             ->with(['lease.property'])
             ->whereHas('lease', function ($q) {
-                $q->where('status', 'ACTIVE');
+                $q->whereIn('status', [
+                    'ACTIVE',
+                    'TERMINATED',
+                    'COMPLETED',
+                    'PENDING_ADMIN_SIGN',
+                    'PENDING_TENANT_SIGN',
+                    'DRAFT',
+                ]);
             })
             ->orderBy('due_date', 'asc')
             ->get();
@@ -534,6 +541,7 @@ class TenantManageController extends Controller
             'paid' => $invoices->where('status', 'PAID')->count(),
             'unpaid' => $invoices->whereIn('status', ['UNPAID', 'PENDING'])->count(),
             'overdue' => $invoices->filter(fn($inv) => $inv->isOverdue())->count(),
+            'processing' => $invoices->where('status', 'PROCESSING')->count(),
             'partial' => $invoices->where('status', 'PARTIAL')->count(),
             'total_amount' => $invoices->sum('total_amount'),
             'paid_amount' => $invoices->sum('paid_amount'),

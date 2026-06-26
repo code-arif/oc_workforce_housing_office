@@ -428,7 +428,7 @@
 
                         <!-- Invoice Summary Cards -->
                         <div class="row mt-4">
-                            <div class="col-md-3 col-6">
+                            <div class="col-md-4 col-6">
                                 <div class="card invoice-stat-card">
                                     <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-primary-light mb-2">
@@ -439,7 +439,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6">
+                            <div class="col-md-2 col-6">
                                 <div class="card invoice-stat-card">
                                     <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-success-light mb-2">
@@ -450,7 +450,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6">
+                            <div class="col-md-2 col-6">
                                 <div class="card invoice-stat-card">
                                     <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-warning-light mb-2">
@@ -461,7 +461,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3 col-6">
+                            <div class="col-md-2 col-6">
                                 <div class="card invoice-stat-card">
                                     <div class="card-body text-center p-3">
                                         <div class="stat-icon bg-danger-light mb-2">
@@ -469,6 +469,17 @@
                                         </div>
                                         <h4 class="mb-0 text-danger">{{ $invoiceStats['overdue'] ?? 0 }}</h4>
                                         <small class="text-muted">Overdue</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2 col-6">
+                                <div class="card invoice-stat-card">
+                                    <div class="card-body text-center p-3">
+                                        <div class="stat-icon bg-info-light mb-2">
+                                            <i class="fe fe-alert-circle text-info"></i>
+                                        </div>
+                                        <h4 class="mb-0 text-info">{{ $invoiceStats['processing'] ?? 0 }}</h4>
+                                        <small class="text-muted">Processing</small>
                                     </div>
                                 </div>
                             </div>
@@ -483,6 +494,7 @@
                                     <button type="button" class="btn btn-outline-primary active"
                                         data-filter="all">All</button>
                                     <button type="button" class="btn btn-outline-success" data-filter="paid">Paid</button>
+                                    <button type="button" class="btn btn-outline-info" data-filter="processing">Processing</button>
                                     <button type="button" class="btn btn-outline-warning" data-filter="unpaid">Due</button>
                                     <button type="button" class="btn btn-outline-danger"
                                         data-filter="overdue">Overdue</button>
@@ -555,6 +567,11 @@
                                                                     class="badge bg-secondary-light text-danger px-2 py-1 d-inline-flex align-items-center">
                                                                     <i class="fe fe-x me-1"></i>Voided
                                                                 </span>
+                                                            @elseif($invoice->status === 'PROCESSING')
+                                                                <span
+                                                                    class="badge bg-warning-light text-warning px-2 py-1 d-inline-flex align-items-center">
+                                                                    <i class="fe fe-clock me-1"></i>Processing
+                                                                </span>
                                                             @else
                                                                 <span
                                                                     class="badge bg-warning-light text-warning px-2 py-1 d-inline-flex align-items-center">
@@ -599,7 +616,7 @@
                                     </h5>
                                 </div>
                                 <div class="card-body p-0">
-                                    <div class="table-responsive">
+                                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                                         <table class="table table-hover mb-0">
                                             <thead class="bg-light">
                                                 <tr>
@@ -621,7 +638,7 @@
                                                             <td>{{ date('M d, Y', strtotime($lease->end_date)) }}</td>
                                                             <td>
                                                                 <span
-                                                                    class="badge bg-{{ $lease->status === 'ACTIVE' ? 'success' : ($lease->status === 'EXPIRED' ? 'secondary' : 'warning') }}">
+                                                                    class="badge p-3 bg-{{ $lease->status === 'ACTIVE' ? 'success' : ($lease->status === 'EXPIRED' ? 'secondary' : 'warning') }}">
                                                                     {{ ucfirst(strtolower($lease->status)) }}
                                                                 </span>
                                                             </td>

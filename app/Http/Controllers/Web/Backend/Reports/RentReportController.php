@@ -59,7 +59,7 @@ class RentReportController extends Controller
                 ->whereHas('lease', function ($q) {
                     $q->where('status', 'ACTIVE');
                 })
-                ->whereIn('invoices.status', ['UNPAID', 'PARTIAL', 'OVERDUE']);
+                ->whereIn('invoices.status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'PROCESSING']);
 
             // Property filter
             if ($request->filled('property_id')) {
@@ -143,6 +143,7 @@ class RentReportController extends Controller
                     elseif ($status === 'PARTIAL') $badgeClass = 'bg-info text-dark';
                     elseif ($status === 'OVERDUE') $badgeClass = 'bg-danger';
                     elseif ($status === 'CANCELLED') $badgeClass = 'bg-dark';
+                    elseif ($status === 'PROCESSING') $badgeClass = 'bg-secondary';
 
                     $displayStatus = $status === 'CANCELLED' ? 'VOIDED' : $status;
                     return '<span class="badge ' . $badgeClass . '">' . $displayStatus . '</span>';
