@@ -195,16 +195,17 @@ class IncomeController extends Controller
                 ->addColumn('status_badge', function ($data) {
                     $statusColors = [
                         'UNPAID' => 'warning',
-                        'PARTIAL' => 'info',
+                        'PARTIAL' => 'dark',
                         'PAID' => 'success',
                         'OVERDUE' => 'danger',
-                        'CANCELLED' => 'secondary'
+                        'CANCELLED' => 'secondary',
+                        'PROCESSING' => 'info',
                     ];
 
                     $status = $data->status;
-                    if ($data->isOverdue() && $status !== 'PAID') {
-                        $status = 'OVERDUE';
-                    }
+                    // if ($data->isOverdue() && !in_array($status, ['PAID', 'PROCESSING', 'CANCELLED'])) {
+                    //     $status = 'OVERDUE';
+                    // }
 
                     $color = $statusColors[$status] ?? 'secondary';
                     $label = $status === 'CANCELLED' ? 'Voided' : ucfirst(strtolower($status));
@@ -215,7 +216,7 @@ class IncomeController extends Controller
                     if (!$data->stripe_payment_method) {
                         return '<span class="text-muted">-</span>';
                     }
-                    
+
                     if ($data->stripe_payment_method === 'us_bank_account') {
                         $methodName = 'ACH';
                         $colorClass = 'bg-info';
@@ -223,7 +224,7 @@ class IncomeController extends Controller
                         $methodName = 'Card';
                         $colorClass = 'bg-primary';
                     }
-                    
+
                     return '<span class="badge p-3 ' . $colorClass . '">' . $methodName . '</span>';
                 })
                 ->addColumn('stripe_amount', function ($data) {

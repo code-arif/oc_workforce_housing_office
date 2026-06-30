@@ -259,13 +259,13 @@
                                             @foreach ($invoice->items as $item)
                                                 <tr>
                                                     <td class="item-desc">
-                                                        <strong>{{ $item->item->name }}</strong>
+                                                        <strong>{{ $item->item?->name ?? $item->name ?? 'Item' }}</strong>
                                                         @if ($item->description)
-                                                            <p class="text-muted small mb-0">{{ $item->description }}</p>
+                                                            <p class="text-muted small mb-0">{{ $item->description ?? "N/A" }}</p>
                                                         @endif
                                                     </td>
                                                     <td class="item-qty">{{ $item->quantity }}</td>
-                                                    <td class="item-rate">${{ number_format($item->item->price, 2) }}</td>
+                                                    <td class="item-rate">${{ number_format($item->item?->price ?? 0, 2) }}</td>
                                                     <td class="item-amount">${{ number_format($item->amount, 2) }}</td>
                                                 </tr>
                                             @endforeach

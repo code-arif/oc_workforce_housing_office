@@ -367,15 +367,33 @@ class V2StripeMultiPaymentService
     // Public: Verify payment after Stripe redirect (for dev/fallback)
     // ─────────────────────────────────────────────────────────────────────────
 
-    public function verifyPayment(string $sessionId): array
+    public function verifyPayment(string $identifier): array
     {
         try {
-            $session = Session::retrieve($sessionId);
+            if (str_starts_with($identifier, 'pi_')) {
+                $intent = \Stripe\PaymentIntent::retrieve($identifier);
 
-            if ($session->payment_status === 'paid') {
-                return $this->processMultiInvoicePayment($session->metadata, $session);
-            } elseif ($session->payment_status === 'processing') {
-                return $this->markMultiInvoiceAsProcessing($session->metadata, $session);
+                if (($intent->metadata['bulk_payment'] ?? '') !== 'true') {
+                    return app(V2StripePaymentService::class)->verifyPayment($identifier);
+                }
+
+                if ($intent->status === 'succeeded') {
+                    return $this->processMultiInvoicePayment($intent->metadata, $intent);
+                } elseif ($intent->status === 'processing') {
+                    return $this->markMultiInvoiceAsProcessing($intent->metadata, $intent);
+                }
+            } else {
+                $session = Session::retrieve($identifier);
+
+                if (($session->metadata['bulk_payment'] ?? '') !== 'true') {
+                    return app(V2StripePaymentService::class)->verifyPayment($identifier);
+                }
+
+                if ($session->payment_status === 'paid') {
+                    return $this->processMultiInvoicePayment($session->metadata, $session);
+                } elseif ($session->payment_status === 'unpaid' && $session->status === 'complete') {
+                    return $this->markMultiInvoiceAsProcessing($session->metadata, $session);
+                }
             }
 
             return ['success' => false, 'message' => 'Payment not completed.'];
@@ -453,7 +471,10 @@ class V2StripeMultiPaymentService
             $firstInvoice = $invoices->first();
             $lease = $firstInvoice->lease;
             $tenant = $firstInvoice->tenant;
-            $bedId = $lease->assignments()->where('is_current', true)->first()?->bed_id ?? null;
+            $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+            if (!$bedId) {
+                $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+            }
 
             // 4. Process each invoice individually
             $processedPayments = [];

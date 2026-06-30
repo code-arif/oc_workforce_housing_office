@@ -957,17 +957,26 @@ class V2StripePaymentService
     /**
      * Verify payment after Stripe redirect
      */
-    public function verifyPayment($sessionId): array
+    public function verifyPayment($identifier): array
     {
         try {
-            $session = Session::retrieve($sessionId);
+            if (str_starts_with($identifier, 'pi_')) {
+                $intent = PaymentIntent::retrieve($identifier);
 
-            if ($session->payment_status === 'paid') {
-                $metadata = $session->metadata;
-                return $this->processPayment($metadata, $session);
-            } elseif ($session->payment_status === 'processing') {
-                $metadata = $session->metadata;
-                return $this->markAsProcessing($metadata, $session);
+                if ($intent->status === 'succeeded') {
+                    return $this->processPayment($intent->metadata, $intent);
+                } elseif ($intent->status === 'processing') {
+                    return $this->markAsProcessing($intent->metadata, $intent);
+                }
+            } else {
+                $session = Session::retrieve($identifier);
+
+                if ($session->payment_status === 'paid') {
+                    return $this->processPayment($session->metadata, $session);
+                } elseif ($session->payment_status === 'unpaid' && $session->status === 'complete') {
+                    // For delayed payment methods like ACH, payment_status is 'unpaid' but session status is 'complete'
+                    return $this->markAsProcessing($session->metadata, $session);
+                }
             }
 
             return ['success' => false, 'message' => 'Payment not completed'];
@@ -1034,7 +1043,10 @@ class V2StripePaymentService
                 ];
             }
 
-            $bedId = $lease->assignments()->where('is_current', true)->first()?->bed_id ?? null;
+            $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+            if (!$bedId) {
+                $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+            }
 
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
 
@@ -1323,7 +1335,7 @@ class V2StripePaymentService
                             'error'      => $result['message']
                         ]);
                     }
-                } elseif ($session->payment_status === 'processing') {
+                } elseif ($session->payment_status === 'unpaid' && $session->status === 'complete') {
                     // Route to multi-invoice handler if this is a bulk-payment session
                     if (($session->metadata['bulk_payment'] ?? '') === 'true') {
                         $multiService = app(V2StripeMultiPaymentService::class);
@@ -1377,6 +1389,64 @@ class V2StripePaymentService
                     $multiService->markMultiInvoiceAsFailed($session->metadata, $session);
                 } else {
                     $this->markAsFailed($session->metadata, $session);
+                }
+                break;
+
+            // Payment Intent Events (Custom Elements)
+            case 'payment_intent.succeeded':
+                $intent = $event->data->object;
+                Log::info('Payment intent succeeded via webhook', [
+                    'payment_intent_id' => $intent->id,
+                ]);
+
+                if (($intent->metadata['bulk_payment'] ?? '') === 'true') {
+                    $multiService = app(V2StripeMultiPaymentService::class);
+                    $result = $multiService->processMultiInvoicePayment($intent->metadata, $intent);
+                } else {
+                    $result = $this->processPayment($intent->metadata, $intent);
+                }
+
+                if (!$result['success']) {
+                    Log::error('Webhook payment intent processing failed', [
+                        'payment_intent_id' => $intent->id,
+                        'error'      => $result['message']
+                    ]);
+                }
+                break;
+
+            case 'payment_intent.processing':
+                $intent = $event->data->object;
+                Log::info('Payment intent processing via webhook', [
+                    'payment_intent_id' => $intent->id,
+                ]);
+
+                if (($intent->metadata['bulk_payment'] ?? '') === 'true') {
+                    $multiService = app(V2StripeMultiPaymentService::class);
+                    $result = $multiService->markMultiInvoiceAsProcessing($intent->metadata, $intent);
+                } else {
+                    $result = $this->markAsProcessing($intent->metadata, $intent);
+                }
+
+                if (!$result['success']) {
+                    Log::error('Webhook payment intent mark as processing failed', [
+                        'payment_intent_id' => $intent->id,
+                        'error' => $result['message']
+                    ]);
+                }
+                break;
+
+            case 'payment_intent.payment_failed':
+                $intent = $event->data->object;
+                Log::warning('Payment intent failed via webhook', [
+                    'payment_intent_id' => $intent->id,
+                    'failure_message' => $intent->last_payment_error->message ?? 'N/A',
+                ]);
+
+                if (($intent->metadata['bulk_payment'] ?? '') === 'true') {
+                    $multiService = app(V2StripeMultiPaymentService::class);
+                    $multiService->markMultiInvoiceAsFailed($intent->metadata, $intent);
+                } else {
+                    $this->markAsFailed($intent->metadata, $intent);
                 }
                 break;
 

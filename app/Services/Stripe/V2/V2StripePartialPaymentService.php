@@ -402,9 +402,9 @@ class V2StripePartialPaymentService
     /**
      * Verify payment after Stripe redirect (delegated to unified StripePaymentService)
      */
-    public function verifyPayment($sessionId): array
+    public function verifyPayment($identifier): array
     {
-        return app(V2StripePaymentService::class)->verifyPayment($sessionId);
+        return app(V2StripePaymentService::class)->verifyPayment($identifier);
     }
 
     /**

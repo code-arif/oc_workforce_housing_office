@@ -210,10 +210,18 @@ class TenantDashboardController extends Controller
     {
         try {
             $tenant = $request->user();
-            $payments = $this->leaseService->getPaymentHistory($tenant->id);
+            $perPage = $request->query('perpage', 10);
+            
+            $paginator = $this->leaseService->getPaginatedPaymentHistory($tenant->id, $perPage);
 
             return $this->success([
-                'payments' => $payments
+                'payments' => $paginator->items(),
+                'pagination' => [
+                    'total' => $paginator->total(),
+                    'per_page' => $paginator->perPage(),
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                ],
             ], 'Payment history retrieved successfully');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);

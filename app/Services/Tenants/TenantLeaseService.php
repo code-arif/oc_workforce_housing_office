@@ -256,6 +256,7 @@ class TenantLeaseService
             }
         ])
             ->where('tenant_id', $tenantId)
+            ->orderByRaw("CASE WHEN status IN ('UNPAID', 'PARTIAL', 'OVERDUE', 'PROCESSING') THEN 1 ELSE 2 END")
             ->orderBy('due_date', 'asc')
             ->orderBy('created_at', 'asc') // Ensure consistent ordering
             ->get();
@@ -448,7 +449,8 @@ class TenantLeaseService
             $query->where('status', $status);
         }
 
-        return $query->orderBy('due_date', 'desc')
+        return $query->orderByRaw("CASE WHEN status IN ('UNPAID', 'PARTIAL', 'OVERDUE', 'PROCESSING') THEN 1 ELSE 2 END")
+            ->orderBy('due_date', 'desc')
             ->get()
             ->map(function ($invoice) {
                 return [
@@ -546,6 +548,7 @@ class TenantLeaseService
                 'amount' => $payment->amount,
                 'payment_date' => $payment->payment_date,
                 'payment_method' => $payment->payment_method,
+                'payment_method_type' => $payment->metadata['stripe_payment_method_type'] ?? ($payment->payment_method === 'cash' ? 'cash' : 'card'),
                 'reference_number' => $payment->reference_number,
                 'payment_type' => $payment->payment_type,
                 'note' => $payment->note,
@@ -556,6 +559,41 @@ class TenantLeaseService
                 'property_name' => $payment->lease->property->name ?? 'N/A',
             ];
         });
+    }
+
+    /**
+     * Get paginated payment history
+     */
+    public function getPaginatedPaymentHistory($tenantId, $perPage = 10)
+    {
+        $paginator = Payment::with([
+            'invoice',
+            'lease.property'
+        ])
+            ->where('tenant_id', $tenantId)
+            ->orderBy('payment_date', 'desc')
+            ->paginate($perPage);
+
+        $paginator->getCollection()->transform(function ($payment) {
+            return [
+                'id' => $payment->id,
+                'payment_number' => $payment->payment_number,
+                'amount' => $payment->amount,
+                'payment_date' => $payment->payment_date,
+                'payment_method' => $payment->payment_method,
+                'payment_method_type' => $payment->metadata['stripe_payment_method_type'] ?? ($payment->payment_method === 'cash' ? 'cash' : 'card'),
+                'reference_number' => $payment->reference_number,
+                'payment_type' => $payment->payment_type,
+                'note' => $payment->note,
+                'invoice' => [
+                    'id' => $payment->invoice->id,
+                    'invoice_number' => $payment->invoice->invoice_number,
+                ],
+                'property_name' => $payment->lease->property->name ?? 'N/A',
+            ];
+        });
+
+        return $paginator;
     }
 
     /**

@@ -81,19 +81,23 @@
                         <ul class="slide-menu">
                             @can('seasons.list')
                                 <li>
-                                    <a href="{{ route('seasons.list') }}" class="slide-item {{ request()->routeIs('seasons.*') ? 'active' : '' }}">Seasons</a>
+                                    <a href="{{ route('seasons.list') }}"
+                                        class="slide-item {{ request()->routeIs('seasons.*') ? 'active' : '' }}">Seasons</a>
                                 </li>
                             @endcan
 
                             @can('lease.template.list')
                                 <li>
-                                    <a href="{{ route('lease-templates.index') }}" class="slide-item {{ request()->routeIs('lease-templates.*') ? 'active' : '' }}">Lease Templates</a>
+                                    <a href="{{ route('lease-templates.index') }}"
+                                        class="slide-item {{ request()->routeIs('lease-templates.*') ? 'active' : '' }}">Lease
+                                        Templates</a>
                                 </li>
                             @endcan
 
                             @can('lease.list')
                                 <li>
-                                    <a href="{{ route('leases.index') }}" class="slide-item {{ request()->routeIs('leases.*') ? 'active' : '' }}">Leases</a>
+                                    <a href="{{ route('leases.index') }}"
+                                        class="slide-item {{ request()->routeIs('leases.*') ? 'active' : '' }}">Leases</a>
                                 </li>
                             @endcan
                         </ul>
@@ -118,21 +122,22 @@
                     {{-- Frontend --}}
                     <li class="slide">
 
-                        <a class="side-menu__item {{ request()->routeIs('cms.*', 'messaging.*', 'maintanance.*', 'items.*', 'faq.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
+                        <a class="side-menu__item {{ request()->routeIs('cms.*', 'messaging.*', 'maintanance.*', 'items.*', 'faq.*') ? 'has-link' : '' }}"
+                            data-bs-toggle="slide" href="#">
                             <i class="fa-solid fa-layer-group"></i>
                             <span class="side-menu__label">Platforms</span>
                             <i class="angle fa fa-angle-right ms-auto"></i>
                         </a>
                         <ul class="slide-menu">
                             <li><a href="{{ route('cms.index') }}"
-                                    class="slide-item {{ request()->routeIs('cms.index') ? 'active' : '' }}">CMS</a></li>
+                                    class="slide-item {{ request()->routeIs('cms.*') ? 'active' : '' }}">CMS</a></li>
                             <li><a href="{{ route('messaging.index') }}"
-                                    class="slide-item {{ request()->routeIs('messaging.index') ? 'active' : '' }}">Messaging</a>
+                                    class="slide-item {{ request()->routeIs('messaging.*') ? 'active' : '' }}">Messaging</a>
                             </li>
                             {{-- Maintanence --}}
                             <li>
-                                <a
-                                    class="slide-item {{ request()->routeIs('maintanance.index') ? 'active' : '' }}" href="{{ route('maintanance.index') }}"> Maintanence
+                                <a class="slide-item {{ request()->routeIs('maintanance.*') ? 'active' : '' }}"
+                                    href="{{ route('maintanance.index') }}"> Maintanence
                                 </a>
                             </li>
                             {{-- Items & FAQ --}}
@@ -149,7 +154,8 @@
                 {{-- Reports --}}
                 @can('reports.list')
                     <li class="slide">
-                        <a class="side-menu__item {{ request()->routeIs('reports.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
+                        <a class="side-menu__item {{ request()->routeIs('reports.*') ? 'has-link' : '' }}"
+                            data-bs-toggle="slide" href="#">
                             <i class="fa-solid fa-explosion"></i>
                             <span class="side-menu__label">Reports</span>
                             <i class="angle fa fa-angle-right ms-auto"></i>
@@ -165,7 +171,8 @@
                                     class="slide-item {{ request()->routeIs('reports.rent-collection.*') ? 'active' : '' }}">Rent
                                     Collection</a></li>
                             <li><a href="{{ route('reports.tenant.index') }}"
-                                    class="slide-item {{ request()->routeIs('reports.tenant.*') ? 'active' : '' }}">Tenant Reports</a></li>
+                                    class="slide-item {{ request()->routeIs('reports.tenant.*') ? 'active' : '' }}">Tenant
+                                    Reports</a></li>
                             {{-- <li><a href="#" class="slide-item">Lease Reports</a></li> --}}
                         </ul>
                     </li>
@@ -175,21 +182,27 @@
                     'user-management.permissions.list'])
                     {{-- User Management --}}
                     <li class="slide">
-                        <a class="side-menu__item {{ request()->routeIs('user-management.*') ? 'has-link' : '' }}" data-bs-toggle="slide" href="#">
+                        <a class="side-menu__item {{ request()->routeIs('user-management.*') ? 'has-link' : '' }}"
+                            data-bs-toggle="slide" href="#">
                             <i class="fa-solid fa-users-gear"></i>
                             <span class="side-menu__label">User Management</span>
                             <i class="angle fa fa-angle-right ms-auto"></i>
                         </a>
                         <ul class="slide-menu">
                             @can('user-management.users.list')
-                                <li><a href="{{ route('user-management.users.index') }}" class="slide-item {{ request()->routeIs('user-management.users.*') ? 'active' : '' }}">Users</a></li>
+                                <li><a href="{{ route('user-management.users.index') }}"
+                                        class="slide-item {{ request()->routeIs('user-management.users.*') ? 'active' : '' }}">Users</a>
+                                </li>
                             @endcan
                             @can('user-management.roles.list')
-                                <li><a href="{{ route('user-management.roles.index') }}" class="slide-item {{ request()->routeIs('user-management.roles.*') ? 'active' : '' }}">Roles</a></li>
+                                <li><a href="{{ route('user-management.roles.index') }}"
+                                        class="slide-item {{ request()->routeIs('user-management.roles.*') ? 'active' : '' }}">Roles</a>
+                                </li>
                             @endcan
                             @can('user-management.permissions.list')
                                 <li><a href="{{ route('user-management.permissions.index') }}"
-                                        class="slide-item {{ request()->routeIs('user-management.permissions.*') ? 'active' : '' }}">Permissions</a></li>
+                                        class="slide-item {{ request()->routeIs('user-management.permissions.*') ? 'active' : '' }}">Permissions</a>
+                                </li>
                             @endcan
                         </ul>
                     </li>
@@ -254,6 +267,35 @@
 </div>
 <!--/APP-SIDEBAR-->
 
+<script>
+    // Auto-expand parent slide menus when a sub-item is already marked active by Blade
+    // Uses vanilla JS to avoid jQuery dependency (sidebar partial renders before scripts load)
+    (function() {
+        'use strict';
+
+        function expandActiveParents() {
+            document.querySelectorAll('.slide-menu .slide-item.active').forEach(function(item) {
+                var parentUl = item.closest('.slide-menu');
+                var parentLi = item.closest('.slide');
+                if (parentLi && !parentLi.classList.contains('is-expanded')) {
+                    parentUl.classList.add('open');
+                    parentUl.style.display = '';
+                    parentLi.classList.add('is-expanded');
+                    var toggle = parentLi.querySelector('[data-bs-toggle="slide"]');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', expandActiveParents);
+        } else {
+            expandActiveParents();
+        }
+        setTimeout(expandActiveParents, 300);
+    })();
+</script>
+
 
 {{-- sidebar style --}}
 <style>
@@ -262,11 +304,11 @@
     /* Premium Sidebar Styling */
     .app-sidebar {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        box-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.08); 
+        box-shadow: 0 4px 24px 0 rgba(34, 41, 47, 0.08);
     }
 
     .side-menu {
-        padding-top: 15px; 
+        padding-top: 15px;
     }
 
     /* Section Headers */
@@ -375,7 +417,8 @@
     .slide-menu .slide-item {
         display: flex;
         align-items: center;
-        padding: 8px 16px 8px 30px; /* added left padding for the indicator */
+        padding: 8px 16px 8px 30px;
+        /* added left padding for the indicator */
         color: #6B7280;
         font-size: 13.5px;
         font-weight: 500;
@@ -430,5 +473,4 @@
         font-weight: 600;
         background-color: rgba(217, 166, 0, 0.08);
     }
-
 </style>

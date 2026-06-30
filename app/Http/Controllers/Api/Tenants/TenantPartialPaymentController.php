@@ -135,7 +135,8 @@ class TenantPartialPaymentController extends Controller
     public function verifyPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'session_id' => 'required|string',
+            'session_id' => 'required_without:payment_intent_id|string',
+            'payment_intent_id' => 'required_without:session_id|string',
         ]);
 
         if ($validator->fails()) {
@@ -143,7 +144,8 @@ class TenantPartialPaymentController extends Controller
         }
 
         try {
-            $result = $this->stripeService->verifyPayment($request->session_id);
+            $identifier = $request->session_id ?? $request->payment_intent_id;
+            $result = $this->stripeService->verifyPayment($identifier);
 
             if (!$result['success']) {
                 return $this->error([], $result['message'], 400);

@@ -280,7 +280,10 @@ class InvoiceController extends Controller
         try {
             $invoice = Invoice::with('lease.property')->findOrFail($id);
             $lease = $invoice->lease;
-            $bedId = $lease->assignments()->where('is_current', true)->first()->bed_id ?? null;
+            $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+            if (!$bedId) {
+                $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+            }
 
             // Check for deposit invoice with same invoice number (for first invoice)
             $depositInvoice = null;

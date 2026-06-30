@@ -106,7 +106,8 @@ class TenantMultiPaymentController extends Controller
     public function verifyPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'session_id' => 'required|string',
+            'session_id' => 'required_without:payment_intent_id|string',
+            'payment_intent_id' => 'required_without:session_id|string',
         ]);
 
         if ($validator->fails()) {
@@ -114,9 +115,9 @@ class TenantMultiPaymentController extends Controller
         }
 
         try {
-            $sessionId = $request->input('session_id');
+            $identifier = $request->session_id ?? $request->payment_intent_id;
 
-            $result = $this->multiPaymentService->verifyPayment($sessionId);
+            $result = $this->multiPaymentService->verifyPayment($identifier);
 
             if (!$result['success']) {
                 return $this->error([], $result['message'] ?? 'Payment verification failed.', 422);
