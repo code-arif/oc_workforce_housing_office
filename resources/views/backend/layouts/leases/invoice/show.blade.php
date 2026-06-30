@@ -112,13 +112,13 @@
                                         <span class="status-badge cancelled">
                                             <i class="fe fe-slash me-1"></i> Voided
                                         </span>
-                                    @elseif($invoice->isOverdue())
-                                        <span class="status-badge overdue">
-                                            <i class="fe fe-alert-circle me-1"></i> Overdue
-                                        </span>
                                     @elseif($invoice->status == 'PROCESSING')
                                         <span class="status-badge processing">
                                             <i class="fe fe-loader me-1"></i> Processing
+                                        </span>
+                                    @elseif($invoice->isOverdue())
+                                        <span class="status-badge overdue">
+                                            <i class="fe fe-alert-circle me-1"></i> Overdue
                                         </span>
                                     @else
                                         <span class="status-badge unpaid">

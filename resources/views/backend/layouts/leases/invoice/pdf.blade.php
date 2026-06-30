@@ -400,10 +400,10 @@
                         <span class="status-badge status-partial">Partially Paid</span>
                     @elseif($invoice->status == 'CANCELLED')
                         <span class="status-badge status-voided">! Void/Cancelled</span>
-                    @elseif($invoice->isOverdue())
-                        <span class="status-badge status-overdue">! Overdue</span>
                     @elseif($invoice->status == 'PROCESSING')
                         <span class="status-badge status-processing">Processing</span>
+                    @elseif($invoice->isOverdue())
+                        <span class="status-badge status-overdue">! Overdue</span>
                     @else
                         <span class="status-badge status-unpaid">Unpaid</span>
                     @endif

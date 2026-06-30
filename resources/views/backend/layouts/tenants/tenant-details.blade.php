@@ -487,17 +487,19 @@
 
                         <!-- Invoices Table -->
                         <div class="card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h5 class="card-title mb-0"><i class="fe fe-file-text text-primary me-2"></i>All Invoices
-                                </h5>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button type="button" class="btn btn-outline-primary active"
-                                        data-filter="all">All</button>
-                                    <button type="button" class="btn btn-outline-success" data-filter="paid">Paid</button>
-                                    <button type="button" class="btn btn-outline-info" data-filter="processing">Processing</button>
-                                    <button type="button" class="btn btn-outline-warning" data-filter="unpaid">Due</button>
-                                    <button type="button" class="btn btn-outline-danger"
-                                        data-filter="overdue">Overdue</button>
+                            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <h5 class="card-title mb-0"><i class="fe fe-file-text text-primary me-2"></i>All Invoices</h5>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="text" class="form-control form-control-sm" id="invoiceSearch" placeholder="Search invoices..." style="width: 200px;">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-primary active" data-filter="all">All</button>
+                                        <button type="button" class="btn btn-outline-success" data-filter="PAID">Paid</button>
+                                        <button type="button" class="btn btn-outline-info" data-filter="PROCESSING">Processing</button>
+                                        <button type="button" class="btn btn-outline-warning" data-filter="UNPAID">Due</button>
+                                        <button type="button" class="btn btn-outline-secondary" data-filter="PARTIAL">Partial</button>
+                                        <button type="button" class="btn btn-outline-danger" data-filter="OVERDUE">Overdue</button>
+                                        <button type="button" class="btn btn-outline-dark" data-filter="CANCELLED">Voided</button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="card-body p-0" style="height: 350px; overflow-y:scroll;">
@@ -520,9 +522,12 @@
                                                     @php
                                                         $isOverdue = $invoice->isOverdue();
                                                         $isPaid = $invoice->isPaid();
-                                                        $statusClass = $isPaid ? 'paid' : ($isOverdue ? 'overdue' : 'unpaid');
+                                                        $exactStatus = $invoice->status;
+                                                        if (in_array($exactStatus, ['UNPAID', 'PARTIAL']) && $isOverdue) {
+                                                            $exactStatus = 'OVERDUE';
+                                                        }
                                                     @endphp
-                                                    <tr class="invoice-row" data-status="{{ $statusClass }}">
+                                                    <tr class="invoice-row" data-status="{{ $exactStatus }}">
                                                         <td>
                                                             <a href="{{ route('invoices.show', $invoice->id) }}"
                                                                 class="fw-semibold text-primary">
@@ -552,29 +557,29 @@
                                                                     class="badge bg-success-light text-success px-2 py-1 d-inline-flex align-items-center">
                                                                     <i class="fe fe-check me-1"></i>Paid
                                                                 </span>
-                                                            @elseif($isOverdue)
+                                                            @elseif($invoice->status === 'PROCESSING')
                                                                 <span
-                                                                    class="badge bg-danger-light text-danger px-2 py-1 d-inline-flex align-items-center">
-                                                                    <i class="fe fe-alert-circle me-1"></i>Overdue
+                                                                    class="badge bg-primary-light text-dark px-2 py-1 d-inline-flex align-items-center">
+                                                                    <i class="fe fe-clock me-1"></i>Processing
                                                                 </span>
                                                             @elseif($invoice->status === 'PARTIAL')
                                                                 <span
                                                                     class="badge bg-info-light text-info px-2 py-1 d-inline-flex align-items-center">
                                                                     <i class="fe fe-percent me-1"></i>Partial
                                                                 </span>
+                                                            @elseif($isOverdue)
+                                                                <span
+                                                                    class="badge bg-danger-light text-danger px-2 py-1 d-inline-flex align-items-center">
+                                                                    <i class="fe fe-alert-circle me-1"></i>Overdue
+                                                                </span>
                                                             @elseif($invoice->status === 'CANCELLED')
                                                                 <span
                                                                     class="badge bg-secondary-light text-danger px-2 py-1 d-inline-flex align-items-center">
                                                                     <i class="fe fe-x me-1"></i>Voided
                                                                 </span>
-                                                            @elseif($invoice->status === 'PROCESSING')
-                                                                <span
-                                                                    class="badge bg-warning-light text-warning px-2 py-1 d-inline-flex align-items-center">
-                                                                    <i class="fe fe-clock me-1"></i>Processing
-                                                                </span>
                                                             @else
                                                                 <span
-                                                                    class="badge bg-warning-light text-warning px-2 py-1 d-inline-flex align-items-center">
+                                                                    class="badge bg-dark-light text-dark px-2 py-1 d-inline-flex align-items-center">
                                                                     <i class="fe fe-clock me-1"></i>Due
                                                                 </span>
                                                             @endif
@@ -919,24 +924,39 @@
     <script src="{{asset('backend/plugins/bootstrap-datepicker/js/datepicker.js')}}"></script>
     <script>
         // Invoice filter functionality
-        document.querySelectorAll('[data-filter]').forEach(btn => {
+        const filterBtns = document.querySelectorAll('[data-filter]');
+        const searchInput = document.getElementById('invoiceSearch');
+
+        function filterInvoices() {
+            const activeFilter = document.querySelector('[data-filter].active').dataset.filter;
+            const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+            document.querySelectorAll('.invoice-row').forEach(row => {
+                const status = row.dataset.status;
+                const text = row.textContent.toLowerCase();
+
+                const matchesFilter = activeFilter === 'all' || status === activeFilter;
+                const matchesSearch = text.includes(searchTerm);
+
+                if (matchesFilter && matchesSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        filterBtns.forEach(btn => {
             btn.addEventListener('click', function () {
-                const filter = this.dataset.filter;
-
-                // Update active button
-                document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+                filterBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-
-                // Filter rows
-                document.querySelectorAll('.invoice-row').forEach(row => {
-                    if (filter === 'all' || row.dataset.status === filter) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
+                filterInvoices();
             });
         });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', filterInvoices);
+        }
 
         $(document).ready(function () {
             // Initialize datepicker
