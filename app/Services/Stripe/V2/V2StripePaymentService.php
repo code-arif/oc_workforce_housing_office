@@ -1259,10 +1259,60 @@ class V2StripePaymentService
             return ['success' => true, 'invoice' => ['id' => $invoice->id, 'status' => $invoice->status]];
         } catch (Exception $e) {
             DB::rollBack();
-            Log::error('Mark as failed failed: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Failed to mark as failed'];
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
+
+    /**
+     * Mark invoice as UNPAID and void local payment if canceled from Stripe
+     */
+    public function markAsCanceled($metadata, $sessionOrIntent): array
+    {
+        DB::beginTransaction();
+        try {
+            $invoiceId = $metadata['invoice_id'] ?? null;
+            $paymentIntentId = $sessionOrIntent->id ?? null;
+
+            if ($invoiceId) {
+                $invoice = Invoice::lockForUpdate()->find($invoiceId);
+                if ($invoice && $invoice->status === 'PROCESSING') {
+                    $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
+                    $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
+                    $invoice->update(['status' => $status]);
+                }
+            }
+
+            if ($paymentIntentId) {
+                $localPayment = Payment::where('stripe_payment_intent_id', $paymentIntentId)
+                    ->where('status', '!=', 'voided')
+                    ->first();
+
+                if ($localPayment) {
+                    $localPayment->update([
+                        'status' => 'voided',
+                        'void_reason' => 'Canceled in Stripe',
+                        'voided_at' => now(),
+                    ]);
+                    
+                    if ($localPayment->invoice) {
+                        $localPayment->invoice->updatePaymentStatus();
+                    }
+                }
+            }
+
+            DB::commit();
+
+            Log::info('Invoice/Payment marked as canceled via webhook', [
+                'session_intent_id' => $paymentIntentId
+            ]);
+
+            return ['success' => true];
+        } catch (Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
 
     /**
      * Send payment success emails
@@ -1450,6 +1500,21 @@ class V2StripePaymentService
                 }
                 break;
 
+            case 'payment_intent.canceled':
+                $intent = $event->data->object;
+                Log::info('Payment intent canceled via webhook', [
+                    'payment_intent_id' => $intent->id,
+                ]);
+
+                if (($intent->metadata['bulk_payment'] ?? '') === 'true') {
+                    $multiService = app(V2StripeMultiPaymentService::class);
+                    // Just fallback to failed logic to revert invoice processing status
+                    $multiService->markMultiInvoiceAsFailed($intent->metadata, $intent);
+                } else {
+                    $this->markAsCanceled($intent->metadata, $intent);
+                }
+                break;
+
             case 'transfer.created':
                 // Log when transfer to connected account is created
                 $transfer = $event->data->object;
@@ -1491,5 +1556,39 @@ class V2StripePaymentService
                 ];
             })
             ->toArray();
+    }
+
+    /**
+     * Cancel a Stripe PaymentIntent.
+     */
+    public function cancelPaymentIntent(string $paymentIntentId): array
+    {
+        try {
+            $intent = PaymentIntent::retrieve($paymentIntentId);
+
+            if (in_array($intent->status, ['succeeded', 'canceled'])) {
+                return [
+                    'success' => false,
+                    'message' => 'PaymentIntent is in a state (' . $intent->status . ') that cannot be canceled.',
+                ];
+            }
+
+            $intent->cancel();
+
+            return [
+                'success' => true,
+                'message' => 'Payment successfully canceled in Stripe.',
+            ];
+        } catch (Exception $e) {
+            Log::error('Stripe PaymentIntent cancellation failed: ' . $e->getMessage(), [
+                'payment_intent_id' => $paymentIntentId,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to cancel PaymentIntent: ' . $e->getMessage()
+            ];
+        }
     }
 }

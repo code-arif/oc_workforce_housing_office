@@ -2,22 +2,23 @@
 
 namespace App\Http\Controllers\Web\Backend\Transaction;
 
+use App\Exports\TransactionExport;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\Transaction;
+use App\Services\Stripe\V2\V2StripePaymentService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\TransactionExport;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Yajra\DataTables\Facades\DataTables;
 
 class TransactionController extends Controller
@@ -506,6 +507,19 @@ class TransactionController extends Controller
             $bedId = $payment->lease?->assignments()
                 ->where('is_current', true)
                 ->value('bed_id') ?? $payment->bed_id;
+
+            // Attempt to cancel in Stripe if it's a Stripe payment
+            if ($payment->stripe_payment_intent_id) {
+                $stripeService = app(V2StripePaymentService::class);
+                $stripeResult = $stripeService->cancelPaymentIntent($payment->stripe_payment_intent_id);
+
+                if (!$stripeResult['success']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot void: ' . $stripeResult['message'],
+                    ], 422);
+                }
+            }
 
             // Void the payment
             $payment->update([

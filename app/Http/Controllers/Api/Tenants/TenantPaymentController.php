@@ -201,8 +201,6 @@ class TenantPaymentController extends Controller
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
         }
-    }
-
     /**
      * Webhook handler for Stripe events
      */

@@ -259,7 +259,7 @@
                 </div>
 
                 <!-- Transactions Table -->
-                <div class="card" id="tableCard">
+                <div class="card p-3" id="tableCard">
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-bordered table-hover text-nowrap align-middle" id="transactionsTable" style="width: 100%">
