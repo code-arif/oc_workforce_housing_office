@@ -46,6 +46,7 @@ use App\Http\Controllers\Web\Backend\Tenant\ApplicationController;
 use App\Http\Controllers\Web\Backend\Tenant\MaintananceController;
 use App\Http\Controllers\Web\Backend\Tenant\PaymentManageController;
 use App\Http\Controllers\Web\Backend\Tenant\TenantManageController;
+use App\Http\Controllers\Web\Backend\Transaction\TransactionController;
 use App\Http\Controllers\Web\Backend\UnitController;
 use App\Http\Controllers\Web\Backend\UserManagement\PermissionController;
 use App\Http\Controllers\Web\Backend\UserManagement\RoleController;
@@ -684,6 +685,24 @@ Route::prefix('system-monitor')->name('system-monitor.')->group(function () {
     // Route::get('/api/activity', [SystemMonitorController::class, 'getUserActivity'])->name('api.activity');
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| Transaction Monitoring Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('transactions')->name('transactions.')->group(function () {
+    Route::get('/', [TransactionController::class, 'index'])->name('index');
+    Route::get('/data', [TransactionController::class, 'getData'])->name('data');
+    Route::get('/summary', [TransactionController::class, 'getSummary'])->name('summary');
+    Route::get('/{id}/details', [TransactionController::class, 'getPaymentDetails'])->name('details');
+    Route::post('/{id}/review', [TransactionController::class, 'updateReviewStatus'])->name('review');
+    Route::post('/{id}/void', [TransactionController::class, 'voidPayment'])->name('void');
+    Route::post('/{id}/note', [TransactionController::class, 'updateNote'])->name('note');
+    Route::get('/export-excel', [TransactionController::class, 'exportExcel'])->name('export.excel');
+    Route::get('/export-csv', [TransactionController::class, 'exportCsv'])->name('export.csv');
+    Route::get('/export-pdf', [TransactionController::class, 'exportPdf'])->name('export.pdf');
+});
 
 // Activity Logs Routes
 Route::prefix('activity-logs')->name('activity-logs.')->group(function () {

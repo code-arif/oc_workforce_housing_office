@@ -116,7 +116,16 @@
                     </li>
                 @endcan
 
-
+                {{-- Transactions / Payment Monitoring --}}
+                @can('income')
+                    <li class="slide">
+                        <a class="side-menu__item {{ request()->routeIs('transactions.*') ? 'has-link' : '' }}"
+                            href="{{ route('transactions.index') }}">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                            <span class="side-menu__label">Transactions</span>
+                        </a>
+                    </li>
+                @endcan
 
                 @can('cms.view')
                     {{-- Frontend --}}
