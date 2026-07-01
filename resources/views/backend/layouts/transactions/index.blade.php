@@ -16,26 +16,26 @@
                             <li class="breadcrumb-item active" aria-current="page">Transactions</li>
                         </ol>
                     </div>
-                    <div class="ms-auto pageheader-btn d-flex gap-2">
+                    <div class="ms-auto pageheader-btn d-flex align-items-center gap-2">
                         <!-- View Toggle -->
-                        <div class="btn-group btn-group-sm" role="group" id="viewToggle">
+                        <div class="btn-group" role="group" id="viewToggle">
                             <input type="radio" class="btn-check" name="viewMode" id="viewTable" value="table" checked>
-                            <label class="btn btn-outline-secondary d-inline-flex align-items-center" for="viewTable" title="Table View">
+                            <label class="btn btn-outline-secondary d-flex align-items-center m-0" for="viewTable" title="Table View" style="height: 38px;">
                                 <i class="fe fe-list me-1"></i> Table
                             </label>
                             <input type="radio" class="btn-check" name="viewMode" id="viewCompact" value="compact">
-                            <label class="btn btn-outline-secondary d-inline-flex align-items-center" for="viewCompact" title="Compact View">
+                            <label class="btn btn-outline-secondary d-flex align-items-center m-0" for="viewCompact" title="Compact View" style="height: 38px;">
                                 <i class="fe fe-align-justify me-1"></i> Compact
                             </label>
                             <input type="radio" class="btn-check" name="viewMode" id="viewChart" value="chart">
-                            <label class="btn btn-outline-secondary d-inline-flex align-items-center" for="viewChart" title="Chart View">
+                            <label class="btn btn-outline-secondary d-flex align-items-center m-0" for="viewChart" title="Chart View" style="height: 38px;">
                                 <i class="fe fe-bar-chart-2 me-1"></i> Chart
                             </label>
                         </div>
                         <div class="btn-group">
-                            <button type="button" class="btn btn-primary dropdown-toggle d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fe fe-download me-2"></i> Export
+                            <button type="button" class="btn btn-primary dropdown-toggle d-flex align-items-center m-0"
+                                data-bs-toggle="dropdown" aria-expanded="false" style="height: 38px;">
+                                <i class="fe fe-download me-1"></i> Export
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="#" id="exportExcelBtn" target="_blank">
@@ -47,8 +47,8 @@
                                     <i class="fe fe-file-text me-2 text-danger"></i> Export as PDF</a></li>
                             </ul>
                         </div>
-                        <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center" id="refreshBtn">
-                            <i class="fe fe-refresh-cw me-2"></i> Refresh
+                        <button type="button" class="btn btn-outline-secondary d-flex align-items-center m-0" id="refreshBtn" style="height: 38px;">
+                            <i class="fe fe-refresh-cw me-1"></i> Refresh
                         </button>
                     </div>
                 </div>
@@ -261,7 +261,8 @@
                 <!-- Transactions Table -->
                 <div class="card" id="tableCard">
                     <div class="card-body">
-                            <table class="table table-hover text-nowrap" id="transactionsTable" style="width: 100%">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover text-nowrap align-middle" id="transactionsTable" style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
                                         <th>ID</th>
@@ -282,6 +283,7 @@
                                 </thead>
                                 <tbody></tbody>
                             </table>
+                        </div>
                     </div>
                 </div>
 
@@ -318,7 +320,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fe fe-edit me-2"></i>Update Review Status</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
                 </div>
                 <form id="reviewForm">
                     @csrf
@@ -354,7 +356,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title text-danger"><i class="fe fe-alert-triangle me-2"></i>Void / Cancel Payment</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">&times;</button>
                 </div>
                 <form id="voidForm">
                     @csrf
@@ -446,7 +448,6 @@
                 order: [[0, 'desc']],
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                scrollX: true,
                 columnDefs: [
                     { targets: 0, visible: false },
                     { targets: [13], orderable: false, searchable: false }

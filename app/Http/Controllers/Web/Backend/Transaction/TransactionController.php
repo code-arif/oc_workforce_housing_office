@@ -234,7 +234,7 @@ class TransactionController extends Controller
                     $escapedInvoiceNumber = e($payment->invoice->invoice_number);
                     return '<div><a href="' . $invoiceUrl . '" class="text-decoration-none fw-semibold" target="_blank" title="View invoice details">'
                         . $escapedInvoiceNumber . ' <i class="fe fe-external-link" style="font-size:10px;opacity:0.4;"></i></a>' .
-                        ' <span class="badge ' . $statusBadge . ' p-1" style="font-size:10px;">' . e($status) . '</span></div>' .
+                        ' <span class="badge ' . $statusBadge . ' p-2" style="font-size:10px;">' . e($status) . '</span></div>' .
                         '<small class="text-muted">$' . number_format($payment->invoice->total_amount, 2) . '</small>';
                 }
                 return 'N/A';
