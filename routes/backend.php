@@ -698,6 +698,7 @@ Route::prefix('transactions')->name('transactions.')->group(function () {
     Route::get('/{id}/details', [TransactionController::class, 'getPaymentDetails'])->name('details');
     Route::post('/{id}/review', [TransactionController::class, 'updateReviewStatus'])->name('review');
     Route::post('/{id}/void', [TransactionController::class, 'voidPayment'])->name('void');
+    Route::get('/chart-data', [TransactionController::class, 'getChartData'])->name('chart-data');
     Route::post('/{id}/note', [TransactionController::class, 'updateNote'])->name('note');
     Route::get('/export-excel', [TransactionController::class, 'exportExcel'])->name('export.excel');
     Route::get('/export-csv', [TransactionController::class, 'exportCsv'])->name('export.csv');

@@ -904,6 +904,87 @@ class TransactionController extends Controller
     }
 
     /**
+     * Get chart data for the dashboard chart view.
+     */
+    public function getChartData(Request $request)
+    {
+        try {
+            $monthsBack = (int) $request->get('months', 12);
+
+            $query = Payment::query()
+                ->select(
+                    DB::raw("DATE_FORMAT(payment_date, '%Y-%m') as month"),
+                    DB::raw("SUM(CASE WHEN status != 'voided' THEN amount ELSE 0 END) as collected"),
+                    DB::raw("SUM(CASE WHEN status != 'voided' THEN COALESCE(processing_fee, 0) ELSE 0 END) as fees"),
+                    DB::raw("SUM(CASE WHEN status = 'voided' THEN amount ELSE 0 END) as voided"),
+                    DB::raw("COUNT(*) as total_payments"),
+                    DB::raw("SUM(CASE WHEN status = 'voided' THEN 1 ELSE 0 END) as voided_count"),
+                )
+                ->where('payment_date', '>=', now()->subMonths($monthsBack)->startOfMonth())
+                ->groupBy(DB::raw("DATE_FORMAT(payment_date, '%Y-%m')"))
+                ->orderBy('month')
+                ->get();
+
+            $labels = [];
+            $collected = [];
+            $fees = [];
+            $voided = [];
+
+            foreach ($query as $row) {
+                $labels[] = \Carbon\Carbon::createFromFormat('Y-m', $row->month)->format('M Y');
+                $collected[] = (float) $row->collected;
+                $fees[] = (float) $row->fees;
+                $voided[] = (float) $row->voided;
+            }
+
+            // Payment method breakdown (active payments)
+            $methodBreakdown = Payment::query()
+                ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+                ->where('payment_date', '>=', now()->subMonths($monthsBack)->startOfMonth())
+                ->where('status', '!=', 'voided')
+                ->groupBy('payment_method')
+                ->get()
+                ->map(function ($row) {
+                    return [
+                        'label' => ucfirst(str_replace('_', ' ', $row->payment_method ?? 'N/A')),
+                        'total' => (float) $row->total,
+                        'count' => (int) $row->count,
+                    ];
+                });
+
+            // Review status breakdown
+            $reviewBreakdown = Payment::query()
+                ->select('review_status', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+                ->where('payment_date', '>=', now()->subMonths($monthsBack)->startOfMonth())
+                ->where('status', '!=', 'voided')
+                ->groupBy('review_status')
+                ->get()
+                ->map(function ($row) {
+                    $label = $row->review_status ? ucfirst($row->review_status) : 'Pending';
+                    return [
+                        'label' => $label,
+                        'total' => (float) $row->total,
+                        'count' => (int) $row->count,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'labels' => $labels,
+                'datasets' => [
+                    'collected' => $collected,
+                    'fees' => $fees,
+                    'voided' => $voided,
+                ],
+                'method_breakdown' => $methodBreakdown,
+                'review_breakdown' => $reviewBreakdown,
+            ]);
+        } catch (Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Normalize date string to Y-m-d format.
      */
     private function normalizeDate($date): ?string

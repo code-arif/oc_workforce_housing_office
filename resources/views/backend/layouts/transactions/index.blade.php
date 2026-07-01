@@ -17,6 +17,21 @@
                         </ol>
                     </div>
                     <div class="ms-auto pageheader-btn d-flex gap-2">
+                        <!-- View Toggle -->
+                        <div class="btn-group btn-group-sm" role="group" id="viewToggle">
+                            <input type="radio" class="btn-check" name="viewMode" id="viewTable" value="table" checked>
+                            <label class="btn btn-outline-secondary d-inline-flex align-items-center" for="viewTable" title="Table View">
+                                <i class="fe fe-list me-1"></i> Table
+                            </label>
+                            <input type="radio" class="btn-check" name="viewMode" id="viewCompact" value="compact">
+                            <label class="btn btn-outline-secondary d-inline-flex align-items-center" for="viewCompact" title="Compact View">
+                                <i class="fe fe-align-justify me-1"></i> Compact
+                            </label>
+                            <input type="radio" class="btn-check" name="viewMode" id="viewChart" value="chart">
+                            <label class="btn btn-outline-secondary d-inline-flex align-items-center" for="viewChart" title="Chart View">
+                                <i class="fe fe-bar-chart-2 me-1"></i> Chart
+                            </label>
+                        </div>
                         <div class="btn-group">
                             <button type="button" class="btn btn-primary dropdown-toggle d-inline-flex align-items-center"
                                 data-bs-toggle="dropdown" aria-expanded="false">
@@ -197,11 +212,56 @@
                     </div>
                 </div>
 
-                <!-- Transactions Table -->
-                <div class="card">
+                <!-- Chart View -->
+                <div class="card d-none" id="chartViewCard">
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-hover text-nowrap" id="transactionsTable" style="width: 100%">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0"><i class="fe fe-bar-chart-2 me-2"></i>Payment Trends</h6>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small text-muted me-1">Timeframe:</label>
+                                <select class="form-select form-select-sm ms-2" id="chartTimeframe" style="width: auto;">
+                                    <option value="6">6 Months</option>
+                                    <option value="12" selected>12 Months</option>
+                                    <option value="24">24 Months</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-lg-8">
+                                <canvas id="paymentsChart" height="280"></canvas>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="row g-2" id="chartBreakdownCards">
+                                    <div class="col-12">
+                                        <div class="card border mb-0">
+                                            <div class="card-header py-2 bg-light">
+                                                <h6 class="mb-0 small fw-bold">By Payment Method</h6>
+                                            </div>
+                                            <div class="card-body py-2" id="chartMethodBreakdown">
+                                                <div class="text-muted small">Loading...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="card border mb-0">
+                                            <div class="card-header py-2 bg-light">
+                                                <h6 class="mb-0 small fw-bold">By Review Status</h6>
+                                            </div>
+                                            <div class="card-body py-2" id="chartReviewBreakdown">
+                                                <div class="text-muted small">Loading...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="card" id="tableCard">
+                    <div class="card-body">
+                            <table class="table table-hover text-nowrap" id="transactionsTable" style="width: 100%">
                                 <thead class="table-light">
                                     <tr>
                                         <th>ID</th>
@@ -222,7 +282,6 @@
                                 </thead>
                                 <tbody></tbody>
                             </table>
-                        </div>
                     </div>
                 </div>
 
@@ -332,7 +391,10 @@
 
 @push('scripts')
     <script src="{{ asset('backend/plugins/bootstrap-datepicker/js/datepicker.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>
+        var paymentsChartInstance = null;
+
         $(document).ready(function() {
             // Initialize Select2
             $('.select3').select2({
@@ -385,7 +447,6 @@
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
                 scrollX: true,
-                scrollCollapse: true,
                 columnDefs: [
                     { targets: 0, visible: false },
                     { targets: [13], orderable: false, searchable: false }
@@ -396,15 +457,19 @@
                     $('#transactionsTotals').html('\n                        <div class="transactions-last-updated text-muted small" id="lastUpdated">Last updated: --</div>\n                        <div class="transactions-totals-group">\n                            <div class="transactions-total-item bg-primary-transparent text-primary px-3 py-2 rounded-3">\n                                <span>Total Collected</span>\n                                <strong id="footerTotalCollected">$0.00</strong>\n                            </div>\n                            <div class="transactions-total-item bg-warning-transparent text-warning px-3 py-2 rounded-3">\n                                <span>Processing Fees</span>\n                                <strong class="text-danger" id="footerTotalFees">$0.00</strong>\n                            </div>\n                            <div class="transactions-total-item bg-danger-transparent px-3 py-2 rounded-3">\n                                <span>Voided</span>\n                                <strong class="text-danger" id="footerTotalVoided">$0.00</strong>\n                            </div>\n                            <div class="transactions-total-item bg-success-transparent text-success px-3 py-2 rounded-3">\n                                <span>Net Collected</span>\n                                <strong id="footerTotalNet">$0.00</strong>\n                            </div>\n                        </div>\n                    ');
                     updateLastUpdated();
 
+                    // Wait for table to be fully drawn before syncing columns
                     setTimeout(function() {
                         api.columns.adjust();
-                    }, 100);
+                    }, 200);
                 },
                 drawCallback: function() {
                     loadSummary();
                     updateLastUpdated();
-                    // Force column widths to sync
-                    this.api().columns.adjust();
+                    var dt = this.api();
+                    // Sync header and body column widths after each draw
+                    setTimeout(function() {
+                        dt.columns.adjust();
+                    }, 50);
                 }
             });
 
@@ -982,6 +1047,163 @@
                 return str.charAt(0).toUpperCase() + str.slice(1);
             }
 
+            // View mode toggle
+            $('input[name="viewMode"]').on('change', function() {
+                var mode = $(this).val();
+                switchView(mode);
+            });
+
+            function switchView(mode) {
+                var $tableCard = $('#tableCard');
+                var $chartCard = $('#chartViewCard');
+                var $filterCard = $('#filterCard');
+
+                if (mode === 'chart') {
+                    $tableCard.addClass('d-none');
+                    $chartCard.removeClass('d-none');
+                    $filterCard.addClass('d-none');
+                    initChart();
+                } else {
+                    $chartCard.addClass('d-none');
+                    $tableCard.removeClass('d-none');
+                    $filterCard.removeClass('d-none');
+
+                    if (mode === 'compact') {
+                        $tableCard.addClass('compact-mode');
+                        // Hide non-essential columns in DataTable
+                        table.column(4).visible(false);  // Property
+                        table.column(10).visible(false); // Gateway Info
+                        table.column(11).visible(false); // Note
+                    } else {
+                        $tableCard.removeClass('compact-mode');
+                        // Show all columns
+                        table.column(4).visible(true);
+                        table.column(10).visible(true);
+                        table.column(11).visible(true);
+                    }
+
+                    try {
+                        setTimeout(function() { table.columns.adjust(); }, 100);
+                    } catch(e) {}
+                }
+
+                loadSummary();
+            }
+
+            // Chart initialization
+            function initChart() {
+                var ctx = document.getElementById('paymentsChart');
+                if (!ctx) return;
+
+                var months = $('#chartTimeframe').val();
+
+                $.ajax({
+                    url: "{{ route('transactions.chart-data') }}",
+                    data: { months: months },
+                    success: function(response) {
+                        if (!response.success) return;
+
+                        if (paymentsChartInstance) {
+                            paymentsChartInstance.destroy();
+                        }
+
+                        paymentsChartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: response.labels,
+                                datasets: [
+                                    {
+                                        label: 'Collected',
+                                        data: response.datasets.collected,
+                                        backgroundColor: 'rgba(40, 167, 69, 0.75)',
+                                        borderColor: 'rgba(40, 167, 69, 1)',
+                                        borderWidth: 1,
+                                        borderRadius: 4,
+                                        order: 1
+                                    },
+                                    {
+                                        label: 'Processing Fees',
+                                        data: response.datasets.fees,
+                                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                                        borderColor: 'rgba(255, 193, 7, 1)',
+                                        borderWidth: 1,
+                                        borderRadius: 4,
+                                        order: 3
+                                    },
+                                    {
+                                        label: 'Voided',
+                                        data: response.datasets.voided,
+                                        backgroundColor: 'rgba(220, 53, 69, 0.6)',
+                                        borderColor: 'rgba(220, 53, 69, 1)',
+                                        borderWidth: 1,
+                                        borderRadius: 4,
+                                        order: 2
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: { usePointStyle: true, padding: 16 }
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return context.dataset.label + ': $' + Number(context.raw).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { display: false },
+                                        ticks: { font: { size: 11 } }
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: {
+                                            font: { size: 11 },
+                                            callback: function(value) {
+                                                return '$' + value.toLocaleString();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        // Update breakdown cards
+                        renderBreakdown('#chartMethodBreakdown', response.method_breakdown);
+                        renderBreakdown('#chartReviewBreakdown', response.review_breakdown);
+                    }
+                });
+            }
+
+            function renderBreakdown(containerId, data) {
+                if (!data || data.length === 0) {
+                    $(containerId).html('<div class="text-muted small">No data available</div>');
+                    return;
+                }
+                var colors = ['#28a745','#ffc107','#17a2b8','#dc3545','#6f42c1','#fd7e14','#20c997','#007bff'];
+                var html = '';
+                $.each(data, function(i, item) {
+                    var color = colors[i % colors.length];
+                    html += '<div class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">';
+                    html += '<span class="small"><span class="d-inline-block rounded-circle me-2" style="width:10px;height:10px;background:' + color + ';"></span>' + escapeHtml(item.label) + '</span>';
+                    html += '<span class="small fw-semibold">$' + numberFormat(item.total) + ' <span class="text-muted fw-normal">(' + item.count + ')</span></span>';
+                    html += '</div>';
+                });
+                $(containerId).html(html);
+            }
+
+            // Rebuild chart on timeframe change
+            $('#chartTimeframe').on('change', function() {
+                initChart();
+            });
+
             // Initial load
             loadSummary();
 
@@ -1056,26 +1278,46 @@
             background-color: #007bff !important;
         }
 
-        /* Make table more compact */
+        /* DataTable appearance */
         #transactionsTable th,
         #transactionsTable td {
             vertical-align: middle;
             padding: 0.55rem 0.65rem;
             font-size: 0.875rem;
         }
-
         #transactionsTable th {
             white-space: nowrap;
             font-weight: 600;
             background-color: #f8fafc;
         }
-
         #transactionsTable td {
             white-space: nowrap;
         }
-
         #transactionsTable tbody tr:hover {
             background-color: rgba(0, 123, 255, 0.03);
+        }
+        /* Add border around the table wrapper instead of table-bordered on the table */
+        #tableCard .card-body {
+            padding: 0;
+        }
+        #tableCard .card-body > .dataTables_wrapper {
+            padding: 1rem;
+        }
+        div.dataTables_scrollHeadInner table.dataTable {
+            border-collapse: separate;
+        }
+        div.dataTables_scrollBody table.dataTable {
+            border-collapse: separate;
+            border-top: none;
+        }
+        div.dataTables_scrollHead table.dataTable {
+            border-bottom: 2px solid #dee2e6;
+        }
+        div.dataTables_scrollHeadInner {
+            width: 100% !important;
+        }
+        div.dataTables_scrollHeadInner table.dataTable {
+            width: 100% !important;
         }
 
         /* DataTable controls */
@@ -1203,6 +1445,57 @@
         .note-cancel-btn {
             line-height: 1;
             padding: 2px 6px;
+        }
+
+        /* Compact Mode */
+        .compact-mode #transactionsTable th,
+        .compact-mode #transactionsTable td {
+            padding: 0.35rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        .compact-mode .btn-group-sm .btn {
+            padding: 0.15rem 0.35rem;
+            font-size: 0.75rem;
+        }
+        .compact-mode .inline-note-wrapper .note-text {
+            max-width: 80px !important;
+        }
+        .compact-mode #transactionsTable th .badge,
+        .compact-mode #transactionsTable td .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+        .compact-mode .dataTables_wrapper .dataTables_length select {
+            height: 28px;
+            font-size: 0.8rem;
+        }
+        .compact-mode .dataTables_wrapper .dataTables_filter input {
+            height: 28px;
+            font-size: 0.8rem;
+            min-width: 160px;
+        }
+        .compact-mode .transactions-totals-bar {
+            padding: 0.5rem 0.75rem;
+        }
+        .compact-mode .transactions-total-item {
+            min-width: 130px;
+            font-size: 0.8rem;
+        }
+
+        /* View Toggle active state */
+        #viewToggle .btn-check:checked + .btn-outline-secondary {
+            background-color: #6c757d;
+            color: #fff;
+            border-color: #6c757d;
+        }
+
+        /* Chart styles */
+        #chartViewCard .card-header h6 {
+            font-size: 0.95rem;
+        }
+        #chartBreakdownCards .card-body {
+            max-height: 210px;
+            overflow-y: auto;
         }
 
         /* Toast */
