@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
 use Stripe\PaymentIntent;
+use Stripe\Refund;
 use Stripe\Stripe;
 use Stripe\Webhook;
 
@@ -1293,7 +1294,7 @@ class V2StripePaymentService
                         'void_reason' => 'Canceled in Stripe',
                         'voided_at' => now(),
                     ]);
-                    
+
                     if ($localPayment->invoice) {
                         $localPayment->invoice->updatePaymentStatus();
                     }
@@ -1559,20 +1560,33 @@ class V2StripePaymentService
     }
 
     /**
-     * Cancel a Stripe PaymentIntent.
+     * Cancel or Refund a Stripe PaymentIntent.
      */
     public function cancelPaymentIntent(string $paymentIntentId): array
     {
         try {
             $intent = PaymentIntent::retrieve($paymentIntentId);
 
-            if (in_array($intent->status, ['succeeded', 'canceled'])) {
+            // If the payment has already succeeded, we must issue a Refund.
+            if ($intent->status === 'succeeded') {
+                Refund::create([
+                    'payment_intent' => $paymentIntentId,
+                ]);
+
                 return [
-                    'success' => false,
-                    'message' => 'PaymentIntent is in a state (' . $intent->status . ') that cannot be canceled.',
+                    'success' => true,
+                    'message' => 'Payment successfully refunded in Stripe.',
                 ];
             }
 
+            if ($intent->status === 'canceled') {
+                return [
+                    'success' => false,
+                    'message' => 'Payment is already canceled in Stripe.',
+                ];
+            }
+
+            // Otherwise, it's still processing/pending and can be canceled.
             $intent->cancel();
 
             return [
@@ -1580,7 +1594,7 @@ class V2StripePaymentService
                 'message' => 'Payment successfully canceled in Stripe.',
             ];
         } catch (Exception $e) {
-            Log::error('Stripe PaymentIntent cancellation failed: ' . $e->getMessage(), [
+            Log::error('Stripe Payment cancellation/refund failed: ' . $e->getMessage(), [
                 'payment_intent_id' => $paymentIntentId,
                 'trace' => $e->getTraceAsString(),
             ]);
