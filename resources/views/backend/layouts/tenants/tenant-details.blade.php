@@ -508,7 +508,8 @@
                                         <table class="table table-hover mb-0" id="invoicesTable">
                                             <thead class="bg-light">
                                                 <tr>
-                                                    <th>Invoice #</th>
+                                                    <th>Invoice</th>
+                                                    <th>Type</th>
                                                     <th>Property</th>
                                                     <th>Amount</th>
                                                     <th>Due Date</th>
@@ -533,6 +534,9 @@
                                                                 class="fw-semibold text-primary">
                                                                 {{ $invoice->invoice_number }}
                                                             </a>
+                                                        </td>
+                                                        <td>
+                                                            {{ $invoice->type }}
                                                         </td>
                                                         <td>
                                                             <span
