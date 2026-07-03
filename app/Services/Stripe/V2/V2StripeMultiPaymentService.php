@@ -441,7 +441,7 @@ class V2StripeMultiPaymentService
             $alreadyExists = Payment::where(function ($q) use ($sessionOrIntent, $stripePaymentIntentId) {
                 $q->where('gateway_transaction_id', $sessionOrIntent->id)
                   ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
-            })->exists();
+            })->where('status', '!=', 'processing')->exists();
 
             if ($alreadyExists) {
                 DB::rollBack();
@@ -491,52 +491,65 @@ class V2StripeMultiPaymentService
                 $invoiceTotalCharge   = round($invoiceBaseAmount + $invoiceProcessingFee, 2);
 
                 // Note: invoice-level idempotency — check for this specific invoice
-                $existingForInvoice = Payment::where('gateway_transaction_id', $sessionOrIntent->id)
+                $existingForInvoice = Payment::where(function ($q) use ($sessionOrIntent, $stripePaymentIntentId) {
+                        $q->where('gateway_transaction_id', $sessionOrIntent->id)
+                          ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+                    })
                     ->where('invoice_id', $invoice->id)
-                    ->exists();
+                    ->first();
 
                 if ($existingForInvoice) {
-                    Log::info('[MultiPayment] Invoice already has payment record, skipping', [
-                        'invoice_id' => $invoice->id,
+                    if ($existingForInvoice->status !== 'processing') {
+                        Log::info('[MultiPayment] Invoice already has processed payment record, skipping', [
+                            'invoice_id' => $invoice->id,
+                        ]);
+                        continue;
+                    }
+                    
+                    $existingForInvoice->update([
+                        'status' => 'active',
+                        'review_status' => 'confirmed',
+                        'note' => str_replace(' (Processing)', '', $existingForInvoice->note)
                     ]);
-                    continue;
+                    $payment = $existingForInvoice;
+                } else {
+                    $payment = Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'tenant_id' => $tenantId,
+                        'lease_id' => $lease->id,
+                        'bed_id' => $bedId,
+                        'payment_number' => 'PAY-' . strtoupper(uniqid()),
+                        'amount' => $invoiceBaseAmount,
+                        'base_amount' => $invoiceBaseAmount,
+                        'processing_fee' => $invoiceProcessingFee,
+                        'total_charged' => $invoiceTotalCharge,
+                        'payment_date' => now()->toDateString(),
+                        'payment_method' => 'stripe',
+                        'reference_number' => $stripePaymentIntentId,
+                        'gateway_transaction_id' => $sessionOrIntent->id,
+                        'stripe_payment_intent_id' => $stripePaymentIntentId,
+                        'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
+                        'paid_by' => 'tenant',
+                        'status' => 'active',
+                        'review_status' => 'confirmed',
+                        'note' => sprintf(
+                            '%s payment via Stripe (bulk) - Invoice %s',
+                            $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
+                            $invoice->invoice_number
+                        ),
+                        'metadata' => [
+                            'stripe_session_id' => $sessionOrIntent->id,
+                            'stripe_payment_intent' => $stripePaymentIntentId,
+                            'connected_account_id' => $connectedAccountId,
+                            'bulk_payment' => 'true',
+                            'all_invoice_ids' => $invoiceIdsStr,
+                            'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
+                            'property_name' => $metadata['property_name'] ?? 'N/A',
+                            'property_id' => $metadata['property_id'] ?? null,
+                            'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
+                        ],
+                    ]);
                 }
-
-                $payment = Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'tenant_id' => $tenantId,
-                    'lease_id' => $lease->id,
-                    'bed_id' => $bedId,
-                    'payment_number' => 'PAY-' . strtoupper(uniqid()),
-                    'amount' => $invoiceBaseAmount,
-                    'base_amount' => $invoiceBaseAmount,
-                    'processing_fee' => $invoiceProcessingFee,
-                    'total_charged' => $invoiceTotalCharge,
-                    'payment_date' => now()->toDateString(),
-                    'payment_method' => 'stripe',
-                    'reference_number' => $stripePaymentIntentId,
-                    'gateway_transaction_id' => $sessionOrIntent->id,
-                    'stripe_payment_intent_id' => $stripePaymentIntentId,
-                    'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
-                    'paid_by' => 'tenant',
-                    'review_status' => 'confirmed',
-                    'note' => sprintf(
-                        '%s payment via Stripe (bulk) - Invoice %s',
-                        $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
-                        $invoice->invoice_number
-                    ),
-                    'metadata' => [
-                        'stripe_session_id' => $sessionOrIntent->id,
-                        'stripe_payment_intent' => $stripePaymentIntentId,
-                        'connected_account_id' => $connectedAccountId,
-                        'bulk_payment' => 'true',
-                        'all_invoice_ids' => $invoiceIdsStr,
-                        'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
-                        'property_name' => $metadata['property_name'] ?? 'N/A',
-                        'property_id' => $metadata['property_id'] ?? null,
-                        'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
-                    ],
-                ]);
 
                 // Update invoice balance
                 $newPaidAmount = round(floatval($invoice->paid_amount) + $invoiceBaseAmount, 2);
@@ -662,9 +675,78 @@ class V2StripeMultiPaymentService
             $invoices = Invoice::lockForUpdate()->whereIn('id', $invoiceIds)->get();
 
             $processedInvoices = [];
-            foreach ($invoices as $invoice) {
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+            
+            $invoiceAmountsStr  = $metadata['invoice_amounts'] ?? '';
+            $invoiceAmounts = !empty($invoiceAmountsStr)
+                ? array_map('floatval', explode(',', $invoiceAmountsStr))
+                : [];
+            $processingFee = floatval($metadata['processing_fee'] ?? 0);
+            $tenantId = $metadata['tenant_id'] ?? null;
+            $connectedAccountId = $metadata['connected_account_id'] ?? null;
+
+            foreach ($invoices as $index => $invoice) {
                 if (in_array($invoice->status, ['UNPAID', 'OVERDUE', 'PARTIAL'])) {
                     $invoice->update(['status' => 'PROCESSING']);
+                }
+
+                $existingForInvoice = Payment::where(function ($q) use ($sessionOrIntent, $stripePaymentIntentId) {
+                        $q->where('gateway_transaction_id', $sessionOrIntent->id)
+                          ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+                    })
+                    ->where('invoice_id', $invoice->id)
+                    ->first();
+
+                if (!$existingForInvoice) {
+                    $lease = $invoice->lease;
+                    $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+                    if (!$bedId) {
+                        $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+                    }
+
+                    $invoiceBaseAmount = isset($invoiceAmounts[$index])
+                        ? round($invoiceAmounts[$index], 2)
+                        : round(floatval($invoice->balance_due), 2);
+
+                    $invoiceProcessingFee = ($index === 0) ? $processingFee : 0.00;
+                    $invoiceTotalCharge   = round($invoiceBaseAmount + $invoiceProcessingFee, 2);
+
+                    Payment::create([
+                        'invoice_id' => $invoice->id,
+                        'tenant_id' => $tenantId ?? $invoice->tenant_id,
+                        'lease_id' => $lease->id,
+                        'bed_id' => $bedId,
+                        'payment_number' => 'PAY-' . strtoupper(uniqid()),
+                        'amount' => $invoiceBaseAmount,
+                        'base_amount' => $invoiceBaseAmount,
+                        'processing_fee' => $invoiceProcessingFee,
+                        'total_charged' => $invoiceTotalCharge,
+                        'payment_date' => now()->toDateString(),
+                        'payment_method' => 'stripe',
+                        'reference_number' => $stripePaymentIntentId,
+                        'gateway_transaction_id' => $sessionOrIntent->id,
+                        'stripe_payment_intent_id' => $stripePaymentIntentId,
+                        'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
+                        'paid_by' => 'tenant',
+                        'status' => 'processing',
+                        'review_status' => 'pending',
+                        'note' => sprintf(
+                            '%s payment via Stripe (bulk) (Processing) - Invoice %s',
+                            $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
+                            $invoice->invoice_number
+                        ),
+                        'metadata' => [
+                            'stripe_session_id' => $sessionOrIntent->id,
+                            'stripe_payment_intent' => $stripePaymentIntentId,
+                            'connected_account_id' => $connectedAccountId,
+                            'bulk_payment' => 'true',
+                            'all_invoice_ids' => $invoiceIdsStr,
+                            'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
+                            'property_name' => $metadata['property_name'] ?? 'N/A',
+                            'property_id' => $metadata['property_id'] ?? null,
+                            'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
+                        ],
+                    ]);
                 }
                 $processedInvoices[] = ['id' => $invoice->id, 'status' => 'PROCESSING'];
             }
@@ -702,9 +784,26 @@ class V2StripeMultiPaymentService
             $invoices = Invoice::lockForUpdate()->whereIn('id', $invoiceIds)->get();
 
             $processedInvoices = [];
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+            
             foreach ($invoices as $invoice) {
+                $failedPayment = Payment::where(function ($q) use ($sessionOrIntent, $stripePaymentIntentId) {
+                        $q->where('gateway_transaction_id', $sessionOrIntent->id)
+                          ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+                    })
+                    ->where('invoice_id', $invoice->id)
+                    ->first();
+
+                if ($failedPayment && $failedPayment->status === 'processing') {
+                    $failedPayment->update([
+                        'status' => 'failed',
+                        'review_status' => 'disputed',
+                        'note' => $failedPayment->note . ' (Failed)'
+                    ]);
+                }
+                
                 if ($invoice->status === 'PROCESSING') {
-                    $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
+                    $totalPaid = $invoice->payments()->where('status', 'active')->sum('amount');
                     $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
                     $invoice->update(['status' => $status]);
                 }

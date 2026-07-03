@@ -1031,71 +1031,86 @@ class V2StripePaymentService
                     ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
             })->first();
 
-            if ($existingPayment) {
-                DB::rollBack();
-                Log::info('Payment already processed, skipping', [
-                    'session_id' => $sessionOrIntent->id,
-                    'payment_intent_id' => $stripePaymentIntentId
-                ]);
-                return [
-                    'success' => true, // Return true so webhook doesn't retry
-                    'payment' => ['id' => $existingPayment->id],
-                    'invoice' => ['id' => $invoice->id],
-                ];
-            }
-
-            $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
-            if (!$bedId) {
-                $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
-            }
-
-            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
-
             $isPartial = isset($metadata['partial_payment']) && $metadata['partial_payment'] === 'true';
+            $payment = null;
 
-            $payment = Payment::create([
-                'invoice_id' => $invoice->id,
-                'tenant_id' => $tenantId,
-                'lease_id' => $lease->id,
-                'bed_id' => $bedId,
-                'payment_number' => 'PAY-' . strtoupper(uniqid()),
-                'amount' => $baseAmount,
-                'base_amount' => $baseAmount,
-                'processing_fee' => $processingFee,
-                'total_charged' => $totalCharge,
-                'payment_date' => now()->toDateString(),
-                'payment_method' => 'stripe',
-                'reference_number' => $stripePaymentIntentId,
-                'gateway_transaction_id' => $sessionOrIntent->id,
-                'stripe_payment_intent_id' => $stripePaymentIntentId,
-                'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
-                'paid_by' => 'tenant',
-                'review_status' => 'confirmed', // Auto-confirm stripe payments
-                'note' => sprintf(
-                    '%s%s payment via Stripe - Invoice %s',
-                    $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
-                    $isPartial ? ' partial' : '',
-                    $invoice->invoice_number
-                ),
-                'metadata' => [
-                    'stripe_session_id' => $sessionOrIntent->id,
-                    'stripe_payment_intent' => $stripePaymentIntentId,
-                    'connected_account_id' => $connectedAccountId,
-                    'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
-                    'property_name' => $metadata['property_name'] ?? 'N/A',
-                    'property_id' => $metadata['property_id'] ?? null,
-                    'partial_payment' => $isPartial ? 'true' : 'false',
-                    'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
-                ]
-            ]);
+            if ($existingPayment) {
+                if ($existingPayment->status !== 'processing') {
+                    DB::rollBack();
+                    Log::info('Payment already processed, skipping', [
+                        'session_id' => $sessionOrIntent->id,
+                        'payment_intent_id' => $stripePaymentIntentId
+                    ]);
+                    return [
+                        'success' => true, // Return true so webhook doesn't retry
+                        'payment' => ['id' => $existingPayment->id],
+                        'invoice' => ['id' => $invoice->id],
+                    ];
+                }
 
-            Log::info('Payment record created in database', [
-                'payment_id' => $payment->id,
-                'invoice_id' => $invoice->id,
-                'amount' => $payment->amount,
-                'processing_fee' => $payment->processing_fee,
-                'total_charged' => $payment->total_charged,
-            ]);
+                // Transition from processing to active
+                $existingPayment->update([
+                    'status' => 'active',
+                    'review_status' => 'confirmed',
+                    'note' => str_replace(' (Processing)', '', $existingPayment->note)
+                ]);
+                $payment = $existingPayment;
+                
+                Log::info('Payment record transitioned from processing to active', [
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice->id,
+                ]);
+            } else {
+                $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+                if (!$bedId) {
+                    $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+                }
+
+                $payment = Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'tenant_id' => $tenantId,
+                    'lease_id' => $lease->id,
+                    'bed_id' => $bedId,
+                    'payment_number' => 'PAY-' . strtoupper(uniqid()),
+                    'amount' => $baseAmount,
+                    'base_amount' => $baseAmount,
+                    'processing_fee' => $processingFee,
+                    'total_charged' => $totalCharge,
+                    'payment_date' => now()->toDateString(),
+                    'payment_method' => 'stripe',
+                    'reference_number' => $stripePaymentIntentId,
+                    'gateway_transaction_id' => $sessionOrIntent->id,
+                    'stripe_payment_intent_id' => $stripePaymentIntentId,
+                    'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
+                    'paid_by' => 'tenant',
+                    'status' => 'active',
+                    'review_status' => 'confirmed', // Auto-confirm stripe payments
+                    'note' => sprintf(
+                        '%s%s payment via Stripe - Invoice %s',
+                        $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
+                        $isPartial ? ' partial' : '',
+                        $invoice->invoice_number
+                    ),
+                    'metadata' => [
+                        'stripe_session_id' => $sessionOrIntent->id,
+                        'stripe_payment_intent' => $stripePaymentIntentId,
+                        'connected_account_id' => $connectedAccountId,
+                        'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
+                        'property_name' => $metadata['property_name'] ?? 'N/A',
+                        'property_id' => $metadata['property_id'] ?? null,
+                        'partial_payment' => $isPartial ? 'true' : 'false',
+                        'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
+                    ]
+                ]);
+
+                Log::info('Payment record created in database', [
+                    'payment_id' => $payment->id,
+                    'invoice_id' => $invoice->id,
+                    'amount' => $payment->amount,
+                    'processing_fee' => $payment->processing_fee,
+                    'total_charged' => $payment->total_charged,
+                ]);
+            }
 
             // Update invoice - ONLY credit base_amount towards balance
             $newPaidAmount = floatval($invoice->paid_amount) + $baseAmount;
@@ -1191,9 +1206,6 @@ class V2StripePaymentService
         }
     }
 
-    /**
-     * Mark invoice as PROCESSING for async payments (ACH)
-     */
     public function markAsProcessing($metadata, $sessionOrIntent): array
     {
         DB::beginTransaction();
@@ -1209,6 +1221,65 @@ class V2StripePaymentService
             // Only update if it's currently unpaid/overdue/partial
             if (in_array($invoice->status, ['UNPAID', 'OVERDUE', 'PARTIAL'])) {
                 $invoice->update(['status' => 'PROCESSING']);
+            }
+
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+
+            $existingPayment = Payment::where(function ($query) use ($sessionOrIntent, $stripePaymentIntentId) {
+                $query->where('gateway_transaction_id', $sessionOrIntent->id)
+                    ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+            })->first();
+
+            if (!$existingPayment) {
+                $tenantId = $metadata['tenant_id'] ?? $invoice->tenant_id;
+                $lease = $invoice->lease;
+                $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+                if (!$bedId) {
+                    $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+                }
+
+                $baseAmount = floatval($metadata['base_amount'] ?? $metadata['payment_amount'] ?? 0);
+                $processingFee = floatval($metadata['processing_fee'] ?? 0);
+                $totalCharge = floatval($metadata['total_charge'] ?? $metadata['payment_amount'] ?? 0);
+                $connectedAccountId = $metadata['connected_account_id'] ?? null;
+                $isPartial = isset($metadata['partial_payment']) && $metadata['partial_payment'] === 'true';
+
+                Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'tenant_id' => $tenantId,
+                    'lease_id' => $lease->id,
+                    'bed_id' => $bedId,
+                    'payment_number' => 'PAY-' . strtoupper(uniqid()),
+                    'amount' => $baseAmount,
+                    'base_amount' => $baseAmount,
+                    'processing_fee' => $processingFee,
+                    'total_charged' => $totalCharge,
+                    'payment_date' => now()->toDateString(),
+                    'payment_method' => 'stripe',
+                    'reference_number' => $stripePaymentIntentId,
+                    'gateway_transaction_id' => $sessionOrIntent->id,
+                    'stripe_payment_intent_id' => $stripePaymentIntentId,
+                    'payment_type' => $invoice->type === 'DEPOSIT' ? 'deposit' : 'rent',
+                    'paid_by' => 'tenant',
+                    'status' => 'processing',
+                    'review_status' => 'pending',
+                    'note' => sprintf(
+                        '%s%s payment via Stripe (Processing) - Invoice %s',
+                        $invoice->type === 'DEPOSIT' ? 'Security deposit' : 'Rent',
+                        $isPartial ? ' partial' : '',
+                        $invoice->invoice_number
+                    ),
+                    'metadata' => [
+                        'stripe_session_id' => $sessionOrIntent->id,
+                        'stripe_payment_intent' => $stripePaymentIntentId,
+                        'connected_account_id' => $connectedAccountId,
+                        'tenant_name' => $metadata['tenant_name'] ?? 'N/A',
+                        'property_name' => $metadata['property_name'] ?? 'N/A',
+                        'property_id' => $metadata['property_id'] ?? null,
+                        'partial_payment' => $isPartial ? 'true' : 'false',
+                        'stripe_payment_method_type' => $metadata['payment_method_type'] ?? 'card',
+                    ]
+                ]);
             }
 
             DB::commit();
@@ -1241,10 +1312,25 @@ class V2StripePaymentService
 
             $invoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
 
+            $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
+            
+            $failedPayment = Payment::where(function ($query) use ($sessionOrIntent, $stripePaymentIntentId) {
+                $query->where('gateway_transaction_id', $sessionOrIntent->id)
+                    ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
+            })->first();
+
+            if ($failedPayment && $failedPayment->status === 'processing') {
+                $failedPayment->update([
+                    'status' => 'failed',
+                    'review_status' => 'disputed',
+                    'note' => $failedPayment->note . ' (Failed)'
+                ]);
+            }
+
             // Revert back from PROCESSING
             if ($invoice->status === 'PROCESSING') {
                 // If there are previous partial payments, we might want to revert to PARTIAL
-                $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
+                $totalPaid = $invoice->payments()->where('status', 'active')->sum('amount');
                 $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
 
                 $invoice->update(['status' => $status]);
@@ -1277,7 +1363,7 @@ class V2StripePaymentService
             if ($invoiceId) {
                 $invoice = Invoice::lockForUpdate()->find($invoiceId);
                 if ($invoice && $invoice->status === 'PROCESSING') {
-                    $totalPaid = $invoice->payments()->where('status', '!=', 'voided')->sum('amount');
+                    $totalPaid = $invoice->payments()->where('status', 'active')->sum('amount');
                     $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');
                     $invoice->update(['status' => $status]);
                 }
