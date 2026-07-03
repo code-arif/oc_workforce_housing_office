@@ -129,8 +129,10 @@
                                 <label for="filterPaymentStatus" class="form-label mb-1 small fw-semibold">Payment Status</label>
                                 <select class="form-select form-select-sm select3" id="filterPaymentStatus">
                                     <option value="">All Payments</option>
-                                    <option value="active">Active Only</option>
-                                    <option value="voided">Voided Only</option>
+                                    <option value="active">Active</option>
+                                    <option value="processing">Processing (ACH)</option>
+                                    <option value="failed">Failed</option>
+                                    <option value="voided">Voided</option>
                                 </select>
                             </div>
                             <div class="col-sm-6 col-md-4 col-xl">
@@ -141,6 +143,18 @@
                                     <option value="reviewed">Reviewed</option>
                                     <option value="confirmed">Confirmed</option>
                                     <option value="disputed">Disputed</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-4 col-xl">
+                                <label for="filterInvoiceStatus" class="form-label mb-1 small fw-semibold">Invoice Status</label>
+                                <select class="form-select form-select-sm select3" id="filterInvoiceStatus">
+                                    <option value="">All Invoices</option>
+                                    <option value="PAID">Paid</option>
+                                    <option value="PROCESSING">Processing</option>
+                                    <option value="PARTIAL">Partial</option>
+                                    <option value="UNPAID">Unpaid</option>
+                                    <option value="OVERDUE">Overdue</option>
+                                    <option value="CANCELLED">Cancelled</option>
                                 </select>
                             </div>
                             <div class="col-sm-6 col-md-4 col-xl">
@@ -421,6 +435,7 @@
                     data: function(d) {
                         d.payment_status = $('#filterPaymentStatus').val();
                         d.review_status = $('#filterReviewStatus').val();
+                        d.invoice_status = $('#filterInvoiceStatus').val();
                         d.property_id = $('#filterProperty').val();
                         d.tenant_id = $('#filterTenant').val();
                         d.payment_method = $('#filterPaymentMethod').val();
@@ -486,7 +501,7 @@
 
             // Reset filters
             $('#resetFilters').on('click', function() {
-                $('#filterPaymentStatus, #filterReviewStatus, #filterProperty, #filterTenant, #filterPaymentMethod, #filterPaymentType')
+                $('#filterPaymentStatus, #filterReviewStatus, #filterInvoiceStatus, #filterProperty, #filterTenant, #filterPaymentMethod, #filterPaymentType')
                     .val('').trigger('change');
                 $('#filterDateFrom, #filterDateTo').val('');
                 table.ajax.reload();

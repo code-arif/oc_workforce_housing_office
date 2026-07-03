@@ -99,10 +99,9 @@ class TransactionController extends Controller
         }
 
         if ($request->filled('payment_status')) {
-            if ($request->payment_status === 'voided') {
-                $query->where('payments.status', 'voided');
-            } else {
-                $query->where('payments.status', '!=', 'voided');
+            $status = $request->payment_status;
+            if (in_array($status, ['active', 'processing', 'failed', 'voided'])) {
+                $query->where('payments.status', $status);
             }
         }
 
@@ -129,6 +128,12 @@ class TransactionController extends Controller
         }
         if ($to = $this->normalizeDate($request->date_to)) {
             $query->whereDate('payments.payment_date', '<=', $to);
+        }
+
+        if ($request->filled('invoice_status')) {
+            $query->whereHas('invoice', function ($q) use ($request) {
+                $q->where('status', $request->invoice_status);
+            });
         }
 
         return DataTables::of($query)
@@ -241,6 +246,9 @@ class TransactionController extends Controller
                 return 'N/A';
             })
             ->addColumn('review_status_badge', function ($payment) {
+                $output = '';
+
+                // Show payment status badge for non-standard statuses
                 if ($payment->status === 'voided') {
                     $voidedBy = $payment->voidedBy?->name ?? 'System';
                     $voidReason = $payment->void_reason ? e($payment->void_reason) : 'No reason';
@@ -248,6 +256,17 @@ class TransactionController extends Controller
                         <i class="fe fe-x-circle me-1" style="font-size:12px;"></i>VOIDED
                     </span><br><small class="text-muted">by ' . e($voidedBy) . '</small>';
                 }
+
+                if ($payment->status === 'processing') {
+                    $output .= '<span class="badge bg-info px-2 py-1 d-inline-flex align-items-center mb-1" title="ACH transfer in progress">
+                        <i class="fe fe-loader me-1" style="font-size:12px;"></i>Processing (ACH)
+                    </span><br>';
+                } elseif ($payment->status === 'failed') {
+                    $output .= '<span class="badge bg-danger px-2 py-1 d-inline-flex align-items-center mb-1" title="Payment failed">
+                        <i class="fe fe-alert-circle me-1" style="font-size:12px;"></i>Failed
+                    </span><br>';
+                }
+
                 $status = $payment->review_status ?? 'pending';
                 $badges = [
                     'pending' => '<span class="badge bg-warning text-dark px-2 py-1 d-inline-flex align-items-center">
@@ -259,7 +278,7 @@ class TransactionController extends Controller
                     'disputed' => '<span class="badge bg-danger px-2 py-1 d-inline-flex align-items-center">
                         <i class="fe fe-alert-triangle me-1" style="font-size:12px;"></i>Disputed</span>',
                 ];
-                return $badges[$status] ?? $badges['pending'];
+                return $output . ($badges[$status] ?? $badges['pending']);
             })
             ->addColumn('paid_by_info', function ($payment) {
                 $badgeColor = match ($payment->paid_by) {
