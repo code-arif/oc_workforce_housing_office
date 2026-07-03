@@ -1034,6 +1034,11 @@ class V2StripePaymentService
             $isPartial = isset($metadata['partial_payment']) && $metadata['partial_payment'] === 'true';
             $payment = null;
 
+            $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
+            if (!$bedId) {
+                $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
+            }
+
             if ($existingPayment) {
                 if ($existingPayment->status !== 'processing') {
                     DB::rollBack();
@@ -1061,10 +1066,6 @@ class V2StripePaymentService
                     'invoice_id' => $invoice->id,
                 ]);
             } else {
-                $bedId = $lease->assignments()->where('is_current', true)->value('bed_id');
-                if (!$bedId) {
-                    $bedId = $lease->assignments()->latest('created_at')->value('bed_id');
-                }
 
                 $payment = Payment::create([
                     'invoice_id' => $invoice->id,
