@@ -142,8 +142,8 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/invoice/{invoiceId}/details', [TenantPaymentController::class, 'getPaymentDetails']); // done
             Route::post('/checkout/create', [TenantPaymentController::class, 'createCheckoutSession']); // ISSUE
-            Route::post('/intent/create', [TenantPaymentController::class, 'createPaymentIntent']); // New Phase 3 endpoint
-            Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
+            // Route::post('/intent/create', [TenantPaymentController::class, 'createPaymentIntent']); // New Phase 3 endpoint
+            // Route::post('/verify', [TenantPaymentController::class, 'verifyPayment']); // done - only for development stage
         });
 
         // Partial Payment Routes (Stripe)
