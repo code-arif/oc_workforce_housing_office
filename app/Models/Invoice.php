@@ -96,17 +96,27 @@ class Invoice extends Model
 
     public function updatePaymentStatus()
     {
-        $totalPaid = $this->payments()->where('status', '!=', 'voided')->sum('amount');
+        // Only active payments count towards the actual paid balance
+        $totalPaid = $this->payments()->where('status', 'active')->sum('amount');
         $this->paid_amount = $totalPaid;
         $this->balance_due = $this->total_amount - $totalPaid;
 
         if ($totalPaid >= $this->total_amount) {
             $this->status = 'PAID';
             $this->paid_at = now();
-        } elseif ($totalPaid > 0) {
-            $this->status = 'PARTIAL';
         } else {
-            $this->status = $this->isOverdue() ? 'OVERDUE' : 'UNPAID';
+            // Check if there's any active processing payment
+            $processingAmount = $this->payments()->where('status', 'processing')->sum('amount');
+            
+            if ($processingAmount > 0 && ($totalPaid + $processingAmount >= $this->total_amount)) {
+                $this->status = 'PROCESSING';
+            } elseif ($totalPaid > 0) {
+                $this->status = 'PARTIAL';
+            } elseif ($processingAmount > 0) {
+                $this->status = 'PROCESSING';
+            } else {
+                $this->status = $this->isOverdue() ? 'OVERDUE' : 'UNPAID';
+            }
         }
 
         $this->save();
