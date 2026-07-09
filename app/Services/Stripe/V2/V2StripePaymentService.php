@@ -1428,8 +1428,8 @@ class V2StripePaymentService
                 'payment_date' => now()->toDateString(),
             ];
 
-            // Mail::to($tenant->email)->queue(new PaymentProcessingTenantMail($emailData));
-            Mail::to($tenant->email)->send(new PaymentProcessingTenantMail($emailData));
+            Mail::to($tenant->email)->queue(new PaymentProcessingTenantMail($emailData));
+            // Mail::to($tenant->email)->send(new PaymentProcessingTenantMail($emailData));
         } catch (Exception $e) {
             Log::error('Failed to send payment processing email: ' . $e->getMessage(), [
                 'invoice_id' => $invoice->id ?? 'unknown'
