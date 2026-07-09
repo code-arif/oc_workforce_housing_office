@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Stripe\Checkout\Session;
 use Stripe\Customer;
+use Stripe\PaymentIntent;
 use Stripe\Stripe;
 use Stripe\Webhook;
 
@@ -371,7 +372,7 @@ class V2StripeMultiPaymentService
     {
         try {
             if (str_starts_with($identifier, 'pi_')) {
-                $intent = \Stripe\PaymentIntent::retrieve($identifier);
+                $intent = PaymentIntent::retrieve($identifier);
 
                 if (($intent->metadata['bulk_payment'] ?? '') !== 'true') {
                     return app(V2StripePaymentService::class)->verifyPayment($identifier);
@@ -505,7 +506,7 @@ class V2StripeMultiPaymentService
                         ]);
                         continue;
                     }
-                    
+
                     $existingForInvoice->update([
                         'status' => 'active',
                         'review_status' => 'confirmed',
@@ -676,7 +677,7 @@ class V2StripeMultiPaymentService
 
             $processedInvoices = [];
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
-            
+
             $invoiceAmountsStr  = $metadata['invoice_amounts'] ?? '';
             $invoiceAmounts = !empty($invoiceAmountsStr)
                 ? array_map('floatval', explode(',', $invoiceAmountsStr))
@@ -785,7 +786,7 @@ class V2StripeMultiPaymentService
 
             $processedInvoices = [];
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
-            
+
             foreach ($invoices as $invoice) {
                 $failedPayment = Payment::where(function ($q) use ($sessionOrIntent, $stripePaymentIntentId) {
                         $q->where('gateway_transaction_id', $sessionOrIntent->id)
@@ -801,7 +802,7 @@ class V2StripeMultiPaymentService
                         'note' => $failedPayment->note . ' (Failed)'
                     ]);
                 }
-                
+
                 if ($invoice->status === 'PROCESSING') {
                     $totalPaid = $invoice->payments()->where('status', 'active')->sum('amount');
                     $status = $totalPaid > 0 ? 'PARTIAL' : ($invoice->due_date < now() ? 'OVERDUE' : 'UNPAID');

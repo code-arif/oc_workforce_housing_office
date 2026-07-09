@@ -64,8 +64,8 @@ class TenantMultiPaymentController extends Controller
     public function createCheckoutSession(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'invoice_ids'         => 'required|array|min:1|max:20',
-            'invoice_ids.*'       => 'required|integer|exists:invoices,id',
+            'invoice_ids' => 'required|array|min:1|max:20',
+            'invoice_ids.*' => 'required|integer|exists:invoices,id',
             'payment_method_type' => 'nullable|in:card,us_bank_account',
         ]);
 
@@ -74,8 +74,8 @@ class TenantMultiPaymentController extends Controller
         }
 
         try {
-            $tenant            = $request->user();
-            $invoiceIds        = array_map('intval', $request->input('invoice_ids'));
+            $tenant = $request->user();
+            $invoiceIds = array_map('intval', $request->input('invoice_ids'));
             $paymentMethodType = $request->input('payment_method_type', 'card');
 
             $result = $this->multiPaymentService->createCheckoutSession($invoiceIds, $tenant->id, $paymentMethodType);
@@ -85,11 +85,11 @@ class TenantMultiPaymentController extends Controller
             }
 
             return $this->success([
-                'session_id'   => $result['session_id'],
+                'session_id' => $result['session_id'],
                 'checkout_url' => $result['checkout_url'],
-                'summary'      => $result['summary'],
-                'tenant'       => $result['tenant'],
-                'lease'        => $result['lease'],
+                'summary' => $result['summary'],
+                'tenant' => $result['tenant'],
+                'lease' => $result['lease'],
             ], 'Checkout session created successfully.');
         } catch (Exception $e) {
             return $this->error([], $e->getMessage(), 500);
