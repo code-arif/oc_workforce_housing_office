@@ -2,6 +2,7 @@
 
 namespace App\Services\Stripe\V2;
 
+use App\Mail\Tenant\Payment\PaymentProcessingTenantMail;
 use App\Mail\Tenant\Payment\PaymentSuccessAdminMail;
 use App\Mail\Tenant\Payment\PaymentSuccessTenantMail;
 use App\Models\Invoice;
@@ -759,6 +760,9 @@ class V2StripeMultiPaymentService
                 'session_id'  => $sessionOrIntent->id ?? 'unknown'
             ]);
 
+            // Send processing notification email to tenant
+            $this->sendBulkProcessingEmail($invoices, $metadata);
+
             return ['success' => true, 'invoices' => $processedInvoices];
         } catch (Exception $e) {
             DB::rollBack();
@@ -902,6 +906,38 @@ class V2StripeMultiPaymentService
         $cardPct   = floatval($setting?->stripe_card_fee_percentage ?? env('STRIPE_CARD_FEE_PERCENTAGE', 2.9));
         $cardFixed = floatval($setting?->stripe_card_fee_fixed      ?? env('STRIPE_CARD_FEE_FIXED', 0.30));
         return round(($baseAmount * ($cardPct / 100)) + $cardFixed, 2);
+    }
+
+    /**
+     * Send bulk processing email to tenant (ACH multi-payment)
+     */
+    private function sendBulkProcessingEmail($invoices, $metadata): void
+    {
+        try {
+            $firstInvoice = $invoices->first();
+            $tenant = $firstInvoice?->tenant ?? $firstInvoice?->load('tenant')?->tenant;
+
+            if (!$tenant) {
+                Log::warning('[MultiPayment] sendBulkProcessingEmail: tenant not found');
+                return;
+            }
+
+            $invoiceNumbers = $invoices->pluck('invoice_number')->implode(', ');
+            $totalAmount    = round($invoices->sum(fn($i) => floatval($i->balance_due)), 2);
+
+            $emailData = [
+                'tenant_name'    => $metadata['tenant_name'] ?? 'Tenant',
+                'property_name'  => $metadata['property_name'] ?? 'Property',
+                'unit'           => $metadata['unit'] ?? 'N/A',
+                'payment_amount' => $totalAmount,
+                'invoice_number' => $invoiceNumbers,
+                'payment_date'   => now()->toDateString(),
+            ];
+
+            Mail::to($tenant->email)->queue(new PaymentProcessingTenantMail($emailData));
+        } catch (Exception $e) {
+            Log::error('[MultiPayment] Failed to send bulk processing email: ' . $e->getMessage());
+        }
     }
 
     /**

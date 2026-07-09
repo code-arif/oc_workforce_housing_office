@@ -2,6 +2,7 @@
 
 namespace App\Services\Stripe\V2;
 
+use App\Mail\Tenant\Payment\PaymentProcessingTenantMail;
 use App\Mail\Tenant\Payment\PaymentSuccessAdminMail;
 use App\Mail\Tenant\Payment\PaymentSuccessTenantMail;
 use App\Models\Invoice;
@@ -1060,7 +1061,7 @@ class V2StripePaymentService
                     'note' => str_replace(' (Processing)', '', $existingPayment->note)
                 ]);
                 $payment = $existingPayment;
-                
+
                 Log::info('Payment record transitioned from processing to active', [
                     'payment_id' => $payment->id,
                     'invoice_id' => $invoice->id,
@@ -1290,6 +1291,9 @@ class V2StripePaymentService
                 'session_id' => $sessionOrIntent->id ?? 'unknown'
             ]);
 
+            // Send processing notification email to tenant
+            $this->sendProcessingEmail($invoice, $metadata);
+
             return ['success' => true, 'invoice' => ['id' => $invoice->id, 'status' => 'PROCESSING']];
         } catch (Exception $e) {
             DB::rollBack();
@@ -1314,7 +1318,7 @@ class V2StripePaymentService
             $invoice = Invoice::lockForUpdate()->findOrFail($invoiceId);
 
             $stripePaymentIntentId = $sessionOrIntent->payment_intent ?? $sessionOrIntent->id;
-            
+
             $failedPayment = Payment::where(function ($query) use ($sessionOrIntent, $stripePaymentIntentId) {
                 $query->where('gateway_transaction_id', $sessionOrIntent->id)
                     ->orWhere('stripe_payment_intent_id', $stripePaymentIntentId);
@@ -1401,6 +1405,37 @@ class V2StripePaymentService
         }
     }
 
+
+    /**
+     * Send payment processing email to tenant (ACH payments)
+     */
+    private function sendProcessingEmail($invoice, $metadata): void
+    {
+        try {
+            $tenant = $invoice->tenant ?? $invoice->load('tenant')->tenant;
+
+            if (!$tenant) {
+                Log::warning('sendProcessingEmail: tenant not found for invoice', ['invoice_id' => $invoice->id]);
+                return;
+            }
+
+            $emailData = [
+                'tenant_name' => $metadata['tenant_name'] ?? 'Tenant',
+                'property_name'  => $metadata['property_name'] ?? 'Property',
+                'unit' => $metadata['unit'] ?? 'N/A',
+                'payment_amount' => floatval($metadata['base_amount'] ?? $metadata['payment_amount'] ?? 0),
+                'invoice_number' => $invoice->invoice_number,
+                'payment_date' => now()->toDateString(),
+            ];
+
+            // Mail::to($tenant->email)->queue(new PaymentProcessingTenantMail($emailData));
+            Mail::to($tenant->email)->send(new PaymentProcessingTenantMail($emailData));
+        } catch (Exception $e) {
+            Log::error('Failed to send payment processing email: ' . $e->getMessage(), [
+                'invoice_id' => $invoice->id ?? 'unknown'
+            ]);
+        }
+    }
 
     /**
      * Send payment success emails
