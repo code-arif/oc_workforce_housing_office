@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class PaymentProcessingTenantMail extends Mailable
 {
@@ -18,6 +19,7 @@ class PaymentProcessingTenantMail extends Mailable
      */
     public function __construct($data)
     {
+        Log::info("PaymentProcessingTenantMail:", [$data]);
         $this->data = $data;
     }
 
