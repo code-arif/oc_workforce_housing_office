@@ -464,17 +464,17 @@ class MessagingController extends Controller
     public function compose()
     {
         $user = Auth::user();
-        
+
         // Get email account
         $account = $this->getDefaultAccount($user);
 
         // Get folder counts for sidebar
         $counts = $this->emailService->getFolderCounts($account);
         $labels = EmailLabel::where('user_id', $user->id)->get();
-        
+
         // Get properties for selection
         $properties = Property::where('is_active', true)->orderBy('name')->get();
-        
+
         // Get mail templates
         $mailTemplates = MailTemplate::active()->orderBy('name')->get();
 
@@ -493,7 +493,7 @@ class MessagingController extends Controller
     public function getUnits(Request $request)
     {
         $propertyId = $request->get('property_id');
-        
+
         $units = Unit::where('property_id', $propertyId)
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -510,10 +510,10 @@ class MessagingController extends Controller
     public function getRooms(Request $request)
     {
         $unitId = $request->get('unit_id');
-        
+
         $rooms = Room::where('unit_id', $unitId)
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'room_number']);
 
         return response()->json([
             'success' => true,
@@ -543,7 +543,7 @@ class MessagingController extends Controller
 
         // Filter by unit or room if specified
         $tenants = collect();
-        
+
         foreach ($leases as $lease) {
             // If unit or room specified, filter by assignment bed location
             if ($unitId || $roomId) {
@@ -551,17 +551,17 @@ class MessagingController extends Controller
                     if (!$assignment->bed || !$assignment->bed->room) {
                         return false;
                     }
-                    
+
                     $room = $assignment->bed->room;
-                    
+
                     if ($roomId && $room->id != $roomId) {
                         return false;
                     }
-                    
+
                     if ($unitId && $room->unit_id != $unitId) {
                         return false;
                     }
-                    
+
                     return true;
                 })->isNotEmpty();
 
@@ -575,7 +575,7 @@ class MessagingController extends Controller
                 if ($lease->tenant->profile) {
                     $name = trim(($lease->tenant->profile->first_name ?? '') . ' ' . ($lease->tenant->profile->last_name ?? ''));
                 }
-                
+
                 $tenants->push([
                     'id' => $lease->tenant->id,
                     'email' => $lease->tenant->email,
@@ -602,9 +602,9 @@ class MessagingController extends Controller
     public function getMailTemplate(Request $request)
     {
         $templateId = $request->get('template_id');
-        
+
         $template = MailTemplate::find($templateId);
-        
+
         if (!$template) {
             return response()->json([
                 'success' => false,
@@ -631,12 +631,12 @@ class MessagingController extends Controller
     public function searchTenants(Request $request)
     {
         $search = $request->get('q', '');
-        
+
         $query = \App\Models\Tenant::query()
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->with(['profile', 'leases.assignments.bed']);
-        
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('email', 'like', "%{$search}%")
@@ -655,15 +655,15 @@ class MessagingController extends Controller
                     });
             });
         }
-        
+
         $tenants = $query->limit(20)->get();
-        
+
         $results = $tenants->map(function ($tenant) {
             $name = '';
             if ($tenant->profile) {
                 $name = trim(($tenant->profile->first_name ?? '') . ' ' . ($tenant->profile->last_name ?? ''));
             }
-            
+
             // Get bed name from active lease if available
             $bedName = '';
             $activeLease = $tenant->leases->where('status', 'ACTIVE')->first();
@@ -673,12 +673,12 @@ class MessagingController extends Controller
                     $bedName = $assignment->bed->bed_label;
                 }
             }
-            
+
             $displayText = $name ?: $tenant->email;
             if ($bedName) {
                 $displayText .= " [{$bedName}]";
             }
-            
+
             return [
                 'id' => $tenant->id,
                 'email' => $tenant->email,
@@ -687,7 +687,7 @@ class MessagingController extends Controller
                 'text' => $displayText . " <{$tenant->email}>",
             ];
         });
-        
+
         return response()->json([
             'results' => $results,
         ]);
