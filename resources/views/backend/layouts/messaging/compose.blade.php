@@ -214,7 +214,7 @@
                                         <select class="form-select" id="templateSelect">
                                             <option value="">-- Select a Template (Optional) --</option>
                                             @foreach($mailTemplates as $template)
-                                                <option value="{{ $template->id }}" 
+                                                <option value="{{ $template->id }}"
                                                     data-variables="{{ json_encode($template->variables ?? []) }}">
                                                     {{ $template->name }}
                                                 </option>
@@ -404,7 +404,7 @@
                         success: function(response) {
                             let options = '<option value="">-- Select Room --</option>';
                             response.rooms.forEach(function(room) {
-                                options += `<option value="${room.id}">${room.name}</option>`;
+                                options += `<option value="${room.id}"> ${room.room_number}</option>`;
                             });
                             $('#roomSelect').html(options).prop('disabled', false);
                         }
@@ -439,9 +439,9 @@
                             response.tenants.forEach(function(tenant) {
                                 addTenant(tenant);
                             });
-                            
+
                             $('#tenantCountInfo').text(`Found ${response.count} tenant(s) with active leases`);
-                            
+
                             if (response.count === 0) {
                                 toastr.info('No tenants with active leases found for the selected location');
                             } else {
@@ -527,7 +527,7 @@
                 const bccEmails = $('#bccEmails').val() ? $('#bccEmails').val().split(',').map(e => e.trim()).filter(e => e) : [];
 
                 const formData = new FormData();
-                
+
                 // Add recipients
                 selectedTenants.forEach((tenant, index) => {
                     formData.append(`to[${index}][email]`, tenant.email);
@@ -637,7 +637,7 @@
         // Update the display of selected tenants
         function updateSelectedTenantsDisplay() {
             const box = $('#selectedTenantsBox');
-            
+
             if (selectedTenants.length === 0) {
                 box.removeClass('has-tenants');
                 box.html('<span class="text-muted" id="noTenantsMessage">No tenants selected. Use the location filter above or search below.</span>');
