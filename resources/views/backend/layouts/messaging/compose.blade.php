@@ -26,24 +26,6 @@
             font-weight: 600;
             margin-left: 15px;
         }
-        .location-filter-card {
-            /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
-            color: black;
-            border-radius: 10px;
-        }
-        .location-filter-card .form-label {
-            color: black;
-            font-weight: 500;
-        }
-        .template-select-card {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            border-radius: 10px;
-        }
-        .template-select-card .form-label {
-            color: white;
-            font-weight: 500;
-        }
         .tenant-badge {
             display: inline-block;
             padding: 5px 10px;
@@ -160,11 +142,11 @@
                     <!-- Compose Form -->
                     <div class="col-md-12 col-lg-8 col-xl-9">
                         <!-- Location Filter Card -->
-                        <div class="card location-filter-card mb-3">
-                            <div class="card-header border-0">
-                                <h5 class="card-title mb-0">
+                        <div class="card mb-3">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title">
                                     <i class="fa fa-building me-2"></i>Select Recipients by Location
-                                </h5>
+                                </h3>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -195,18 +177,18 @@
                                         <button type="button" class="btn btn-info" id="fetchTenantsBtn">
                                             <i class="fa fa-users me-2"></i>Fetch Tenants with Active Leases
                                         </button>
-                                        <span class="ms-3 text-white-50" id="tenantCountInfo"></span>
+                                        <span class="ms-3 text-muted" id="tenantCountInfo"></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Template Selection Card -->
-                        <div class="card template-select-card mb-3">
-                            <div class="card-header border-0">
-                                <h5 class="card-title mb-0">
+                        <div class="card mb-3">
+                            <div class="card-header border-bottom">
+                                <h3 class="card-title">
                                     <i class="fa fa-file-text-o me-2"></i>Use Mail Template
-                                </h5>
+                                </h3>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -222,12 +204,12 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <button type="button" class="btn btn-light w-100" id="applyTemplateBtn" disabled>
+                                        <button type="button" class="btn btn-primary w-100" id="applyTemplateBtn" disabled>
                                             <i class="fa fa-magic me-2"></i>Apply Template
                                         </button>
                                     </div>
                                 </div>
-                                <div id="templateVariablesInfo" class="mt-2 text-white-50" style="display: none;">
+                                <div id="templateVariablesInfo" class="mt-2 text-muted" style="display: none;">
                                     <small><i class="fa fa-info-circle me-1"></i>Available placeholders: <span id="variablesList"></span></small>
                                 </div>
                             </div>
