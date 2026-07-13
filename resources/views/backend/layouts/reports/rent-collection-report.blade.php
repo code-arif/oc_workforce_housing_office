@@ -152,55 +152,65 @@
                         <div class="card h-100 mb-0">
                             <div class="card-body py-3 px-3">
                                 <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
-                                            <div class="icon-service-sm bg-primary-transparent text-primary flex-shrink-0">
+                                    <div class="col-sm-5 col-md-5 col-5">
+                                        <div class="d-flex flex-column justify-content-center align-items-center text-center p-3 border rounded-3 h-100 bg-primary-transparent">
+                                            <div class="icon-service bg-primary text-white mb-3 shadow-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 28px;">
                                                 <i class="fe fe-dollar-sign"></i>
                                             </div>
-                                            <div class="overflow-hidden">
-                                                <p class="text-muted mb-0 small text-truncate">Total Collected</p>
-                                                <h6 class="mb-0 text-primary fw-bold" id="summaryTotalCollected">$0.00</h6>
-                                                <small class="text-muted"><span id="summaryTotalPayments">0</span>
-                                                    payments</small>
-                                            </div>
+                                            <p class="text-muted mb-1 text-truncate">Total Collected</p>
+                                            <h4 class="mb-1 text-primary fw-bold" id="summaryTotalCollected">$0.00</h4>
+                                            <small class="text-muted"><span id="summaryTotalPayments">0</span> payments</small>
                                         </div>
                                     </div>
-                                    <div class="col-6">
-                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
-                                            <div class="icon-service-sm bg-warning-transparent text-warning flex-shrink-0">
-                                                <i class="fe fe-clock"></i>
+                                    <div class="col-sm-7 col-md-7 col-7">
+                                        <div class="row g-2 h-100">
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3 h-100">
+                                                    <div class="icon-service-sm bg-warning-transparent text-warning flex-shrink-0">
+                                                        <i class="fe fe-clock"></i>
+                                                    </div>
+                                                    <div class="overflow-hidden">
+                                                        <p class="text-muted mb-0 small text-truncate">Pending</p>
+                                                        <h6 class="mb-0 text-warning fw-bold" id="summaryPendingAmount">$0.00</h6>
+                                                        <small class="text-muted"><span id="summaryPendingCount">0</span> pmts</small>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="overflow-hidden">
-                                                <p class="text-muted mb-0 small text-truncate">Pending Review</p>
-                                                <h6 class="mb-0 text-warning fw-bold" id="summaryPendingAmount">$0.00</h6>
-                                                <small class="text-muted"><span id="summaryPendingCount">0</span>
-                                                    payments</small>
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3 h-100">
+                                                    <div class="icon-service-sm bg-success-transparent text-success flex-shrink-0">
+                                                        <i class="fe fe-check-circle"></i>
+                                                    </div>
+                                                    <div class="overflow-hidden">
+                                                        <p class="text-muted mb-0 small text-truncate">Confirmed</p>
+                                                        <h6 class="mb-0 text-success fw-bold" id="summaryConfirmedAmount">$0.00</h6>
+                                                        <small class="text-muted"><span id="summaryConfirmedCount">0</span> pmts</small>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
-                                            <div class="icon-service-sm bg-success-transparent text-success flex-shrink-0">
-                                                <i class="fe fe-check-circle"></i>
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3 h-100">
+                                                    <div class="icon-service-sm bg-danger-transparent text-danger flex-shrink-0">
+                                                        <i class="fe fe-alert-triangle"></i>
+                                                    </div>
+                                                    <div class="overflow-hidden">
+                                                        <p class="text-muted mb-0 small text-truncate">Disputed</p>
+                                                        <h6 class="mb-0 text-danger fw-bold" id="summaryDisputedAmount">$0.00</h6>
+                                                        <small class="text-muted"><span id="summaryDisputedCount">0</span> pmts</small>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div class="overflow-hidden">
-                                                <p class="text-muted mb-0 small text-truncate">Confirmed</p>
-                                                <h6 class="mb-0 text-success fw-bold" id="summaryConfirmedAmount">$0.00</h6>
-                                                <small class="text-muted"><span id="summaryConfirmedCount">0</span>
-                                                    payments</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="d-flex align-items-center gap-2 p-2 border rounded-3">
-                                            <div class="icon-service-sm bg-danger-transparent text-danger flex-shrink-0">
-                                                <i class="fe fe-alert-triangle"></i>
-                                            </div>
-                                            <div class="overflow-hidden">
-                                                <p class="text-muted mb-0 small text-truncate">Disputed</p>
-                                                <h6 class="mb-0 text-danger fw-bold" id="summaryDisputedAmount">$0.00</h6>
-                                                <small class="text-muted"><span id="summaryDisputedCount">0</span>
-                                                    payments</small>
+                                            <div class="col-6">
+                                                <div class="d-flex align-items-center gap-2 p-2 border rounded-3 h-100">
+                                                    <div class="icon-service-sm bg-secondary-transparent text-secondary flex-shrink-0">
+                                                        <i class="fe fe-x-circle"></i>
+                                                    </div>
+                                                    <div class="overflow-hidden">
+                                                        <p class="text-muted mb-0 small text-truncate">Cancelled</p>
+                                                        <h6 class="mb-0 text-secondary fw-bold" id="summaryCancelledAmount">$0.00</h6>
+                                                        <small class="text-muted"><span id="summaryCancelledCount">0</span> pmts</small>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -674,6 +684,9 @@
 
                         $('#summaryDisputedAmount').text('$' + numberFormat(data.disputed_amount || 0));
                         $('#summaryDisputedCount').text(data.disputed || 0);
+
+                        $('#summaryCancelledAmount').text('$' + numberFormat(data.cancelled_amount || 0));
+                        $('#summaryCancelledCount').text(data.cancelled || 0);
 
                         $('#footerTotalCollected').text('$' + numberFormat(data.total_amount || 0));
                         $('#footerTotalStripeAmount').text('$' + numberFormat(data.total_stripe_amount ||

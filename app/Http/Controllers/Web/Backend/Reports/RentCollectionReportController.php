@@ -387,35 +387,41 @@ class RentCollectionReportController extends Controller
      */
     public function getSummary(Request $request)
     {
-        $query = Payment::query()
-            ->whereHas('invoice', function ($q) {
-                $q->where('status', '!=', 'CANCELLED');
-            });
+        $baseQuery = Payment::query();
 
         // Apply same filters as getData
         if ($request->filled('property_id')) {
-            $query->whereHas('lease', function ($q) use ($request) {
+            $baseQuery->whereHas('lease', function ($q) use ($request) {
                 $q->where('property_id', $request->property_id);
             });
         }
         if ($request->filled('tenant_id')) {
-            $query->where('tenant_id', $request->tenant_id);
+            $baseQuery->where('tenant_id', $request->tenant_id);
         }
         if ($request->filled('payment_method')) {
-            $query->where('payment_method', $request->payment_method);
+            $baseQuery->where('payment_method', $request->payment_method);
         }
         if ($from = $this->normalizeRequestDate($request->date_from)) {
-            $query->whereDate('payment_date', '>=', $from);
+            $baseQuery->whereDate('payment_date', '>=', $from);
         }
         if ($to = $this->normalizeRequestDate($request->date_to)) {
-            $query->whereDate('payment_date', '<=', $to);
+            $baseQuery->whereDate('payment_date', '<=', $to);
         }
         if ($request->filled('review_status')) {
-            $query->where('review_status', $request->review_status);
+            $baseQuery->where('review_status', $request->review_status);
         }
+
+        $query = (clone $baseQuery)->whereHas('invoice', function ($q) {
+            $q->where('status', '!=', 'CANCELLED');
+        });
+
+        $cancelledQuery = (clone $baseQuery)->whereHas('invoice', function ($q) {
+            $q->where('status', 'CANCELLED');
+        });
 
         // Clone and filter out voided payments for all financial statistics
         $activeQuery = (clone $query)->where('payments.status', '!=', 'voided');
+        $activeCancelledQuery = (clone $cancelledQuery)->where('payments.status', '!=', 'voided');
 
         $stripeTotalAmount = (clone $activeQuery)
             ->get()
@@ -442,6 +448,8 @@ class RentCollectionReportController extends Controller
             'confirmed_amount' => (clone $activeQuery)->where('review_status', 'confirmed')->sum('amount'),
             'disputed' => (clone $activeQuery)->where('review_status', 'disputed')->count(),
             'disputed_amount' => (clone $activeQuery)->where('review_status', 'disputed')->sum('amount'),
+            'cancelled' => $activeCancelledQuery->count(),
+            'cancelled_amount' => $activeCancelledQuery->sum('amount'),
 
             // By payment method
             'by_method' => (clone $activeQuery)
