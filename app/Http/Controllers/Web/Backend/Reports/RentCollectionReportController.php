@@ -38,6 +38,9 @@ class RentCollectionReportController extends Controller
     {
         if ($request->ajax()) {
             $query = Payment::query()
+                ->whereHas('invoice', function ($q) {
+                    $q->where('status', '!=', 'CANCELLED');
+                })
                 ->select([
                     'payments.id',
                     'payments.invoice_id',
@@ -384,7 +387,10 @@ class RentCollectionReportController extends Controller
      */
     public function getSummary(Request $request)
     {
-        $query = Payment::query();
+        $query = Payment::query()
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', '!=', 'CANCELLED');
+            });
 
         // Apply same filters as getData
         if ($request->filled('property_id')) {
@@ -494,6 +500,9 @@ class RentCollectionReportController extends Controller
     private function getReportData(Request $request): array
     {
         $query = Payment::query()
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', '!=', 'CANCELLED');
+            })
             ->with([
                 'tenant:id,email' => [
                     'profile:id,tenant_id,first_name,middle_name,last_name'
