@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Api\Tenants;
 
-use Exception;
-use App\Models\Tenant;
-use App\Traits\ApiResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Mail\Tenant\PasswordReset\TenantPasswordResetOTPMail;
-use Illuminate\Support\Facades\Log;
+use App\Models\Tenant;
+use App\Traits\ApiResponse;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -22,89 +22,6 @@ class TenantPasswordController extends Controller
      * Set password after approval (First time setup)
      * Uses approval_token from approval email
      */
-    // public function setPasswordAfterApproval(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'email' => 'required|email|exists:tenants,email',
-    //         'approval_token' => 'required|string',
-    //         'password' => 'required|string|min:8|confirmed', // password_confirmation required
-    //     ], [
-    //         'password.confirmed' => 'Password and confirm password do not match.',
-    //         'password.min' => 'Password must be at least 8 characters.',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return $this->validationError(
-    //             $validator->errors()->toArray(),
-    //             'Validation failed',
-    //             422
-    //         );
-    //     }
-
-    //     try {
-    //         DB::beginTransaction();
-
-    //         // Find tenant by email
-    //         $tenant = Tenant::where('email', $request->email)->first();
-
-    //         if (!$tenant) {
-    //             return $this->error([], 'Tenant not found.', 404);
-    //         }
-
-    //         // Verify approval token
-    //         if ($tenant->approval_token !== $request->approval_token) {
-    //             return $this->error([], 'Invalid approval token.', 403);
-    //         }
-
-    //         // Check if token expired
-    //         if ($tenant->approval_token_expires_at && now()->isAfter($tenant->approval_token_expires_at)) {
-    //             return $this->error([], 'Approval token has expired. Please contact support.', 403);
-    //         }
-
-    //         // Check if tenant is approved
-    //         if ($tenant->status !== 'approved') {
-    //             return $this->error([
-    //                 'status' => $tenant->status
-    //             ], 'Your application is not approved yet. Current status: ' . $tenant->status, 400);
-    //         }
-
-    //         // Set password
-    //         $tenant->password = Hash::make($request->password);
-    //         $tenant->status = 'active'; // Change status to active after password set
-
-    //         // Clear approval token (one-time use)
-    //         $tenant->approval_token = null;
-    //         $tenant->approval_token_expires_at = null;
-
-    //         $tenant->save();
-
-    //         // Generate JWT token
-    //         $token = auth('api')->login($tenant);
-
-    //         DB::commit();
-
-    //         return $this->success([
-    //             'tenant' => [
-    //                 'id' => $tenant->id,
-    //                 'email' => $tenant->email,
-    //                 'status' => $tenant->status,
-    //                 'profile' => $tenant->profile,
-    //             ],
-    //             'token' => $token,
-    //             'token_type' => 'bearer',
-    //             'expires_in' => auth('api')->factory()->getTTL() * 60
-    //         ], 'Password set successfully. You are now logged in.', 200);
-    //     } catch (Exception $e) {
-    //         DB::rollBack();
-    //         Log::error('Password setup failed: ' . $e->getMessage(), [
-    //             'email' => $request->email,
-    //             'trace' => $e->getTraceAsString()
-    //         ]);
-    //         return $this->error([], 'Failed to set password. Please try again.', 500);
-    //     }
-    // }
-
-
     public function setPasswordAfterApproval(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -129,7 +46,7 @@ class TenantPasswordController extends Controller
             // 🔹 Find tenant by approval token
             $tenant = Tenant::where('approval_token', $request->approval_token)->first();
 
-            if (!$tenant) {
+            if (! $tenant) {
                 return $this->error([], 'Invalid or already used approval token.', 404);
             }
 
@@ -144,7 +61,7 @@ class TenantPasswordController extends Controller
             // 🔹 Check approval status
             if ($tenant->status == 'approved') {
                 return $this->error([
-                    'status' => $tenant->status
+                    'status' => $tenant->status,
                 ], 'Your application is already approved.', 400);
             }
 
@@ -172,7 +89,7 @@ class TenantPasswordController extends Controller
                 ],
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
             ], 'Password set successfully. You are now logged in.', 200);
         } catch (Exception $e) {
             DB::rollBack();
@@ -185,7 +102,6 @@ class TenantPasswordController extends Controller
             return $this->error([], 'Failed to set password. Please try again.', 500);
         }
     }
-
 
     /**
      * Send OTP for forgot password (After first time setup)
@@ -211,19 +127,15 @@ class TenantPasswordController extends Controller
 
             $tenant = Tenant::where('email', $request->email)->first();
 
-            if (!$tenant) {
-                return $this->error([], 'Tenant not found.', 404);
-            }
-
             // Check if password is set (can't reset if never set)
-            if (!$tenant->password) {
+            if (! $tenant->password) {
                 return $this->error([], 'Please set your password first using the approval link sent to your email.', 400);
             }
 
             // Check if account is active
-            if (!in_array($tenant->status, ['approved'])) {
+            if (! in_array($tenant->status, ['approved'])) {
                 return $this->error([
-                    'status' => $tenant->status
+                    'status' => $tenant->status,
                 ], 'Your account is not approved. Current status: ' . $tenant->status, 400);
             }
 
@@ -236,6 +148,7 @@ class TenantPasswordController extends Controller
             } catch (Exception $mailError) {
                 Log::error('Failed to send OTP email: ' . $mailError->getMessage());
                 DB::rollBack();
+
                 return $this->error([], 'Failed to send OTP. Please try again.', 500);
             }
 
@@ -243,12 +156,12 @@ class TenantPasswordController extends Controller
 
             return $this->success([
                 'email' => $tenant->email,
-                'otp' => $tenant->otp . ' (TODO: only for testing purposes)',
-                'otp_expires_in_minutes' => 10
+                'otp_expires_in_minutes' => 10,
             ], 'OTP sent to your email. Please check your inbox.', 200);
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Send OTP failed: ' . $e->getMessage());
+
             return $this->error([], 'Failed to send OTP. Please try again.', 500);
         }
     }
@@ -274,12 +187,8 @@ class TenantPasswordController extends Controller
         try {
             $tenant = Tenant::where('email', $request->email)->first();
 
-            if (!$tenant) {
-                return $this->error([], 'Tenant not found.', 404);
-            }
-
             // Verify OTP
-            if (!$tenant->verifyOTP($request->otp)) {
+            if (! $tenant->verifyOTP($request->otp)) {
                 return $this->error([], 'Invalid or expired OTP.', 400);
             }
 
@@ -290,10 +199,11 @@ class TenantPasswordController extends Controller
                 'email' => $tenant->email,
                 'reset_token' => $tenant->reset_password_token,
                 'reset_url' => config('app.frontend_url') . "/reset-password?token={$tenant->reset_password_token}&email={$tenant->email}",
-                'expires_in_minutes' => 60
+                'expires_in_minutes' => 60,
             ], 'OTP verified successfully. Use the reset token to change your password.', 200);
         } catch (Exception $e) {
             Log::error('OTP verification failed: ' . $e->getMessage());
+
             return $this->error([], 'OTP verification failed. Please try again.', 500);
         }
     }
@@ -325,10 +235,6 @@ class TenantPasswordController extends Controller
 
             $tenant = Tenant::where('email', $request->email)->first();
 
-            if (!$tenant) {
-                return $this->error([], 'Tenant not found.', 404);
-            }
-
             // Verify reset token
             if ($tenant->reset_password_token !== $request->reset_token) {
                 return $this->error([], 'Invalid reset token.', 403);
@@ -358,11 +264,12 @@ class TenantPasswordController extends Controller
                 ],
                 'token' => $token,
                 'token_type' => 'bearer',
-                'expires_in' => auth('api')->factory()->getTTL() * 60
+                'expires_in' => auth('api')->factory()->getTTL() * 60,
             ], 'Password reset successfully. You are now logged in.', 200);
         } catch (Exception $e) {
             DB::rollBack();
             Log::error('Password reset failed: ' . $e->getMessage());
+
             return $this->error([], 'Failed to reset password. Please try again.', 500);
         }
     }

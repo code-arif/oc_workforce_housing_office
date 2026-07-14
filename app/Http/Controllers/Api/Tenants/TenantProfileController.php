@@ -117,8 +117,8 @@ class TenantProfileController extends Controller
 
         // Validate input
         $validator = Validator::make($request->all(), [
-            'old_password'      => 'required',
-            'new_password'      => 'required|min:6',
+            'old_password' => 'required',
+            'new_password' => 'required|min:6',
             'confirm_password'  => 'required|same:new_password',
         ]);
 
